@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v39.28" />
+    <link rel="stylesheet" href="css/app.css?v=app-v39.29" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -62,7 +62,7 @@
         <header class="app-header">
           <div class="app-title-row">
             <h1 class="app-title" id="home-title">家裡練習</h1>
-            <span class="app-version" id="app-version" aria-label="版本">v39.28</span>
+            <span class="app-version" id="app-version" aria-label="版本">v39.29</span>
           </div>
           <p class="app-subtitle">長按標題可新增／管理使用者</p>
         </header>
@@ -144,6 +144,12 @@
               <span class="card-xiangqi-head">
                 <span class="card-title">象棋</span>
                 <span class="card-xiangqi-note">明棋 9×10 · 暗棋 4×8 · 台灣規則</span>
+              </span>
+            </button>
+            <button type="button" class="card card-chess card-chess-home" id="btn-start-chess">
+              <span class="card-chess-head">
+                <span class="card-title">西洋棋</span>
+                <span class="card-chess-note">8×8 · 白先 · 史東頓棋子</span>
               </span>
             </button>
             <button type="button" class="card card-sky-shooter" id="btn-start-sky-shooter">
@@ -1103,6 +1109,169 @@
         </div>
       </section>
 
+      <!-- 西洋棋：設定 -->
+      <section id="view-chess-first" class="view view-hidden" aria-label="西洋棋誰執白">
+        <header class="quiz-header quiz-header-chess">
+          <button type="button" class="btn-text" id="btn-chess-first-back">← 返回</button>
+          <span class="quiz-subject">西洋棋</span>
+        </header>
+        <div class="flip-first-body">
+          <h2 class="flip-first-title" id="chess-first-title">誰執白（先手）？</h2>
+          <p class="flip-first-meta" id="chess-first-meta">8×8 · 白先 · 國際象棋規則</p>
+          <div id="chess-local-setup">
+            <p class="flip-first-hint">
+              誰在練習：<strong id="chess-duo-active-name">思妘</strong>
+            </p>
+            <div class="home-zone">
+              <p class="home-zone-title">對戰對象</p>
+              <div class="lesson-chips" id="chess-duo-opponent-chips"></div>
+            </div>
+            <div class="flip-players-vs" id="chess-duo-matchup">
+              <span id="chess-duo-matchup-a">思妘</span>
+              <span class="flip-vs">VS</span>
+              <span id="chess-duo-matchup-b">思妤</span>
+            </div>
+            <div class="flip-pick-btns" id="chess-pick-btns"></div>
+          </div>
+          <div id="chess-ai-setup" hidden>
+            <p class="flip-first-hint">
+              誰在練習：<strong id="chess-ai-active-name">—</strong>
+            </p>
+            <div class="chess-ai-zone home-zone">
+              <p class="home-zone-title">電腦難度</p>
+              <div class="chess-ai-difficulty-cards" id="chess-ai-difficulty-chips"></div>
+              <p class="chess-ai-start-hint">涅槃之後可接 Stockfish；目前與宗師同棋力。</p>
+              <div class="chess-ai-start-btns" id="chess-ai-start-btns"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 西洋棋：對局 -->
+      <section id="view-chess-play" class="view view-hidden" aria-label="西洋棋對局">
+        <header class="quiz-header quiz-header-chess">
+          <button type="button" class="btn-text" id="btn-chess-play-back">← 返回</button>
+          <span class="quiz-subject">西洋棋</span>
+        </header>
+        <div class="chess-play-body">
+          <div class="chess-status-bar">
+            <div class="chess-turn-board">
+              <div class="chess-side-card chess-side-white" id="chess-side-white">
+                <span class="chess-side-card-label">白方</span>
+                <strong class="chess-side-card-name">—</strong>
+              </div>
+              <div class="chess-turn-banner chess-turn-banner-white" id="chess-turn-banner" role="status" aria-live="polite">
+                <span class="chess-turn-banner-kicker">現在輪到</span>
+                <span class="chess-turn-banner-main" id="chess-turn-main">白方走棋</span>
+                <span class="chess-turn-banner-sub" id="chess-turn-sub">—</span>
+              </div>
+              <div class="chess-side-card chess-side-black" id="chess-side-black">
+                <span class="chess-side-card-label">黑方</span>
+                <strong class="chess-side-card-name">—</strong>
+              </div>
+            </div>
+            <div class="chess-check-alert" id="chess-check-hint" hidden role="alert" aria-live="assertive">
+              <span class="chess-check-alert-x" aria-hidden="true">✕</span>
+              <div class="chess-check-alert-copy">
+                <strong class="chess-check-alert-title" id="chess-check-title">你被將軍了！</strong>
+                <p class="chess-check-alert-detail" id="chess-check-detail">王有危險，快解將！</p>
+              </div>
+            </div>
+            <div class="chess-play-actions" hidden>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-resign" hidden>認輸</button>
+            </div>
+          </div>
+          <div class="chess-board-wrap">
+            <svg class="chess-svg" id="chess-board" role="img" aria-label="西洋棋棋盤"></svg>
+            <div class="chess-win-overlay" id="chess-win-overlay" hidden>
+              <div class="chess-win-card">
+                <h2 class="chess-win-title" id="chess-win-title">獲勝</h2>
+                <p class="chess-win-detail" id="chess-win-detail"></p>
+                <div class="chess-win-actions">
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-replay">再玩一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-home">回首頁</button>
+                </div>
+              </div>
+            </div>
+            <div class="chess-promo-overlay" id="chess-promo-overlay" hidden>
+              <div class="chess-promo-card">
+                <h3 class="chess-promo-title">兵要升變成？</h3>
+                <div class="chess-promo-choices" id="chess-promo-choices">
+                  <button type="button" class="btn btn-primary" data-promo="q">后</button>
+                  <button type="button" class="btn btn-secondary" data-promo="r">車</button>
+                  <button type="button" class="btn btn-secondary" data-promo="b">象</button>
+                  <button type="button" class="btn btn-secondary" data-promo="n">馬</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 西洋棋：線上對局 -->
+      <section id="view-chess-online-play" class="view view-hidden" aria-label="西洋棋線上對局">
+        <header class="quiz-header quiz-header-chess">
+          <button type="button" class="btn-text" id="btn-chess-online-play-back">← 返回</button>
+          <span class="quiz-subject">西洋棋 · 線上</span>
+        </header>
+        <div class="chess-play-body">
+          <div class="chess-status-bar">
+            <p class="chess-room-tag" id="chess-online-room-tag">房間</p>
+            <div class="chess-turn-board">
+              <div class="chess-side-card chess-side-white" id="chess-online-side-white">
+                <span class="chess-side-card-label">白方</span>
+                <strong class="chess-side-card-name">—</strong>
+              </div>
+              <div class="chess-turn-banner chess-turn-banner-white" id="chess-online-turn-banner" role="status" aria-live="polite">
+                <span class="chess-turn-banner-kicker">現在輪到</span>
+                <span class="chess-turn-banner-main" id="chess-online-turn-main">白方走棋</span>
+                <span class="chess-turn-banner-sub" id="chess-online-turn-sub">—</span>
+              </div>
+              <div class="chess-side-card chess-side-black" id="chess-online-side-black">
+                <span class="chess-side-card-label">黑方</span>
+                <strong class="chess-side-card-name">—</strong>
+              </div>
+            </div>
+            <div class="chess-check-alert" id="chess-online-check-hint" hidden role="alert" aria-live="assertive">
+              <span class="chess-check-alert-x" aria-hidden="true">✕</span>
+              <div class="chess-check-alert-copy">
+                <strong class="chess-check-alert-title" id="chess-online-check-title">你被將軍了！</strong>
+                <p class="chess-check-alert-detail" id="chess-online-check-detail">王有危險，快解將！</p>
+              </div>
+            </div>
+            <div class="chess-play-actions" hidden>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-online-resign" hidden>認輸</button>
+            </div>
+          </div>
+          <div class="chess-board-wrap">
+            <svg class="chess-svg" id="chess-online-board" role="img" aria-label="西洋棋棋盤"></svg>
+            <div class="chess-win-overlay" id="chess-online-win-overlay" hidden>
+              <div class="chess-win-card">
+                <h2 class="chess-win-title" id="chess-online-win-title">獲勝</h2>
+                <p class="chess-win-detail" id="chess-online-win-detail"></p>
+                <div class="chess-win-actions">
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-rematch">再來一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-home">回首頁</button>
+                </div>
+              </div>
+            </div>
+            <div class="chess-promo-overlay" id="chess-online-promo-overlay" hidden>
+              <div class="chess-promo-card">
+                <h3 class="chess-promo-title">兵要升變成？</h3>
+                <div class="chess-promo-choices" id="chess-online-promo-choices">
+                  <button type="button" class="btn btn-primary" data-promo="q">后</button>
+                  <button type="button" class="btn btn-secondary" data-promo="r">車</button>
+                  <button type="button" class="btn btn-secondary" data-promo="b">象</button>
+                  <button type="button" class="btn btn-secondary" data-promo="n">馬</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 暗棋：設定 -->
       <section id="view-anqi-first" class="view view-hidden" aria-label="暗棋設定">
         <header class="quiz-header quiz-header-xiangqi">
@@ -1594,7 +1763,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v39.28").catch((e) => {
+      import("./js/app.js?v=app-v39.29").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

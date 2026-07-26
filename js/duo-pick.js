@@ -152,6 +152,7 @@ function updateDuoMatchupLabels() {
     ["#gomoku-duo-matchup-a", "#gomoku-duo-matchup-b"],
     ["#xiangqi-duo-matchup-a", "#xiangqi-duo-matchup-b"],
     ["#anqi-duo-matchup-a", "#anqi-duo-matchup-b"],
+    ["#chess-duo-matchup-a", "#chess-duo-matchup-b"],
     ["#flip-player-a-name", "#flip-player-b-name"],
     ["#mul-flip-player-a-name", "#mul-flip-player-b-name"],
   ];
@@ -167,7 +168,7 @@ function updateDuoMatchupLabels() {
 export function refreshDuoBattleUI() {
   normalizeSelectedChild();
   const activeName = getChildName(getSelectedChild());
-  for (const id of ["math-duo-active-name", "flip-duo-active-name", "gomoku-duo-active-name", "xiangqi-duo-active-name", "anqi-duo-active-name"]) {
+  for (const id of ["math-duo-active-name", "flip-duo-active-name", "gomoku-duo-active-name", "xiangqi-duo-active-name", "anqi-duo-active-name", "chess-duo-active-name"]) {
     const el = document.getElementById(id);
     if (el) el.textContent = activeName;
   }
@@ -179,6 +180,7 @@ export function refreshDuoBattleUI() {
     "#gomoku-duo-opponent-chips",
     "#xiangqi-duo-opponent-chips",
     "#anqi-duo-opponent-chips",
+    "#chess-duo-opponent-chips",
   ]) {
     if (document.querySelector(sel)) {
       renderDuoOpponentPicker(sel, { onChange });
