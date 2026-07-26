@@ -9,13 +9,13 @@ import {
   positionToFen,
   shouldFlipBoardForSide,
   sideOfPiece,
-} from "./chess-core.js?v=chess-v1";
+} from "./chess-core.js?v=chess-v2";
 import {
   ensureChessBoardSvg,
   renderChessBoardSvg,
   renderChessStatusBar,
   resetChessBoardSvg,
-} from "./chess-board-ui.js?v=chess-v1";
+} from "./chess-board-ui.js?v=chess-v2";
 import {
   registerOnlineGame,
   getOnlineContext,
@@ -58,12 +58,12 @@ function otherSlot(slot) {
 }
 
 function slotName(slot) {
-  if (!onlineGame) return slot === "host" ? "房主" : "來賓";
-  return onlineGame.names[slot] || (slot === "host" ? "房主" : "來賓");
+  if (!onlineGame) return slot === "host" ? "?�主" : "來�?";
+  return onlineGame.names[slot] || (slot === "host" ? "?�主" : "來�?");
 }
 
 function sideName(side) {
-  return side === "white" ? "白方" : "黑方";
+  return side === "white" ? "?�方" : "黑方";
 }
 
 function slotForSide(side) {
@@ -82,8 +82,8 @@ function renderWhitePick(panel, snap, onPick) {
   const host = snap.players.host;
   const guest = snap.players.guest;
   [
-    ["host", `${host?.name || "房主"} 執白（先手）`],
-    ["guest", `${guest?.name || "來賓"} 執白（先手）`],
+    ["host", `${host?.name || "?�主"} ?�白（�??��?`],
+    ["guest", `${guest?.name || "來�?"} ?�白（�??��?`],
   ].forEach(([slot, label]) => {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -142,15 +142,15 @@ function renderOnlineBoard() {
   });
 
   if ($("#chess-online-room-tag") && ctx.roomId) {
-    $("#chess-online-room-tag").textContent = `房間 ${ctx.roomId}`;
+    $("#chess-online-room-tag").textContent = `?��? ${ctx.roomId}`;
   }
 
   const curSlot = slotForSide(onlineGame.position.turn);
-  let overTitle = "對局結束";
+  let overTitle = "對�?結�?";
   if (onlineGame.over && onlineGame.winner) {
-    overTitle = onlineGame.winner === ctx.slot ? "你獲勝！" : `${slotName(onlineGame.winner)} 獲勝`;
+    overTitle = onlineGame.winner === ctx.slot ? "你獲?��?" : `${slotName(onlineGame.winner)} ?��?`;
   } else if (onlineGame.over) {
-    overTitle = "和棋";
+    overTitle = "?��?";
   }
 
   renderChessStatusBar({
@@ -165,13 +165,13 @@ function renderOnlineBoard() {
     turnPlayerName: slotName(curSlot),
     over: onlineGame.over,
     overTitle,
-    youHint: myTurn ? " · 輪到你" : "",
+    youHint: myTurn ? " · 輪到�? : "",
     inCheck,
     checkEl: $("#chess-online-check-hint"),
     checkTitleEl: $("#chess-online-check-title"),
     checkDetailEl: $("#chess-online-check-detail"),
-    checkTitle: inCheck ? (myTurn ? "你被將軍了！" : `${sideName(onlineGame.position.turn)}被將軍！`) : "",
-    checkDetail: inCheck ? "王有危險，快解將！" : "",
+    checkTitle: inCheck ? (myTurn ? "你被將�?了�?" : `${sideName(onlineGame.position.turn)}被�?軍�?`) : "",
+    checkDetail: inCheck ? "?��??�險，快�??�? : "",
   });
   syncResign();
 }
@@ -183,11 +183,11 @@ function showOnlineWinOverlay() {
   const detail = $("#chess-online-win-detail");
   if (!title || !detail) return;
   if (!onlineGame.winner) {
-    title.textContent = "和棋";
+    title.textContent = "?��?";
     detail.textContent = onlineGame.endReason || "";
   } else {
-    title.textContent = onlineGame.winner === ctx.slot ? "你贏了！" : `${slotName(onlineGame.winner)} 獲勝`;
-    detail.textContent = `${sideName(onlineGame.winnerSide)} · ${onlineGame.endReason || "勝"}`;
+    title.textContent = onlineGame.winner === ctx.slot ? "你�?了�?" : `${slotName(onlineGame.winner)} ?��?`;
+    detail.textContent = `${sideName(onlineGame.winnerSide)} · ${onlineGame.endReason || "??}`;
   }
   $("#chess-online-win-overlay")?.removeAttribute("hidden");
 }
@@ -210,8 +210,8 @@ function applyRemoteChess(snapshot) {
     lastMove: g.lastMove || null,
     viewFlipped: shouldFlipBoardForSide(mySide),
     names: {
-      host: snapshot.players.host?.name || "房主",
-      guest: snapshot.players.guest?.name || "來賓",
+      host: snapshot.players.host?.name || "?�主",
+      guest: snapshot.players.guest?.name || "來�?",
     },
   };
   selected = null;
@@ -286,7 +286,7 @@ async function submitOnlineMove(move) {
   });
 
   if (!result) {
-    alert("這一步無法走（可能輪到對方或不符合規則）");
+    alert("?��?步無法走（可?�輪?��??��?不符?��??��?");
     selected = null;
     hidePromotion();
     renderOnlineBoard();
@@ -337,7 +337,7 @@ async function resignOnlineGame() {
   if (!ctx.roomId || !ctx.slot || !onlineGame || onlineGame.over) return;
   const mySide = sideForSlot(ctx.slot);
   if (!mySide) return;
-  if (!confirm("確定認輸？")) return;
+  if (!confirm("確�?認輸�?)) return;
 
   await transactGameState(ctx.roomId, (current) => {
     if (!current || current.over) return;
@@ -361,7 +361,7 @@ function bindChessOnlineOnly() {
   bindChessOnlineOnly.done = true;
 
   $("#btn-chess-online-play-back")?.addEventListener("click", async () => {
-    if (confirm("離開棋局？")) {
+    if (confirm("?��?棋�?�?)) {
       await leaveOnlineRoom();
       onlineGame = null;
       selected = null;
@@ -411,7 +411,7 @@ function bindChessOnlineOnly() {
 }
 
 registerOnlineGame("chess", {
-  startHint: "請選誰執白（白先）",
+  startHint: "請選誰執?��??��?�?,
   renderStartButtons: renderWhitePick,
   startGame: (roomId, slot) => startChessRoom(roomId, slot),
   onPlaying(snapshot) {

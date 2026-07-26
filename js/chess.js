@@ -4,7 +4,7 @@ import {
   renderChessBoardSvg,
   renderChessStatusBar,
   resetChessBoardSvg,
-} from "./chess-board-ui.js?v=chess-v1";
+} from "./chess-board-ui.js?v=chess-v2";
 import {
   applyMove,
   clonePosition,
@@ -15,7 +15,7 @@ import {
   isInCheck,
   shouldFlipBoardForSide,
   sideOfPiece,
-} from "./chess-core.js?v=chess-v1";
+} from "./chess-core.js?v=chess-v2";
 import { getChildName, otherDuoPlayer } from "./children.js";
 import { getSelectedChild } from "./store.js";
 import {
@@ -29,7 +29,7 @@ import {
   GRANDMASTER_LEVEL,
   requestChessAiMove,
   terminateChessAiWorker,
-} from "./chess-ai.js?v=chess-v1";
+} from "./chess-ai.js?v=chess-v2";
 
 /** @typedef {"local"|"ai"} SetupMode */
 
@@ -68,12 +68,12 @@ let game = null;
 const $ = (sel) => document.querySelector(sel);
 
 const AI_LEVELS = [
-  { level: 1, label: "入門", desc: "隨機合法走法，適合剛學規則。" },
-  { level: 2, label: "普通", desc: "會吃子、會擋將，日常陪練。" },
-  { level: 3, label: "高手", desc: "兩層搜尋，中盤較難僥倖。" },
-  { level: 4, label: "大師", desc: "Worker 加深搜尋，棋力明顯提升。" },
-  { level: 5, label: "宗師", desc: "內建最強搜尋，極難戰勝。" },
-  { level: 6, label: "涅槃", desc: "暫與宗師同棋力；之後可接 Stockfish。" },
+  { level: 1, label: "?��?", desc: "?��??��?走�?，適?��?學�??��? },
+  { level: 2, label: "?��?, desc: "?��?子、�??��?，日常陪練�? },
+  { level: 3, label: "高�?", desc: "?�層?��?，中?��???��?��? },
+  { level: 4, label: "大師", desc: "Worker ?�深?��?，�??��?顯�??��? },
+  { level: 5, label: "宗師", desc: "?�建?�強�?尋�?極難?��??? },
+  { level: 6, label: "涅�?", desc: "?��?宗師?��??��?之�??�接 Stockfish?? },
 ];
 
 function aiLevelLabel(level) {
@@ -81,17 +81,17 @@ function aiLevelLabel(level) {
 }
 
 function playerName(id) {
-  if (!id) return "—";
+  if (!id) return "??;
   if (id === AI_PLAYER_ID) {
     const label = aiLevelLabel(game?.aiDifficulty ?? aiDifficulty);
-    return label ? `電腦（${label}）` : "電腦";
+    return label ? `?�腦�?{label}）` : "?�腦";
   }
   const names = deps?.getChildNames() || {};
   return names[id] || getChildName(id) || id;
 }
 
 function sideName(side) {
-  return side === "white" ? "白方" : "黑方";
+  return side === "white" ? "?�方" : "黑方";
 }
 
 function playerSide(playerId) {
@@ -117,12 +117,12 @@ function setFirstScreenMode(mode) {
   const title = $("#chess-first-title");
   const meta = $("#chess-first-meta");
   if (mode === "ai") {
-    if (title) title.textContent = "西洋棋 · 對電腦";
-    if (meta) meta.textContent = "8×8 · 白先 · 史東頓棋子";
+    if (title) title.textContent = "西�?�?· 對電??;
+    if (meta) meta.textContent = "8?8 · ?��? · ?�東?��?�?;
     renderAiSetup();
   } else {
-    if (title) title.textContent = "誰執白（先手）？";
-    if (meta) meta.textContent = "8×8 · 白先 · 國際象棋規則";
+    if (title) title.textContent = "誰執?��??��?）�?";
+    if (meta) meta.textContent = "8?8 · ?��? · ?��?象�?規�?";
     renderLocalPick();
   }
 }
@@ -131,14 +131,14 @@ function renderLocalPick() {
   refreshDuoBattleUI();
   renderDuoPickButtons("#chess-pick-btns", {
     onPick: startLocalGame,
-    labelSuffix: " 執白（先手）",
+    labelSuffix: " ?�白（�??��?",
   });
 }
 
 function renderAiSetup() {
   const active = getSelectedChild();
   const nameEl = $("#chess-ai-active-name");
-  if (nameEl) nameEl.textContent = active ? playerName(active) : "—";
+  if (nameEl) nameEl.textContent = active ? playerName(active) : "??;
   const chips = $("#chess-ai-difficulty-chips");
   if (chips) {
     chips.innerHTML = "";
@@ -160,12 +160,12 @@ function renderAiSetup() {
   const humanWhite = document.createElement("button");
   humanWhite.type = "button";
   humanWhite.className = "btn btn-secondary btn-block";
-  humanWhite.textContent = "我執白（先手）";
+  humanWhite.textContent = "?�執?��??��?�?;
   humanWhite.addEventListener("click", () => startAiGame(true));
   const aiWhite = document.createElement("button");
   aiWhite.type = "button";
   aiWhite.className = "btn btn-secondary btn-block";
-  aiWhite.textContent = `電腦執白（${aiLevelLabel(aiDifficulty) || "電腦"}）`;
+  aiWhite.textContent = `?�腦?�白�?{aiLevelLabel(aiDifficulty) || "?�腦"}）`;
   aiWhite.addEventListener("click", () => startAiGame(false));
   startBox.append(humanWhite, aiWhite);
 }
@@ -184,7 +184,7 @@ function startLocalGame(whitePlayerId) {
 function startAiGame(humanWhite) {
   const humanId = getSelectedChild();
   if (!humanId) {
-    alert("請在首頁選「誰在練習」");
+    alert("請在首�??�「誰?�練習�?);
     return;
   }
   beginGame({
@@ -264,8 +264,8 @@ function resignGame() {
   if (!game || game.over) return;
   const resignSide = game.mode === "ai" ? playerSide(game.humanPlayerId) : game.position.turn;
   if (!resignSide) return;
-  const resignName = game.mode === "ai" ? "你" : playerName(sidePlayerId(resignSide));
-  if (!confirm(`${resignName}確定認輸？`)) return;
+  const resignName = game.mode === "ai" ? "�? : playerName(sidePlayerId(resignSide));
+  if (!confirm(`${resignName}確�?認輸？`)) return;
   aiMoveToken += 1;
   aiMovePending = false;
   pendingPromotion = null;
@@ -328,26 +328,26 @@ function renderPlayHeader() {
     turn: game.over ? null : game.position.turn,
     turnPlayerName: playerName(sidePlayerId(game.position.turn)),
     over: game.over,
-    overTitle: game.winner ? `${playerName(sidePlayerId(game.winner))} 獲勝！` : "和棋",
+    overTitle: game.winner ? `${playerName(sidePlayerId(game.winner))} ?��?！` : "?��?",
     waitingAi: waitingAi && !deepThink,
-    statusText: deepThink ? "電腦深度思考中…" : "",
-    youHint: isHumanTurn ? " · 輪到你" : "",
+    statusText: deepThink ? "?�腦深度?�考中?? : "",
+    youHint: isHumanTurn ? " · 輪到�? : "",
     inCheck,
     checkEl: $("#chess-check-hint"),
     checkTitleEl: $("#chess-check-title"),
     checkDetailEl: $("#chess-check-detail"),
-    checkTitle: inCheck ? (game.mode === "ai" && isHumanTurn ? "你被將軍了！" : `${sideName(game.position.turn)}被將軍！`) : "",
-    checkDetail: inCheck ? "王有危險，快解將！" : "",
+    checkTitle: inCheck ? (game.mode === "ai" && isHumanTurn ? "你被將�?了�?" : `${sideName(game.position.turn)}被�?軍�?`) : "",
+    checkDetail: inCheck ? "?��??�險，快�??�? : "",
   });
   syncResignButton();
 }
 
 function getWinTexts() {
   if (!game) return { title: "", detail: "" };
-  if (!game.winner) return { title: "和棋", detail: game.endReason || "" };
+  if (!game.winner) return { title: "?��?", detail: game.endReason || "" };
   return {
-    title: `${playerName(sidePlayerId(game.winner))} 獲勝！`,
-    detail: `${sideName(game.winner)} · ${game.endReason || "勝"}`,
+    title: `${playerName(sidePlayerId(game.winner))} ?��?！`,
+    detail: `${sideName(game.winner)} · ${game.endReason || "??}`,
   };
 }
 
@@ -480,7 +480,7 @@ async function runAiMove(token) {
 export function beginChessFromHome() {
   openDuoModePicker({
     game: "chess",
-    title: "西洋棋",
+    title: "西�?�?,
     backView: "home",
     localStart: beginChessLocal,
     aiStart: beginChessAi,
@@ -489,7 +489,7 @@ export function beginChessFromHome() {
 
 export function beginChessLocal() {
   if (!canStartDuoBattle()) {
-    alert("請在首頁選「誰在練習」，並在對戰設定中挑選對戰對象（至少需要兩位）");
+    alert("請在首�??�「誰?�練習」�?並在對戰設�?中�??��??��?象�??��??�要兩位�?");
     return;
   }
   setFirstScreenMode("local");
@@ -519,7 +519,7 @@ function bindChessEvents() {
     deps?.showView("duoMode");
   });
   $("#btn-chess-play-back")?.addEventListener("click", () => {
-    if (confirm("離開棋局？目前進度不會儲存。")) {
+    if (confirm("?��?棋�?？目?�進度不�??��???)) {
       aiMoveToken += 1;
       terminateChessAiWorker();
       game = null;

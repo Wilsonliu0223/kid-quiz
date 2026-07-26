@@ -1,4 +1,4 @@
-import { computeChessAiMove, GRANDMASTER_LEVEL, MASTER_WORKER_LEVEL, NIRVANA_LEVEL } from "./chess-ai-core.js?v=chess-v1";
+import { computeChessAiMove, GRANDMASTER_LEVEL, MASTER_WORKER_LEVEL, NIRVANA_LEVEL } from "./chess-ai-core.js?v=chess-v2";
 
 export const AI_PLAYER_ID = "__chess_ai__";
 export { GRANDMASTER_LEVEL, MASTER_WORKER_LEVEL, NIRVANA_LEVEL };
