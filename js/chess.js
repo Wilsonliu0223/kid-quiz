@@ -4,7 +4,7 @@ import {
   renderChessBoardSvg,
   renderChessStatusBar,
   resetChessBoardSvg,
-} from "./chess-board-ui.js?v=chess-v3";
+} from "./chess-board-ui.js?v=chess-v4";
 import {
   applyMove,
   clonePosition,
@@ -15,7 +15,7 @@ import {
   isInCheck,
   shouldFlipBoardForSide,
   sideOfPiece,
-} from "./chess-core.js?v=chess-v3";
+} from "./chess-core.js?v=chess-v4";
 import { getChildName, otherDuoPlayer } from "./children.js";
 import { getSelectedChild } from "./store.js";
 import {
@@ -29,7 +29,7 @@ import {
   GRANDMASTER_LEVEL,
   requestChessAiMove,
   terminateChessAiWorker,
-} from "./chess-ai.js?v=chess-v3";
+} from "./chess-ai.js?v=chess-v4";
 
 /** @typedef {"local"|"ai"} SetupMode */
 

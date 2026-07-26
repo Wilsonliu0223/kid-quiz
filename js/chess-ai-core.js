@@ -5,7 +5,7 @@ import {
   isInCheck,
   opponent,
   pieceValue,
-} from "./chess-core.js?v=chess-v3";
+} from "./chess-core.js?v=chess-v4";
 
 export const GRANDMASTER_LEVEL = 5;
 export const MASTER_WORKER_LEVEL = 4;
