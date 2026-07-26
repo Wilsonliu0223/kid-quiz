@@ -30,7 +30,7 @@ import {
   requestChessAiMove,
   terminateChessAiWorker,
 } from "./chess-ai.js?v=chess-v5";
-import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v1";
+import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v2";
 
 /** @typedef {"local"|"ai"} SetupMode */
 

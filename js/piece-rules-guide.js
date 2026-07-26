@@ -1,5 +1,5 @@
-import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v1";
-import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v1";
+import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v2";
+import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v2";
 
 const $ = (sel) => document.querySelector(sel);
 
