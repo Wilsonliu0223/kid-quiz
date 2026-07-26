@@ -87,7 +87,7 @@ export function ensureChessBoardSvg(svg, onSquareClick) {
 
   svg.setAttribute("viewBox", "0 0 8 8");
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-  svg.setAttribute("aria-label", "è¥¿æ?æ£‹æ???);
+  svg.setAttribute("aria-label", "?????");
   svg.innerHTML = `<defs>
     <linearGradient id="chess-light-sq" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#f3d9a8"/>

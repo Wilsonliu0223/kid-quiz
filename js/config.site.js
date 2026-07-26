@@ -1,65 +1,70 @@
-/** GitHub Pages ?�設定�??��?交到?�庫�?*/
+/** GitHub Pages 用設定（會提交到倉庫） */
 export const CONFIG = {
-  /** 首�?標�??��?字�??��?每次?�送更?��??��?，�?�?4.0 ??34.1�?*/
+  /** 首頁標題旁小字版本（每次推送更新請遞增，例：34.0 → 34.1） */
   APP_VERSION: "39.30",
 
   /**
-   * 涅�? Rapfi 完整 NNUE 權�?（�? 40 MB）公?��?載網?�??   * ?�空?�用站內 engines/rapfi/full/rapfi.data（�? GitHub Pages ?��?）�?   * ?�改??Firebase Storage 等雲端�?貼�? https://... ?��?????�可??   */
+   * 涅槃 Rapfi 完整 NNUE 權重（約 40 MB）公開下載網址。
+   * 留空則用站內 engines/rapfi/full/rapfi.data（與 GitHub Pages 同源）。
+   * 若改放 Firebase Storage 等雲端，貼上 https://... 公開連結即可。
+   */
   RAPFI_NNUE_DATA_URL: "",
   SPREADSHEET_ID: "1CIkz0vH-Dp3xj9K3OUvXO_mfaFwq2-qzEJbQcIyWvPg",
   SHEETS_JSON_URL: "",
 
-  /** ?�績寫入：�?一試�?表部署�? Apps Script 網�?（�? docs/google-apps-script.gs�?*/
+  /** 成績寫入：同一試算表部署的 Apps Script 網址（見 docs/google-apps-script.gs） */
   SCORE_LOG_URL:
     "https://script.google.com/macros/s/AKfycbxo0gTXgN_WEaZjhfgPpvMMG5sONKYAkqJCkVN_JLoZ1iq_eBVmD7cwYXRlHPqn_bkRiw/exec",
-  SHEET_ZH: "?��?",
-  SHEET_EN: "?��?",
-  QUIZ_TYPES: ["?��?"],
-  QUIZ_TYPES_ZH: ["?��?"],
-  QUIZ_TYPES_EN: ["?��?"],
+  SHEET_ZH: "國語",
+  SHEET_EN: "英語",
+  QUIZ_TYPES: ["生字"],
+  QUIZ_TYPES_ZH: ["生字"],
+  QUIZ_TYPES_EN: ["單字"],
 
-  /** 首�??�設?�本次�??�」�??�被使用?�改?��??��?覆�?�?*/
+  /** 首頁預設「本次題數」（可被使用者改過的選擇覆蓋） */
   QUIZ_COUNT_DEFAULT: 10,
   PARENT_PIN: "1234",
   CHILD_NAMES: {
-    A: "?��?",
-    B: "?�妤",
+    A: "思妘",
+    B: "思妤",
   },
-  /** PaddleOCR.js ?��?辨�?（�?次�??�模?��?久�? */
+  /** PaddleOCR.js 圖像辨識（首次載入模型較久） */
   OCR_ENABLED: true,
   OCR_STRICT: false,
-  /** 辨�??��??�放大�?建議保�? true�?*/
+  /** 辨識前裁切放大（建議保持 true） */
   OCR_PREPROCESS: true,
-  /** ?��?以�??�白?�單；單字另�?OCR_WHITELIST_SINGLE_CHAR */
+  /** 雙字以上用白名單；單字另見 OCR_WHITELIST_SINGLE_CHAR */
   OCR_USE_WHITELIST: true,
-  /** false：單字�???OCR 結�?（「�??��?較�??�被洗�?空白�?*/
+  /** false：單字不刪 OCR 結果（「要」等較不易被洗成空白） */
   OCR_WHITELIST_SINGLE_CHAR: false,
-  /** 裁�?後�??��??��?（�?大�?準、略?��? */
+  /** 裁切後最短邊像素（愈大愈準、略慢） */
   OCR_MIN_SIDE: 280,
   OCR_LENIENT_MIN_SIDE: 340,
-  /** ?�寫?��?伯數字�?九�?乘�?�?*/
+  /** 手寫阿拉伯數字（九九乘法） */
   OCR_NUMERIC_MIN_SIDE: 400,
   OCR_NUMERIC_SINGLE_MIN_SIDE: 480,
   OCR_NUMERIC_CROP_PADDING: 0.28,
-  /** ?�寫筆畫粗細 */
+  /** 手寫筆畫粗細 */
   OCR_STROKE_WIDTH: 6,
-  /** ?�音?�混?��??��?；�?顯寫?��??�接答錯並�??�錯題本 */
+  /** 同音易混時四選一；明顯寫錯則直接答錯並記入錯題本 */
   HOMOPHONE_PICKER: true,
 
-  /** 筆畫?�寫辨�?（hanzilookup-js ?��?，�?次�?下�?字庫�?*/
+  /** 筆畫手寫辨識（hanzilookup-js 開源，首次會下載字庫） */
   HANZI_STROKE_ENABLED: true,
-  /** 筆畫?�選?�幾?�內?��?準�?案即算寫對�?減�? OCR 誤判�?*/
+  /** 筆畫候選前幾名內有標準答案即算寫對（減少 OCR 誤判） */
   STROKE_TRUST_TOP_N: 8,
-  /** ?�別容�?誤判?�單字�??��??��? */
-  STROKE_EXTRA_LENIENT_CHARS: ["�?, "??],
+  /** 特別容易誤判的單字（可再加） */
+  STROKE_EXTRA_LENIENT_CHARS: ["要", "在"],
   STROKE_EXTRA_LENIENT_TOP_N: 12,
 
-  /** 答錯複寫：HanziWriter ?�在?�寫?��?層�?opacity �?0.32�?*/
+  /** 答錯複寫：HanziWriter 疊在手寫格底層（opacity 約 0.32） */
   STROKE_ORDER_ENABLED: true,
   STROKE_ORDER_DELAY: 500,
 
   /**
-   * Firebase ?�台?��?對戰（�? docs/firebase-setup.md�?   * ?�填寫�??�兩?��?機」�?顯示設�??�學??   */
+   * Firebase 兩台手機對戰（見 docs/firebase-setup.md）
+   * 未填寫時「兩台手機」會顯示設定教學。
+   */
   FIREBASE: {
     apiKey: "AIzaSyCt1caYzi7PDeTXEvcES6Sct9q6Lffs2Kk",
     authDomain: "kid-quiz-online.firebaseapp.com",

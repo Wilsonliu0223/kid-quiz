@@ -12,7 +12,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>家裡練�?</title>
+    <title>家裡練習</title>
     <script>
       (function () {
         var V = "39.13";
@@ -47,8 +47,8 @@
         document.addEventListener("DOMContentLoaded", function () {
           document.body.innerHTML =
             '<div style="padding:24px;font-family:sans-serif;max-width:360px;margin:0 auto">' +
-            "<h2>請用網�??��?</h2>" +
-            "<p>不可?�接?��?檔�??��??��?案�??�夾?��? <code>start.bat</code>，�??�瀏覽?��?�?/p>" +
+            "<h2>請用網址開啟</h2>" +
+            "<p>不可直接雙擊檔案。請在專案資料夾執行 <code>start.bat</code>，再用瀏覽器開：</p>" +
             "<p><strong>http://localhost:8787</strong></p></div>";
         });
       }
@@ -57,36 +57,36 @@
   <body>
     <div id="boot-error" class="boot-error" hidden></div>
     <div id="app">
-      <!-- 首�? -->
-      <section id="view-home" class="view view-active" aria-label="首�?">
+      <!-- 首頁 -->
+      <section id="view-home" class="view view-active" aria-label="首頁">
         <header class="app-header">
           <div class="app-title-row">
-            <h1 class="app-title" id="home-title">家裡練�?</h1>
-            <span class="app-version" id="app-version" aria-label="?�本">v39.30</span>
+            <h1 class="app-title" id="home-title">家裡練習</h1>
+            <span class="app-version" id="app-version" aria-label="版本">v39.30</span>
           </div>
-          <p class="app-subtitle">?��?標�??�新增�?管�?使用??/p>
+          <p class="app-subtitle">長按標題可新增／管理使用者</p>
         </header>
 
         <div class="resume-quiz-banner" id="resume-quiz-banner" hidden>
-          <p class="resume-quiz-label">?��??�測�?/p>
+          <p class="resume-quiz-label">未完成測驗</p>
           <p class="resume-quiz-text" id="resume-quiz-text"></p>
           <button type="button" class="btn btn-primary btn-block" id="btn-resume-quiz">
-            繼�?上次測�?
+            繼續上次測驗
           </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-discard-draft">
-            ?��??��?
+            放棄暫存
           </button>
         </div>
 
         <div class="home-settings">
-          <div class="child-picker" role="group" aria-label="?��?小孩">
-            <span class="label">誰在練�?�?/span>
+          <div class="child-picker" role="group" aria-label="選擇小孩">
+            <span class="label">誰在練習？</span>
             <div class="child-btns" id="child-btns"></div>
           </div>
         </div>
 
         <div class="home-zone home-zone-solo">
-          <h2 class="home-zone-title">?�人練�?</h2>
+          <h2 class="home-zone-title">單人練習</h2>
           <div class="subject-cards">
             <button
               type="button"
@@ -94,8 +94,8 @@
               id="btn-start-zh"
               data-action="start-zh"
             >
-              <span class="card-title">?��?</span>
-              <span class="card-desc">?�課�?· 測�? · 翻�?</span>
+              <span class="card-title">國語</span>
+              <span class="card-desc">選課次 · 測驗 · 翻牌</span>
             </button>
             <button
               type="button"
@@ -103,59 +103,59 @@
               id="btn-start-en"
               data-action="start-en"
             >
-              <span class="card-title">?��?</span>
-              <span class="card-desc">?��???· ?��?測�?</span>
+              <span class="card-title">英語</span>
+              <span class="card-desc">選範圍 · 拼字測驗</span>
             </button>
             <button type="button" class="card card-mul" id="btn-start-mul">
-              <span class="card-title">九�?乘�?</span>
-              <span class="card-desc">?�誦 · 測�? · ?��??�戰</span>
+              <span class="card-title">九九乘法</span>
+              <span class="card-desc">背誦 · 測驗 · 進階挑戰</span>
             </button>
           </div>
         </div>
 
         <div class="home-zone home-zone-duo">
-          <h2 class="home-zone-title">?�人對戰</h2>
+          <h2 class="home-zone-title">雙人對戰</h2>
           <div class="home-duo-cards">
             <button type="button" class="card card-math-open" id="btn-start-math-open">
               <span class="card-math-head">
-                <span class="card-title">?�學?��?</span>
-                <span class="card-math-note">?�部?��??��?</span>
+                <span class="card-title">數學攤牌</span>
+                <span class="card-math-note">全部攤開選牌</span>
               </span>
             </button>
             <button type="button" class="card card-math-flip" id="btn-start-math-flip">
               <span class="card-math-head">
-                <span class="card-title">?�學翻�?</span>
-                <span class="card-math-note">每�??�翻 5 �?/span>
+                <span class="card-title">數學翻牌</span>
+                <span class="card-math-note">每回合翻 5 張</span>
               </span>
             </button>
             <button type="button" class="card card-math-guess" id="btn-start-math-guess">
               <span class="card-math-head">
-                <span class="card-title">?�數�?/span>
-                <span class="card-math-note">比大小�?秘�???/span>
+                <span class="card-title">猜數字</span>
+                <span class="card-math-note">比大小猜秘密數</span>
               </span>
             </button>
             <button type="button" class="card card-gomoku card-gomoku-home" id="btn-start-gomoku">
               <span class="card-gomoku-head">
-                <span class="card-title">五�?�?/span>
-                <span class="card-gomoku-note">15?15 · ???規�? · 黑�?禁�?（�?三、�??�、長???</span>
+                <span class="card-title">五子棋</span>
+                <span class="card-gomoku-note">15×15 · 連珠規則 · 黑先禁手（三三、四四、長連）</span>
               </span>
             </button>
             <button type="button" class="card card-xiangqi card-xiangqi-home" id="btn-start-xiangqi">
               <span class="card-xiangqi-head">
-                <span class="card-title">象�?</span>
-                <span class="card-xiangqi-note">?��? 9?10 · ?��? 4?8 · ?�灣規�?</span>
+                <span class="card-title">象棋</span>
+                <span class="card-xiangqi-note">明棋 9×10 · 暗棋 4×8 · 台灣規則</span>
               </span>
             </button>
             <button type="button" class="card card-chess card-chess-home" id="btn-start-chess">
               <span class="card-chess-head">
-                <span class="card-title">西�?�?/span>
-                <span class="card-chess-note">8?8 · ?��? · ?�東?��?�?/span>
+                <span class="card-title">西洋棋</span>
+                <span class="card-chess-note">8×8 · 白先 · 史東頓棋子</span>
               </span>
             </button>
             <button type="button" class="card card-sky-shooter" id="btn-start-sky-shooter">
               <span class="card-sky-head">
-                <span class="card-title">天空射�?</span>
-                <span class="card-sky-note">?��??��? · ?��??��??��??�搶??· ?��?�?/span>
+                <span class="card-title">天空射擊</span>
+                <span class="card-sky-note">單機闖關 · 雙機合作或對戰搶分 · 選機體</span>
               </span>
             </button>
           </div>
@@ -164,10 +164,10 @@
         <div class="home-zone home-zone-meta">
           <section class="mistake-book-home" id="mistake-book-home" hidden>
             <div class="mistake-book-head">
-              <span class="label">?��???/span>
+              <span class="label">錯題本</span>
               <span class="mistake-book-meta" id="mistake-book-meta"></span>
             </div>
-            <p class="mistake-book-hint">�?A/B ?��??��? · 答�??�自?�移??/p>
+            <p class="mistake-book-hint">依 A/B 分開儲存 · 答對會自動移除</p>
             <div class="mistake-book-actions">
               <button
                 type="button"
@@ -175,7 +175,7 @@
                 id="btn-review-zh-mistakes"
                 hidden
               >
-                複�??��??��?
+                複習國語錯題
               </button>
               <button
                 type="button"
@@ -183,71 +183,71 @@
                 id="btn-review-en-mistakes"
                 hidden
               >
-                複�??��??��?
+                複習英語錯題
               </button>
             </div>
           </section>
 
-          <section class="home-history" id="home-history" aria-label="歷史?�數">
+          <section class="home-history" id="home-history" aria-label="歷史分數">
             <div class="home-history-head">
-              <span class="label">歷史?�數</span>
+              <span class="label">歷史分數</span>
               <button type="button" class="btn-text btn-text-sm" id="btn-home-history-toggle">
-                ?��?此人
+                只看此人
               </button>
             </div>
             <ul class="home-history-list" id="home-history-list"></ul>
-            <p class="home-history-empty" id="home-history-empty" hidden>尚無紀??/p>
+            <p class="home-history-empty" id="home-history-empty" hidden>尚無紀錄</p>
             <p class="home-history-cloud" id="home-history-cloud" hidden></p>
           </section>
         </div>
 
-        <p class="sheet-status" id="sheet-status">�?��載入題庫??/p>
+        <p class="sheet-status" id="sheet-status">正在載入題庫…</p>
       </section>
 
-      <!-- ?��?：選課次 ??題數 ???��? -->
-      <section id="view-setup-zh" class="view view-hidden" aria-label="?��?設�?">
+      <!-- 國語：選課次 → 題數 → 開始 -->
+      <section id="view-setup-zh" class="view view-hidden" aria-label="國語設定">
         <header class="setup-header setup-header-zh">
-          <button type="button" class="btn-text" id="btn-setup-zh-back">??返�?</button>
-          <span class="setup-subject">?��?</span>
+          <button type="button" class="btn-text" id="btn-setup-zh-back">← 返回</button>
+          <span class="setup-subject">國語</span>
         </header>
 
         <div class="setup-section">
-          <span class="label">?�週課�?/span>
+          <span class="label">本週課次</span>
           <div class="lesson-books" id="setup-zh-lesson-books"></div>
         </div>
 
         <div class="setup-section">
-          <span class="label">?�次題數</span>
+          <span class="label">本次題數</span>
           <div class="lesson-chips quiz-count-chips" id="quiz-count-chips-zh">
             <button type="button" class="chip" data-quiz-count="5">5</button>
             <button type="button" class="chip chip-active" data-quiz-count="10">10</button>
             <button type="button" class="chip" data-quiz-count="15">15</button>
             <button type="button" class="chip" data-quiz-count="20">20</button>
-            <button type="button" class="chip" data-quiz-count="all">?�部</button>
+            <button type="button" class="chip" data-quiz-count="all">全部</button>
           </div>
           <p class="quiz-count-hint" id="quiz-count-hint-zh"></p>
         </div>
 
         <button type="button" class="btn btn-primary btn-block" id="btn-setup-zh-start">
-          ?��?測�?
+          開始測驗
         </button>
 
         <button type="button" class="btn btn-secondary btn-block" id="btn-setup-zh-race">
-          ?��?對戰（兩?��?機�?
+          搶答對戰（兩台手機）
         </button>
 
         <div class="setup-divider" aria-hidden="true"></div>
 
         <div class="setup-section setup-section-flip">
-          <span class="label">?��?翻�?</span>
-          <p class="setup-section-sub">?�人?��? · ?��??�課次抽�?· ?��??��?誰�?</p>
+          <span class="label">國字翻牌</span>
+          <p class="setup-section-sub">雙人同機 · 用上方課次抽字 · 開局再點誰先</p>
           <div class="flip-players-vs" id="flip-players-vs">
-            <span id="flip-player-a-name">?��?</span>
+            <span id="flip-player-a-name">思妘</span>
             <span class="flip-vs">vs</span>
-            <span id="flip-player-b-name">?�妤</span>
+            <span id="flip-player-b-name">思妤</span>
           </div>
-          <div class="flip-pair-count-picker" role="group" aria-label="幾�?�?>
-            <span class="label">幾�?字�?</span>
+          <div class="flip-pair-count-picker" role="group" aria-label="幾組字">
+            <span class="label">幾組字？</span>
             <div class="lesson-chips" id="flip-pair-count-chips">
               <button type="button" class="chip" data-flip-pairs="5">5</button>
               <button type="button" class="chip chip-active" data-flip-pairs="10">10</button>
@@ -256,74 +256,74 @@
             </div>
           </div>
           <button type="button" class="card card-flip" id="btn-start-flip-zh">
-            <span class="card-title">?��?翻�?</span>
-            <span class="card-desc">?��??�注??/span>
+            <span class="card-title">開始翻牌</span>
+            <span class="card-desc">國字配注音</span>
           </button>
         </div>
       </section>
 
-      <!-- ?��?：�??????�試範�? ???��? -->
-      <section id="view-setup-en" class="view view-hidden" aria-label="?��?設�?">
+      <!-- 英語：題數 → 考試範圍 → 開始 -->
+      <section id="view-setup-en" class="view view-hidden" aria-label="英語設定">
         <header class="setup-header setup-header-en">
-          <button type="button" class="btn-text" id="btn-setup-en-back">??返�?</button>
-          <span class="setup-subject">?��?</span>
+          <button type="button" class="btn-text" id="btn-setup-en-back">← 返回</button>
+          <span class="setup-subject">英語</span>
         </header>
 
         <div class="setup-section">
-          <span class="label">?�次題數</span>
+          <span class="label">本次題數</span>
           <div class="lesson-chips quiz-count-chips" id="quiz-count-chips-en">
             <button type="button" class="chip" data-quiz-count="5">5</button>
             <button type="button" class="chip chip-active" data-quiz-count="10">10</button>
             <button type="button" class="chip" data-quiz-count="15">15</button>
             <button type="button" class="chip" data-quiz-count="20">20</button>
-            <button type="button" class="chip" data-quiz-count="all">?�部</button>
+            <button type="button" class="chip" data-quiz-count="all">全部</button>
           </div>
           <p class="quiz-count-hint" id="quiz-count-hint-en"></p>
         </div>
 
         <div class="setup-section">
-          <span class="label">?�試範�?</span>
-          <p class="setup-section-sub">??TJ3 ??TJ4 等試算表課次</p>
+          <span class="label">考試範圍</span>
+          <p class="setup-section-sub">選 TJ3 或 TJ4 等試算表課次</p>
           <div class="lesson-books" id="setup-en-exam-books"></div>
         </div>
 
         <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-setup-en-start">
-          ?��?測�?
+          開始測驗
         </button>
 
         <button type="button" class="btn btn-secondary btn-block" id="btn-setup-en-race">
-          ?��?對戰（兩?��?機�?
+          搶答對戰（兩台手機）
         </button>
       </section>
 
-      <!-- ?��?測�? -->
-      <section id="view-quiz-zh" class="view view-hidden" aria-label="?��?測�?">
+      <!-- 國語測驗 -->
+      <section id="view-quiz-zh" class="view view-hidden" aria-label="國語測驗">
         <header class="quiz-header quiz-header-zh">
-          <button type="button" class="btn-text" id="btn-quiz-back">??返�?</button>
-          <span class="quiz-subject">?��?</span>
-          <span class="quiz-progress" id="quiz-progress">�?1 / 10 �?/span>
+          <button type="button" class="btn-text" id="btn-quiz-back">← 返回</button>
+          <span class="quiz-subject">國語</span>
+          <span class="quiz-progress" id="quiz-progress">第 1 / 10 題</span>
         </header>
 
         <div class="quiz-body">
-          <p class="zhuyin-display" id="zhuyin-display">?�ㄨ? ?�ㄣ</p>
+          <p class="zhuyin-display" id="zhuyin-display">ㄓㄨˋ ㄧㄣ</p>
           <p class="sentence-context" id="sentence-context" hidden></p>
-          <p class="quiz-hint" id="quiz-hint">請在下方寫出?��??��?</p>
+          <p class="quiz-hint" id="quiz-hint">請在下方寫出國字或詞</p>
 
           <div class="canvas-wrap" id="canvas-wrap">
             <div id="stroke-order-layer" class="stroke-order-layer" hidden>
               <div id="stroke-order-target" class="stroke-order-target"></div>
             </div>
-            <canvas id="hand-canvas" aria-label="?�寫?�"></canvas>
+            <canvas id="hand-canvas" aria-label="手寫區"></canvas>
           </div>
 
           <div id="stroke-order-toolbar" class="stroke-order-toolbar" hidden>
-            <span class="stroke-order-label">筆畫?��? · ?��??��?裡�?淡色字�?一�?/span>
+            <span class="stroke-order-label">筆畫順序 · 照著格子裡的淡色字描一次</span>
             <button
               type="button"
               class="btn-text btn-text-sm"
               id="btn-stroke-order-replay"
             >
-              ?�播筆畫
+              重播筆畫
             </button>
           </div>
           <p id="stroke-order-error" class="stroke-order-error" hidden></p>
@@ -333,29 +333,29 @@
 
         <footer class="quiz-footer">
           <button type="button" class="btn btn-secondary" id="btn-clear-canvas">清除</button>
-          <button type="button" class="btn btn-primary" id="btn-submit-answer">?�出</button>
+          <button type="button" class="btn btn-primary" id="btn-submit-answer">送出</button>
         </footer>
       </section>
 
-      <!-- ?��?測�? -->
-      <section id="view-quiz-en" class="view view-hidden" aria-label="?��?測�?">
+      <!-- 英語測驗 -->
+      <section id="view-quiz-en" class="view view-hidden" aria-label="英語測驗">
         <header class="quiz-header quiz-header-en">
-          <button type="button" class="btn-text btn-text-en" id="btn-quiz-back-en">??返�?</button>
-          <span class="quiz-subject">?��?</span>
-          <span class="quiz-progress" id="quiz-progress-en">�?1 / 10 �?/span>
+          <button type="button" class="btn-text btn-text-en" id="btn-quiz-back-en">← 返回</button>
+          <span class="quiz-subject">英語</span>
+          <span class="quiz-progress" id="quiz-progress-en">第 1 / 10 題</span>
         </header>
 
-        <div class="en-mode-picker" role="group" aria-label="測�?模�?">
-          <button type="button" class="chip chip-active" data-en-mode="meaning">?�中?�英</button>
-          <button type="button" class="chip" data-en-mode="listen">?�音?��?</button>
+        <div class="en-mode-picker" role="group" aria-label="測驗模式">
+          <button type="button" class="chip chip-active" data-en-mode="meaning">看中拼英</button>
+          <button type="button" class="chip" data-en-mode="listen">聽音拼字</button>
         </div>
 
         <div class="quiz-body">
           <div id="en-prompt-meaning">
-            <p class="en-chinese-display" id="en-chinese-display">�?/p>
+            <p class="en-chinese-display" id="en-chinese-display">貓</p>
             <p class="en-hint-display" id="en-hint-display" hidden></p>
           </div>
-          <p class="quiz-hint" id="en-quiz-hint">請輸?�英?�單�?/p>
+          <p class="quiz-hint" id="en-quiz-hint">請輸入英文單字</p>
 
           <input
             id="en-answer-input"
@@ -365,7 +365,7 @@
             autocomplete="off"
             autocapitalize="off"
             spellcheck="false"
-            placeholder="輸入?��?"
+            placeholder="輸入英文"
           />
 
           <button
@@ -374,69 +374,69 @@
             id="btn-speak-en"
             hidden
           >
-            ?? ?�放?�音
+            🔊 播放發音
           </button>
         </div>
 
         <footer class="quiz-footer quiz-footer-en" id="quiz-footer-en">
           <button type="button" class="btn btn-secondary" id="btn-clear-en">清除</button>
-          <button type="button" class="btn btn-primary btn-primary-en" id="btn-submit-en">?�出</button>
+          <button type="button" class="btn btn-primary btn-primary-en" id="btn-submit-en">送出</button>
         </footer>
       </section>
 
-      <!-- 翻�?：選?��? -->
-      <section id="view-flip-first" class="view view-hidden" aria-label="誰�?翻�?">
+      <!-- 翻牌：選先手 -->
+      <section id="view-flip-first" class="view view-hidden" aria-label="誰先翻牌">
         <header class="quiz-header quiz-header-flip">
-          <button type="button" class="btn-text" id="btn-flip-first-back">??返�?</button>
-          <span class="quiz-subject">?��?翻�?</span>
+          <button type="button" class="btn-text" id="btn-flip-first-back">← 返回</button>
+          <span class="quiz-subject">國字翻牌</span>
         </header>
 
         <div class="flip-first-body">
-          <h2 class="flip-first-title">誰�?翻�?�?/h2>
+          <h2 class="flip-first-title">誰先翻牌？</h2>
           <p class="flip-first-meta">
-            <span id="flip-first-pairs">10</span> �?· 課次�?span id="flip-first-lesson">?�部</span>
+            <span id="flip-first-pairs">10</span> 組 · 課次：<span id="flip-first-lesson">全部</span>
           </p>
-          <p class="flip-first-hint">點�?下�??��?字�?你�?翻�?</p>
+          <p class="flip-first-hint">點一下你的名字，你先翻牌</p>
 
           <p class="flip-first-meta duo-active-line">
-            誰在練�?�?strong id="flip-duo-active-name">?��?</strong>
+            誰在練習：<strong id="flip-duo-active-name">思妘</strong>
           </p>
           <div class="duo-opponent-picker" role="group" aria-label="對戰對象">
             <span class="label">對戰對象</span>
             <div class="lesson-chips" id="flip-duo-opponent-chips"></div>
           </div>
           <div class="flip-players-vs math-players-vs" id="flip-duo-matchup">
-            <span id="flip-duo-matchup-a">?��?</span>
+            <span id="flip-duo-matchup-a">思妘</span>
             <span class="flip-vs">vs</span>
-            <span id="flip-duo-matchup-b">?�妤</span>
+            <span id="flip-duo-matchup-b">思妤</span>
           </div>
 
           <div class="flip-pick-btns" id="flip-pick-btns"></div>
         </div>
       </section>
 
-      <!-- 翻�?：�???-->
-      <section id="view-flip-play" class="view view-hidden" aria-label="翻�?對戰">
+      <!-- 翻牌：對戰 -->
+      <section id="view-flip-play" class="view view-hidden" aria-label="翻牌對戰">
         <header class="quiz-header quiz-header-flip">
-          <button type="button" class="btn-text" id="btn-flip-play-back">??返�?</button>
-          <span class="quiz-subject">?��?翻�?</span>
-          <span class="quiz-progress" id="flip-progress-label">?��? 0 / 10</span>
+          <button type="button" class="btn-text" id="btn-flip-play-back">← 返回</button>
+          <span class="quiz-subject">國字翻牌</span>
+          <span class="quiz-progress" id="flip-progress-label">配對 0 / 10</span>
         </header>
 
         <div class="flip-play-body">
           <div class="flip-scorebar">
             <div class="flip-score-block" id="flip-score-block-a">
-              <span class="flip-score-name" id="flip-play-name-a">?��?</span>
-              <span class="flip-first-tag" id="flip-first-tag-a">?��?</span>
+              <span class="flip-score-name" id="flip-play-name-a">思妘</span>
+              <span class="flip-first-tag" id="flip-first-tag-a">先開</span>
               <span class="flip-score-num" id="flip-score-a">0</span>
             </div>
             <div class="flip-turn-wrap">
-              <p class="flip-turn-label" id="flip-turn-label">輪到：思�?</p>
-              <p class="flip-click-label" id="flip-click-label">點�? 0 �?· ?�人?��?20 �?/p>
+              <p class="flip-turn-label" id="flip-turn-label">輪到：思妘</p>
+              <p class="flip-click-label" id="flip-click-label">點擊 0 次 · 單人最少 20 次</p>
             </div>
             <div class="flip-score-block" id="flip-score-block-b">
-              <span class="flip-score-name" id="flip-play-name-b">?�妤</span>
-              <span class="flip-first-tag" id="flip-first-tag-b" hidden>?��?</span>
+              <span class="flip-score-name" id="flip-play-name-b">思妤</span>
+              <span class="flip-first-tag" id="flip-first-tag-b" hidden>先開</span>
               <span class="flip-score-num" id="flip-score-b">0</span>
             </div>
           </div>
@@ -445,149 +445,150 @@
         </div>
       </section>
 
-      <!-- 翻�?：�?�?-->
-      <section id="view-flip-result" class="view view-hidden" aria-label="翻�?結�?">
+      <!-- 翻牌：結算 -->
+      <section id="view-flip-result" class="view view-hidden" aria-label="翻牌結算">
         <header class="app-header">
-          <h2 class="result-title" id="flip-result-title">完�?</h2>
-          <p class="flip-result-scores" id="flip-result-scores">?��? 0 �? ?�妤</p>
+          <h2 class="result-title" id="flip-result-title">完成</h2>
+          <p class="flip-result-scores" id="flip-result-scores">思妘 0 ：0 思妤</p>
           <p class="flip-result-clicks" id="flip-result-clicks"></p>
           <p class="flip-result-detail" id="flip-result-detail"></p>
         </header>
 
         <footer class="result-footer">
-          <button type="button" class="btn btn-primary btn-block" id="btn-flip-replay">?�玩一局</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-flip-home">?��???/button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-flip-replay">再玩一局</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-flip-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- ?�學：選模�?後設定�??��?範�?�?-->
-      <section id="view-math-setup" class="view view-hidden" aria-label="?�學對戰設�?">
+      <!-- 數學：選模式後設定（目標範圍） -->
+      <section id="view-math-setup" class="view view-hidden" aria-label="數學對戰設定">
         <header class="quiz-header quiz-header-math">
-          <button type="button" class="btn-text" id="btn-math-setup-back">??返�?</button>
-          <span class="quiz-subject" id="math-setup-header">?�學對戰</span>
+          <button type="button" class="btn-text" id="btn-math-setup-back">← 返回</button>
+          <span class="quiz-subject" id="math-setup-header">數學對戰</span>
         </header>
         <div class="flip-first-body math-setup-body">
-          <h2 class="flip-first-title" id="math-setup-title">?�學?��?</h2>
+          <h2 class="flip-first-title" id="math-setup-title">數學攤牌</h2>
           <p class="flip-first-meta duo-active-line">
-            誰在練�?�?strong id="math-duo-active-name">?��?</strong>
+            誰在練習：<strong id="math-duo-active-name">思妘</strong>
           </p>
           <div class="duo-opponent-picker math-duo-opponent-picker" role="group" aria-label="對戰對象">
             <span class="label">對戰對象</span>
             <div class="lesson-chips" id="math-duo-opponent-chips"></div>
           </div>
           <div class="flip-players-vs math-players-vs" id="math-setup-players-vs">
-            <span id="math-setup-player-a-name">?��?</span>
+            <span id="math-setup-player-a-name">思妘</span>
             <span class="flip-vs">vs</span>
-            <span id="math-setup-player-b-name">?�妤</span>
+            <span id="math-setup-player-b-name">思妤</span>
           </div>
-          <div class="math-range-picker math-setup-range-picker" role="group" aria-label="?��?範�?">
-            <span class="label">?��?範�?</span>
+          <div class="math-range-picker math-setup-range-picker" role="group" aria-label="目標範圍">
+            <span class="label">目標範圍</span>
             <div class="lesson-chips" id="math-setup-range-chips">
-              <button type="button" class="chip chip-active" data-math-range="100">10�?00</button>
-              <button type="button" class="chip" data-math-range="1000">100�?000</button>
+              <button type="button" class="chip chip-active" data-math-range="100">10～100</button>
+              <button type="button" class="chip" data-math-range="1000">100～1000</button>
             </div>
           </div>
-          <p class="flip-first-meta">??5 ?��?</p>
+          <p class="flip-first-meta">先 5 分勝</p>
           <button type="button" class="btn btn-primary btn-block btn-primary-math" id="btn-math-setup-continue">
-            ?�誰??          </button>
+            選誰先
+          </button>
         </div>
       </section>
 
-      <!-- ?�學：選?��? -->
-      <section id="view-math-first" class="view view-hidden" aria-label="?�學誰�?">
+      <!-- 數學：選先手 -->
+      <section id="view-math-first" class="view view-hidden" aria-label="數學誰先">
         <header class="quiz-header quiz-header-math">
-          <button type="button" class="btn-text" id="btn-math-first-back">??返�?</button>
-          <span class="quiz-subject">?�學對戰</span>
+          <button type="button" class="btn-text" id="btn-math-first-back">← 返回</button>
+          <span class="quiz-subject">數學對戰</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title">誰�?�?/h2>
+          <h2 class="flip-first-title">誰先？</h2>
           <p class="flip-first-meta">
-            <span id="math-first-mode">?��?</span> · ?��? <span id="math-first-range">10�?00</span>
+            <span id="math-first-mode">攤牌</span> · 目標 <span id="math-first-range">10～100</span>
           </p>
-          <p class="flip-first-hint">點�?字�??��?</p>
+          <p class="flip-first-hint">點名字先出牌</p>
           <div class="flip-pick-btns" id="math-pick-btns"></div>
         </div>
       </section>
 
-      <!-- ?�學：�??��??��? / 翻�??�用�?-->
-      <section id="view-math-play" class="view view-hidden" aria-label="?�學對戰">
+      <!-- 數學：對戰（攤牌 / 翻牌共用） -->
+      <section id="view-math-play" class="view view-hidden" aria-label="數學對戰">
         <header class="quiz-header quiz-header-math">
-          <button type="button" class="btn-text" id="btn-math-play-back">??返�?</button>
-          <span class="quiz-subject">?�學 <span id="math-mode-badge">?��?</span></span>
+          <button type="button" class="btn-text" id="btn-math-play-back">← 返回</button>
+          <span class="quiz-subject">數學 <span id="math-mode-badge">攤牌</span></span>
         </header>
         <div class="math-play-body">
           <div class="flip-scorebar math-scorebar">
             <div class="flip-score-block" id="math-score-block-a">
-              <span class="flip-score-name" id="math-play-name-a">?��?</span>
-              <span class="flip-first-tag" id="math-first-tag-a">?��?</span>
+              <span class="flip-score-name" id="math-play-name-a">思妘</span>
+              <span class="flip-first-tag" id="math-first-tag-a">先開</span>
               <span class="flip-score-num" id="math-score-a">0</span>
             </div>
             <div class="flip-turn-wrap">
-              <p class="flip-turn-label" id="math-turn-label">輪到：思�?</p>
+              <p class="flip-turn-label" id="math-turn-label">輪到：思妘</p>
             </div>
             <div class="flip-score-block" id="math-score-block-b">
-              <span class="flip-score-name" id="math-play-name-b">?�妤</span>
-              <span class="flip-first-tag" id="math-first-tag-b" hidden>?��?</span>
+              <span class="flip-score-name" id="math-play-name-b">思妤</span>
+              <span class="flip-first-tag" id="math-first-tag-b" hidden>先開</span>
               <span class="flip-score-num" id="math-score-b">0</span>
             </div>
           </div>
           <div id="math-cards-panel">
             <div class="math-target-block">
-              <p class="math-target-label">?��???/p>
+              <p class="math-target-label">目標數</p>
               <p class="math-target-big" id="math-target-big">67</p>
               <p class="math-target-hint" id="math-target-hint"></p>
             </div>
-            <p class="math-expression" id="math-expression">點選下方?��??��?式�?湊錢</p>
+            <p class="math-expression" id="math-expression">點選下方牌組成算式或湊錢</p>
             <p class="math-flip-hint" id="math-flip-hint" hidden></p>
             <div class="math-card-grid" id="math-card-grid"></div>
           </div>
           <div id="math-guess-panel" class="math-guess-panel" hidden>
             <div class="math-guess-target-block">
-              <p class="math-guess-label">秘�??��?</p>
-              <p class="math-guess-range" id="math-guess-range">??10�?00</p>
-              <p class="math-guess-sub">不�??�訴你�?案�??��?示慢?��?</p>
+              <p class="math-guess-label">秘密數字</p>
+              <p class="math-guess-range" id="math-guess-range">猜 10～100</p>
+              <p class="math-guess-sub">不會告訴你答案，靠提示慢慢猜</p>
             </div>
-            <p class="math-guess-input" id="math-guess-input" aria-live="polite">??/p>
-            <p class="math-guess-hint math-guess-hint-idle" id="math-guess-hint">輸入?��?後送出</p>
+            <p class="math-guess-input" id="math-guess-input" aria-live="polite">—</p>
+            <p class="math-guess-hint math-guess-hint-idle" id="math-guess-hint">輸入數字後送出</p>
             <div class="math-numpad" id="math-numpad"></div>
           </div>
         </div>
         <footer class="quiz-footer">
           <button type="button" class="btn btn-secondary" id="btn-math-clear">清除</button>
-          <button type="button" class="btn btn-primary btn-primary-math" id="btn-math-submit">?�出</button>
+          <button type="button" class="btn btn-primary btn-primary-math" id="btn-math-submit">送出</button>
         </footer>
       </section>
 
-      <!-- ?�學：�?�?-->
-      <section id="view-math-result" class="view view-hidden" aria-label="?�學結�?">
+      <!-- 數學：結算 -->
+      <section id="view-math-result" class="view view-hidden" aria-label="數學結算">
         <header class="app-header">
-          <h2 class="result-title" id="math-result-title">完�?</h2>
-          <p class="flip-result-scores math-result-scores" id="math-result-scores">0 �?</p>
+          <h2 class="result-title" id="math-result-title">完成</h2>
+          <p class="flip-result-scores math-result-scores" id="math-result-scores">0 ：0</p>
         </header>
         <footer class="result-footer">
-          <button type="button" class="btn btn-primary btn-block btn-primary-math" id="btn-math-replay">?�玩一局</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-math-home">?��???/button>
+          <button type="button" class="btn btn-primary btn-block btn-primary-math" id="btn-math-replay">再玩一局</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-math-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- ?��?對戰（�?上�? -->
-      <section id="view-race-play" class="view view-hidden" aria-label="?��?對戰">
+      <!-- 搶答對戰（線上） -->
+      <section id="view-race-play" class="view view-hidden" aria-label="搶答對戰">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-race-play-back">??返�?</button>
-          <span class="quiz-subject" id="race-room-tag">?��?對戰</span>
-          <span class="quiz-progress" id="race-round-label">�?1 / 10 �?/span>
+          <button type="button" class="btn-text" id="btn-race-play-back">← 返回</button>
+          <span class="quiz-subject" id="race-room-tag">搶答對戰</span>
+          <span class="quiz-progress" id="race-round-label">第 1 / 10 題</span>
         </header>
         <div class="race-play-body">
           <div class="flip-scorebar race-scorebar">
             <div class="flip-score-block" id="race-score-block-a">
-              <span class="flip-score-name" id="race-play-name-a">?�主</span>
+              <span class="flip-score-name" id="race-play-name-a">房主</span>
               <span class="flip-score-num" id="race-score-a">0</span>
             </div>
             <div class="race-timer-block">
-              <span class="race-timer-label" id="race-timer-label">作�? 10 �?/span>
+              <span class="race-timer-label" id="race-timer-label">作答 10 秒</span>
             </div>
             <div class="flip-score-block" id="race-score-block-b">
-              <span class="flip-score-name" id="race-play-name-b">來�?</span>
+              <span class="flip-score-name" id="race-play-name-b">來賓</span>
               <span class="flip-score-num" id="race-score-b">0</span>
             </div>
           </div>
@@ -604,80 +605,82 @@
               spellcheck="false"
             />
           </div>
-          <p class="race-status-hint" id="race-status-hint">請�??�好?�輸?��?�?/p>
-          <button type="button" class="btn btn-race-buzz" id="btn-race-buzz" disabled>?��?�?/button>
+          <p class="race-status-hint" id="race-status-hint">請先選好或輸入答案</p>
+          <button type="button" class="btn btn-race-buzz" id="btn-race-buzz" disabled>搶答！</button>
         </div>
       </section>
 
-      <section id="view-race-result" class="view view-hidden" aria-label="?��?對戰結�?">
+      <section id="view-race-result" class="view view-hidden" aria-label="搶答對戰結算">
         <header class="app-header">
-          <h2 class="result-title" id="race-result-title">完�?</h2>
-          <p class="flip-result-scores" id="race-result-scores">0 �?</p>
+          <h2 class="result-title" id="race-result-title">完成</h2>
+          <p class="flip-result-scores" id="race-result-scores">0 ：0</p>
           <p class="flip-result-detail" id="race-result-detail"></p>
         </header>
         <footer class="result-footer">
           <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-race-replay">
-            ?�房?��??��?局
+            同房間再玩一局
           </button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-race-home">?��???/button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-race-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- 對戰：�?�?/ ?�台?��?（共?��? -->
-      <section id="view-duo-mode" class="view view-hidden" aria-label="對戰模�?">
+      <!-- 對戰：同機 / 兩台手機（共用） -->
+      <section id="view-duo-mode" class="view view-hidden" aria-label="對戰模式">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-duo-mode-back">??返�?</button>
+          <button type="button" class="btn-text" id="btn-duo-mode-back">← 返回</button>
           <span class="quiz-subject" id="duo-mode-header">對戰</span>
         </header>
         <div class="flip-first-body gomoku-mode-body">
-          <h2 class="flip-first-title" id="duo-mode-title">?�麼?��?</h2>
-          <p class="flip-first-meta" id="duo-mode-sub">?��??��?置�??�兩?��?機用?��?碼�??</p>
+          <h2 class="flip-first-title" id="duo-mode-title">怎麼玩？</h2>
+          <p class="flip-first-meta" id="duo-mode-sub">同一台裝置，或兩台手機用房間碼連線</p>
           <div class="gomoku-mode-btns">
             <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-duo-mode-local">
-              ?��??��?置�??��??��?
+              同一台裝置（面對面）
             </button>
             <button type="button" class="btn btn-secondary btn-block btn-primary-gomoku-outline" id="btn-duo-mode-ai" hidden>
-              ?�戰 AI（單人練習�?
+              挑戰 AI（單人練習）
             </button>
             <button type="button" class="btn btn-secondary btn-block" id="btn-duo-mode-online">
-              ?�台?��?（房?�碼???�?            </button>
+              兩台手機（房間碼連線）
+            </button>
           </div>
-          <p class="gomoku-mode-note" id="duo-mode-online-note">?�台?��??�?��???Firebase 設�?（�? docs/firebase-setup.md�?/p>
+          <p class="gomoku-mode-note" id="duo-mode-online-note">兩台手機需先完成 Firebase 設定（見 docs/firebase-setup.md）</p>
         </div>
       </section>
 
-      <section id="view-online-firebase-setup" class="view view-hidden" aria-label="Firebase 設�?說�?">
+      <section id="view-online-firebase-setup" class="view view-hidden" aria-label="Firebase 設定說明">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-online-firebase-setup-back">??返�?</button>
-          <span class="quiz-subject">???設�?</span>
+          <button type="button" class="btn-text" id="btn-online-firebase-setup-back">← 返回</button>
+          <span class="quiz-subject">連線設定</span>
         </header>
         <div class="flip-first-body online-setup-body">
-          <h2 class="flip-first-title">尚未設�? Firebase</h2>
-          <p class="flip-first-meta">?�台?��?對戰?�要雲端�??�庫?��???<strong>Google 帳�?</strong>?�入 Firebase 主控?��??��?次性設定�?/p>
+          <h2 class="flip-first-title">尚未設定 Firebase</h2>
+          <p class="flip-first-meta">兩台手機對戰需要雲端資料庫。請用 <strong>Google 帳號</strong>登入 Firebase 主控台完成一次性設定。</p>
           <ol class="online-setup-steps">
-            <li>?��?專�?裡�? <code>docs/firebase-setup.md</code></li>
-            <li>依�?學建�?Firebase 專�??�Realtime Database?�匿?�登??/li>
-            <li>?�網?�設定貼??<code>js/config.site.js</code> ??<code>FIREBASE</code></li>
-            <li>?�送�??�新?��?網�?（Ctrl+Shift+R�?/li>
+            <li>開啟專案裡的 <code>docs/firebase-setup.md</code></li>
+            <li>依教學建立 Firebase 專案、Realtime Database、匿名登入</li>
+            <li>把網頁設定貼到 <code>js/config.site.js</code> 的 <code>FIREBASE</code></li>
+            <li>推送後重新整理網站（Ctrl+Shift+R）</li>
           </ol>
         </div>
       </section>
 
-      <section id="view-online-room-entry" class="view view-hidden" aria-label="建�??��??�房??>
+      <section id="view-online-room-entry" class="view view-hidden" aria-label="建立或加入房間">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-online-room-entry-back">??返�?</button>
-          <span class="quiz-subject">?�台?��?</span>
+          <button type="button" class="btn-text" id="btn-online-room-entry-back">← 返回</button>
+          <span class="quiz-subject">兩台手機</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title">建�??��??�房??/h2>
+          <h2 class="flip-first-title">建立或加入房間</h2>
           <p class="flip-first-meta">
-            <span id="online-room-game-label">對戰</span> · �?��?��?�?            <strong id="online-player-name">?��?</strong>
+            <span id="online-room-game-label">對戰</span> · 代表名字：
+            <strong id="online-player-name">思妘</strong>
           </p>
           <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-online-create-room">
-            建�??��?（�?�?4 碼�?
+            建立房間（取得 4 碼）
           </button>
           <div class="online-join-row">
-            <label class="label" for="online-room-join-input">?�入?��?</label>
+            <label class="label" for="online-room-join-input">加入房間</label>
             <div class="online-join-inputs">
               <input
                 type="text"
@@ -686,111 +689,113 @@
                 inputmode="numeric"
                 pattern="[0-9]*"
                 maxlength="4"
-                placeholder="例�? 4821"
+                placeholder="例如 4821"
                 autocomplete="off"
               />
-              <button type="button" class="btn btn-secondary" id="btn-online-join-room">?�入</button>
+              <button type="button" class="btn btn-secondary" id="btn-online-join-room">加入</button>
             </div>
           </div>
           <p class="gomoku-mode-note">
-            測試?�用?��?＋電?�。若顯示?�房?�已滿」�?請房主在等候室?�「�??��?賓�?試」�?          </p>
+            測試可用手機＋電腦。若顯示「房間已滿」，請房主在等候室按「清除來賓重試」。
+          </p>
         </div>
       </section>
 
       <section id="view-online-lobby" class="view view-hidden" aria-label="等候室">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-online-lobby-back">???��?</button>
+          <button type="button" class="btn-text" id="btn-online-lobby-back">← 離開</button>
           <span class="quiz-subject">等候室 · <span id="online-lobby-game">對戰</span></span>
         </header>
         <div class="flip-first-body online-lobby-body">
-          <p class="online-room-code-label">?��?�?/p>
+          <p class="online-room-code-label">房間碼</p>
           <p class="online-room-code" id="online-lobby-code">0000</p>
-          <p class="flip-first-meta" id="online-lobby-status">等候�??��??��?/p>
+          <p class="flip-first-meta" id="online-lobby-status">等候對方加入…</p>
           <div class="online-lobby-players">
-            <p><span class="label">?�主</span> <span id="online-lobby-host">??/span></p>
-            <p><span class="label">來�?</span> <span id="online-lobby-guest">??/span></p>
+            <p><span class="label">房主</span> <span id="online-lobby-host">—</span></p>
+            <p><span class="label">來賓</span> <span id="online-lobby-guest">—</span></p>
           </div>
           <div id="online-lobby-sky-panel" class="online-lobby-sky-panel" hidden>
             <div id="sky-lobby-ship-pick"></div>
           </div>
-          <button type="button" class="btn btn-primary btn-block" id="btn-online-lobby-ready">?��??�好�?/button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-online-lobby-ready">我準備好了</button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-online-lobby-kick-guest" hidden>
-            來�?沒進�?？�??��?賓�?�?          </button>
+            來賓沒進來？清除來賓重試
+          </button>
           <div id="online-lobby-start-panel" class="online-lobby-start" hidden>
-            <p class="flip-first-hint" id="online-lobby-start-hint">請選?��?</p>
+            <p class="flip-first-hint" id="online-lobby-start-hint">請選先手</p>
             <div class="flip-pick-btns" id="online-lobby-start-pick"></div>
           </div>
         </div>
       </section>
 
-      <!-- 五�?棋�??��???-->
-      <section id="view-gomoku-first" class="view view-hidden" aria-label="五�?棋誰??>
+      <!-- 五子棋：選黑先 -->
+      <section id="view-gomoku-first" class="view view-hidden" aria-label="五子棋誰先">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-gomoku-first-back">??返�?</button>
-          <span class="quiz-subject">五�?�?/span>
+          <button type="button" class="btn-text" id="btn-gomoku-first-back">← 返回</button>
+          <span class="quiz-subject">五子棋</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title" id="gomoku-first-title">誰拿黑�?�?/h2>
-          <p class="flip-first-meta" id="gomoku-first-meta">15?15 · ?��??子獲??· ???規�?</p>
-          <p class="flip-first-hint" id="gomoku-first-hint">黑�??��??�遵守�??��?三�??��??�、長???；白棋無禁�?</p>
+          <h2 class="flip-first-title" id="gomoku-first-title">誰拿黑子？</h2>
+          <p class="flip-first-meta" id="gomoku-first-meta">15×15 · 先連五子獲勝 · 連珠規則</p>
+          <p class="flip-first-hint" id="gomoku-first-hint">黑子先手須遵守禁手（三三、四四、長連）；白棋無禁手</p>
           <div id="gomoku-local-setup">
             <p class="flip-first-meta duo-active-line">
-              誰在練�?�?strong id="gomoku-duo-active-name">?��?</strong>
+              誰在練習：<strong id="gomoku-duo-active-name">思妘</strong>
             </p>
             <div class="duo-opponent-picker" role="group" aria-label="對戰對象">
               <span class="label">對戰對象</span>
               <div class="lesson-chips" id="gomoku-duo-opponent-chips"></div>
             </div>
             <div class="flip-players-vs gomoku-players-vs" id="gomoku-duo-matchup">
-              <span id="gomoku-duo-matchup-a">?��?</span>
+              <span id="gomoku-duo-matchup-a">思妘</span>
               <span class="flip-vs">vs</span>
-              <span id="gomoku-duo-matchup-b">?�妤</span>
+              <span id="gomoku-duo-matchup-b">思妤</span>
             </div>
             <div class="flip-pick-btns" id="gomoku-pick-btns"></div>
           </div>
           <div id="gomoku-ai-setup" class="gomoku-ai-setup" hidden>
             <p class="flip-first-meta duo-active-line">
-              練�??��?<strong id="gomoku-ai-active-name">?��?</strong>
+              練習者：<strong id="gomoku-ai-active-name">思妘</strong>
             </p>
             <div class="home-zone gomoku-ai-zone">
-              <h3 class="home-zone-title">?�腦??��</h3>
+              <h3 class="home-zone-title">電腦難度</h3>
               <div
                 class="gomoku-ai-difficulty-cards"
                 id="gomoku-ai-difficulty-chips"
                 role="group"
-                aria-label="AI ??��"
+                aria-label="AI 難度"
               ></div>
             </div>
             <div class="home-zone gomoku-ai-zone">
-              <h3 class="home-zone-title">誰拿黑�?（�??��?</h3>
-              <p class="gomoku-ai-start-hint">宗師??Rapfi 快板，精簡�?棋�?比�??��?師更強�?涅�??��???NNUE（�?次�? 40 MB）�?棋�??�強。建議執?��?/p>
+              <h3 class="home-zone-title">誰拿黑子（先手）</h3>
+              <p class="gomoku-ai-start-hint">宗師為 Rapfi 快板，精簡但棋力比舊版宗師更強；涅槃為完整 NNUE（首次約 40 MB），棋力最強。建議執白。</p>
               <div class="gomoku-ai-start-cards" id="gomoku-ai-start-btns"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 五�?棋�?對�? -->
-      <section id="view-gomoku-play" class="view view-hidden" aria-label="五�?棋�?局">
+      <!-- 五子棋：對局 -->
+      <section id="view-gomoku-play" class="view view-hidden" aria-label="五子棋對局">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-gomoku-play-back">??返�?</button>
-          <span class="quiz-subject">五�?�?/span>
+          <button type="button" class="btn-text" id="btn-gomoku-play-back">← 返回</button>
+          <span class="quiz-subject">五子棋</span>
         </header>
         <div class="gomoku-play-body">
           <div class="gomoku-status-bar">
             <div class="gomoku-turn-board">
               <div class="gomoku-side-card gomoku-side-black" id="gomoku-side-black">
                 <span class="gomoku-side-card-label">黑方</span>
-                <strong class="gomoku-side-card-name">??/strong>
+                <strong class="gomoku-side-card-name">—</strong>
               </div>
               <div class="gomoku-turn-banner gomoku-turn-banner-black" id="gomoku-turn-banner" role="status" aria-live="polite">
-                <span class="gomoku-turn-banner-kicker">?�在輪到</span>
-                <span class="gomoku-turn-banner-main" id="gomoku-turn-main">黑方下�?</span>
-                <span class="gomoku-turn-banner-sub" id="gomoku-turn-sub">??/span>
+                <span class="gomoku-turn-banner-kicker">現在輪到</span>
+                <span class="gomoku-turn-banner-main" id="gomoku-turn-main">黑方下棋</span>
+                <span class="gomoku-turn-banner-sub" id="gomoku-turn-sub">—</span>
               </div>
               <div class="gomoku-side-card gomoku-side-white" id="gomoku-side-white">
-                <span class="gomoku-side-card-label">?�方</span>
-                <strong class="gomoku-side-card-name">??/strong>
+                <span class="gomoku-side-card-label">白方</span>
+                <strong class="gomoku-side-card-name">—</strong>
               </div>
             </div>
             <p
@@ -804,33 +809,34 @@
               id="gomoku-renju-hint"
               aria-hidden="true"
             >
-              黑�?禁�??��?標示 ?��?三�??��??�、長????�為????�活三」�??�任?��?子�??�?            </p>
+              黑棋禁手格會標示 ✕（三三、四四、長連；須為連珠「活三」，非任意三子連線）
+            </p>
           </div>
-          <p class="gomoku-zoom-hint">?��??��??�大 · ?��?下�? · ?�大後單?��??�移?��??�腦：滾輪放大、右?��??��?</p>
+          <p class="gomoku-zoom-hint">雙指捏合放大 · 單指下棋 · 放大後單指拖曳移動（電腦：滾輪放大、右鍵拖曳）</p>
           <div class="gomoku-board-wrap" id="gomoku-board-viewport">
             <div class="gomoku-board-stage" id="gomoku-board-stage">
-              <div class="gomoku-board" id="gomoku-board" role="grid" aria-label="五�?棋�???></div>
+              <div class="gomoku-board" id="gomoku-board" role="grid" aria-label="五子棋棋盤"></div>
               <div class="gomoku-replay-dock" id="gomoku-replay-dock" hidden>
                 <button type="button" class="btn btn-primary btn-sm gomoku-replay-dock-primary" id="btn-gomoku-replay-moves">
-                  ?�播棋�?
+                  重播棋局
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-gomoku-replay-options">?�利?��?</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-gomoku-replay-options">勝利選項</button>
               </div>
               <div class="gomoku-win-overlay" id="gomoku-win-overlay" hidden>
                 <div class="gomoku-win-card">
-                  <h2 class="gomoku-win-title" id="gomoku-win-title">?��?</h2>
+                  <h2 class="gomoku-win-title" id="gomoku-win-title">獲勝</h2>
                   <p class="gomoku-win-detail" id="gomoku-win-detail"></p>
                   <div class="gomoku-win-actions">
                     <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-win-dismiss">
-                      繼�?觀察�?局
+                      繼續觀察棋局
                     </button>
                     <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-gomoku-win-moves">
-                      ?�播棋�?
+                      重播棋局
                     </button>
                     <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-win-replay">
-                      ?�玩一局
+                      再玩一局
                     </button>
-                    <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-win-home">?��???/button>
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-win-home">回首頁</button>
                   </div>
                 </div>
               </div>
@@ -839,76 +845,77 @@
         </div>
       </section>
 
-      <!-- 五�?棋�?結�? -->
-      <section id="view-gomoku-result" class="view view-hidden" aria-label="五�?棋�?�?>
+      <!-- 五子棋：結算 -->
+      <section id="view-gomoku-result" class="view view-hidden" aria-label="五子棋結算">
         <header class="app-header">
-          <h2 class="result-title" id="gomoku-result-title">完�?</h2>
+          <h2 class="result-title" id="gomoku-result-title">完成</h2>
           <p class="gomoku-result-detail" id="gomoku-result-detail"></p>
         </header>
         <footer class="result-footer">
-          <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-gomoku-replay">?�玩一局</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-home">?��???/button>
+          <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-gomoku-replay">再玩一局</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- 五�?棋�?上�?對�? -->
-      <section id="view-gomoku-online-play" class="view view-hidden" aria-label="五�?棋�?上�?局">
+      <!-- 五子棋線上：對局 -->
+      <section id="view-gomoku-online-play" class="view view-hidden" aria-label="五子棋線上對局">
         <header class="quiz-header quiz-header-gomoku">
-          <button type="button" class="btn-text" id="btn-gomoku-online-play-back">??返�?</button>
-          <span class="quiz-subject">線�?五�?�?/span>
+          <button type="button" class="btn-text" id="btn-gomoku-online-play-back">← 返回</button>
+          <span class="quiz-subject">線上五子棋</span>
         </header>
         <div class="gomoku-play-body">
           <div class="gomoku-status-bar">
-            <p class="gomoku-room-tag" id="gomoku-online-room-tag">?��?</p>
+            <p class="gomoku-room-tag" id="gomoku-online-room-tag">房間</p>
             <div class="gomoku-turn-board">
               <div class="gomoku-side-card gomoku-side-black" id="gomoku-online-side-black">
                 <span class="gomoku-side-card-label">黑方</span>
-                <strong class="gomoku-side-card-name">??/strong>
+                <strong class="gomoku-side-card-name">—</strong>
               </div>
               <div class="gomoku-turn-banner gomoku-turn-banner-black" id="gomoku-online-turn-banner" role="status" aria-live="polite">
-                <span class="gomoku-turn-banner-kicker">?�在輪到</span>
-                <span class="gomoku-turn-banner-main" id="gomoku-online-turn-main">黑方下�?</span>
-                <span class="gomoku-turn-banner-sub" id="gomoku-online-turn-sub">??/span>
+                <span class="gomoku-turn-banner-kicker">現在輪到</span>
+                <span class="gomoku-turn-banner-main" id="gomoku-online-turn-main">黑方下棋</span>
+                <span class="gomoku-turn-banner-sub" id="gomoku-online-turn-sub">—</span>
               </div>
               <div class="gomoku-side-card gomoku-side-white" id="gomoku-online-side-white">
-                <span class="gomoku-side-card-label">?�方</span>
-                <strong class="gomoku-side-card-name">??/strong>
+                <span class="gomoku-side-card-label">白方</span>
+                <strong class="gomoku-side-card-name">—</strong>
               </div>
             </div>
             <p class="gomoku-renju-hint" id="gomoku-online-renju-hint" aria-hidden="true">
-              黑�?禁�??��?標示 ?��?三�??��??�、長????�為????�活三」�??�任?��?子�??�?            </p>
+              黑棋禁手格會標示 ✕（三三、四四、長連；須為連珠「活三」，非任意三子連線）
+            </p>
           </div>
-          <p class="gomoku-zoom-hint">?��??��??�大 · ?��?下�? · ?�大後單?��??�移?��??�腦：滾輪放大、右?��??��?</p>
+          <p class="gomoku-zoom-hint">雙指捏合放大 · 單指下棋 · 放大後單指拖曳移動（電腦：滾輪放大、右鍵拖曳）</p>
           <div class="gomoku-board-wrap" id="gomoku-online-board-viewport">
             <div class="gomoku-board-stage" id="gomoku-online-board-stage">
-              <div class="gomoku-board" id="gomoku-online-board" role="grid" aria-label="五�?棋�???></div>
+              <div class="gomoku-board" id="gomoku-online-board" role="grid" aria-label="五子棋棋盤"></div>
               <div class="gomoku-replay-dock" id="gomoku-online-replay-dock" hidden>
                 <button
                   type="button"
                   class="btn btn-primary btn-sm gomoku-replay-dock-primary"
                   id="btn-gomoku-online-replay-moves"
                 >
-                  ?�播棋�?
+                  重播棋局
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" id="btn-gomoku-online-replay-options">
-                  ?�利?��?
+                  勝利選項
                 </button>
               </div>
               <div class="gomoku-win-overlay" id="gomoku-online-win-overlay" hidden>
                 <div class="gomoku-win-card">
-                  <h2 class="gomoku-win-title" id="gomoku-online-win-title">?��?</h2>
+                  <h2 class="gomoku-win-title" id="gomoku-online-win-title">獲勝</h2>
                   <p class="gomoku-win-detail" id="gomoku-online-win-detail"></p>
                   <div class="gomoku-win-actions">
                     <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-win-dismiss">
-                      繼�?觀察�?局
+                      繼續觀察棋局
                     </button>
                     <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-gomoku-online-win-moves">
-                      ?�播棋�?
+                      重播棋局
                     </button>
                     <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-win-rematch">
-                      ?�房?��??��?局
+                      同房間再玩一局
                     </button>
-                    <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-win-home">?��???/button>
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-win-home">回首頁</button>
                   </div>
                 </div>
               </div>
@@ -917,109 +924,109 @@
         </div>
       </section>
 
-      <!-- 五�?棋�?上�?結�? -->
-      <section id="view-gomoku-online-result" class="view view-hidden" aria-label="五�?棋�?上�?�?>
+      <!-- 五子棋線上：結算 -->
+      <section id="view-gomoku-online-result" class="view view-hidden" aria-label="五子棋線上結算">
         <header class="app-header">
-          <h2 class="result-title" id="gomoku-online-result-title">完�?</h2>
+          <h2 class="result-title" id="gomoku-online-result-title">完成</h2>
           <p class="gomoku-result-detail" id="gomoku-online-result-detail"></p>
         </header>
         <footer class="result-footer">
-          <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-lobby">?�房?��?�?/button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-home">?��???/button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-lobby">回房間列表</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gomoku-online-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- 象�?：�?棋�??��? -->
-      <section id="view-xiangqi-variant" class="view view-hidden" aria-label="象�?模�?">
+      <!-- 象棋：明棋／暗棋 -->
+      <section id="view-xiangqi-variant" class="view view-hidden" aria-label="象棋模式">
         <header class="quiz-header quiz-header-xiangqi">
-          <button type="button" class="btn-text" id="btn-xiangqi-variant-back">??返�?</button>
-          <span class="quiz-subject">象�?</span>
+          <button type="button" class="btn-text" id="btn-xiangqi-variant-back">← 返回</button>
+          <span class="quiz-subject">象棋</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title">?��??��?</h2>
-          <p class="flip-first-meta">?��??�傳統象棋�??��???4?8 翻�?（台????��?</p>
+          <h2 class="flip-first-title">選擇玩法</h2>
+          <p class="flip-first-meta">明棋為傳統象棋；暗棋為 4×8 翻棋（台灣規則）</p>
           <div class="home-grid home-grid-tight">
             <button type="button" class="card card-xiangqi-home" id="btn-xiangqi-variant-ming">
-              <span class="card-title">?��?（象棋�?</span>
-              <span class="card-xiangqi-note">9?10 · 紅�? · 將�?將死</span>
+              <span class="card-title">明棋（象棋）</span>
+              <span class="card-xiangqi-note">9×10 · 紅先 · 將軍將死</span>
             </button>
             <button type="button" class="card card-xiangqi-home" id="btn-xiangqi-variant-anqi">
-              <span class="card-title">?��?</span>
-              <span class="card-xiangqi-note">4?8 · 翻�?定色 · ?��?對方棋�?</span>
+              <span class="card-title">暗棋</span>
+              <span class="card-xiangqi-note">4×8 · 翻棋定色 · 吃完對方棋子</span>
             </button>
           </div>
         </div>
       </section>
 
-      <!-- 象�?：誰?��? -->
-      <section id="view-xiangqi-first" class="view view-hidden" aria-label="象�?誰執�?>
+      <!-- 象棋：誰執紅 -->
+      <section id="view-xiangqi-first" class="view view-hidden" aria-label="象棋誰執紅">
         <header class="quiz-header quiz-header-xiangqi">
-          <button type="button" class="btn-text" id="btn-xiangqi-first-back">??返�?</button>
-          <span class="quiz-subject">象�?</span>
+          <button type="button" class="btn-text" id="btn-xiangqi-first-back">← 返回</button>
+          <span class="quiz-subject">象棋</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title" id="xiangqi-first-title">誰執紅�??��?）�?</h2>
-          <p class="flip-first-meta" id="xiangqi-first-meta">9?10 · 紅�? · ?�灣象�?規�?</p>
+          <h2 class="flip-first-title" id="xiangqi-first-title">誰執紅（先手）？</h2>
+          <p class="flip-first-meta" id="xiangqi-first-meta">9×10 · 紅先 · 台灣象棋規則</p>
           <div id="xiangqi-local-setup">
             <p class="flip-first-hint">
-              誰在練�?�?strong id="xiangqi-duo-active-name">?��?</strong>
+              誰在練習：<strong id="xiangqi-duo-active-name">思妘</strong>
             </p>
             <div class="home-zone">
               <p class="home-zone-title">對戰對象</p>
               <div class="lesson-chips" id="xiangqi-duo-opponent-chips"></div>
             </div>
             <div class="flip-players-vs" id="xiangqi-duo-matchup">
-              <span id="xiangqi-duo-matchup-a">?��?</span>
+              <span id="xiangqi-duo-matchup-a">思妘</span>
               <span class="flip-vs">VS</span>
-              <span id="xiangqi-duo-matchup-b">?�妤</span>
+              <span id="xiangqi-duo-matchup-b">思妤</span>
             </div>
             <div class="flip-pick-btns" id="xiangqi-pick-btns"></div>
           </div>
           <div id="xiangqi-ai-setup" class="xiangqi-ai-setup" hidden>
             <p class="flip-first-hint">
-              練�??��?<strong id="xiangqi-ai-active-name">?��?</strong>
+              練習者：<strong id="xiangqi-ai-active-name">思妘</strong>
             </p>
             <div class="home-zone xiangqi-ai-zone">
-              <p class="home-zone-title">?�腦??��</p>
+              <p class="home-zone-title">電腦難度</p>
               <div class="xiangqi-ai-difficulty-cards" id="xiangqi-ai-difficulty-chips"></div>
-              <p class="xiangqi-ai-start-hint">宗師?�內建�?強�?涅�???Pikafish 引�?（�?次�? 4.6 MB）�?棋�??�強�?/p>
+              <p class="xiangqi-ai-start-hint">宗師為內建最強；涅槃為 Pikafish 引擎（首次約 4.6 MB），棋力最強。</p>
             </div>
             <div class="home-zone xiangqi-ai-zone">
-              <p class="home-zone-title">?��?顏色</p>
+              <p class="home-zone-title">執棋顏色</p>
               <div class="xiangqi-ai-start-btns" id="xiangqi-ai-start-btns"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 象�?：�?局 -->
-      <section id="view-xiangqi-play" class="view view-hidden" aria-label="象�?對�?">
+      <!-- 象棋：對局 -->
+      <section id="view-xiangqi-play" class="view view-hidden" aria-label="象棋對局">
         <header class="quiz-header quiz-header-xiangqi">
-          <button type="button" class="btn-text" id="btn-xiangqi-play-back">??返�?</button>
-          <span class="quiz-subject">象�?</span>
+          <button type="button" class="btn-text" id="btn-xiangqi-play-back">← 返回</button>
+          <span class="quiz-subject">象棋</span>
         </header>
         <div class="xiangqi-play-body">
           <div class="xiangqi-status-bar">
             <div class="xiangqi-turn-board">
               <div class="xiangqi-side-card xiangqi-side-red" id="xiangqi-side-red">
                 <span class="xiangqi-side-card-label">紅方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
               <div class="xiangqi-turn-banner xiangqi-turn-banner-red" id="xiangqi-turn-banner" role="status" aria-live="polite">
-                <span class="xiangqi-turn-banner-kicker">?�在輪到</span>
-                <span class="xiangqi-turn-banner-main" id="xiangqi-turn-main">紅方走�?</span>
-                <span class="xiangqi-turn-banner-sub" id="xiangqi-turn-sub">??/span>
+                <span class="xiangqi-turn-banner-kicker">現在輪到</span>
+                <span class="xiangqi-turn-banner-main" id="xiangqi-turn-main">紅方走棋</span>
+                <span class="xiangqi-turn-banner-sub" id="xiangqi-turn-sub">—</span>
               </div>
               <div class="xiangqi-side-card xiangqi-side-black" id="xiangqi-side-black">
                 <span class="xiangqi-side-card-label">黑方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
             </div>
             <div class="xiangqi-check-alert" id="xiangqi-check-hint" hidden role="alert" aria-live="assertive">
-              <span class="xiangqi-check-alert-x" aria-hidden="true">??/span>
+              <span class="xiangqi-check-alert-x" aria-hidden="true">✕</span>
               <div class="xiangqi-check-alert-copy">
-                <strong class="xiangqi-check-alert-title" id="xiangqi-check-title">你被將�?了�?</strong>
-                <p class="xiangqi-check-alert-detail" id="xiangqi-check-detail">帥�??�險，快�??�?/p>
+                <strong class="xiangqi-check-alert-title" id="xiangqi-check-title">你被將軍了！</strong>
+                <p class="xiangqi-check-alert-detail" id="xiangqi-check-detail">帥有危險，快解將！</p>
               </div>
             </div>
             <div class="xiangqi-play-actions" hidden>
@@ -1027,22 +1034,22 @@
             </div>
           </div>
           <div class="xiangqi-board-wrap">
-            <svg class="xiangqi-svg" id="xiangqi-board" role="img" aria-label="象�?棋盤"></svg>
+            <svg class="xiangqi-svg" id="xiangqi-board" role="img" aria-label="象棋棋盤"></svg>
             <div class="xiangqi-replay-dock" id="xiangqi-replay-dock" hidden>
               <button type="button" class="btn btn-primary btn-sm xiangqi-replay-dock-primary" id="btn-xiangqi-replay-moves">
-                ?�播棋�?
+                重播棋局
               </button>
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-replay-options">?�利?��?</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-replay-options">勝利選項</button>
             </div>
             <div class="xiangqi-win-overlay" id="xiangqi-win-overlay" hidden>
               <div class="xiangqi-win-card">
-                <h2 class="xiangqi-win-title" id="xiangqi-win-title">?��?</h2>
+                <h2 class="xiangqi-win-title" id="xiangqi-win-title">獲勝</h2>
                 <p class="xiangqi-win-detail" id="xiangqi-win-detail"></p>
                 <div class="xiangqi-win-actions">
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-win-dismiss">繼�?觀察�?局</button>
-                  <button type="button" class="btn btn-primary btn-block btn-primary-xiangqi" id="btn-xiangqi-win-moves">?�播棋�?</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-win-replay">?�玩一局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-win-home">?��???/button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-primary btn-block btn-primary-xiangqi" id="btn-xiangqi-win-moves">重播棋局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-win-replay">再玩一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-win-home">回首頁</button>
                 </div>
               </div>
             </div>
@@ -1050,35 +1057,35 @@
         </div>
       </section>
 
-      <!-- 象�?：�?上�?局 -->
-      <section id="view-xiangqi-online-play" class="view view-hidden" aria-label="象�?線�?對�?">
+      <!-- 象棋：線上對局 -->
+      <section id="view-xiangqi-online-play" class="view view-hidden" aria-label="象棋線上對局">
         <header class="quiz-header quiz-header-xiangqi">
-          <button type="button" class="btn-text" id="btn-xiangqi-online-play-back">??返�?</button>
-          <span class="quiz-subject">象�? · 線�?</span>
+          <button type="button" class="btn-text" id="btn-xiangqi-online-play-back">← 返回</button>
+          <span class="quiz-subject">象棋 · 線上</span>
         </header>
         <div class="xiangqi-play-body">
           <div class="xiangqi-status-bar">
-            <p class="xiangqi-room-tag" id="xiangqi-online-room-tag">?��?</p>
+            <p class="xiangqi-room-tag" id="xiangqi-online-room-tag">房間</p>
             <div class="xiangqi-turn-board">
               <div class="xiangqi-side-card xiangqi-side-red" id="xiangqi-online-side-red">
                 <span class="xiangqi-side-card-label">紅方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
               <div class="xiangqi-turn-banner xiangqi-turn-banner-red" id="xiangqi-online-turn-banner" role="status" aria-live="polite">
-                <span class="xiangqi-turn-banner-kicker">?�在輪到</span>
-                <span class="xiangqi-turn-banner-main" id="xiangqi-online-turn-main">紅方走�?</span>
-                <span class="xiangqi-turn-banner-sub" id="xiangqi-online-turn-sub">??/span>
+                <span class="xiangqi-turn-banner-kicker">現在輪到</span>
+                <span class="xiangqi-turn-banner-main" id="xiangqi-online-turn-main">紅方走棋</span>
+                <span class="xiangqi-turn-banner-sub" id="xiangqi-online-turn-sub">—</span>
               </div>
               <div class="xiangqi-side-card xiangqi-side-black" id="xiangqi-online-side-black">
                 <span class="xiangqi-side-card-label">黑方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
             </div>
             <div class="xiangqi-check-alert" id="xiangqi-online-check-hint" hidden role="alert" aria-live="assertive">
-              <span class="xiangqi-check-alert-x" aria-hidden="true">??/span>
+              <span class="xiangqi-check-alert-x" aria-hidden="true">✕</span>
               <div class="xiangqi-check-alert-copy">
-                <strong class="xiangqi-check-alert-title" id="xiangqi-online-check-title">你被將�?了�?</strong>
-                <p class="xiangqi-check-alert-detail" id="xiangqi-online-check-detail">帥�??�險，快�??�?/p>
+                <strong class="xiangqi-check-alert-title" id="xiangqi-online-check-title">你被將軍了！</strong>
+                <p class="xiangqi-check-alert-detail" id="xiangqi-online-check-detail">帥有危險，快解將！</p>
               </div>
             </div>
             <div class="xiangqi-play-actions" hidden>
@@ -1086,15 +1093,15 @@
             </div>
           </div>
           <div class="xiangqi-board-wrap">
-            <svg class="xiangqi-svg" id="xiangqi-online-board" role="img" aria-label="象�?棋盤"></svg>
+            <svg class="xiangqi-svg" id="xiangqi-online-board" role="img" aria-label="象棋棋盤"></svg>
             <div class="xiangqi-win-overlay" id="xiangqi-online-win-overlay" hidden>
               <div class="xiangqi-win-card">
-                <h2 class="xiangqi-win-title" id="xiangqi-online-win-title">?��?</h2>
+                <h2 class="xiangqi-win-title" id="xiangqi-online-win-title">獲勝</h2>
                 <p class="xiangqi-win-detail" id="xiangqi-online-win-detail"></p>
                 <div class="xiangqi-win-actions">
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-online-win-dismiss">繼�?觀察�?局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-online-win-rematch">?��?一局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-online-win-home">?��???/button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-online-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-online-win-rematch">再來一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-xiangqi-online-win-home">回首頁</button>
                 </div>
               </div>
             </div>
@@ -1102,72 +1109,72 @@
         </div>
       </section>
 
-      <!-- 西�?棋�?設�? -->
-      <section id="view-chess-first" class="view view-hidden" aria-label="西�?棋誰?�白">
+      <!-- 西洋棋：設定 -->
+      <section id="view-chess-first" class="view view-hidden" aria-label="西洋棋誰執白">
         <header class="quiz-header quiz-header-chess">
-          <button type="button" class="btn-text" id="btn-chess-first-back">??返�?</button>
-          <span class="quiz-subject">西�?�?/span>
+          <button type="button" class="btn-text" id="btn-chess-first-back">← 返回</button>
+          <span class="quiz-subject">西洋棋</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title" id="chess-first-title">誰執?��??��?）�?</h2>
-          <p class="flip-first-meta" id="chess-first-meta">8?8 · ?��? · ?��?象�?規�?</p>
+          <h2 class="flip-first-title" id="chess-first-title">誰執白（先手）？</h2>
+          <p class="flip-first-meta" id="chess-first-meta">8×8 · 白先 · 國際象棋規則</p>
           <div id="chess-local-setup">
             <p class="flip-first-hint">
-              誰在練�?�?strong id="chess-duo-active-name">?��?</strong>
+              誰在練習：<strong id="chess-duo-active-name">思妘</strong>
             </p>
             <div class="home-zone">
               <p class="home-zone-title">對戰對象</p>
               <div class="lesson-chips" id="chess-duo-opponent-chips"></div>
             </div>
             <div class="flip-players-vs" id="chess-duo-matchup">
-              <span id="chess-duo-matchup-a">?��?</span>
+              <span id="chess-duo-matchup-a">思妘</span>
               <span class="flip-vs">VS</span>
-              <span id="chess-duo-matchup-b">?�妤</span>
+              <span id="chess-duo-matchup-b">思妤</span>
             </div>
             <div class="flip-pick-btns" id="chess-pick-btns"></div>
           </div>
           <div id="chess-ai-setup" hidden>
             <p class="flip-first-hint">
-              誰在練�?�?strong id="chess-ai-active-name">??/strong>
+              誰在練習：<strong id="chess-ai-active-name">—</strong>
             </p>
             <div class="chess-ai-zone home-zone">
-              <p class="home-zone-title">?�腦??��</p>
+              <p class="home-zone-title">電腦難度</p>
               <div class="chess-ai-difficulty-cards" id="chess-ai-difficulty-chips"></div>
-              <p class="chess-ai-start-hint">涅�?之�??�接 Stockfish；目?��?宗師?��??��?/p>
+              <p class="chess-ai-start-hint">涅槃之後可接 Stockfish；目前與宗師同棋力。</p>
               <div class="chess-ai-start-btns" id="chess-ai-start-btns"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 西�?棋�?對�? -->
-      <section id="view-chess-play" class="view view-hidden" aria-label="西�?棋�?局">
+      <!-- 西洋棋：對局 -->
+      <section id="view-chess-play" class="view view-hidden" aria-label="西洋棋對局">
         <header class="quiz-header quiz-header-chess">
-          <button type="button" class="btn-text" id="btn-chess-play-back">??返�?</button>
-          <span class="quiz-subject">西�?�?/span>
+          <button type="button" class="btn-text" id="btn-chess-play-back">← 返回</button>
+          <span class="quiz-subject">西洋棋</span>
         </header>
         <div class="chess-play-body">
           <div class="chess-status-bar">
             <div class="chess-turn-board">
               <div class="chess-side-card chess-side-white" id="chess-side-white">
-                <span class="chess-side-card-label">?�方</span>
-                <strong class="chess-side-card-name">??/strong>
+                <span class="chess-side-card-label">白方</span>
+                <strong class="chess-side-card-name">—</strong>
               </div>
               <div class="chess-turn-banner chess-turn-banner-white" id="chess-turn-banner" role="status" aria-live="polite">
-                <span class="chess-turn-banner-kicker">?�在輪到</span>
-                <span class="chess-turn-banner-main" id="chess-turn-main">?�方走�?</span>
-                <span class="chess-turn-banner-sub" id="chess-turn-sub">??/span>
+                <span class="chess-turn-banner-kicker">現在輪到</span>
+                <span class="chess-turn-banner-main" id="chess-turn-main">白方走棋</span>
+                <span class="chess-turn-banner-sub" id="chess-turn-sub">—</span>
               </div>
               <div class="chess-side-card chess-side-black" id="chess-side-black">
                 <span class="chess-side-card-label">黑方</span>
-                <strong class="chess-side-card-name">??/strong>
+                <strong class="chess-side-card-name">—</strong>
               </div>
             </div>
             <div class="chess-check-alert" id="chess-check-hint" hidden role="alert" aria-live="assertive">
-              <span class="chess-check-alert-x" aria-hidden="true">??/span>
+              <span class="chess-check-alert-x" aria-hidden="true">✕</span>
               <div class="chess-check-alert-copy">
-                <strong class="chess-check-alert-title" id="chess-check-title">你被將�?了�?</strong>
-                <p class="chess-check-alert-detail" id="chess-check-detail">?��??�險，快�??�?/p>
+                <strong class="chess-check-alert-title" id="chess-check-title">你被將軍了！</strong>
+                <p class="chess-check-alert-detail" id="chess-check-detail">王有危險，快解將！</p>
               </div>
             </div>
             <div class="chess-play-actions" hidden>
@@ -1175,26 +1182,26 @@
             </div>
           </div>
           <div class="chess-board-wrap">
-            <svg class="chess-svg" id="chess-board" role="img" aria-label="西�?棋�???></svg>
+            <svg class="chess-svg" id="chess-board" role="img" aria-label="西洋棋棋盤"></svg>
             <div class="chess-win-overlay" id="chess-win-overlay" hidden>
               <div class="chess-win-card">
-                <h2 class="chess-win-title" id="chess-win-title">?��?</h2>
+                <h2 class="chess-win-title" id="chess-win-title">獲勝</h2>
                 <p class="chess-win-detail" id="chess-win-detail"></p>
                 <div class="chess-win-actions">
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-dismiss">繼�?觀察�?局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-replay">?�玩一局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-home">?��???/button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-replay">再玩一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-win-home">回首頁</button>
                 </div>
               </div>
             </div>
             <div class="chess-promo-overlay" id="chess-promo-overlay" hidden>
               <div class="chess-promo-card">
-                <h3 class="chess-promo-title">?��??��??��?</h3>
+                <h3 class="chess-promo-title">兵要升變成？</h3>
                 <div class="chess-promo-choices" id="chess-promo-choices">
-                  <button type="button" class="btn btn-primary" data-promo="q">??/button>
-                  <button type="button" class="btn btn-secondary" data-promo="r">�?/button>
-                  <button type="button" class="btn btn-secondary" data-promo="b">�?/button>
-                  <button type="button" class="btn btn-secondary" data-promo="n">�?/button>
+                  <button type="button" class="btn btn-primary" data-promo="q">后</button>
+                  <button type="button" class="btn btn-secondary" data-promo="r">車</button>
+                  <button type="button" class="btn btn-secondary" data-promo="b">象</button>
+                  <button type="button" class="btn btn-secondary" data-promo="n">馬</button>
                 </div>
               </div>
             </div>
@@ -1202,35 +1209,35 @@
         </div>
       </section>
 
-      <!-- 西�?棋�?線�?對�? -->
-      <section id="view-chess-online-play" class="view view-hidden" aria-label="西�?棋�?上�?局">
+      <!-- 西洋棋：線上對局 -->
+      <section id="view-chess-online-play" class="view view-hidden" aria-label="西洋棋線上對局">
         <header class="quiz-header quiz-header-chess">
-          <button type="button" class="btn-text" id="btn-chess-online-play-back">??返�?</button>
-          <span class="quiz-subject">西�?�?· 線�?</span>
+          <button type="button" class="btn-text" id="btn-chess-online-play-back">← 返回</button>
+          <span class="quiz-subject">西洋棋 · 線上</span>
         </header>
         <div class="chess-play-body">
           <div class="chess-status-bar">
-            <p class="chess-room-tag" id="chess-online-room-tag">?��?</p>
+            <p class="chess-room-tag" id="chess-online-room-tag">房間</p>
             <div class="chess-turn-board">
               <div class="chess-side-card chess-side-white" id="chess-online-side-white">
-                <span class="chess-side-card-label">?�方</span>
-                <strong class="chess-side-card-name">??/strong>
+                <span class="chess-side-card-label">白方</span>
+                <strong class="chess-side-card-name">—</strong>
               </div>
               <div class="chess-turn-banner chess-turn-banner-white" id="chess-online-turn-banner" role="status" aria-live="polite">
-                <span class="chess-turn-banner-kicker">?�在輪到</span>
-                <span class="chess-turn-banner-main" id="chess-online-turn-main">?�方走�?</span>
-                <span class="chess-turn-banner-sub" id="chess-online-turn-sub">??/span>
+                <span class="chess-turn-banner-kicker">現在輪到</span>
+                <span class="chess-turn-banner-main" id="chess-online-turn-main">白方走棋</span>
+                <span class="chess-turn-banner-sub" id="chess-online-turn-sub">—</span>
               </div>
               <div class="chess-side-card chess-side-black" id="chess-online-side-black">
                 <span class="chess-side-card-label">黑方</span>
-                <strong class="chess-side-card-name">??/strong>
+                <strong class="chess-side-card-name">—</strong>
               </div>
             </div>
             <div class="chess-check-alert" id="chess-online-check-hint" hidden role="alert" aria-live="assertive">
-              <span class="chess-check-alert-x" aria-hidden="true">??/span>
+              <span class="chess-check-alert-x" aria-hidden="true">✕</span>
               <div class="chess-check-alert-copy">
-                <strong class="chess-check-alert-title" id="chess-online-check-title">你被將�?了�?</strong>
-                <p class="chess-check-alert-detail" id="chess-online-check-detail">?��??�險，快�??�?/p>
+                <strong class="chess-check-alert-title" id="chess-online-check-title">你被將軍了！</strong>
+                <p class="chess-check-alert-detail" id="chess-online-check-detail">王有危險，快解將！</p>
               </div>
             </div>
             <div class="chess-play-actions" hidden>
@@ -1238,26 +1245,26 @@
             </div>
           </div>
           <div class="chess-board-wrap">
-            <svg class="chess-svg" id="chess-online-board" role="img" aria-label="西�?棋�???></svg>
+            <svg class="chess-svg" id="chess-online-board" role="img" aria-label="西洋棋棋盤"></svg>
             <div class="chess-win-overlay" id="chess-online-win-overlay" hidden>
               <div class="chess-win-card">
-                <h2 class="chess-win-title" id="chess-online-win-title">?��?</h2>
+                <h2 class="chess-win-title" id="chess-online-win-title">獲勝</h2>
                 <p class="chess-win-detail" id="chess-online-win-detail"></p>
                 <div class="chess-win-actions">
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-dismiss">繼�?觀察�?局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-rematch">?��?一局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-home">?��???/button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-rematch">再來一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-chess-online-win-home">回首頁</button>
                 </div>
               </div>
             </div>
             <div class="chess-promo-overlay" id="chess-online-promo-overlay" hidden>
               <div class="chess-promo-card">
-                <h3 class="chess-promo-title">?��??��??��?</h3>
+                <h3 class="chess-promo-title">兵要升變成？</h3>
                 <div class="chess-promo-choices" id="chess-online-promo-choices">
-                  <button type="button" class="btn btn-primary" data-promo="q">??/button>
-                  <button type="button" class="btn btn-secondary" data-promo="r">�?/button>
-                  <button type="button" class="btn btn-secondary" data-promo="b">�?/button>
-                  <button type="button" class="btn btn-secondary" data-promo="n">�?/button>
+                  <button type="button" class="btn btn-primary" data-promo="q">后</button>
+                  <button type="button" class="btn btn-secondary" data-promo="r">車</button>
+                  <button type="button" class="btn btn-secondary" data-promo="b">象</button>
+                  <button type="button" class="btn btn-secondary" data-promo="n">馬</button>
                 </div>
               </div>
             </div>
@@ -1265,52 +1272,52 @@
         </div>
       </section>
 
-      <!-- ?��?：設�?-->
-      <section id="view-anqi-first" class="view view-hidden" aria-label="?��?設�?">
+      <!-- 暗棋：設定 -->
+      <section id="view-anqi-first" class="view view-hidden" aria-label="暗棋設定">
         <header class="quiz-header quiz-header-xiangqi">
-          <button type="button" class="btn-text" id="btn-anqi-first-back">??返�?</button>
-          <span class="quiz-subject">?��?</span>
+          <button type="button" class="btn-text" id="btn-anqi-first-back">← 返回</button>
+          <span class="quiz-subject">暗棋</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title" id="anqi-first-title">?��? · 誰�??��?</h2>
-          <p class="flip-first-meta" id="anqi-first-meta">4?8 · ?��?翻�?定色</p>
+          <h2 class="flip-first-title" id="anqi-first-title">暗棋 · 誰先手？</h2>
+          <p class="flip-first-meta" id="anqi-first-meta">4×8 · 先手翻棋定色</p>
           <div id="anqi-local-setup">
             <p class="flip-first-hint">
-              誰在練�?�?strong id="anqi-duo-active-name">??/strong>
+              誰在練習：<strong id="anqi-duo-active-name">—</strong>
             </p>
             <div class="home-zone">
               <p class="home-zone-title">對戰對象</p>
               <div class="lesson-chips" id="anqi-duo-opponent-chips"></div>
             </div>
             <div class="flip-players-vs" id="anqi-duo-matchup">
-              <span id="anqi-duo-matchup-a">??/span>
+              <span id="anqi-duo-matchup-a">—</span>
               <span class="flip-vs">VS</span>
-              <span id="anqi-duo-matchup-b">??/span>
+              <span id="anqi-duo-matchup-b">—</span>
             </div>
             <div class="flip-pick-btns" id="anqi-pick-btns"></div>
           </div>
           <div id="anqi-ai-setup" class="xiangqi-ai-setup" hidden>
             <p class="flip-first-hint">
-              練�??��?<strong id="anqi-ai-active-name">??/strong>
+              練習者：<strong id="anqi-ai-active-name">—</strong>
             </p>
             <div class="home-zone xiangqi-ai-zone">
-              <p class="home-zone-title">?�腦??��</p>
+              <p class="home-zone-title">電腦難度</p>
               <div class="xiangqi-ai-difficulty-cards" id="anqi-ai-difficulty-chips"></div>
-              <p class="xiangqi-ai-start-hint">涅�?使用?��? banqi WASM（MCTS）�??��?/p>
+              <p class="xiangqi-ai-start-hint">涅槃使用開源 banqi WASM（MCTS）引擎。</p>
             </div>
             <div class="home-zone xiangqi-ai-zone">
-              <p class="home-zone-title">?��?</p>
+              <p class="home-zone-title">先手</p>
               <div class="xiangqi-ai-start-btns" id="anqi-ai-start-btns"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ?��?：�?局 -->
-      <section id="view-anqi-play" class="view view-hidden" aria-label="?��?對�?">
+      <!-- 暗棋：對局 -->
+      <section id="view-anqi-play" class="view view-hidden" aria-label="暗棋對局">
         <header class="quiz-header quiz-header-xiangqi">
-          <button type="button" class="btn-text" id="btn-anqi-play-back">??返�?</button>
-          <span class="quiz-subject">?��?</span>
+          <button type="button" class="btn-text" id="btn-anqi-play-back">← 返回</button>
+          <span class="quiz-subject">暗棋</span>
         </header>
         <div class="anqi-play-body">
           <p class="anqi-play-meta" id="anqi-play-meta" hidden></p>
@@ -1318,34 +1325,34 @@
             <div class="xiangqi-turn-board">
               <div class="xiangqi-side-card xiangqi-side-red" id="anqi-side-red">
                 <span class="xiangqi-side-card-label">紅方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
               <div class="xiangqi-turn-banner xiangqi-turn-banner-red" id="anqi-turn-banner" role="status" aria-live="polite">
-                <span class="xiangqi-turn-banner-kicker">?�在輪到</span>
-                <span class="xiangqi-turn-banner-main" id="anqi-turn-main">??/span>
-                <span class="xiangqi-turn-banner-sub" id="anqi-turn-sub">??/span>
+                <span class="xiangqi-turn-banner-kicker">現在輪到</span>
+                <span class="xiangqi-turn-banner-main" id="anqi-turn-main">—</span>
+                <span class="xiangqi-turn-banner-sub" id="anqi-turn-sub">—</span>
               </div>
               <div class="xiangqi-side-card xiangqi-side-black" id="anqi-side-black">
                 <span class="xiangqi-side-card-label">黑方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
             </div>
           </div>
-          <p class="anqi-play-hint" id="anqi-play-hint">點�?棋翻??· ?��??�橫走�??��??��??��?距�??��?一子跳?��?· ?�架?��??��?</p>
+          <p class="anqi-play-hint" id="anqi-play-hint">點暗棋翻開 · 明子直橫走一格（炮／包遠距僅能隔一子跳吃）· 炮架可明可暗</p>
           <div class="anqi-action-toast-slot">
             <p class="anqi-action-toast" id="anqi-action-toast" aria-live="polite"></p>
           </div>
           <div class="anqi-board-wrap">
-            <svg class="anqi-svg" id="anqi-board" role="img" aria-label="?��?棋盤"></svg>
+            <svg class="anqi-svg" id="anqi-board" role="img" aria-label="暗棋棋盤"></svg>
             <div class="xiangqi-win-overlay" id="anqi-win-overlay" hidden>
               <div class="xiangqi-win-card">
-                <h2 class="xiangqi-win-title" id="anqi-win-title">?��?</h2>
+                <h2 class="xiangqi-win-title" id="anqi-win-title">獲勝</h2>
                 <p class="xiangqi-win-detail" id="anqi-win-detail"></p>
                 <div class="xiangqi-win-actions">
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-win-dismiss">繼�?觀察�?局</button>
-                  <button type="button" class="btn btn-primary btn-block" id="btn-anqi-win-replay">?�玩一局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-win-options">?��?局?��?</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-win-home">?��???/button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-primary btn-block" id="btn-anqi-win-replay">再玩一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-win-options">回首局選項</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-win-home">回首頁</button>
                 </div>
               </div>
             </div>
@@ -1353,40 +1360,40 @@
         </div>
       </section>
 
-      <!-- ?��?：�?上�?局 -->
-      <section id="view-anqi-online-play" class="view view-hidden" aria-label="?��?線�?對�?">
+      <!-- 暗棋：線上對局 -->
+      <section id="view-anqi-online-play" class="view view-hidden" aria-label="暗棋線上對局">
         <header class="quiz-header quiz-header-xiangqi">
-          <button type="button" class="btn-text" id="btn-anqi-online-play-back">??返�?</button>
-          <span class="quiz-subject">?��? · 線�?</span>
+          <button type="button" class="btn-text" id="btn-anqi-online-play-back">← 返回</button>
+          <span class="quiz-subject">暗棋 · 線上</span>
         </header>
         <div class="anqi-play-body">
           <div class="xiangqi-status-bar">
             <div class="xiangqi-turn-board">
               <div class="xiangqi-side-card xiangqi-side-red" id="anqi-online-side-red">
                 <span class="xiangqi-side-card-label">紅方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
               <div class="xiangqi-turn-banner xiangqi-turn-banner-red" id="anqi-online-turn-banner" role="status" aria-live="polite">
-                <span class="xiangqi-turn-banner-kicker">?�在輪到</span>
-                <span class="xiangqi-turn-banner-main" id="anqi-online-turn-main">??/span>
-                <span class="xiangqi-turn-banner-sub" id="anqi-online-turn-sub">??/span>
+                <span class="xiangqi-turn-banner-kicker">現在輪到</span>
+                <span class="xiangqi-turn-banner-main" id="anqi-online-turn-main">—</span>
+                <span class="xiangqi-turn-banner-sub" id="anqi-online-turn-sub">—</span>
               </div>
               <div class="xiangqi-side-card xiangqi-side-black" id="anqi-online-side-black">
                 <span class="xiangqi-side-card-label">黑方</span>
-                <strong class="xiangqi-side-card-name">??/strong>
+                <strong class="xiangqi-side-card-name">—</strong>
               </div>
             </div>
           </div>
-          <p class="anqi-play-hint">點�?棋翻??· ?��??�橫走�??��??��??��?距�??��?一子跳?��?</p>
+          <p class="anqi-play-hint">點暗棋翻開 · 明子直橫走一格（炮／包遠距僅能隔一子跳吃）</p>
           <div class="anqi-board-wrap">
-            <svg class="anqi-svg" id="anqi-online-board" role="img" aria-label="?��?棋盤"></svg>
+            <svg class="anqi-svg" id="anqi-online-board" role="img" aria-label="暗棋棋盤"></svg>
             <div class="xiangqi-win-overlay" id="anqi-online-win-overlay" hidden>
               <div class="xiangqi-win-card">
-                <h2 class="xiangqi-win-title" id="anqi-online-win-title">?��?</h2>
+                <h2 class="xiangqi-win-title" id="anqi-online-win-title">獲勝</h2>
                 <div class="xiangqi-win-actions">
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-online-win-dismiss">繼�?觀察�?局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-online-rematch">?��?一局</button>
-                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-online-home">?��???/button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-online-win-dismiss">繼續觀察棋局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-online-rematch">再來一局</button>
+                  <button type="button" class="btn btn-secondary btn-block" id="btn-anqi-online-home">回首頁</button>
                 </div>
               </div>
             </div>
@@ -1394,97 +1401,97 @@
         </div>
       </section>
 
-      <!-- 天空射�?：模式選??-->
-      <section id="view-sky-duo-menu" class="view view-hidden" aria-label="天空射�?">
+      <!-- 天空射擊：模式選單 -->
+      <section id="view-sky-duo-menu" class="view view-hidden" aria-label="天空射擊">
         <header class="quiz-header">
-          <button type="button" class="btn-text" id="btn-sky-duo-menu-back">??返�?</button>
-          <span class="quiz-subject">天空射�?</span>
+          <button type="button" class="btn-text" id="btn-sky-duo-menu-back">← 返回</button>
+          <span class="quiz-subject">天空射擊</span>
         </header>
         <div class="sky-duo-menu-body">
-          <h2 class="flip-first-title">?��?模�?</h2>
-          <p class="flip-first-hint">?��?練�?，�??�台?��?????��?（�??��?後�??��?</p>
-          <button type="button" class="btn btn-primary btn-block" id="btn-sky-duo-solo">?�卡1 · 海岸�?/button>
-          <button type="button" class="btn btn-primary btn-block" id="btn-sky-duo-solo2">?�卡2 · ?�山峽谷</button>
-          <button type="button" class="btn btn-primary btn-block" id="btn-sky-duo-solo3">?�卡3 · ?��?要�?</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-sky-duo-coop">?��??��??��?</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-sky-duo-versus" disabled title="之�??�放">?��?對戰?��?（�?後�??��?</button>
+          <h2 class="flip-first-title">選擇模式</h2>
+          <p class="flip-first-hint">單機練習，或兩台手機連線合作（對戰之後開放）</p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-sky-duo-solo">關卡1 · 海岸線</button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-sky-duo-solo2">關卡2 · 火山峽谷</button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-sky-duo-solo3">關卡3 · 冰封要塞</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-sky-duo-coop">雙機合作闖關</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-sky-duo-versus" disabled title="之後開放">雙機對戰搶分（之後開放）</button>
         </div>
       </section>
 
-      <!-- 天空?�人：�?上�???-->
-      <section id="view-sky-online-play" class="view view-hidden" aria-label="天空射�??�人">
+      <!-- 天空雙人：線上對戰 -->
+      <section id="view-sky-online-play" class="view view-hidden" aria-label="天空射擊雙人">
         <header class="quiz-header quiz-header-sky">
-          <button type="button" class="btn-text" id="btn-sky-online-play-back">???��?</button>
-          <span class="quiz-subject" id="sky-online-title">天空射�?</span>
+          <button type="button" class="btn-text" id="btn-sky-online-play-back">← 離開</button>
+          <span class="quiz-subject" id="sky-online-title">天空射擊</span>
           <span class="sky-online-room-tag" id="sky-online-room-tag"></span>
         </header>
         <div class="sky-online-play-body">
           <div class="sky-canvas-wrap" id="sky-canvas-wrap">
-            <canvas id="sky-online-canvas" aria-label="天空射�??�場"></canvas>
-            <div class="sky-dead-overlay" id="sky-dead-overlay" hidden>你已??��，�?待�??��?/div>
+            <canvas id="sky-online-canvas" aria-label="天空射擊戰場"></canvas>
+            <div class="sky-dead-overlay" id="sky-dead-overlay" hidden>你已陣亡，等待隊友…</div>
             <div class="sky-debug-status" id="sky-debug-status" aria-hidden="true"></div>
           </div>
           <div class="sky-online-controls">
-            <div class="sky-online-hud" id="sky-online-hud" role="toolbar" aria-label="?�鬥?��?">
-              <button type="button" class="sky-hud-btn sky-hud-active" id="btn-sky-hud-weapon">?��?�?/button>
-              <button type="button" class="sky-hud-btn" id="btn-sky-hud-shield" disabled>?�敵???0</button>
-              <button type="button" class="sky-hud-btn" id="btn-sky-hud-missile" disabled>導�?</button>
-              <button type="button" class="sky-hud-btn" id="btn-sky-hud-bomb" disabled>?��? ?0</button>
+            <div class="sky-online-hud" id="sky-online-hud" role="toolbar" aria-label="戰鬥操作">
+              <button type="button" class="sky-hud-btn sky-hud-active" id="btn-sky-hud-weapon">直射彈</button>
+              <button type="button" class="sky-hud-btn" id="btn-sky-hud-shield" disabled>無敵盾 ×0</button>
+              <button type="button" class="sky-hud-btn" id="btn-sky-hud-missile" disabled>導彈</button>
+              <button type="button" class="sky-hud-btn" id="btn-sky-hud-bomb" disabled>炸彈 ×0</button>
               <button type="button" class="sky-hud-btn" id="btn-sky-hud-ult" disabled>必殺 0/3</button>
             </div>
-            <p class="sky-online-hint">?��??�曳移�? · ?��?射�? · ??P/S/L/M ?�強??/p>
+            <p class="sky-online-hint">手指拖曳移動 · 自動射擊 · 撿 P/S/L/M 球強化</p>
           </div>
         </div>
       </section>
 
-      <!-- 天空?�人：�?�?-->
-      <section id="view-sky-online-result" class="view view-hidden" aria-label="天空射�?結�?">
+      <!-- 天空雙人：結算 -->
+      <section id="view-sky-online-result" class="view view-hidden" aria-label="天空射擊結算">
         <header class="app-header">
-          <h2 class="result-title" id="sky-online-result-title">完�?</h2>
+          <h2 class="result-title" id="sky-online-result-title">完成</h2>
           <p class="gomoku-result-detail" id="sky-online-result-detail"></p>
         </header>
         <footer class="result-footer">
-          <button type="button" class="btn btn-primary btn-block" id="btn-sky-online-rematch">?�戰一局</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-sky-online-result-home">?��???/button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-sky-online-rematch">再戰一局</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-sky-online-result-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- 九�?乘�?：選?��? -->
-      <section id="view-mul-pick" class="view view-hidden" aria-label="九�?乘�??�數�?>
+      <!-- 九九乘法：選數字 -->
+      <section id="view-mul-pick" class="view view-hidden" aria-label="九九乘法選數字">
         <header class="quiz-header quiz-header-mul">
-          <button type="button" class="btn-text" id="btn-mul-pick-back">??返�?</button>
-          <span class="quiz-subject">九�?乘�?</span>
+          <button type="button" class="btn-text" id="btn-mul-pick-back">← 返回</button>
+          <span class="quiz-subject">九九乘法</span>
         </header>
         <div class="mul-body">
-          <h2 class="mul-heading">今天?��??��??��?</h2>
-          <p class="mul-sub">點數字�?�?· 綠色�?��已�???/p>
+          <h2 class="mul-heading">今天想背哪一個？</h2>
+          <p class="mul-sub">點數字開始 · 綠色代表已過關</p>
           <div class="mul-digit-grid" id="mul-digit-grid"></div>
           <div class="mul-full-block">
-            <p class="mul-full-label">?�部測�?</p>
+            <p class="mul-full-label">全部測驗</p>
             <button type="button" class="mul-full-btn" id="btn-mul-full-quiz">
-              <span class="mul-full-title">2�? ?��?測�?</span>
-              <span class="mul-full-meta" id="mul-full-meta">9 �?· 三種空格</span>
+              <span class="mul-full-title">2～9 隨機測驗</span>
+              <span class="mul-full-meta" id="mul-full-meta">9 題 · 三種空格</span>
             </button>
           </div>
           <div class="mul-hard-block">
-            <p class="mul-hard-label">?��??�戰</p>
+            <p class="mul-hard-label">進階挑戰</p>
             <button type="button" class="mul-hard-btn" id="btn-mul-hard-full-quiz">
-              <span class="mul-hard-title">2�? ?��?測�?</span>
-              <span class="mul-hard-meta" id="mul-hard-meta">18 �?· ?�活�?· ?�數?�解</span>
+              <span class="mul-hard-title">2～9 進階測驗</span>
+              <span class="mul-hard-meta" id="mul-hard-meta">18 題 · 生活題 · 因數分解</span>
             </button>
 
             <div class="mul-flip-block setup-section-flip">
-              <p class="mul-flip-label">翻�?對戰</p>
-              <p class="mul-flip-sub">?�人?��? · 算�??��?�?· 不含 ?1</p>
+              <p class="mul-flip-label">翻牌對戰</p>
+              <p class="mul-flip-sub">雙人同機 · 算式配答案 · 不含 ×1</p>
               <div class="flip-players-vs mul-flip-players-vs" id="mul-flip-players-vs">
-                <span id="mul-flip-player-a-name">?��?</span>
+                <span id="mul-flip-player-a-name">思妘</span>
                 <span class="flip-vs">vs</span>
-                <span id="mul-flip-player-b-name">?�妤</span>
+                <span id="mul-flip-player-b-name">思妤</span>
               </div>
-              <div class="mul-flip-picker" role="group" aria-label="翻�?範�?">
-                <span class="label">範�?</span>
+              <div class="mul-flip-picker" role="group" aria-label="翻牌範圍">
+                <span class="label">範圍</span>
                 <div class="lesson-chips mul-flip-digit-chips" id="mul-flip-digit-chips">
-                  <button type="button" class="chip chip-active" data-mul-flip-digit="all">?�表</button>
+                  <button type="button" class="chip chip-active" data-mul-flip-digit="all">全表</button>
                   <button type="button" class="chip" data-mul-flip-digit="2">2</button>
                   <button type="button" class="chip" data-mul-flip-digit="3">3</button>
                   <button type="button" class="chip" data-mul-flip-digit="4">4</button>
@@ -1494,66 +1501,66 @@
                   <button type="button" class="chip" data-mul-flip-digit="8">8</button>
                   <button type="button" class="chip" data-mul-flip-digit="9">9</button>
                 </div>
-                <p class="mul-flip-scope-hint" id="mul-flip-scope-hint">?�表 2�? · 不含 ?1（共 64 題可?��?</p>
+                <p class="mul-flip-scope-hint" id="mul-flip-scope-hint">全表 2～9 · 不含 ×1（共 64 題可抽）</p>
               </div>
-              <div class="mul-flip-picker" role="group" aria-label="翻�?組數">
-                <span class="label">幾�?�?/span>
+              <div class="mul-flip-picker" role="group" aria-label="翻牌組數">
+                <span class="label">幾組？</span>
                 <div class="lesson-chips" id="mul-flip-pair-chips">
-                  <button type="button" class="chip chip-active" data-mul-flip-pairs="9">9 �?/button>
-                  <button type="button" class="chip" data-mul-flip-pairs="20">20 �?/button>
-                  <button type="button" class="chip" data-mul-flip-pairs="50">50 �?/button>
+                  <button type="button" class="chip chip-active" data-mul-flip-pairs="9">9 組</button>
+                  <button type="button" class="chip" data-mul-flip-pairs="20">20 組</button>
+                  <button type="button" class="chip" data-mul-flip-pairs="50">50 組</button>
                 </div>
-                <p class="mul-flip-size-hint">9 組�?18 �?· 20 組�?40 �?· 50 組�?100 張�??�捲?��?</p>
+                <p class="mul-flip-size-hint">9 組＝18 張 · 20 組＝40 張 · 50 組＝100 張（可捲動）</p>
               </div>
               <button type="button" class="card card-mul-flip" id="btn-start-mul-flip">
-                <span class="card-title">?��?翻�?</span>
-                <span class="card-desc">輪�?翻兩�?· ?��?算�??��?</span>
+                <span class="card-title">開始翻牌</span>
+                <span class="card-desc">輪流翻兩張 · 配對算式與積</span>
               </button>
             </div>
           </div>
           <button type="button" class="btn btn-secondary btn-block mul-race-duo-btn" id="btn-mul-race-duo">
-            ?��?對戰（兩?��?機�?
+            搶答對戰（兩台手機）
           </button>
         </div>
       </section>
 
-      <!-- 九�?翻�?：選?��? -->
-      <section id="view-mul-flip-first" class="view view-hidden" aria-label="九�?翻�?誰�?">
+      <!-- 九九翻牌：選先手 -->
+      <section id="view-mul-flip-first" class="view view-hidden" aria-label="九九翻牌誰先">
         <header class="quiz-header quiz-header-mul">
-          <button type="button" class="btn-text" id="btn-mul-flip-first-back">??返�?</button>
-          <span class="quiz-subject">九�?翻�?</span>
+          <button type="button" class="btn-text" id="btn-mul-flip-first-back">← 返回</button>
+          <span class="quiz-subject">九九翻牌</span>
         </header>
         <div class="flip-first-body">
-          <h2 class="flip-first-title">誰�?翻�?�?/h2>
+          <h2 class="flip-first-title">誰先翻牌？</h2>
           <p class="flip-first-meta">
-            <span id="mul-flip-first-pairs">9 �?/span> · <span id="mul-flip-first-scope">2�? ?�表</span>
+            <span id="mul-flip-first-pairs">9 組</span> · <span id="mul-flip-first-scope">2～9 全表</span>
           </p>
-          <p class="flip-first-hint">點�?下�??��?字�?你�?翻�?</p>
+          <p class="flip-first-hint">點一下你的名字，你先翻牌</p>
           <div class="flip-pick-btns" id="mul-flip-pick-btns"></div>
         </div>
       </section>
 
-      <!-- 九�?翻�?：�???-->
-      <section id="view-mul-flip-play" class="view view-hidden" aria-label="九�?翻�?對戰">
+      <!-- 九九翻牌：對戰 -->
+      <section id="view-mul-flip-play" class="view view-hidden" aria-label="九九翻牌對戰">
         <header class="quiz-header quiz-header-mul">
-          <button type="button" class="btn-text" id="btn-mul-flip-play-back">??返�?</button>
-          <span class="quiz-subject">九�?翻�?</span>
-          <span class="quiz-progress" id="mul-flip-progress-label">?��? 0 / 9</span>
+          <button type="button" class="btn-text" id="btn-mul-flip-play-back">← 返回</button>
+          <span class="quiz-subject">九九翻牌</span>
+          <span class="quiz-progress" id="mul-flip-progress-label">配對 0 / 9</span>
         </header>
         <div class="flip-play-body">
           <div class="flip-scorebar">
             <div class="flip-score-block" id="mul-flip-score-block-a">
-              <span class="flip-score-name" id="mul-flip-play-name-a">?��?</span>
-              <span class="flip-first-tag" id="mul-flip-first-tag-a">?��?</span>
+              <span class="flip-score-name" id="mul-flip-play-name-a">思妘</span>
+              <span class="flip-first-tag" id="mul-flip-first-tag-a">先開</span>
               <span class="flip-score-num" id="mul-flip-score-a">0</span>
             </div>
             <div class="flip-turn-wrap">
-              <p class="flip-turn-label" id="mul-flip-turn-label">輪到：思�?</p>
-              <p class="flip-click-label" id="mul-flip-click-label">點�? 0 �?/p>
+              <p class="flip-turn-label" id="mul-flip-turn-label">輪到：思妘</p>
+              <p class="flip-click-label" id="mul-flip-click-label">點擊 0 次</p>
             </div>
             <div class="flip-score-block" id="mul-flip-score-block-b">
-              <span class="flip-score-name" id="mul-flip-play-name-b">?�妤</span>
-              <span class="flip-first-tag" id="mul-flip-first-tag-b" hidden>?��?</span>
+              <span class="flip-score-name" id="mul-flip-play-name-b">思妤</span>
+              <span class="flip-first-tag" id="mul-flip-first-tag-b" hidden>先開</span>
               <span class="flip-score-num" id="mul-flip-score-b">0</span>
             </div>
           </div>
@@ -1561,90 +1568,90 @@
         </div>
       </section>
 
-      <!-- 九�?翻�?：�?�?-->
-      <section id="view-mul-flip-result" class="view view-hidden" aria-label="九�?翻�?結�?">
+      <!-- 九九翻牌：結算 -->
+      <section id="view-mul-flip-result" class="view view-hidden" aria-label="九九翻牌結算">
         <header class="app-header">
-          <h2 class="result-title" id="mul-flip-result-title">完�?</h2>
-          <p class="flip-result-scores mul-flip-result-scores" id="mul-flip-result-scores">?��? 0 �? ?�妤</p>
+          <h2 class="result-title" id="mul-flip-result-title">完成</h2>
+          <p class="flip-result-scores mul-flip-result-scores" id="mul-flip-result-scores">思妘 0 ：0 思妤</p>
           <p class="flip-result-clicks" id="mul-flip-result-clicks"></p>
           <p class="flip-result-detail" id="mul-flip-result-detail"></p>
         </header>
         <footer class="result-footer">
-          <button type="button" class="btn btn-primary btn-block btn-primary-mul" id="btn-mul-flip-replay">?�玩一局</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-flip-home">?��?九�?�?/button>
+          <button type="button" class="btn btn-primary btn-block btn-primary-mul" id="btn-mul-flip-replay">再玩一局</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-flip-home">回九九乘法</button>
         </footer>
       </section>
 
-      <!-- 九�?乘�?：�?�?-->
-      <section id="view-mul-learn" class="view view-hidden" aria-label="九�?乘�??�誦">
+      <!-- 九九乘法：背誦 -->
+      <section id="view-mul-learn" class="view view-hidden" aria-label="九九乘法背誦">
         <header class="quiz-header quiz-header-mul">
-          <button type="button" class="btn-text" id="btn-mul-learn-back">??返�?</button>
-          <span class="quiz-subject" id="mul-learn-title">??3</span>
+          <button type="button" class="btn-text" id="btn-mul-learn-back">← 返回</button>
+          <span class="quiz-subject" id="mul-learn-title">背 3</span>
         </header>
         <div class="mul-body">
-          <p class="mul-sub" id="mul-learn-sub">3 ? 1 �?3 ? 9</p>
+          <p class="mul-sub" id="mul-learn-sub">3 × 1 ～ 3 × 9</p>
           <div class="mul-learn-row" id="mul-learn-row"></div>
           <div id="mul-learn-recite-panel" class="mul-learn-panel">
-            <p class="mul-recite-line" id="mul-recite-line">3 ? 1 �?3</p>
+            <p class="mul-recite-line" id="mul-recite-line">3 × 1 ＝ 3</p>
             <p class="mul-life-story" id="mul-learn-life-story" hidden></p>
             <button type="button" class="btn btn-secondary btn-block" id="btn-mul-recite">從頭跟念</button>
           </div>
           <div id="mul-learn-reveal-panel" class="mul-learn-panel" hidden>
             <p class="mul-life-story" id="mul-reveal-life-story" hidden></p>
-            <p class="mul-reveal-equation" id="mul-reveal-equation">3 ? 1 �???/p>
-            <p class="mul-reveal-hint" id="mul-reveal-hint">?�出�?��答�?</p>
+            <p class="mul-reveal-equation" id="mul-reveal-equation">3 × 1 ＝ □</p>
+            <p class="mul-reveal-hint" id="mul-reveal-hint">選出正確答案</p>
             <div class="mul-choice-pad" id="mul-reveal-choice-pad"></div>
-            <button type="button" class="btn btn-text btn-block" id="btn-mul-reveal-next">?��? · 下�???/button>
+            <button type="button" class="btn btn-text btn-block" id="btn-mul-reveal-next">略過 · 下一句</button>
           </div>
           <div class="mul-learn-actions">
-            <button type="button" class="btn btn-secondary" id="btn-mul-reveal-mode">?��?案練�?/button>
-            <button type="button" class="btn btn-primary btn-primary-mul" id="btn-mul-to-quiz">?��?測�?</button>
+            <button type="button" class="btn btn-secondary" id="btn-mul-reveal-mode">遮答案練習</button>
+            <button type="button" class="btn btn-primary btn-primary-mul" id="btn-mul-to-quiz">開始測驗</button>
           </div>
-          <button type="button" class="btn btn-secondary btn-block mul-hard-quiz-btn" id="btn-mul-hard-quiz">?��?測�?（�?活�? · ?�數?�解�?/button>
-          <button type="button" class="btn btn-text btn-block" id="btn-mul-skip-learn">?�已經�?了�??�接?�這�???/button>
+          <button type="button" class="btn btn-secondary btn-block mul-hard-quiz-btn" id="btn-mul-hard-quiz">進階測驗（生活題 · 因數分解）</button>
+          <button type="button" class="btn btn-text btn-block" id="btn-mul-skip-learn">我已經會了，直接考這一數</button>
         </div>
       </section>
 
-      <!-- 九�?乘�?：測�?-->
-      <section id="view-mul-quiz" class="view view-hidden" aria-label="九�?乘�?測�?">
+      <!-- 九九乘法：測驗 -->
+      <section id="view-mul-quiz" class="view view-hidden" aria-label="九九乘法測驗">
         <header class="quiz-header quiz-header-mul">
-          <button type="button" class="btn-text" id="btn-mul-quiz-back">??返�?</button>
-          <span class="quiz-subject" id="mul-quiz-title">??3 · 測�?</span>
-          <span class="quiz-progress" id="mul-quiz-progress">�?1 / 9 �?/span>
+          <button type="button" class="btn-text" id="btn-mul-quiz-back">← 返回</button>
+          <span class="quiz-subject" id="mul-quiz-title">背 3 · 測驗</span>
+          <span class="quiz-progress" id="mul-quiz-progress">第 1 / 9 題</span>
         </header>
         <div class="mul-body mul-quiz-body">
           <p class="mul-life-story mul-quiz-life" id="mul-quiz-life-story" hidden></p>
-          <p class="mul-pair-badge" id="mul-pair-badge" hidden>多選�?· ?��??�部組�?</p>
-          <p class="mul-prompt" id="mul-prompt">3 ? ??�?21</p>
-          <p class="mul-quiz-hint" id="mul-quiz-hint">?�出�?��答�?</p>
+          <p class="mul-pair-badge" id="mul-pair-badge" hidden>多選題 · 找齊全部組合</p>
+          <p class="mul-prompt" id="mul-prompt">3 × □ ＝ 21</p>
+          <p class="mul-quiz-hint" id="mul-quiz-hint">選出正確答案</p>
           <div class="mul-answer-area">
             <div class="mul-factor-pad" id="mul-factor-pad" hidden></div>
             <div class="mul-choice-pad" id="mul-choice-pad" hidden></div>
-            <button type="button" class="btn btn-text mul-pair-clear" id="btn-mul-pair-clear" hidden>清除?�選</button>
+            <button type="button" class="btn btn-text mul-pair-clear" id="btn-mul-pair-clear" hidden>清除重選</button>
           </div>
         </div>
       </section>
 
-      <!-- 九�?乘�?：�?�?-->
-      <section id="view-mul-result" class="view view-hidden" aria-label="九�?乘�?結�?">
+      <!-- 九九乘法：結算 -->
+      <section id="view-mul-result" class="view view-hidden" aria-label="九九乘法結算">
         <header class="app-header">
-          <h2 class="result-title" id="mul-result-title">完�?</h2>
+          <h2 class="result-title" id="mul-result-title">完成</h2>
           <p class="mul-result-score" id="mul-result-score">0 / 9</p>
           <p class="mul-result-sub" id="mul-result-sub"></p>
         </header>
         <ul class="mul-wrong-list" id="mul-wrong-list" hidden></ul>
         <footer class="result-footer">
-          <button type="button" class="btn btn-primary btn-block btn-primary-mul" id="btn-mul-retry-wrong" hidden>?��??�練</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-try-again">?�考�?�?/button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-next-digit">?��??��??��?</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-home">?��???/button>
+          <button type="button" class="btn btn-primary btn-block btn-primary-mul" id="btn-mul-retry-wrong" hidden>錯題再練</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-try-again">再考一次</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-next-digit">換背其他數字</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-mul-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- ?�績 -->
-      <section id="view-result" class="view view-hidden" aria-label="?�績">
+      <!-- 成績 -->
+      <section id="view-result" class="view view-hidden" aria-label="成績">
         <header class="app-header">
-          <h2 class="result-title" id="result-title">完�?</h2>
+          <h2 class="result-title" id="result-title">完成</h2>
         </header>
 
         <div class="score-block">
@@ -1662,64 +1669,69 @@
             id="btn-retry-wrong"
             hidden
           >
-            ?�考本輪錯�?          </button>
-          <button type="button" class="btn btn-secondary" id="btn-retry">?�練一�?/button>
-          <button type="button" class="btn btn-primary" id="btn-home">?��???/button>
+            再考本輪錯題
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-retry">再練一次</button>
+          <button type="button" class="btn btn-primary" id="btn-home">回首頁</button>
         </footer>
       </section>
 
-      <!-- 使用?�設�?-->
-      <section id="view-parent" class="view view-hidden" aria-label="使用?�設�?>
+      <!-- 使用者設定 -->
+      <section id="view-parent" class="view view-hidden" aria-label="使用者設定">
         <header class="quiz-header">
-          <button type="button" class="btn-text" id="btn-parent-back">??返�?</button>
-          <span class="quiz-subject">使用?�設�?/span>
+          <button type="button" class="btn-text" id="btn-parent-back">← 返回</button>
+          <span class="quiz-subject">使用者設定</span>
         </header>
 
         <div class="parent-body">
           <div id="parent-names" class="parent-names">
-          <h3 class="parent-heading">使用?��?�?/h3>
-          <p class="parent-note parent-names-hint">?�新增�?位�?首�??�誰?�練習」�??�人對戰?�用?�這�??��?</p>
+          <h3 class="parent-heading">使用者名稱</h3>
+          <p class="parent-note parent-names-hint">可新增多位；首頁「誰在練習」與雙人對戰會用到這些名字</p>
           <div id="parent-name-list" class="parent-name-list"></div>
           <button type="button" class="btn btn-secondary btn-block" id="btn-add-child-name">
-            �??��?使用??          </button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-save-names">
-            ?��??��?
+            ＋ 新增使用者
           </button>
-          <p class="parent-note" id="name-save-msg" hidden>已儲�?/p>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-save-names">
+            儲存名字
+          </button>
+          <p class="parent-note" id="name-save-msg" hidden>已儲存</p>
         </div>
 
           <div id="parent-panel" class="parent-panel">
             <button type="button" class="btn btn-secondary btn-block" id="btn-reload-sheet">
-              ?�新載入試�?�?            </button>
-            <h3 class="parent-heading">?�近�?�?/h3>
+              重新載入試算表
+            </button>
+            <h3 class="parent-heading">最近成績</h3>
             <ul class="score-history-list" id="score-history-list"></ul>
             <p class="parent-note" id="score-history-hint"></p>
 
-            <h3 class="parent-heading">待確�?<span id="pending-count">0</span></h3>
+            <h3 class="parent-heading">待確認 <span id="pending-count">0</span></h3>
             <div id="pending-list" class="pending-list"></div>
 
             <h3 class="parent-heading">
-              ?��???              <span id="parent-mistake-count">0</span>
+              錯題本
+              <span id="parent-mistake-count">0</span>
             </h3>
-            <p class="parent-note">存在此�?機瀏覽?��??��?機�??��?�?/p>
+            <p class="parent-note">存在此手機瀏覽器，換手機不會同步</p>
             <ul class="mistake-parent-list" id="parent-mistake-list"></ul>
             <div class="parent-mistake-actions">
               <button type="button" class="btn btn-secondary" id="btn-clear-zh-mistakes">
-                清空?��??��?
+                清空國語錯題
               </button>
               <button type="button" class="btn btn-secondary" id="btn-clear-en-mistakes">
-                清空?��??��?
+                清空英語錯題
               </button>
             </div>
             <p class="parent-note">
-              設�?試�?表�?編輯 <code>js/config.js</code>，詳�?README??            </p>
+              設定試算表請編輯 <code>js/config.js</code>，詳見 README。
+            </p>
           </div>
         </div>
       </section>
 
     </div>
 
-    <!-- ?�罩?�在 app 外�??��??��?首�??��? -->
+    <!-- 遮罩放在 app 外，避免擋住首頁按鈕 -->
     <div id="feedback-overlay" class="feedback-overlay" hidden aria-hidden="true">
       <div class="feedback-card" id="feedback-card">
         <p class="feedback-text" id="feedback-text"></p>
@@ -1727,13 +1739,13 @@
         <div class="feedback-actions" id="feedback-actions"></div>
         <div id="feedback-homophone" class="feedback-homophone" hidden>
           <p class="feedback-homophone-zhuyin" id="feedback-homophone-zhuyin"></p>
-          <div class="homophone-choices" id="homophone-choices" role="group" aria-label="?�音字選??></div>
+          <div class="homophone-choices" id="homophone-choices" role="group" aria-label="同音字選項"></div>
         </div>
         <div id="feedback-parent" class="feedback-parent" hidden>
-          <p class="feedback-parent-title">請判定這�?</p>
+          <p class="feedback-parent-title">請判定這題</p>
           <p class="feedback-ocr-line" id="feedback-ocr-line"></p>
           <div class="feedback-parent-btns">
-            <button type="button" class="btn btn-ok" id="feedback-mark-correct">算�?</button>
+            <button type="button" class="btn btn-ok" id="feedback-mark-correct">算對</button>
             <button type="button" class="btn btn-no" id="feedback-mark-wrong">算錯</button>
           </div>
         </div>
@@ -1754,12 +1766,12 @@
       import("./js/app.js?v=app-v39.30").catch((e) => {
         console.error(e);
         showLoadError(
-          `程�?載入失�?�?{e.message || e}?��??��??��??��?；若仍無?��??�瀏覽?�設定�??�此網�?快�??�`,
+          `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
         );
       });
       setTimeout(() => {
         if (!window.__kidQuizReady) {
-          showLoadError("程�?尚未?��??��??��??��??��?；若仍無?��?清除?�覽?�快?��?);
+          showLoadError("程式尚未啟動。請關閉分頁重開；若仍無效請清除瀏覽器快取。");
         }
       }, 5000);
     </script>
