@@ -5,7 +5,7 @@ import {
   renderXiangqiBoardSvg,
   renderXiangqiStatusBar,
   resetXiangqiBoardSvg,
-} from "./xiangqi-board-ui.js?v=xiangqi-v12";
+} from "./xiangqi-board-ui.js?v=xiangqi-v13";
 import {
   applyMove,
   cloneBoard,
@@ -14,13 +14,13 @@ import {
   getLegalMovesFrom,
   shouldFlipBoardForSide,
   sideOfPiece,
-} from "./xiangqi-core.js?v=xiangqi-v12";
-import { buildCheckAlert, getResolveCheckSquares } from "./xiangqi-check-ui.js?v=xiangqi-v12";
+} from "./xiangqi-core.js?v=xiangqi-v13";
+import { buildCheckAlert, getResolveCheckSquares } from "./xiangqi-check-ui.js?v=xiangqi-v13";
 import {
   isXiangqiReplayRunning,
   startXiangqiReplay,
   stopXiangqiReplay,
-} from "./xiangqi-replay.js?v=xiangqi-v12";
+} from "./xiangqi-replay.js?v=xiangqi-v13";
 import { getChildName, otherDuoPlayer } from "./children.js";
 import { getSelectedChild } from "./store.js";
 import {
@@ -30,6 +30,7 @@ import {
   renderDuoPickButtons,
 } from "./duo-pick.js";
 import { AI_PLAYER_ID, GRANDMASTER_LEVEL, NIRVANA_LEVEL, requestXiangqiAiMove, terminateXiangqiAiWorker, pikafishLoadState } from "./xiangqi-ai.js";
+import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v1";
 
 /** @typedef {"local"|"ai"} SetupMode */
 
@@ -472,6 +473,12 @@ function renderPlayHeader(checkAlert = buildCurrentCheckAlert()) {
     checkDetail: checkAlert?.detail || "",
   });
   syncResignButton();
+  let pieceHint = "";
+  if (game.selected && !game.over && !headerStatusText) {
+    const [sr, sc] = game.selected;
+    pieceHint = getPieceMoveHint("xiangqi", game.board[sr][sc]);
+  }
+  setRulesPlayHint($("#xiangqi-piece-hint"), pieceHint);
 }
 
 function showWinOverlay() {
@@ -665,6 +672,7 @@ function bindXiangqiEvents() {
   $("#btn-xiangqi-resign")?.addEventListener("click", () => {
     resignGame();
   });
+  bindRulesGuideButtons("xiangqi", ["#btn-xiangqi-rules", "#btn-xiangqi-first-rules"]);
   $("#btn-xiangqi-win-dismiss")?.addEventListener("click", () => {
     dismissWinOverlay();
   });

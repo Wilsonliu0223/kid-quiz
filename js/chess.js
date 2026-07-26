@@ -4,7 +4,7 @@ import {
   renderChessBoardSvg,
   renderChessStatusBar,
   resetChessBoardSvg,
-} from "./chess-board-ui.js?v=chess-v4";
+} from "./chess-board-ui.js?v=chess-v5";
 import {
   applyMove,
   clonePosition,
@@ -15,7 +15,7 @@ import {
   isInCheck,
   shouldFlipBoardForSide,
   sideOfPiece,
-} from "./chess-core.js?v=chess-v4";
+} from "./chess-core.js?v=chess-v5";
 import { getChildName, otherDuoPlayer } from "./children.js";
 import { getSelectedChild } from "./store.js";
 import {
@@ -29,7 +29,8 @@ import {
   GRANDMASTER_LEVEL,
   requestChessAiMove,
   terminateChessAiWorker,
-} from "./chess-ai.js?v=chess-v4";
+} from "./chess-ai.js?v=chess-v5";
+import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v1";
 
 /** @typedef {"local"|"ai"} SetupMode */
 
@@ -340,6 +341,12 @@ function renderPlayHeader() {
     checkDetail: inCheck ? "王有危險，快解將！" : "",
   });
   syncResignButton();
+  let pieceHint = "";
+  if (game.selected && !game.over) {
+    const [sr, sc] = game.selected;
+    pieceHint = getPieceMoveHint("chess", game.position.board[sr][sc]);
+  }
+  setRulesPlayHint($("#chess-piece-hint"), pieceHint);
 }
 
 function getWinTexts() {
@@ -530,6 +537,7 @@ function bindChessEvents() {
     }
   });
   $("#btn-chess-resign")?.addEventListener("click", () => resignGame());
+  bindRulesGuideButtons("chess", ["#btn-chess-rules", "#btn-chess-first-rules"]);
   $("#btn-chess-win-dismiss")?.addEventListener("click", () => dismissWinOverlay());
   $("#btn-chess-win-replay")?.addEventListener("click", () => {
     if (!game) return;

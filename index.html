@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v39.32" />
+    <link rel="stylesheet" href="css/app.css?v=app-v39.33" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -62,7 +62,7 @@
         <header class="app-header">
           <div class="app-title-row">
             <h1 class="app-title" id="home-title">家裡練習</h1>
-            <span class="app-version" id="app-version" aria-label="版本">v39.32</span>
+            <span class="app-version" id="app-version" aria-label="版本">v39.33</span>
           </div>
           <p class="app-subtitle">長按標題可新增／管理使用者</p>
         </header>
@@ -967,6 +967,9 @@
         <div class="flip-first-body">
           <h2 class="flip-first-title" id="xiangqi-first-title">誰執紅（先手）？</h2>
           <p class="flip-first-meta" id="xiangqi-first-meta">9×10 · 紅先 · 台灣象棋規則</p>
+          <div class="xiangqi-first-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-first-rules">規則小教室</button>
+          </div>
           <div id="xiangqi-local-setup">
             <p class="flip-first-hint">
               誰在練習：<strong id="xiangqi-duo-active-name">思妘</strong>
@@ -1004,6 +1007,7 @@
         <header class="quiz-header quiz-header-xiangqi">
           <button type="button" class="btn-text" id="btn-xiangqi-play-back">← 返回</button>
           <span class="quiz-subject">象棋</span>
+          <button type="button" class="btn-text btn-rules-guide" id="btn-xiangqi-rules">規則</button>
         </header>
         <div class="xiangqi-play-body">
           <div class="xiangqi-status-bar">
@@ -1032,6 +1036,7 @@
             <div class="xiangqi-play-actions" hidden>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-resign" hidden>認輸</button>
             </div>
+            <p class="rules-play-hint" id="xiangqi-piece-hint" hidden></p>
           </div>
           <div class="xiangqi-board-wrap">
             <svg class="xiangqi-svg" id="xiangqi-board" role="img" aria-label="象棋棋盤"></svg>
@@ -1118,6 +1123,9 @@
         <div class="flip-first-body">
           <h2 class="flip-first-title" id="chess-first-title">誰執白（先手）？</h2>
           <p class="flip-first-meta" id="chess-first-meta">8×8 · 白先 · 國際象棋規則</p>
+          <div class="chess-first-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-first-rules">規則小教室</button>
+          </div>
           <div id="chess-local-setup">
             <p class="flip-first-hint">
               誰在練習：<strong id="chess-duo-active-name">思妘</strong>
@@ -1152,6 +1160,7 @@
         <header class="quiz-header quiz-header-chess">
           <button type="button" class="btn-text" id="btn-chess-play-back">← 返回</button>
           <span class="quiz-subject">西洋棋</span>
+          <button type="button" class="btn-text btn-rules-guide" id="btn-chess-rules">規則</button>
         </header>
         <div class="chess-play-body">
           <div class="chess-status-bar">
@@ -1180,6 +1189,7 @@
             <div class="chess-play-actions" hidden>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-resign" hidden>認輸</button>
             </div>
+            <p class="rules-play-hint" id="chess-piece-hint" hidden></p>
           </div>
           <div class="chess-board-wrap">
             <svg class="chess-svg" id="chess-board" role="img" aria-label="西洋棋棋盤"></svg>
@@ -1763,7 +1773,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v39.32").catch((e) => {
+      import("./js/app.js?v=app-v39.33").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -5338,3 +5338,214 @@ body {
 .chess-ai-start-btns .btn {
   text-align: center;
 }
+
+/* ===== Rules guide (xiangqi + chess) ===== */
+.rules-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(20, 28, 24, 0.45);
+}
+.rules-guide-overlay[hidden] { display: none; }
+.rules-guide-card {
+  width: min(100%, 440px);
+  max-height: min(88vh, 720px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px 18px 14px 14px;
+  background: #fffef9;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.28);
+  overflow: hidden;
+}
+.rules-guide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 8px;
+}
+.rules-guide-title {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #24352e;
+}
+.rules-guide-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 0 12px 10px;
+}
+.rules-guide-tab {
+  border: 2px solid #d5ddd7;
+  border-radius: 999px;
+  background: #f4f7f4;
+  padding: 8px 10px;
+  font-weight: 700;
+  color: #4a5a52;
+  cursor: pointer;
+}
+.rules-guide-tab.is-active {
+  border-color: #2f5d4a;
+  background: #e5f0ea;
+  color: #1e3d32;
+}
+.rules-guide-body {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 14px 18px;
+  -webkit-overflow-scrolling: touch;
+}
+.rules-how-card {
+  margin: 0 0 12px;
+  padding: 12px 12px 10px;
+  border-radius: 14px;
+  background: #f3f7f4;
+  border: 1px solid #d5e2da;
+}
+.rules-how-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #1e3d32;
+}
+.rules-how-card ul {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+.rules-how-card li {
+  margin: 4px 0;
+  line-height: 1.45;
+  color: #33443c;
+  font-size: 0.92rem;
+}
+.rules-tip {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff6df;
+  color: #6a5318;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.rules-piece-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.rules-piece-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 2px solid #d5ddd7;
+  background: #fff;
+  cursor: pointer;
+}
+.rules-piece-chip.is-selected {
+  border-color: #2f5d4a;
+  background: #e8f3ed;
+  box-shadow: inset 0 0 0 1px rgba(47,93,74,0.18);
+}
+.rules-piece-badge {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.rules-piece-badge-lg { font-size: 2rem; }
+.rules-piece-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #33443c;
+  text-align: center;
+}
+.rules-piece-detail {
+  padding: 12px;
+  border-radius: 14px;
+  background: #f7faf7;
+  border: 1px solid #d5e2da;
+}
+.rules-piece-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rules-piece-detail-head h3 { margin: 0; font-size: 1.05rem; }
+.rules-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--rules-cols), minmax(0, 1fr));
+  gap: 3px;
+  width: min(100%, 260px);
+  margin: 0 auto 12px;
+  aspect-ratio: var(--rules-cols) / var(--rules-rows);
+  padding: 6px;
+  border-radius: 10px;
+  background: #8b5a3c;
+}
+.rules-mini-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: #f0d9b5;
+  min-height: 0;
+}
+.rules-mini-cell.is-dark { background: #b58863; }
+.rules-mini-cell.is-from { box-shadow: inset 0 0 0 2px #2f5d4a; }
+.rules-mini-piece {
+  font-size: clamp(0.75rem, 3.4vw, 1rem);
+  font-weight: 800;
+  color: #3a2412;
+  line-height: 1;
+}
+.rules-mini-dot {
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: rgba(47, 93, 74, 0.7);
+}
+.rules-mini-block, .rules-mini-x {
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.rules-mini-block { color: #6b3a18; }
+.rules-mini-x { color: #a32018; }
+.rules-how-line, .rules-limit-line {
+  margin: 6px 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #33443c;
+}
+.rules-legend {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  color: #6a7a72;
+}
+.quiz-header .btn-rules-guide {
+  margin-left: auto;
+  margin-right: 4px;
+}
+.rules-play-hint {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #eef5f0;
+  border: 1px dashed #9bb7a8;
+  color: #2a463a;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  text-align: center;
+}
+.rules-play-hint[hidden] { display: none; }
+.xiangqi-first-actions,
+.chess-first-actions {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 12px;
+}

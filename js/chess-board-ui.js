@@ -3,7 +3,7 @@ import {
   PIECE_NAME_ZH,
   ROWS,
   sideOfPiece,
-} from "./chess-core.js?v=chess-v4";
+} from "./chess-core.js?v=chess-v5";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";

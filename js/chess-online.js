@@ -9,13 +9,13 @@ import {
   positionToFen,
   shouldFlipBoardForSide,
   sideOfPiece,
-} from "./chess-core.js?v=chess-v4";
+} from "./chess-core.js?v=chess-v5";
 import {
   ensureChessBoardSvg,
   renderChessBoardSvg,
   renderChessStatusBar,
   resetChessBoardSvg,
-} from "./chess-board-ui.js?v=chess-v4";
+} from "./chess-board-ui.js?v=chess-v5";
 import {
   registerOnlineGame,
   getOnlineContext,
