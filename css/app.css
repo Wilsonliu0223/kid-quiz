@@ -4457,6 +4457,16 @@ body {
   border: 1px solid #d4b896;
 }
 
+.xiangqi-play-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.xiangqi-play-actions[hidden] {
+  display: none;
+}
+
 .xiangqi-room-tag {
   margin: 0;
   text-align: center;

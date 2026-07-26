@@ -115,7 +115,15 @@ export function applyBoardViewFlip(svg, flipped) {
  */
 export function ensureXiangqiBoardSvg(svg, onPointClick) {
   if (!svg) return null;
-  if (svg.dataset.built === "1") return svg;
+  // 再玩一局若只清子節點卻留下 data-built，會變成空盤；此處自癒
+  if (svg.dataset.built === "1" && svg.querySelector(".xiangqi-point")) return svg;
+  if (svg.dataset.built === "1") {
+    const fresh = svg.cloneNode(false);
+    delete fresh.dataset.built;
+    delete fresh.dataset.flipped;
+    svg.replaceWith(fresh);
+    svg = fresh;
+  }
 
   svg.setAttribute("viewBox", "0 0 8 9");
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");

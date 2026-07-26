@@ -4,7 +4,8 @@ import {
   ensureXiangqiBoardSvg,
   renderXiangqiBoardSvg,
   renderXiangqiStatusBar,
-} from "./xiangqi-board-ui.js";
+  resetXiangqiBoardSvg,
+} from "./xiangqi-board-ui.js?v=xiangqi-v12";
 import {
   applyMove,
   cloneBoard,
@@ -13,13 +14,13 @@ import {
   getLegalMovesFrom,
   shouldFlipBoardForSide,
   sideOfPiece,
-} from "./xiangqi-core.js";
-import { buildCheckAlert, getResolveCheckSquares } from "./xiangqi-check-ui.js";
+} from "./xiangqi-core.js?v=xiangqi-v12";
+import { buildCheckAlert, getResolveCheckSquares } from "./xiangqi-check-ui.js?v=xiangqi-v12";
 import {
   isXiangqiReplayRunning,
   startXiangqiReplay,
   stopXiangqiReplay,
-} from "./xiangqi-replay.js";
+} from "./xiangqi-replay.js?v=xiangqi-v12";
 import { getChildName, otherDuoPlayer } from "./children.js";
 import { getSelectedChild } from "./store.js";
 import {
@@ -246,11 +247,52 @@ function beginGame(opts) {
 function resetBoardDom() {
   const svg = $("#xiangqi-board");
   if (svg) {
-    svg.replaceWith(svg.cloneNode(false));
+    // cloneNode(false) 會清掉子節點與舊事件，但保留 data-built；必須一併重設
+    const next = svg.cloneNode(false);
+    resetXiangqiBoardSvg(next);
+    svg.replaceWith(next);
   }
   $("#xiangqi-win-overlay")?.setAttribute("hidden", "");
+  syncResignButton();
   syncReplayDock();
   deps?.showView("xiangqiPlay");
+}
+
+function syncResignButton() {
+  const btn = $("#btn-xiangqi-resign");
+  const wrap = btn?.closest(".xiangqi-play-actions");
+  if (!btn) return;
+  const show = !!game && !game.over;
+  btn.hidden = !show;
+  if (wrap) wrap.hidden = !show;
+  if (!show) return;
+  btn.disabled = false;
+  if (game.mode === "ai") {
+    btn.textContent = "認輸";
+  } else {
+    btn.textContent = `${playerName(sidePlayerId(game.turn))} 認輸`;
+  }
+}
+
+function resignGame() {
+  if (!game || game.over) return;
+  const resignSide =
+    game.mode === "ai" ? playerSide(game.humanPlayerId) : game.turn;
+  if (!resignSide) return;
+  const resignName =
+    game.mode === "ai" ? "你" : playerName(sidePlayerId(resignSide));
+  if (!confirm(`${resignName}確定認輸？`)) return;
+
+  aiMoveToken += 1;
+  aiMovePending = false;
+  stopXiangqiReplay();
+  headerStatusText = "";
+  game.over = true;
+  game.winner = resignSide === "red" ? "black" : "red";
+  game.endReason = `${sideName(resignSide)}認輸`;
+  game.selected = null;
+  renderBoard();
+  showWinOverlay();
 }
 
 function ensureBoardSvg() {
@@ -429,6 +471,7 @@ function renderPlayHeader(checkAlert = buildCurrentCheckAlert()) {
     checkTitle: checkAlert?.title || "",
     checkDetail: checkAlert?.detail || "",
   });
+  syncResignButton();
 }
 
 function showWinOverlay() {
@@ -615,8 +658,12 @@ function bindXiangqiEvents() {
       terminateXiangqiAiWorker();
       stopXiangqiReplay();
       game = null;
+      syncResignButton();
       deps?.showView("home");
     }
+  });
+  $("#btn-xiangqi-resign")?.addEventListener("click", () => {
+    resignGame();
   });
   $("#btn-xiangqi-win-dismiss")?.addEventListener("click", () => {
     dismissWinOverlay();

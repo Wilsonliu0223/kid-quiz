@@ -6,13 +6,15 @@ import {
   gameResult,
   getLegalMovesFrom,
   shouldFlipBoardForSide,
-} from "./xiangqi-core.js";
+  sideOfPiece,
+} from "./xiangqi-core.js?v=xiangqi-v12";
 import {
   ensureXiangqiBoardSvg,
   renderXiangqiBoardSvg,
   renderXiangqiStatusBar,
-} from "./xiangqi-board-ui.js";
-import { buildCheckAlert, getResolveCheckSquares } from "./xiangqi-check-ui.js";
+  resetXiangqiBoardSvg,
+} from "./xiangqi-board-ui.js?v=xiangqi-v12";
+import { buildCheckAlert, getResolveCheckSquares } from "./xiangqi-check-ui.js?v=xiangqi-v12";
 import {
   registerOnlineGame,
   getOnlineContext,
@@ -163,6 +165,14 @@ function renderOnlineBoard() {
     checkTitle: checkAlert?.title || "",
     checkDetail: checkAlert?.detail || "",
   });
+
+  const resignBtn = $("#btn-xiangqi-online-resign");
+  if (resignBtn) {
+    const show = !!mySide && !onlineGame.over;
+    resignBtn.hidden = !show;
+    const wrap = resignBtn.closest(".xiangqi-play-actions");
+    if (wrap) wrap.hidden = !show;
+  }
 }
 
 function showOnlineWinOverlay() {
@@ -222,10 +232,36 @@ function enterOnlinePlay(snapshot) {
   selected = null;
   const svg = $("#xiangqi-online-board");
   if (svg) {
-    svg.replaceWith(svg.cloneNode(false));
+    const next = svg.cloneNode(false);
+    resetXiangqiBoardSvg(next);
+    svg.replaceWith(next);
   }
   $("#xiangqi-online-win-overlay")?.setAttribute("hidden", "");
   applyRemoteXiangqi(snapshot);
+}
+
+async function resignOnlineGame() {
+  const ctx = getOnlineContext();
+  if (!ctx.roomId || !ctx.slot || !onlineGame || onlineGame.over) return;
+  const mySide = sideForSlot(ctx.slot);
+  if (!mySide) return;
+  if (!confirm("確定認輸？")) return;
+
+  await transactGameState(ctx.roomId, (current) => {
+    if (!current || current.over) return;
+    const winnerSlot = otherSlot(ctx.slot);
+    let winnerSide = "red";
+    if (winnerSlot === current.redPlayerId) winnerSide = "red";
+    else if (winnerSlot === current.blackPlayerId) winnerSide = "black";
+    else winnerSide = mySide === "red" ? "black" : "red";
+    return {
+      ...current,
+      over: true,
+      winner: winnerSlot,
+      winnerSide,
+      endReason: `${sideName(mySide)}認輸`,
+    };
+  });
 }
 
 async function submitOnlineMove(fromR, fromC, toR, toC) {
@@ -321,6 +357,9 @@ function bindXiangqiOnlineOnly() {
       celebratedWinKey = null;
       getOnlineContext().deps?.showView("home");
     }
+  });
+  $("#btn-xiangqi-online-resign")?.addEventListener("click", () => {
+    void resignOnlineGame();
   });
   $("#btn-xiangqi-online-win-dismiss")?.addEventListener("click", () => {
     $("#xiangqi-online-win-overlay")?.setAttribute("hidden", "");
