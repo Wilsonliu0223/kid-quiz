@@ -30,7 +30,7 @@ import {
   renderDuoPickButtons,
 } from "./duo-pick.js";
 import { AI_PLAYER_ID, GRANDMASTER_LEVEL, NIRVANA_LEVEL, requestXiangqiAiMove, terminateXiangqiAiWorker, pikafishLoadState } from "./xiangqi-ai.js";
-import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v2";
+import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v3";
 
 /** @typedef {"local"|"ai"} SetupMode */
 

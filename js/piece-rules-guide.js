@@ -1,14 +1,16 @@
-import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v2";
-import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v2";
+import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v3";
+import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v3";
 
 const $ = (sel) => document.querySelector(sel);
 
 /** @type {'xiangqi'|'chess'|null} */
 let activeGame = null;
-/** @type {'how'|'pieces'} */
+/** @type {'how'|'pieces'|'specials'} */
 let activeTab = "how";
 /** @type {string|null} */
 let activePieceId = null;
+/** @type {string|null} */
+let activeSpecialId = null;
 
 const RULES = {
   xiangqi: XIANGQI_RULES,
@@ -36,6 +38,7 @@ function ensureOverlay() {
       <div class="rules-guide-tabs" role="tablist">
         <button type="button" class="rules-guide-tab is-active" data-tab="how" role="tab">怎麼玩</button>
         <button type="button" class="rules-guide-tab" data-tab="pieces" role="tab">棋子怎麼走</button>
+        <button type="button" class="rules-guide-tab" data-tab="specials" role="tab" hidden>特別招式</button>
       </div>
       <div class="rules-guide-body" id="rules-guide-body"></div>
     </div>`;
@@ -47,7 +50,7 @@ function ensureOverlay() {
   el.querySelector("#btn-rules-guide-close")?.addEventListener("click", () => closeRulesGuide());
   el.querySelectorAll(".rules-guide-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
-      activeTab = /** @type {'how'|'pieces'} */ (btn.getAttribute("data-tab") || "how");
+      activeTab = /** @type {'how'|'pieces'|'specials'} */ (btn.getAttribute("data-tab") || "how");
       renderGuide();
     });
   });
@@ -68,15 +71,19 @@ function renderMiniGrid(grid) {
       if (cell?.mark === "dot") classes.push("is-dot");
       if (cell?.mark === "block") classes.push("is-block");
       if (cell?.mark === "x") classes.push("is-capture");
+      if (cell?.mark === "to") classes.push("is-to");
+      if (cell?.mark === "bad") classes.push("is-bad");
       const label = cell?.piece
         ? `<span class="rules-mini-piece">${cell.piece}</span>`
-        : cell?.mark === "dot"
+        : cell?.mark === "dot" || cell?.mark === "to"
           ? `<span class="rules-mini-dot"></span>`
           : cell?.mark === "block"
             ? `<span class="rules-mini-block">擋</span>`
             : cell?.mark === "x"
               ? `<span class="rules-mini-x">吃</span>`
-              : "";
+              : cell?.mark === "bad"
+                ? `<span class="rules-mini-bad">✕</span>`
+                : "";
       html += `<div class="${classes.join(" ")}">${label}</div>`;
     }
   }
@@ -91,20 +98,29 @@ function renderHow(pack) {
     <article class="rules-how-card">
       <h3>${card.title}</h3>
       <ul>${card.lines.map((l) => `<li>${l}</li>`).join("")}</ul>
+      ${card.grid ? renderMiniGrid(card.grid) : ""}
+      ${card.caption ? `<p class="rules-legend">${card.caption}</p>` : ""}
       ${card.tip ? `<p class="rules-tip">${card.tip}</p>` : ""}
     </article>`,
     )
     .join("");
 }
 
-function renderPieces(pack) {
-  const pieces = pack.pieces;
-  const current = pieces.find((p) => p.id === activePieceId) || pieces[0];
-  activePieceId = current.id;
-  const chips = pieces
+/**
+ * @param {import('./rules/chess-rules.js').RulesPiece[] | any[]} items
+ * @param {string|null} selectedId
+ * @param {'piece'|'special'} kind
+ */
+function renderItemDetail(items, selectedId, kind) {
+  const current = items.find((p) => p.id === selectedId) || items[0];
+  if (!current) return "<p>尚無內容</p>";
+  if (kind === "piece") activePieceId = current.id;
+  else activeSpecialId = current.id;
+
+  const chips = items
     .map(
       (p) => `
-    <button type="button" class="rules-piece-chip${p.id === current.id ? " is-selected" : ""}" data-piece="${p.id}">
+    <button type="button" class="rules-piece-chip${p.id === current.id ? " is-selected" : ""}" data-${kind}="${p.id}">
       <span class="rules-piece-badge">${p.badge}</span>
       <span class="rules-piece-name">${p.name}</span>
     </button>`,
@@ -122,9 +138,9 @@ function renderPieces(pack) {
         </div>
       </div>
       ${renderMiniGrid(current.grid)}
-      <p class="rules-how-line"><strong>怎麼走：</strong>${current.how}</p>
+      <p class="rules-how-line"><strong>怎麼做：</strong>${current.how}</p>
       <p class="rules-limit-line"><strong>要注意：</strong>${current.limit}</p>
-      <p class="rules-legend">綠點＝可以走 · 擋＝擋住了 · 吃＝可以吃這顆</p>
+      <p class="rules-legend">綠框＝起點 · 點＝走到這裡 · 擋＝擋住 · 吃＝可吃 · ✕＝不行／被擋方向</p>
     </article>`;
 }
 
@@ -135,15 +151,31 @@ function renderGuide() {
   const title = $("#rules-guide-title");
   const body = $("#rules-guide-body");
   if (title) title.textContent = pack.title;
+
+  const hasSpecials = Array.isArray(pack.specials) && pack.specials.length > 0;
+  const specialsTab = overlay.querySelector('.rules-guide-tab[data-tab="specials"]');
+  if (specialsTab) specialsTab.hidden = !hasSpecials;
+  if (!hasSpecials && activeTab === "specials") activeTab = "how";
+
   overlay.querySelectorAll(".rules-guide-tab").forEach((btn) => {
     btn.classList.toggle("is-active", btn.getAttribute("data-tab") === activeTab);
   });
   if (body) {
-    body.innerHTML = activeTab === "how" ? renderHow(pack) : renderPieces(pack);
+    if (activeTab === "how") body.innerHTML = renderHow(pack);
+    else if (activeTab === "specials") body.innerHTML = renderItemDetail(pack.specials || [], activeSpecialId, "special");
+    else body.innerHTML = renderItemDetail(pack.pieces, activePieceId, "piece");
+
     body.querySelectorAll("[data-piece]").forEach((btn) => {
       btn.addEventListener("click", () => {
         activePieceId = btn.getAttribute("data-piece");
         activeTab = "pieces";
+        renderGuide();
+      });
+    });
+    body.querySelectorAll("[data-special]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeSpecialId = btn.getAttribute("data-special");
+        activeTab = "specials";
         renderGuide();
       });
     });
@@ -152,12 +184,13 @@ function renderGuide() {
 
 /**
  * @param {'xiangqi'|'chess'} game
- * @param {{ tab?: 'how'|'pieces', pieceId?: string }} [opts]
+ * @param {{ tab?: 'how'|'pieces'|'specials', pieceId?: string, specialId?: string }} [opts]
  */
 export function openRulesGuide(game, opts = {}) {
   activeGame = game;
   activeTab = opts.tab || "how";
   activePieceId = opts.pieceId || null;
+  activeSpecialId = opts.specialId || null;
   const overlay = ensureOverlay();
   renderGuide();
   overlay.hidden = false;

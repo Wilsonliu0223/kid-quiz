@@ -5497,6 +5497,8 @@ body {
 }
 .rules-mini-cell.is-dark { background: #b58863; }
 .rules-mini-cell.is-from { box-shadow: inset 0 0 0 2px #2f5d4a; }
+.rules-mini-cell.is-to { box-shadow: inset 0 0 0 2px #1d6b9f; background: #d6ebf7; }
+.rules-mini-cell.is-to.is-dark { background: #9ec4da; }
 .rules-mini-piece {
   font-size: clamp(0.75rem, 3.4vw, 1rem);
   font-weight: 800;
@@ -5509,13 +5511,16 @@ body {
   border-radius: 50%;
   background: rgba(47, 93, 74, 0.7);
 }
-.rules-mini-block, .rules-mini-x {
+.rules-mini-block, .rules-mini-x, .rules-mini-bad {
   font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
 }
 .rules-mini-block { color: #6b3a18; }
 .rules-mini-x { color: #a32018; }
+.rules-mini-cell.is-bad { background: #f3d0d0; }
+.rules-mini-cell.is-bad.is-dark { background: #d9a0a0; }
+.rules-mini-bad { color: #a32018; }
 .rules-how-line, .rules-limit-line {
   margin: 6px 0;
   font-size: 0.92rem;

@@ -1,17 +1,17 @@
 /** 西洋棋：兒童規則圖鑑內容 */
 
-/** @typedef {{ r:number, c:number, piece?:string, mark?:'dot'|'block'|'from'|'x' }} RulesCell */
-/** @typedef {{ title:string, lines:string[], tip?:string }} RulesHowCard */
+/** @typedef {{ r:number, c:number, piece?:string, mark?:'dot'|'block'|'from'|'x'|'to'|'bad' }} RulesCell */
+/** @typedef {{ title:string, lines:string[], tip?:string, grid?:{rows:number,cols:number,cells:RulesCell[]}, caption?:string }} RulesHowCard */
 /** @typedef {{ id:string, name:string, badge:string, how:string, limit:string, tip?:string, grid:{rows:number,cols:number,cells:RulesCell[]} }} RulesPiece */
 
-/** @type {{ gameId:'chess', title:string, how:RulesHowCard[], pieces:RulesPiece[] }} */
+/** @type {{ gameId:'chess', title:string, how:RulesHowCard[], pieces:RulesPiece[], specials:RulesPiece[] }} */
 export const CHESS_RULES = {
   gameId: "chess",
   title: "西洋棋小教室",
   how: [
     {
       title: "誰先走？",
-      lines: ["白方先走，然後黑方，再輪流下。", "一次只能動一顆棋。"],
+      lines: ["白方先走，然後黑方，再輪流下。", "一次只能動一顆棋（王車易位算同一步）。"],
     },
     {
       title: "怎麼算贏？",
@@ -26,15 +26,17 @@ export const CHESS_RULES = {
       lines: [
         "走到對方棋子的格子上，就把那顆棋吃掉（換成你的位置）。",
         "不能走到自己棋子的格子上。",
+        "王不能走到會被對方攻擊的格子。",
       ],
     },
     {
-      title: "特別招式（先記住名字）",
+      title: "將軍時怎麼辦？",
       lines: [
-        "兵走到對方底線：一定要升變成后／車／象／馬（大多選后）。",
-        "王車易位：王向車的方向一次走兩格，車跳到王的另一側；中間要空著，王和車都還沒動過，而且王不能被將軍、也不能經過被攻擊的格子。",
-        "吃過路兵（進階）：對方兵剛從原位走兩格，停在你兵旁邊時，你可以斜走進它「剛跳過」的那格，把它吃掉。",
+        "對方攻擊你的王＝被將軍。輪到你時，一定要先解除將軍。",
+        "解法只有三種：王逃走、擋住攻擊線、或把攻擊你的那顆棋吃掉。",
+        "如果三樣都做不到＝將死，對方獲勝。",
       ],
+      tip: "被將軍時不能裝沒看到，也不能先動別的無關棋。",
     },
   ],
   pieces: [
@@ -177,6 +179,103 @@ export const CHESS_RULES = {
           { r: 1, c: 2, mark: "dot" },
           { r: 2, c: 1, piece: "♟", mark: "x" },
           { r: 2, c: 3, piece: "♟", mark: "x" },
+        ],
+      },
+    },
+  ],
+  specials: [
+    {
+      id: "castle",
+      name: "王車易位",
+      badge: "♔♖",
+      how: "王向車的方向一次走兩格（綠點），同一回合車跳到王的另一側（綠點旁邊那格）。短易位往 h 邊、長易位往 a 邊。",
+      limit: "王和那隻車都還沒動過；中間格子要空；王不能正被將軍，也不能經過或停在被攻擊的格子。",
+      tip: "把王藏到角落、把車拉出來的招式！下排＝短易位，上排＝長易位。",
+      grid: {
+        rows: 2,
+        cols: 8,
+        cells: [
+          { r: 1, c: 4, piece: "♔", mark: "from" },
+          { r: 1, c: 7, piece: "♖", mark: "from" },
+          { r: 1, c: 6, mark: "to" },
+          { r: 1, c: 5, mark: "dot" },
+          { r: 0, c: 0, piece: "♖", mark: "from" },
+          { r: 0, c: 4, piece: "♔", mark: "from" },
+          { r: 0, c: 2, mark: "to" },
+          { r: 0, c: 3, mark: "dot" },
+        ],
+      },
+    },
+    {
+      id: "enpassant",
+      name: "吃過路兵",
+      badge: "♙×",
+      how: "對方兵剛從原位一次走兩格，停在你兵旁邊時：你可以斜走進它「剛跳過」的那格（綠點），把那顆兵吃掉。",
+      limit: "只能在對方剛走完那兩格的「下一手」立刻吃；錯過就沒了。",
+      tip: "像對方兵從你旁邊偷偷衝過去，你攔腰吃掉！",
+      grid: {
+        rows: 4,
+        cols: 3,
+        cells: [
+          { r: 3, c: 0, piece: "♟" },
+          { r: 2, c: 0, mark: "to" },
+          { r: 1, c: 0, piece: "♟", mark: "x" },
+          { r: 1, c: 1, piece: "♙", mark: "from" },
+        ],
+      },
+    },
+    {
+      id: "promote",
+      name: "兵升變",
+      badge: "♙→♕",
+      how: "兵走到對方底線那一格時，一定要立刻換成后／車／象／馬其中一種（大多選后）。",
+      limit: "不能繼續當兵；升變後那顆新棋就從那格開始作用。",
+      tip: "小兵衝到底＝變超強！",
+      grid: {
+        rows: 3,
+        cols: 3,
+        cells: [
+          { r: 2, c: 1, piece: "♙", mark: "from" },
+          { r: 1, c: 1, mark: "dot" },
+          { r: 0, c: 1, piece: "♕", mark: "to" },
+        ],
+      },
+    },
+    {
+      id: "checkmate",
+      name: "將軍／將死",
+      badge: "♚!",
+      how: "攻擊對方的王＝將軍。對方必須逃王、擋線、或吃掉攻擊棋。三樣都做不到＝將死，你贏。",
+      limit: "自己的每一步都不能讓自己的王處於被將軍狀態（不能送死）。",
+      tip: "西洋棋不會把王「吃掉」，是逼到沒路可走才算贏。",
+      grid: {
+        rows: 3,
+        cols: 5,
+        cells: [
+          { r: 0, c: 2, piece: "♚", mark: "from" },
+          { r: 2, c: 2, piece: "♖", mark: "from" },
+          { r: 1, c: 2, mark: "bad" },
+          { r: 0, c: 1, mark: "bad" },
+          { r: 0, c: 3, mark: "bad" },
+        ],
+      },
+    },
+    {
+      id: "stalemate",
+      name: "逼和",
+      badge: "½",
+      how: "輪到對方時：他的王沒被將軍，但也沒有任何合法步可走。",
+      limit: "這局算平手，不是你贏。追著吃光對方棋時要小心別「逼和」。",
+      tip: "差一點將死卻變成平手，好可惜！",
+      grid: {
+        rows: 3,
+        cols: 3,
+        cells: [
+          { r: 0, c: 0, piece: "♚", mark: "from" },
+          { r: 2, c: 2, piece: "♕", mark: "from" },
+          { r: 0, c: 1, mark: "bad" },
+          { r: 1, c: 0, mark: "bad" },
+          { r: 1, c: 1, mark: "bad" },
         ],
       },
     },

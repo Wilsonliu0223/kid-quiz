@@ -1,13 +1,13 @@
 /** 象棋明棋：兒童規則圖鑑內容 */
 
-/** @typedef {{ r:number, c:number, piece?:string, mark?:'dot'|'block'|'from'|'x' }} RulesCell */
-/** @typedef {{ title:string, lines:string[], tip?:string }} RulesHowCard */
+/** @typedef {{ r:number, c:number, piece?:string, mark?:'dot'|'block'|'from'|'x'|'to'|'bad' }} RulesCell */
+/** @typedef {{ title:string, lines:string[], tip?:string, grid?:{rows:number,cols:number,cells:RulesCell[]}, caption?:string }} RulesHowCard */
 /** @typedef {{ id:string, name:string, badge:string, how:string, limit:string, tip?:string, grid:{rows:number,cols:number,cells:RulesCell[]} }} RulesPiece */
 
-/** @type {{ gameId:'xiangqi', title:string, how:RulesHowCard[], pieces:RulesPiece[] }} */
+/** @type {{ gameId:'xiangqi', title:string, how:RulesHowCard[], pieces:RulesPiece[], specials:RulesPiece[] }} */
 export const XIANGQI_RULES = {
   gameId: "xiangqi",
-  title: "象棋小教室",
+  title: "象棋小教室（明棋）",
   how: [
     {
       title: "誰先走？",
@@ -16,18 +16,35 @@ export const XIANGQI_RULES = {
     {
       title: "怎麼算贏？",
       lines: [
-        "把對方的「將／帥」將軍到沒辦法逃，你就贏了。",
+        "把對方的「將／帥」將軍到沒辦法逃，你就贏了（將死）。",
         "被將軍時，一定要先救自己的將／帥。",
+        "若輪到的人無子可動（困斃），也算輸。",
       ],
       tip: "將軍＝對方的王被攻擊了，要立刻解！",
+    },
+    {
+      title: "吃子怎麼吃？",
+      lines: [
+        "走到對方棋子的交叉點上，就把那顆棋吃掉。",
+        "不能走到自己棋子的位置上。",
+        "炮比較特別：走路像車，吃子要隔一顆「炮架」。",
+      ],
     },
     {
       title: "棋盤小知識",
       lines: [
         "棋盤中間有「楚河漢界」，象不能過河。",
         "將／帥和士只能待在「九宮」小格子裡。",
-        "兩個將／帥不能面對面（中間沒有棋擋著）。",
+        "兩個將／帥不能面對面（中間沒有棋擋著）＝「將帥對面」。",
       ],
+    },
+    {
+      title: "將軍時怎麼辦？",
+      lines: [
+        "解將只有三種：將／帥逃走、用別的棋擋住攻擊線、或把攻擊你的那顆棋吃掉。",
+        "若三樣都做不到＝被將死。",
+      ],
+      tip: "被將軍時不能先動無關的棋。",
     },
   ],
   pieces: [
@@ -74,7 +91,7 @@ export const XIANGQI_RULES = {
       name: "象／相",
       badge: "相",
       how: "斜斜走兩格（像畫一個「田」）。",
-      limit: "田中間有棋就不能走；也不能過河。",
+      limit: "田中間有棋就不能走（塞象眼）；也不能過河。",
       tip: "大象站這邊守護，不過河去玩。",
       grid: {
         rows: 5,
@@ -93,7 +110,7 @@ export const XIANGQI_RULES = {
       name: "馬／傌",
       badge: "傌",
       how: "走一個「日」字：先直一格，再斜一格。",
-      limit: "正前方（或正側）有棋擋住＝蹩馬腿，不能跳。",
+      limit: "正前方（或正側）有棋擋住＝蹩馬腿，不能往那邊跳。",
       tip: "馬不能飛，前面有擋就不能走。",
       grid: {
         rows: 5,
@@ -140,7 +157,7 @@ export const XIANGQI_RULES = {
       name: "炮／包",
       badge: "炮",
       how: "平常走路跟車一樣：直橫走。",
-      limit: "要吃子時，中間一定要隔一顆棋當「炮架」。",
+      limit: "要吃子時，中間一定要隔剛好一顆棋當「炮架」（多一顆、少一顆都不行）。",
       tip: "走路自由；吃人要隔一座橋。",
       grid: {
         rows: 5,
@@ -158,7 +175,7 @@ export const XIANGQI_RULES = {
       name: "兵／卒",
       badge: "兵",
       how: "沒過河：只能往前走一格。過河後：可以往前或左右。",
-      limit: "永遠不能後退。",
+      limit: "永遠不能後退；也不能斜走。",
       tip: "過河的小兵變勇敢，可以左右移動。",
       grid: {
         rows: 5,
@@ -170,6 +187,134 @@ export const XIANGQI_RULES = {
           { r: 0, c: 1, mark: "dot" },
           { r: 1, c: 0, mark: "dot" },
           { r: 1, c: 2, mark: "dot" },
+        ],
+      },
+    },
+  ],
+  specials: [
+    {
+      id: "faceking",
+      name: "將帥對面",
+      badge: "帥將",
+      how: "將和帥如果在同一條直線上，中間又沒有棋擋住，就不合法（像互相「對射」）。",
+      limit: "你不能走出讓兩邊面對面的一步；對方若露出空線，你有時可以用這條規則逼他。",
+      tip: "兩位王不能大眼瞪小眼！",
+      grid: {
+        rows: 6,
+        cols: 3,
+        cells: [
+          { r: 0, c: 1, piece: "將", mark: "from" },
+          { r: 1, c: 1, mark: "bad" },
+          { r: 2, c: 1, mark: "bad" },
+          { r: 3, c: 1, mark: "bad" },
+          { r: 4, c: 1, mark: "bad" },
+          { r: 5, c: 1, piece: "帥", mark: "from" },
+        ],
+      },
+    },
+    {
+      id: "hobbled",
+      name: "蹩馬腿",
+      badge: "傌✕",
+      how: "馬要往某個方向跳時，緊鄰的那一格（馬腿）若有棋，就不能往那兩格跳。",
+      limit: "擋腿的可以是任何棋（己方或對方）。圖裡上方被擋，上方兩點就不能去。",
+      tip: "西洋棋的馬會飛；象棋的馬會被絆住。",
+      grid: {
+        rows: 5,
+        cols: 5,
+        cells: [
+          { r: 2, c: 2, piece: "傌", mark: "from" },
+          { r: 1, c: 2, piece: "兵", mark: "block" },
+          { r: 0, c: 1, mark: "bad" },
+          { r: 0, c: 3, mark: "bad" },
+          { r: 3, c: 0, mark: "dot" },
+          { r: 3, c: 4, mark: "dot" },
+          { r: 4, c: 1, mark: "dot" },
+          { r: 4, c: 3, mark: "dot" },
+          { r: 1, c: 0, mark: "dot" },
+          { r: 1, c: 4, mark: "dot" },
+        ],
+      },
+    },
+    {
+      id: "elephant-eye",
+      name: "塞象眼",
+      badge: "相✕",
+      how: "象斜走兩格時，田字中間那一格若有棋，就不能過去。",
+      limit: "象還不能過河；被塞眼就只能往沒被擋的方向走。",
+      tip: "想讓對方象動不了，就塞住他的象眼。",
+      grid: {
+        rows: 5,
+        cols: 5,
+        cells: [
+          { r: 3, c: 2, piece: "相", mark: "from" },
+          { r: 2, c: 1, piece: "兵", mark: "block" },
+          { r: 1, c: 0, mark: "bad" },
+          { r: 2, c: 3, mark: "dot" },
+          { r: 1, c: 4, mark: "to" },
+        ],
+      },
+    },
+    {
+      id: "cannon-screen",
+      name: "炮架吃子",
+      badge: "炮🌉",
+      how: "炮要吃遠處的子：同一直線上，中間剛好隔一顆棋當炮架，再跳過去吃。",
+      limit: "中間 0 顆＝吃不到；中間 2 顆以上＝也不能吃。走路（不吃）時反而不需要炮架。",
+      tip: "記住：走＝像車；吃＝隔一座橋。",
+      grid: {
+        rows: 3,
+        cols: 6,
+        cells: [
+          { r: 1, c: 0, piece: "炮", mark: "from" },
+          { r: 1, c: 1, mark: "dot" },
+          { r: 1, c: 2, piece: "兵", mark: "block" },
+          { r: 1, c: 3, mark: "dot" },
+          { r: 1, c: 5, piece: "卒", mark: "x" },
+          { r: 0, c: 0, piece: "炮", mark: "from" },
+          { r: 0, c: 2, piece: "兵", mark: "block" },
+          { r: 0, c: 3, piece: "兵", mark: "block" },
+          { r: 0, c: 5, piece: "卒" },
+        ],
+      },
+    },
+    {
+      id: "river-pawn",
+      name: "過河兵",
+      badge: "兵→",
+      how: "兵／卒還沒過河：只能往前一格。一過河：可以往前，也可以左右橫走。",
+      limit: "永遠不能後退；過河後也不能斜走或一次走兩格。",
+      tip: "過河後威脅變大，要小心防守！",
+      grid: {
+        rows: 5,
+        cols: 5,
+        cells: [
+          { r: 4, c: 1, piece: "兵", mark: "from" },
+          { r: 3, c: 1, mark: "dot" },
+          { r: 2, c: 3, piece: "兵", mark: "from" },
+          { r: 1, c: 3, mark: "to" },
+          { r: 2, c: 2, mark: "dot" },
+          { r: 2, c: 4, mark: "dot" },
+        ],
+      },
+    },
+    {
+      id: "check-escape",
+      name: "將軍與解將",
+      badge: "將!",
+      how: "攻擊對方將／帥＝將軍。對方必須：逃將、擋攻擊線、或吃掉攻擊棋。",
+      limit: "若解不了＝將死。自己也不能走出讓己方被將軍的一步。",
+      tip: "跟西洋棋一樣：被將軍要先救命！",
+      grid: {
+        rows: 4,
+        cols: 3,
+        cells: [
+          { r: 0, c: 1, piece: "將", mark: "from" },
+          { r: 3, c: 1, piece: "俥", mark: "from" },
+          { r: 1, c: 1, mark: "bad" },
+          { r: 2, c: 1, mark: "bad" },
+          { r: 0, c: 0, mark: "dot" },
+          { r: 0, c: 2, mark: "dot" },
         ],
       },
     },
