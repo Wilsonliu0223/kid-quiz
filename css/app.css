@@ -266,6 +266,7 @@ body {
 .home-zone-duo .card-gomoku-head,
 .home-zone-duo .card-xiangqi-head,
 .home-zone-duo .card-chess-head,
+.home-zone-duo .card-go-head,
 .home-zone-duo .card-sky-head {
   display: flex;
   flex-wrap: nowrap;
@@ -279,6 +280,7 @@ body {
 .home-zone-duo .card-gomoku-head .card-title,
 .home-zone-duo .card-xiangqi-head .card-title,
 .home-zone-duo .card-chess-head .card-title,
+.home-zone-duo .card-go-head .card-title,
 .home-zone-duo .card-sky-head .card-title {
   flex-shrink: 0;
 }
@@ -287,6 +289,7 @@ body {
 .home-zone-duo .card-gomoku-note,
 .home-zone-duo .card-xiangqi-note,
 .home-zone-duo .card-chess-note,
+.home-zone-duo .card-go-note,
 .home-zone-duo .card-sky-note {
   font-size: 0.72rem;
   font-weight: 600;
@@ -5553,4 +5556,74 @@ body {
   display: flex;
   justify-content: center;
   margin: 8px 0 12px;
+}
+
+.card-go-home {
+  background: linear-gradient(145deg, #f4eee4 0%, #e4d3b4 100%);
+  border: 2px solid #8b6914;
+}
+.card-go-home .card-title { color: #3d2a12; }
+.card-go-note { color: #6b4e1f; }
+.quiz-header-go .quiz-subject { color: #3d2a12; }
+#view-go-play.view-active,
+#view-go-online-play.view-active,
+#view-go-lesson.view-active,
+#view-go-drill-play.view-active {
+  display: flex;
+  flex-direction: column;
+}
+.go-play-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 8px;
+  padding: 8px 12px 16px;
+  background: linear-gradient(180deg, #f6efe4, #faf6ee);
+}
+.go-status-bar { flex-shrink: 0; }
+.go-turn-board {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 1.35fr) 1fr;
+  gap: 8px;
+}
+.go-side-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border-radius: 10px;
+  opacity: 0.7;
+  background: rgba(255,255,255,0.5);
+  border: 2px solid transparent;
+}
+.go-side-card.is-active-turn { opacity: 1; border-color: #3d2a12; }
+.go-side-black { color: #111; }
+.go-side-white { color: #444; }
+.go-turn-banner {
+  text-align: center;
+  border-radius: 12px;
+  padding: 6px 8px;
+  background: #efe4d0;
+}
+.go-play-meta { margin: 6px 0 0; text-align: center; font-size: 0.8rem; color: #6b5a40; }
+.go-play-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.go-svg { width: 100%; max-width: min(96vw, 72vh); margin: 0 auto; display: block; }
+.go-wood { fill: #e6c992; }
+.go-grid-line { stroke: #4a3318; stroke-width: 1.4; }
+.go-star { fill: #3a2710; }
+.go-stone-black { fill: #161616; stroke: #000; stroke-width: 1; }
+.go-stone-white { fill: #f7f4ee; stroke: #333; stroke-width: 1.4; }
+.go-last { fill: #c0392b; }
+.go-mark { fill: #2f7d4a; opacity: 0.85; }
+.go-ko { fill: none; stroke: #c0392b; stroke-width: 1.6; }
+.go-point { fill: transparent; cursor: pointer; }
+.go-board-wrap { flex: 1; min-height: 0; }
+.go-lesson-intro {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #3d2a12;
 }

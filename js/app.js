@@ -74,6 +74,7 @@ import {
 import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v34";
 import { initXiangqi, renderXiangqiHomePlayers } from "./xiangqi.js?v=xiangqi-v13";
 import { initChess, renderChessHomePlayers } from "./chess.js?v=chess-v5";
+import { initGo, renderGoHomePlayers } from "./go.js?v=go-v1";
 import { initAnqi, onAnqiFirstShown, renderAnqiHomePlayers } from "./anqi.js?v=anqi-v19";
 import { initOnlineDuo } from "./online-duo.js";
 import { initSkyOnline, openSkyDuoMenu } from "./sky-online.js?v=sky-duo-v43";
@@ -82,6 +83,7 @@ import "./flip-math-online.js";
 import "./gomoku-online.js?v=gomoku-v34";
 import "./xiangqi-online.js?v=xiangqi-v13";
 import "./chess-online.js?v=chess-v5";
+import "./go-online.js?v=go-v1";
 import "./anqi-online.js?v=anqi-v19";
 import {
   initRaceDuo,
@@ -200,6 +202,13 @@ const views = {
   chessFirst: $("#view-chess-first"),
   chessPlay: $("#view-chess-play"),
   chessOnlinePlay: $("#view-chess-online-play"),
+  goHub: $("#view-go-hub"),
+  goFirst: $("#view-go-first"),
+  goPlay: $("#view-go-play"),
+  goLesson: $("#view-go-lesson"),
+  goDrill: $("#view-go-drill"),
+  goDrillPlay: $("#view-go-drill-play"),
+  goOnlinePlay: $("#view-go-online-play"),
   anqiFirst: $("#view-anqi-first"),
   anqiPlay: $("#view-anqi-play"),
   anqiOnlinePlay: $("#view-anqi-online-play"),
@@ -238,6 +247,7 @@ function showView(name) {
     renderGomokuHomePlayers();
     renderXiangqiHomePlayers();
     renderChessHomePlayers();
+    renderGoHomePlayers();
     renderAnqiHomePlayers();
   }
   if (name === "setupZh") {
@@ -2194,6 +2204,10 @@ async function init() {
     getChildNames,
   });
   initChess({
+    showView,
+    getChildNames,
+  });
+  initGo({
     showView,
     getChildNames,
   });

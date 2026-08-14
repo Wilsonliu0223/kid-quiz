@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v39.35" />
+    <link rel="stylesheet" href="css/app.css?v=app-v40.0" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -62,7 +62,7 @@
         <header class="app-header">
           <div class="app-title-row">
             <h1 class="app-title" id="home-title">家裡練習</h1>
-            <span class="app-version" id="app-version" aria-label="版本">v39.35</span>
+            <span class="app-version" id="app-version" aria-label="版本">v40.0</span>
           </div>
           <p class="app-subtitle">長按標題可新增／管理使用者</p>
         </header>
@@ -150,6 +150,12 @@
               <span class="card-chess-head">
                 <span class="card-title">西洋棋</span>
                 <span class="card-chess-note">8×8 · 白先 · 史東頓棋子</span>
+              </span>
+            </button>
+            <button type="button" class="card card-go card-go-home" id="btn-start-go">
+              <span class="card-go-head">
+                <span class="card-title">圍棋</span>
+                <span class="card-go-note">9／13／19 路 · 中國數子 · 教學棋局</span>
               </span>
             </button>
             <button type="button" class="card card-sky-shooter" id="btn-start-sky-shooter">
@@ -1282,6 +1288,198 @@
         </div>
       </section>
 
+      <!-- 圍棋 -->
+      <section id="view-go-hub" class="view view-hidden" aria-label="圍棋大廳">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-hub-back">← 返回</button>
+          <span class="quiz-subject">圍棋</span>
+        </header>
+        <div class="flip-first-body">
+          <h2 class="flip-first-title">圍棋大廳</h2>
+          <p class="flip-first-meta">中國規則數子 · 黑先 · 禁止自殺 · 單劫</p>
+          <div class="gomoku-mode-btns">
+            <button type="button" class="btn btn-primary btn-block" id="btn-go-hub-lesson">示範教學棋局</button>
+            <button type="button" class="btn btn-secondary btn-block" id="btn-go-hub-rules">規則小教室</button>
+            <button type="button" class="btn btn-secondary btn-block" id="btn-go-hub-drill">練習關卡</button>
+            <button type="button" class="btn btn-secondary btn-block" id="btn-go-hub-play">正式對戰</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-go-first" class="view view-hidden" aria-label="圍棋設定">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-first-back">← 返回</button>
+          <span class="quiz-subject">圍棋</span>
+        </header>
+        <div class="flip-first-body">
+          <h2 class="flip-first-title">誰拿黑（先手）？</h2>
+          <p class="flip-first-meta">棋盤 <strong id="go-size-label">9 路</strong> · 中國數子</p>
+          <div class="lesson-chips" id="go-size-chips">
+            <button type="button" class="chip is-selected" data-go-size="9">9 路</button>
+            <button type="button" class="chip" data-go-size="13">13 路</button>
+            <button type="button" class="chip" data-go-size="19">19 路</button>
+          </div>
+          <div class="chess-first-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-go-first-rules">規則小教室</button>
+          </div>
+          <div id="go-local-setup">
+            <p class="flip-first-hint">誰在練習：<strong id="go-duo-active-name">—</strong></p>
+            <div class="home-zone">
+              <p class="home-zone-title">對戰對象</p>
+              <div class="lesson-chips" id="go-duo-opponent-chips"></div>
+            </div>
+            <div class="flip-players-vs" id="go-duo-matchup">
+              <span id="go-duo-matchup-a">—</span>
+              <span class="flip-vs">VS</span>
+              <span id="go-duo-matchup-b">—</span>
+            </div>
+            <div class="flip-pick-btns" id="go-pick-btns"></div>
+          </div>
+          <div id="go-ai-setup" hidden>
+            <p class="flip-first-hint">練習者：<strong id="go-ai-active-name">—</strong></p>
+            <p class="flip-first-meta">電腦是陪練（會吃明顯的子），不是職業棋力。</p>
+            <div id="go-ai-start-btns"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-go-play" class="view view-hidden" aria-label="圍棋對局">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-play-back">← 返回</button>
+          <span class="quiz-subject">圍棋</span>
+          <button type="button" class="btn-text btn-rules-guide" id="btn-go-rules">規則</button>
+        </header>
+        <div class="go-play-body">
+          <div class="go-status-bar">
+            <div class="go-turn-board">
+              <div class="go-side-card go-side-black" id="go-side-black">
+                <span class="go-side-card-label">黑方</span>
+                <strong class="go-side-card-name">—</strong>
+              </div>
+              <div class="go-turn-banner go-turn-banner-black" id="go-turn-banner" role="status">
+                <span class="go-turn-banner-kicker">現在輪到</span>
+                <span class="go-turn-banner-main" id="go-turn-main">黑方下棋</span>
+                <span class="go-turn-banner-sub" id="go-turn-sub">—</span>
+              </div>
+              <div class="go-side-card go-side-white" id="go-side-white">
+                <span class="go-side-card-label">白方</span>
+                <strong class="go-side-card-name">—</strong>
+              </div>
+            </div>
+            <p class="go-play-meta" id="go-play-meta"></p>
+            <div class="go-play-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-go-pass">停著</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-go-resign">認輸</button>
+            </div>
+          </div>
+          <p class="gomoku-zoom-hint">19 路請雙指放大。下在交叉點上。</p>
+          <div class="gomoku-board-wrap go-board-wrap" id="go-board-viewport">
+            <div class="gomoku-board-stage" id="go-board-stage">
+              <svg class="go-svg" id="go-board" role="img" aria-label="圍棋棋盤"></svg>
+              <div class="chess-win-overlay" id="go-win-overlay" hidden>
+                <div class="chess-win-card">
+                  <h2 class="chess-win-title" id="go-win-title">終局</h2>
+                  <p class="chess-win-detail" id="go-win-detail" style="white-space:pre-wrap"></p>
+                  <div class="chess-win-actions">
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-go-win-dismiss">繼續看盤</button>
+                    <button type="button" class="btn btn-primary btn-block" id="btn-go-win-replay">再玩一局</button>
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-go-win-home">回大廳</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-go-lesson" class="view view-hidden" aria-label="圍棋教學棋局">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-lesson-back">← 返回</button>
+          <span class="quiz-subject" id="go-lesson-title">教學</span>
+        </header>
+        <div class="go-play-body">
+          <p class="go-lesson-intro" id="go-lesson-intro"></p>
+          <p class="flip-first-meta" id="go-lesson-progress"></p>
+          <svg class="go-svg" id="go-lesson-board" role="img" aria-label="教學棋盤"></svg>
+          <div class="go-play-actions">
+            <button type="button" class="btn btn-secondary" id="btn-go-lesson-prev">上一步</button>
+            <button type="button" class="btn btn-primary" id="btn-go-lesson-next">下一步</button>
+          </div>
+          <div class="go-play-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-go-lesson-again">重來</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-go-lesson-skip">下一局</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-go-drill" class="view view-hidden" aria-label="圍棋練習關卡">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-drill-back">← 返回</button>
+          <span class="quiz-subject">練習關卡</span>
+        </header>
+        <div class="flip-first-body">
+          <div id="go-drill-list" class="gomoku-mode-btns"></div>
+        </div>
+      </section>
+
+      <section id="view-go-drill-play" class="view view-hidden" aria-label="圍棋關卡">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-drill-play-back">← 返回</button>
+          <span class="quiz-subject" id="go-drill-play-title">關卡</span>
+        </header>
+        <div class="go-play-body">
+          <p class="go-lesson-intro" id="go-drill-feedback"></p>
+          <svg class="go-svg" id="go-drill-board" role="img" aria-label="練習棋盤"></svg>
+        </div>
+      </section>
+
+      <section id="view-go-online-play" class="view view-hidden" aria-label="圍棋線上對局">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-online-play-back">← 返回</button>
+          <span class="quiz-subject">圍棋 · 線上</span>
+        </header>
+        <div class="go-play-body">
+          <div class="go-status-bar">
+            <div class="go-turn-board">
+              <div class="go-side-card go-side-black" id="go-online-side-black">
+                <span class="go-side-card-label">黑方</span>
+                <strong class="go-side-card-name">—</strong>
+              </div>
+              <div class="go-turn-banner go-turn-banner-black" id="go-online-turn-banner" role="status">
+                <span class="go-turn-banner-kicker">現在輪到</span>
+                <span class="go-turn-banner-main" id="go-online-turn-main">黑方下棋</span>
+                <span class="go-turn-banner-sub" id="go-online-turn-sub">—</span>
+              </div>
+              <div class="go-side-card go-side-white" id="go-online-side-white">
+                <span class="go-side-card-label">白方</span>
+                <strong class="go-side-card-name">—</strong>
+              </div>
+            </div>
+            <p class="go-play-meta" id="go-online-meta"></p>
+            <div class="go-play-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-go-online-pass" hidden>停著</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-go-online-resign" hidden>認輸</button>
+            </div>
+          </div>
+          <div class="gomoku-board-wrap go-board-wrap" id="go-online-board-viewport">
+            <div class="gomoku-board-stage" id="go-online-board-stage">
+              <svg class="go-svg" id="go-online-board" role="img" aria-label="圍棋棋盤"></svg>
+              <div class="chess-win-overlay" id="go-online-win-overlay" hidden>
+                <div class="chess-win-card">
+                  <h2 class="chess-win-title" id="go-online-win-title">終局</h2>
+                  <p class="chess-win-detail" id="go-online-win-detail" style="white-space:pre-wrap"></p>
+                  <div class="chess-win-actions">
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-go-online-win-dismiss">繼續看盤</button>
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-go-online-win-rematch">再來一局</button>
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-go-online-win-home">離開</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 暗棋：設定 -->
       <section id="view-anqi-first" class="view view-hidden" aria-label="暗棋設定">
         <header class="quiz-header quiz-header-xiangqi">
@@ -1773,7 +1971,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v39.35").catch((e) => {
+      import("./js/app.js?v=app-v40.0").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

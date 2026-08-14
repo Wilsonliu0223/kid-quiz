@@ -1,4 +1,4 @@
-/** @typedef {'xiangqi' | 'gomoku' | 'chess'} TurnStatusTheme */
+/** @typedef {'xiangqi' | 'gomoku' | 'chess' | 'go'} TurnStatusTheme */
 
 const THEME = {
   xiangqi: {
@@ -34,6 +34,17 @@ const THEME = {
     rightBannerClass: "chess-turn-banner-black",
     turnMain: (turn) => (turn === "white" ? "白方走棋" : "黑方走棋"),
   },
+  go: {
+    leftKey: "black",
+    rightKey: "white",
+    leftLabel: "黑方",
+    rightLabel: "白方",
+    leftCardClass: "go-side-black",
+    rightCardClass: "go-side-white",
+    leftBannerClass: "go-turn-banner-black",
+    rightBannerClass: "go-turn-banner-white",
+    turnMain: (turn) => (turn === "black" ? "黑方下棋" : "白方下棋"),
+  },
 };
 
 /**
@@ -62,7 +73,7 @@ export function renderDuoTurnStatusBar(opts) {
   if (!cfg) return;
 
   const setName = (card, name) => {
-    const el = card?.querySelector(".duo-side-card-name, .xiangqi-side-card-name, .gomoku-side-card-name, .chess-side-card-name");
+    const el = card?.querySelector(".duo-side-card-name, .xiangqi-side-card-name, .gomoku-side-card-name, .chess-side-card-name, .go-side-card-name");
     if (el) el.textContent = name;
   };
   setName(opts.leftCard, opts.leftName);

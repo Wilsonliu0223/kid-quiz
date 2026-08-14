@@ -1,9 +1,10 @@
-import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v3";
-import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v3";
+import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v4";
+import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v4";
+import { GO_RULES, GO_PIECE_HINT } from "./rules/go-rules.js?v=rules-v4";
 
 const $ = (sel) => document.querySelector(sel);
 
-/** @type {'xiangqi'|'chess'|null} */
+/** @type {'xiangqi'|'chess'|'go'|null} */
 let activeGame = null;
 /** @type {'how'|'pieces'|'specials'} */
 let activeTab = "how";
@@ -15,11 +16,13 @@ let activeSpecialId = null;
 const RULES = {
   xiangqi: XIANGQI_RULES,
   chess: CHESS_RULES,
+  go: GO_RULES,
 };
 
 const HINTS = {
   xiangqi: XIANGQI_PIECE_HINT,
   chess: CHESS_PIECE_HINT,
+  go: GO_PIECE_HINT,
 };
 
 function ensureOverlay() {
@@ -159,6 +162,9 @@ function renderGuide() {
 
   overlay.querySelectorAll(".rules-guide-tab").forEach((btn) => {
     btn.classList.toggle("is-active", btn.getAttribute("data-tab") === activeTab);
+    if (btn.getAttribute("data-tab") === "pieces") {
+      btn.textContent = pack.piecesTab || "棋子怎麼走";
+    }
   });
   if (body) {
     if (activeTab === "how") body.innerHTML = renderHow(pack);
@@ -183,7 +189,7 @@ function renderGuide() {
 }
 
 /**
- * @param {'xiangqi'|'chess'} game
+ * @param {'xiangqi'|'chess'|'go'} game
  * @param {{ tab?: 'how'|'pieces'|'specials', pieceId?: string, specialId?: string }} [opts]
  */
 export function openRulesGuide(game, opts = {}) {
@@ -202,7 +208,7 @@ export function closeRulesGuide() {
 }
 
 /**
- * @param {'xiangqi'|'chess'} game
+ * @param {'xiangqi'|'chess'|'go'} game
  * @param {string} pieceCode
  */
 export function getPieceMoveHint(game, pieceCode) {
@@ -227,7 +233,7 @@ export function setRulesPlayHint(el, text) {
 
 /**
  * Bind common "規則" buttons.
- * @param {'xiangqi'|'chess'} game
+ * @param {'xiangqi'|'chess'|'go'} game
  * @param {string[]} buttonSelectors
  */
 export function bindRulesGuideButtons(game, buttonSelectors) {

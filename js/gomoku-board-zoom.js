@@ -75,7 +75,7 @@ function applyTransform() {
 
 function isCellTarget(e) {
   const target = e.target;
-  return target instanceof Element && !!target.closest(".gomoku-cell");
+  return target instanceof Element && !!target.closest(".gomoku-cell, .go-point");
 }
 
 function isInsideViewport(e) {
