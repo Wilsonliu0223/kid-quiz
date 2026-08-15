@@ -252,7 +252,7 @@ function applyOnlineCellState(btn, row, col) {
   } else {
     const myTurn = ctx.slot === onlineGame.currentPlayerId && !onlineGame.over;
     const forbidden = forbiddenAt(row, col);
-    btn.disabled = !myTurn || !!forbidden;
+    btn.disabled = onlineGame.over || (!myTurn && !forbidden);
     if (forbidden) {
       btn.classList.add("gomoku-cell-forbidden");
       btn.setAttribute("aria-label", `禁手：${forbiddenLabel(forbidden)}`);
@@ -327,14 +327,8 @@ function renderOnlinePlayHeader(statusText = "") {
 
   const renjuHint = $("#gomoku-online-renju-hint");
   if (renjuHint) {
-    if (statusText || onlineGame.over) {
-      renjuHint.classList.remove("is-visible");
-      renjuHint.setAttribute("aria-hidden", "true");
-    } else {
-      const isBlackTurn = onlineGame.currentPlayerId === onlineGame.blackPlayerId;
-      renjuHint.classList.toggle("is-visible", isBlackTurn);
-      renjuHint.setAttribute("aria-hidden", String(!isBlackTurn));
-    }
+    renjuHint.classList.add("is-visible");
+    renjuHint.removeAttribute("aria-hidden");
   }
 }
 

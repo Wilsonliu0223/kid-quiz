@@ -71,7 +71,7 @@ import {
   initFlipMath,
   renderMathHomePlayers,
 } from "./flip-math-deck30.js";
-import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v34";
+import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v35";
 import { initXiangqi, renderXiangqiHomePlayers } from "./xiangqi.js?v=xiangqi-v13";
 import { initChess, renderChessHomePlayers } from "./chess.js?v=chess-v5";
 import { initGo, renderGoHomePlayers } from "./go.js?v=go-v2";
@@ -80,7 +80,7 @@ import { initOnlineDuo } from "./online-duo.js";
 import { initSkyOnline, openSkyDuoMenu } from "./sky-online.js?v=sky-duo-v43";
 import "./flip-zh-online.js";
 import "./flip-math-online.js";
-import "./gomoku-online.js?v=gomoku-v34";
+import "./gomoku-online.js?v=gomoku-v35";
 import "./xiangqi-online.js?v=xiangqi-v13";
 import "./chess-online.js?v=chess-v5";
 import "./go-online.js?v=go-v1";

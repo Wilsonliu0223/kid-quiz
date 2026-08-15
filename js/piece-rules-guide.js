@@ -1,10 +1,11 @@
-import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v4";
-import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v4";
-import { GO_RULES, GO_PIECE_HINT } from "./rules/go-rules.js?v=rules-v4";
+import { XIANGQI_RULES, XIANGQI_PIECE_HINT } from "./rules/xiangqi-rules.js?v=rules-v5";
+import { CHESS_RULES, CHESS_PIECE_HINT } from "./rules/chess-rules.js?v=rules-v5";
+import { GO_RULES, GO_PIECE_HINT } from "./rules/go-rules.js?v=rules-v5";
+import { GOMOKU_RULES, GOMOKU_PIECE_HINT } from "./rules/gomoku-rules.js?v=rules-v5";
 
 const $ = (sel) => document.querySelector(sel);
 
-/** @type {'xiangqi'|'chess'|'go'|null} */
+/** @type {'xiangqi'|'chess'|'go'|'gomoku'|null} */
 let activeGame = null;
 /** @type {'how'|'pieces'|'specials'} */
 let activeTab = "how";
@@ -17,12 +18,14 @@ const RULES = {
   xiangqi: XIANGQI_RULES,
   chess: CHESS_RULES,
   go: GO_RULES,
+  gomoku: GOMOKU_RULES,
 };
 
 const HINTS = {
   xiangqi: XIANGQI_PIECE_HINT,
   chess: CHESS_PIECE_HINT,
   go: GO_PIECE_HINT,
+  gomoku: GOMOKU_PIECE_HINT,
 };
 
 function ensureOverlay() {
@@ -189,7 +192,7 @@ function renderGuide() {
 }
 
 /**
- * @param {'xiangqi'|'chess'|'go'} game
+ * @param {'xiangqi'|'chess'|'go'|'gomoku'} game
  * @param {{ tab?: 'how'|'pieces'|'specials', pieceId?: string, specialId?: string }} [opts]
  */
 export function openRulesGuide(game, opts = {}) {
@@ -208,7 +211,7 @@ export function closeRulesGuide() {
 }
 
 /**
- * @param {'xiangqi'|'chess'|'go'} game
+ * @param {'xiangqi'|'chess'|'go'|'gomoku'} game
  * @param {string} pieceCode
  */
 export function getPieceMoveHint(game, pieceCode) {
@@ -233,7 +236,7 @@ export function setRulesPlayHint(el, text) {
 
 /**
  * Bind common "規則" buttons.
- * @param {'xiangqi'|'chess'|'go'} game
+ * @param {'xiangqi'|'chess'|'go'|'gomoku'} game
  * @param {string[]} buttonSelectors
  */
 export function bindRulesGuideButtons(game, buttonSelectors) {

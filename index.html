@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v40.1" />
+    <link rel="stylesheet" href="css/app.css?v=app-v40.2" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -739,11 +739,12 @@
         <header class="quiz-header quiz-header-gomoku">
           <button type="button" class="btn-text" id="btn-gomoku-first-back">← 返回</button>
           <span class="quiz-subject">五子棋</span>
+          <button type="button" class="btn-text btn-rules-guide" id="btn-gomoku-first-rules">規則</button>
         </header>
         <div class="flip-first-body">
           <h2 class="flip-first-title" id="gomoku-first-title">誰拿黑子？</h2>
           <p class="flip-first-meta" id="gomoku-first-meta">15×15 · 先連五子獲勝 · 連珠規則</p>
-          <p class="flip-first-hint" id="gomoku-first-hint">黑子先手須遵守禁手（三三、四四、長連）；白棋無禁手</p>
+          <p class="flip-first-hint" id="gomoku-first-hint">黑先禁手只有三種：三三、四四、長連（六子以上）。白棋無禁手。連五仍算贏。</p>
           <div id="gomoku-local-setup">
             <p class="flip-first-meta duo-active-line">
               誰在練習：<strong id="gomoku-duo-active-name">思妘</strong>
@@ -786,6 +787,7 @@
         <header class="quiz-header quiz-header-gomoku">
           <button type="button" class="btn-text" id="btn-gomoku-play-back">← 返回</button>
           <span class="quiz-subject">五子棋</span>
+          <button type="button" class="btn-text btn-rules-guide" id="btn-gomoku-rules">規則</button>
         </header>
         <div class="gomoku-play-body">
           <div class="gomoku-status-bar">
@@ -815,7 +817,7 @@
               id="gomoku-renju-hint"
               aria-hidden="true"
             >
-              黑棋禁手格會標示 ✕（三三、四四、長連；須為連珠「活三」，非任意三子連線）
+              黑先禁手：三三、四四、長連。出現時格子會標 ✕（白棋無禁手）
             </p>
           </div>
           <p class="gomoku-zoom-hint">雙指捏合放大 · 單指下棋 · 放大後單指拖曳移動（電腦：滾輪放大、右鍵拖曳）</p>
@@ -868,6 +870,7 @@
         <header class="quiz-header quiz-header-gomoku">
           <button type="button" class="btn-text" id="btn-gomoku-online-play-back">← 返回</button>
           <span class="quiz-subject">線上五子棋</span>
+          <button type="button" class="btn-text btn-rules-guide" id="btn-gomoku-online-rules">規則</button>
         </header>
         <div class="gomoku-play-body">
           <div class="gomoku-status-bar">
@@ -888,7 +891,7 @@
               </div>
             </div>
             <p class="gomoku-renju-hint" id="gomoku-online-renju-hint" aria-hidden="true">
-              黑棋禁手格會標示 ✕（三三、四四、長連；須為連珠「活三」，非任意三子連線）
+              黑先禁手：三三、四四、長連。出現時格子會標 ✕（白棋無禁手）
             </p>
           </div>
           <p class="gomoku-zoom-hint">雙指捏合放大 · 單指下棋 · 放大後單指拖曳移動（電腦：滾輪放大、右鍵拖曳）</p>
@@ -1983,7 +1986,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v40.1").catch((e) => {
+      import("./js/app.js?v=app-v40.2").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -1,4 +1,5 @@
 import { forbiddenLabel, wouldBlackForbidden } from "./gomoku-renju.js?v=gomoku-v12";
+import { bindRulesGuideButtons } from "./piece-rules-guide.js?v=rules-v5";
 import { openDuoModePicker } from "./online-duo.js";
 import {
   AI_PLAYER_ID,
@@ -456,14 +457,8 @@ function renderPlayHeader(statusText = "") {
   });
 
   if (renjuHint) {
-    if (displayStatus || game.over) {
-      renjuHint.classList.remove("is-visible");
-      renjuHint.setAttribute("aria-hidden", "true");
-    } else {
-      const isBlackTurn = game.currentPlayerId === game.blackPlayerId;
-      renjuHint.classList.toggle("is-visible", isBlackTurn);
-      renjuHint.setAttribute("aria-hidden", String(!isBlackTurn));
-    }
+    renjuHint.classList.add("is-visible");
+    renjuHint.removeAttribute("aria-hidden");
   }
 
   syncNirvanaEngineBadge(diff);
@@ -520,7 +515,7 @@ function applyCellState(btn, row, col) {
   } else {
     const waitingAi = game.mode === "ai" && (aiMovePending || !isHumanTurn());
     const forbidden = forbiddenAt(row, col);
-    btn.disabled = game.over || waitingAi || !!forbidden;
+    btn.disabled = game.over || (waitingAi && !forbidden);
     if (forbidden) {
       btn.classList.add("gomoku-cell-forbidden");
       btn.setAttribute("aria-label", `禁手：${forbiddenLabel(forbidden)}`);
@@ -1054,6 +1049,7 @@ export function bindGomokuEvents() {
     terminateAiWorker();
     deps.showView("home");
   });
+  bindRulesGuideButtons("gomoku", ["#btn-gomoku-rules", "#btn-gomoku-first-rules", "#btn-gomoku-online-rules"]);
 }
 
 /**

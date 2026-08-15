@@ -24,7 +24,7 @@ import {
   refreshDuoBattleUI,
   renderDuoPickButtons,
 } from "./duo-pick.js";
-import { bindRulesGuideButtons, openRulesGuide } from "./piece-rules-guide.js?v=rules-v4";
+import { bindRulesGuideButtons, openRulesGuide } from "./piece-rules-guide.js?v=rules-v5";
 import {
   rebindGomokuBoardZoom,
   resetGomokuBoardZoom,
