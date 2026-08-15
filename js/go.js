@@ -30,8 +30,8 @@ import {
   resetGomokuBoardZoom,
   shouldSuppressGomokuCellTap,
 } from "./gomoku-board-zoom.js";
-import lessons from "./go/lessons.js?v=go-v1";
-import drills from "./go/drills.js?v=go-v1";
+import lessons from "./go/lessons.js?v=go-v2";
+import drills from "./go/drills.js?v=go-v2";
 
 /** @type {{ showView:(v:string)=>void, getChildNames:()=>Record<string,string> }|null} */
 let deps = null;
@@ -308,25 +308,68 @@ function lessonPrev() {
   renderLesson();
 }
 
+const KIND_LABEL = {
+  capture: "吃子",
+  life: "死活",
+  joseki: "定式",
+  fuseki: "初步布局",
+};
+
+const KIND_ORDER = ["fuseki", "joseki", "capture", "life"];
+
+function renderLessonList() {
+  const box = $("#go-lesson-list");
+  if (!box) return;
+  box.innerHTML = "";
+  const groups = [
+    { key: "rule", title: "規則怎麼走" },
+    { key: "fuseki", title: "初步布局" },
+  ];
+  for (const g of groups) {
+    const h = document.createElement("p");
+    h.className = "home-zone-title";
+    h.textContent = g.title;
+    box.appendChild(h);
+    lessons.forEach((item, i) => {
+      const chap = item.chapter || "rule";
+      if (chap !== g.key) return;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-secondary btn-block";
+      btn.textContent = item.title;
+      btn.addEventListener("click", () => openLesson(i));
+      box.appendChild(btn);
+    });
+  }
+}
+
 function renderDrillList() {
   const box = $("#go-drill-list");
   if (!box) return;
   box.innerHTML = "";
-  drills.forEach((d, i) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-secondary btn-block";
-    btn.textContent = `${d.title}（${d.kind === "joseki" ? "定式" : d.kind === "life" ? "死活" : "吃子"}）`;
-    btn.addEventListener("click", () => openDrill(i));
-    box.appendChild(btn);
-  });
+  for (const kind of KIND_ORDER) {
+    const items = drills.map((d, i) => ({ d, i })).filter((x) => x.d.kind === kind);
+    if (!items.length) continue;
+    const h = document.createElement("p");
+    h.className = "home-zone-title";
+    h.textContent = KIND_LABEL[kind];
+    box.appendChild(h);
+    for (const { d, i } of items) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-secondary btn-block";
+      btn.textContent = d.title;
+      btn.addEventListener("click", () => openDrill(i));
+      box.appendChild(btn);
+    }
+  }
 }
 
 function openDrill(i) {
   drillIndex = i;
   const d = drills[i];
   drillPos = positionFromAscii(d.setup, d.turn || BLACK);
-  $("#go-drill-feedback").textContent = "點正確的交叉點。";
+  $("#go-drill-feedback").textContent = d.prompt || "點正確的交叉點。";
   deps?.showView("goDrillPlay");
   renderGoBoardSvg(ensureGoBoardSvg($("#go-drill-board"), onDrillPoint), drillPos, { marks: [] });
   $("#go-drill-play-title").textContent = d.title;
@@ -373,7 +416,10 @@ function bind() {
   });
   $("#btn-go-hub-back")?.addEventListener("click", () => deps?.showView("home"));
   $("#btn-go-hub-rules")?.addEventListener("click", () => openRulesGuide("go"));
-  $("#btn-go-hub-lesson")?.addEventListener("click", () => openLesson(0));
+  $("#btn-go-hub-lesson")?.addEventListener("click", () => {
+    renderLessonList();
+    deps?.showView("goLessonList");
+  });
   $("#btn-go-hub-drill")?.addEventListener("click", () => {
     renderDrillList();
     deps?.showView("goDrill");
@@ -431,13 +477,20 @@ function bind() {
     if (game.mode === "ai") startAiGame(game.blackPlayerId !== AI_PLAYER_ID);
     else startLocalGame(game.blackPlayerId);
   });
-  $("#btn-go-lesson-back")?.addEventListener("click", () => deps?.showView("goHub"));
+  $("#btn-go-lesson-back")?.addEventListener("click", () => {
+    renderLessonList();
+    deps?.showView("goLessonList");
+  });
+  $("#btn-go-lesson-list-back")?.addEventListener("click", () => deps?.showView("goHub"));
   $("#btn-go-lesson-next")?.addEventListener("click", () => lessonNext());
   $("#btn-go-lesson-prev")?.addEventListener("click", () => lessonPrev());
   $("#btn-go-lesson-again")?.addEventListener("click", () => openLesson(lessonIndex));
   $("#btn-go-lesson-skip")?.addEventListener("click", () => {
     if (lessonIndex < lessons.length - 1) openLesson(lessonIndex + 1);
-    else deps?.showView("goHub");
+    else {
+      renderLessonList();
+      deps?.showView("goLessonList");
+    }
   });
   $("#btn-go-drill-back")?.addEventListener("click", () => deps?.showView("goHub"));
   $("#btn-go-drill-play-back")?.addEventListener("click", () => {

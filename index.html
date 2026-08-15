@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v40.0" />
+    <link rel="stylesheet" href="css/app.css?v=app-v40.1" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -62,7 +62,7 @@
         <header class="app-header">
           <div class="app-title-row">
             <h1 class="app-title" id="home-title">家裡練習</h1>
-            <span class="app-version" id="app-version" aria-label="版本">v40.0</span>
+            <span class="app-version" id="app-version" aria-label="版本">v40.1</span>
           </div>
           <p class="app-subtitle">長按標題可新增／管理使用者</p>
         </header>
@@ -1412,12 +1412,24 @@
         </div>
       </section>
 
+      <section id="view-go-lesson-list" class="view view-hidden" aria-label="圍棋教學棋局列表">
+        <header class="quiz-header quiz-header-go">
+          <button type="button" class="btn-text" id="btn-go-lesson-list-back">← 返回</button>
+          <span class="quiz-subject">示範教學棋局</span>
+        </header>
+        <div class="flip-first-body">
+          <p class="flip-first-meta">選一局逐步看。規則局先看，再看初步布局。</p>
+          <div id="go-lesson-list" class="gomoku-mode-btns"></div>
+        </div>
+      </section>
+
       <section id="view-go-drill" class="view view-hidden" aria-label="圍棋練習關卡">
         <header class="quiz-header quiz-header-go">
           <button type="button" class="btn-text" id="btn-go-drill-back">← 返回</button>
           <span class="quiz-subject">練習關卡</span>
         </header>
         <div class="flip-first-body">
+          <p class="flip-first-meta">吃子、死活、初步布局（角、邊、掛角）</p>
           <div id="go-drill-list" class="gomoku-mode-btns"></div>
         </div>
       </section>
@@ -1971,7 +1983,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v40.0").catch((e) => {
+      import("./js/app.js?v=app-v40.1").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

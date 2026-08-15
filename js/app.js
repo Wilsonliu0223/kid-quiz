@@ -74,7 +74,7 @@ import {
 import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v34";
 import { initXiangqi, renderXiangqiHomePlayers } from "./xiangqi.js?v=xiangqi-v13";
 import { initChess, renderChessHomePlayers } from "./chess.js?v=chess-v5";
-import { initGo, renderGoHomePlayers } from "./go.js?v=go-v1";
+import { initGo, renderGoHomePlayers } from "./go.js?v=go-v2";
 import { initAnqi, onAnqiFirstShown, renderAnqiHomePlayers } from "./anqi.js?v=anqi-v19";
 import { initOnlineDuo } from "./online-duo.js";
 import { initSkyOnline, openSkyDuoMenu } from "./sky-online.js?v=sky-duo-v43";
@@ -206,6 +206,7 @@ const views = {
   goFirst: $("#view-go-first"),
   goPlay: $("#view-go-play"),
   goLesson: $("#view-go-lesson"),
+  goLessonList: $("#view-go-lesson-list"),
   goDrill: $("#view-go-drill"),
   goDrillPlay: $("#view-go-drill-play"),
   goOnlinePlay: $("#view-go-online-play"),
