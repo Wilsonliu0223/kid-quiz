@@ -14,7 +14,7 @@ import {
   clonePosition,
 } from "./go-core.js?v=go-v1";
 import { ensureGoBoardSvg, renderGoBoardSvg } from "./go-board-ui.js?v=go-v2";
-import { AI_PLAYER_ID, requestGoAiMove } from "./go-ai.js?v=go-v1";
+import { AI_PLAYER_ID, GO_AI_LEVELS, requestGoAiMove } from "./go-ai.js?v=go-v2";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=go-v1";
 import { getChildName } from "./children.js";
 import { getSelectedChild } from "./store.js";
@@ -38,7 +38,7 @@ let deps = null;
 let boardSize = 9;
 /** @type {"local"|"ai"} */
 let setupMode = "local";
-let aiDifficulty = 2;
+let aiDifficulty = 3;
 let aiMoveToken = 0;
 
 /**
@@ -94,8 +94,18 @@ function colorName(c) {
 }
 
 function playerName(id) {
-  if (id === AI_PLAYER_ID) return "電腦";
+  if (id === AI_PLAYER_ID) {
+    if (game?.mode === "ai") {
+      const label = GO_AI_LEVELS.find((d) => d.level === (game.aiDifficulty ?? aiDifficulty))?.label;
+      return label ? `電腦（${label}）` : "電腦";
+    }
+    return "電腦";
+  }
   return getChildName(id);
+}
+
+function aiLevelLabel(level) {
+  return GO_AI_LEVELS.find((d) => d.level === level)?.label || "";
 }
 
 function ensurePlayBoard() {
@@ -175,7 +185,7 @@ function maybeAi() {
   if (!game || game.over || game.mode !== "ai") return;
   if (currentId() !== AI_PLAYER_ID) return;
   const token = ++aiMoveToken;
-  requestGoAiMove(clonePosition(game.position), game.aiDifficulty || 2).then((mv) => {
+  requestGoAiMove(clonePosition(game.position), game.aiDifficulty ?? aiDifficulty).then((mv) => {
     if (!game || token !== aiMoveToken || game.over) return;
     if (currentId() !== AI_PLAYER_ID) return;
     game.position = mv ? playMove(game.position, mv[0], mv[1]) : playPass(game.position);
@@ -238,12 +248,28 @@ function renderFirst() {
     const name = getChildName(getSelectedChild());
     const n = $("#go-ai-active-name");
     if (n) n.textContent = name;
+    const chips = $("#go-ai-difficulty-chips");
+    if (chips) {
+      chips.innerHTML = "";
+      for (const d of GO_AI_LEVELS) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `xiangqi-ai-card${aiDifficulty === d.level ? " is-selected" : ""}`;
+        btn.innerHTML = `<strong>${d.label}</strong><span>${d.desc}</span>`;
+        btn.addEventListener("click", () => {
+          aiDifficulty = d.level;
+          renderFirst();
+        });
+        chips.appendChild(btn);
+      }
+    }
     const wrap = $("#go-ai-start-btns");
     if (wrap) {
       wrap.innerHTML = "";
+      const aiLabel = aiLevelLabel(aiDifficulty) || "電腦";
       [
-        [true, `${name} 拿黑`],
-        [false, "電腦拿黑"],
+        [true, `${name} 拿黑（先手）`],
+        [false, `電腦拿黑（${aiLabel}）`],
       ].forEach(([humanBlack, label]) => {
         const btn = document.createElement("button");
         btn.type = "button";

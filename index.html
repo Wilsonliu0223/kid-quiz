@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v40.5" />
+    <link rel="stylesheet" href="css/app.css?v=app-v40.6" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1338,10 +1338,19 @@
             </div>
             <div class="flip-pick-btns" id="go-pick-btns"></div>
           </div>
-          <div id="go-ai-setup" hidden>
+          <div id="go-ai-setup" class="xiangqi-ai-setup" hidden>
             <p class="flip-first-hint">練習者：<strong id="go-ai-active-name">—</strong></p>
-            <p class="flip-first-meta">電腦是陪練（會吃明顯的子），不是職業棋力。</p>
-            <div id="go-ai-start-btns"></div>
+            <div class="home-zone xiangqi-ai-zone">
+              <p class="home-zone-title">電腦難度</p>
+              <div class="xiangqi-ai-difficulty-cards" id="go-ai-difficulty-chips"></div>
+              <p class="xiangqi-ai-start-hint">
+                內建陪練 AI（不是職業棋力）。預設「高手」；「宗師」會多想幾步，較難隨便贏。
+              </p>
+            </div>
+            <div class="home-zone xiangqi-ai-zone">
+              <p class="home-zone-title">誰拿黑（先手）</p>
+              <div id="go-ai-start-btns"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -1986,7 +1995,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v40.5").catch((e) => {
+      import("./js/app.js?v=app-v40.6").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
