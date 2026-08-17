@@ -4960,6 +4960,14 @@ button.gomoku-cell:disabled {
   line-height: 1.35;
 }
 
+.go-ai-strength {
+  display: block;
+  font-size: 0.8rem !important;
+  font-weight: 700;
+  color: #8d4a2a !important;
+  line-height: 1.35;
+}
+
 .xiangqi-ai-card.is-selected {
   border-color: var(--xiangqi);
   background: linear-gradient(135deg, #faf0e0 0%, #f0d9b0 100%);
@@ -5612,7 +5620,13 @@ button.gomoku-cell:disabled {
   padding: 6px 8px;
   background: #efe4d0;
 }
-.go-play-meta { margin: 6px 0 0; text-align: center; font-size: 0.8rem; color: #6b5a40; }
+.go-play-meta {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6b5a40;
+  white-space: pre-wrap;
+}
 .go-play-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .go-svg { width: 100%; max-width: min(96vw, 72vh); margin: 0 auto; display: block; }
 .go-wood { fill: #e6c992; }

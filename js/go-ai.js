@@ -6,38 +6,62 @@ import {
   groupAt,
   starPoints,
 } from "./go-core.js?v=go-v1";
+import {
+  NIRVANA_LEVEL,
+  katagoLoadState,
+  requestKatagoMove,
+  ensureKatagoReady,
+  terminateKatagoEngine,
+} from "./go-katago-engine.js?v=go-v1";
 
 export const AI_PLAYER_ID = "__go_ai__";
+export { NIRVANA_LEVEL, katagoLoadState, ensureKatagoReady, terminateKatagoEngine };
 
-/** 圍棋 AI 難度（內建啟發式；沒有外掛引擎，但刻意不要太弱） */
+/**
+ * 難度卡：label＝名稱，strength＝棋力（一定要講清楚），desc＝打起來感覺
+ */
 export const GO_AI_LEVELS = [
   {
     level: 1,
     label: "入門",
-    desc: "會提明顯的子、也會逃叫吃，偶爾下軟。適合剛會下棋。",
+    strength: "棋力：約剛學會規則（遠低於業餘 20 級）",
+    desc: "會提明顯的子、也會逃叫吃，偶爾下軟。適合熟悉棋盤。",
   },
   {
     level: 2,
     label: "普通",
-    desc: "會連自己的棋、靠近對方、佔大場，日常陪練。",
+    strength: "棋力：約業餘 15～20 級陪練",
+    desc: "會連棋、靠近、佔大場。日常輕鬆對打。",
   },
   {
     level: 3,
     label: "高手",
-    desc: "優先處理叫吃與對殺，布局較穩，中盤不好隨便贏。",
+    strength: "棋力：約業餘 10～15 級",
+    desc: "優先處理叫吃與對殺，布局較穩。預設推薦。",
   },
   {
     level: 4,
     label: "大師",
-    desc: "會看對手下一步反擊，少送吃，棋力明顯較強。",
+    strength: "棋力：約業餘 5～10 級",
+    desc: "會看對手下一步反擊，少送吃，明顯較難。",
   },
   {
     level: 5,
     label: "宗師",
-    desc: "內建最強：多手推演＋嚴格挑選，陪練級裡最難打。",
+    strength: "棋力：約業餘 1～5 級（內建啟發式最強）",
+    desc: "多手推演＋嚴格挑選。還沒載入 KataGo 前的天花板。",
+  },
+  {
+    level: 6,
+    label: "涅槃",
+    strength: "棋力：KataGo 小網路 b6c96＋搜尋 ≈ 業餘高段～職業入門量級（視手機／電腦）",
+    desc: "開源最強引擎系列（KataGo）。首次約下載 3.6 MB 網路；明顯強過上面五級。不是完整桌面滿血最大網路。",
   },
 ];
 
+export function isGoNirvanaLevel(level) {
+  return Number(level) >= NIRVANA_LEVEL;
+}
 const DIRS = [
   [-1, 0],
   [1, 0],
@@ -322,17 +346,18 @@ function countStones(pos) {
  * @returns {Promise<[number,number]|null>}
  */
 export function requestGoAiMove(pos, level) {
-  const lv = Math.max(1, Math.min(5, Number(level) || 2));
+  const lv = Math.max(1, Math.min(6, Number(level) || 2));
+  if (lv >= NIRVANA_LEVEL) {
+    return requestKatagoMove(pos).catch((err) => {
+      console.warn("[go] KataGo failed, fallback to 宗師", err);
+      katagoLoadState.failReason = err?.message || String(err);
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(pickGoAiMove(pos, 5)), 80);
+      });
+    });
+  }
   const delay = lv <= 2 ? 120 : lv === 3 ? 220 : lv === 4 ? 380 : 520;
   return new Promise((resolve) => {
-    setTimeout(() => {
-      const mv = pickGoAiMove(pos, lv);
-      // 若幾乎沒好棋且盤面很大、候選很少，偶爾停著（終盤感）
-      if (!mv) {
-        resolve(null);
-        return;
-      }
-      resolve(mv);
-    }, delay);
+    setTimeout(() => resolve(pickGoAiMove(pos, lv)), delay);
   });
 }

@@ -14,7 +14,15 @@ import {
   clonePosition,
 } from "./go-core.js?v=go-v1";
 import { ensureGoBoardSvg, renderGoBoardSvg } from "./go-board-ui.js?v=go-v2";
-import { AI_PLAYER_ID, GO_AI_LEVELS, requestGoAiMove } from "./go-ai.js?v=go-v2";
+import {
+  AI_PLAYER_ID,
+  GO_AI_LEVELS,
+  NIRVANA_LEVEL,
+  katagoLoadState,
+  ensureKatagoReady,
+  terminateKatagoEngine,
+  requestGoAiMove,
+} from "./go-ai.js?v=go-v3";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=go-v1";
 import { getChildName } from "./children.js";
 import { getSelectedChild } from "./store.js";
@@ -132,13 +140,39 @@ function renderPlay() {
     overTitle: game.endReason || "終局",
     waitingAi: game.mode === "ai" && !game.over && turnId === AI_PLAYER_ID,
     extraEl: $("#go-play-meta"),
-    extraText: `${game.position.size} 路 · 貼目 ${komiForSize(game.position.size)} · 黑提 ${game.position.captured[0]} · 白提 ${game.position.captured[1]}`,
+    extraText: formatGoPlayMeta(turnId),
     extraVisible: true,
   });
   const passBtn = $("#btn-go-pass");
   const resignBtn = $("#btn-go-resign");
   if (passBtn) passBtn.hidden = game.over;
   if (resignBtn) resignBtn.hidden = game.over;
+}
+
+function formatGoPlayMeta(turnId) {
+  if (!game) return "";
+  const base = `${game.position.size} 路 · 貼目 ${komiForSize(game.position.size)} · 黑提 ${game.position.captured[0]} · 白提 ${game.position.captured[1]}`;
+  if (game.mode !== "ai") return base;
+  const lv = game.aiDifficulty ?? aiDifficulty;
+  const info = GO_AI_LEVELS.find((d) => d.level === lv);
+  const strength = info?.strength ? ` · ${info.strength}` : "";
+  if (lv >= NIRVANA_LEVEL) {
+    if (katagoLoadState.loading) {
+      return `${base}\nKataGo 載入中… ${Math.round((katagoLoadState.progress || 0) * 100)}%`;
+    }
+    if (katagoLoadState.failReason) {
+      return `${base}\nKataGo 載入失敗，改用宗師啟發式 · ${katagoLoadState.failReason}`;
+    }
+    if (turnId === AI_PLAYER_ID && !game.over) {
+      const be = katagoLoadState.backend ? `（${katagoLoadState.backend}）` : "";
+      return `${base}\n涅槃・KataGo 思考中${be}${strength}`;
+    }
+    return `${base}\n${strength}${katagoLoadState.backend ? ` · 後端 ${katagoLoadState.backend}` : ""}`;
+  }
+  if (turnId === AI_PLAYER_ID && !game.over) {
+    return `${base}\n電腦思考中${strength}`;
+  }
+  return `${base}${strength}`;
 }
 
 function endWithScore(reason) {
@@ -212,13 +246,14 @@ function startLocalGame(blackId) {
 
 function startAiGame(humanBlack) {
   const human = getSelectedChild();
+  const level = aiDifficulty;
   game = {
     mode: "ai",
     position: createPosition(boardSize),
     blackPlayerId: humanBlack ? human : AI_PLAYER_ID,
     whitePlayerId: humanBlack ? AI_PLAYER_ID : human,
     humanPlayerId: human,
-    aiDifficulty,
+    aiDifficulty: level,
     over: false,
     winner: null,
   };
@@ -226,6 +261,23 @@ function startAiGame(humanBlack) {
   deps?.showView("goPlay");
   rebindGomokuBoardZoom("#go-board-viewport", "#go-board-stage");
   renderPlay();
+  if (level >= NIRVANA_LEVEL) {
+    const poll = window.setInterval(() => {
+      if (!game || game.mode !== "ai") {
+        window.clearInterval(poll);
+        return;
+      }
+      renderPlay();
+      if (!katagoLoadState.loading) window.clearInterval(poll);
+    }, 400);
+    ensureKatagoReady()
+      .catch(() => {})
+      .finally(() => {
+        renderPlay();
+        maybeAi();
+      });
+    return;
+  }
   maybeAi();
 }
 
@@ -255,9 +307,12 @@ function renderFirst() {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = `xiangqi-ai-card${aiDifficulty === d.level ? " is-selected" : ""}`;
-        btn.innerHTML = `<strong>${d.label}</strong><span>${d.desc}</span>`;
+        btn.innerHTML = `<strong>${d.label}</strong><span class="go-ai-strength">${d.strength || ""}</span><span>${d.desc}</span>`;
         btn.addEventListener("click", () => {
           aiDifficulty = d.level;
+          if (d.level >= NIRVANA_LEVEL) {
+            ensureKatagoReady().catch(() => {});
+          }
           renderFirst();
         });
         chips.appendChild(btn);
@@ -758,6 +813,7 @@ function bind() {
     if (confirm("離開棋局？進度不會儲存。")) {
       aiMoveToken += 1;
       game = null;
+      terminateKatagoEngine();
       resetGomokuBoardZoom();
       deps?.showView("goHub");
     }
@@ -783,6 +839,7 @@ function bind() {
   $("#btn-go-win-dismiss")?.addEventListener("click", () => $("#go-win-overlay")?.setAttribute("hidden", ""));
   $("#btn-go-win-home")?.addEventListener("click", () => {
     game = null;
+    terminateKatagoEngine();
     deps?.showView("goHub");
   });
   $("#btn-go-win-replay")?.addEventListener("click", () => {

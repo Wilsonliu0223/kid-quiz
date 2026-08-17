@@ -9,4 +9,11 @@ Third-party WASM engines
 - Engine files under engines/pikafish/
 - License: GNU GPL v3
 
-These engines are invoked by the app without modification. GPL applies to the engine binaries; see upstream projects for full license text.
+圍棋 KataGo（涅槃・瀏覽器）
+- Engine UI port based on: https://github.com/Sir-Teo/web-katrain (MIT)
+- Upstream KataGo: https://github.com/lightvector/KataGo (MIT)
+- Small network g170-b6c96 under engines/katago/models/ (CC0 / KataGo training license)
+- TensorFlow.js WASM binaries under engines/katago/tfjs/
+
+These engines are invoked by the app without modification where applicable.
+See upstream projects for full license text.

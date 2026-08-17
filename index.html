@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v40.6" />
+    <link rel="stylesheet" href="css/app.css?v=app-v40.7" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1344,7 +1344,7 @@
               <p class="home-zone-title">電腦難度</p>
               <div class="xiangqi-ai-difficulty-cards" id="go-ai-difficulty-chips"></div>
               <p class="xiangqi-ai-start-hint">
-                內建陪練 AI（不是職業棋力）。預設「高手」；「宗師」會多想幾步，較難隨便贏。
+                每一級都會標明「棋力」。涅槃＝開源最強引擎系列 KataGo（瀏覽器小網路 b6c96，約 3.6 MB），明顯強過內建啟發式；不是桌面滿血最大網路。
               </p>
             </div>
             <div class="home-zone xiangqi-ai-zone">
@@ -1995,7 +1995,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v40.6").catch((e) => {
+      import("./js/app.js?v=app-v40.7").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
