@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v40.4" />
+    <link rel="stylesheet" href="css/app.css?v=app-v40.5" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1432,7 +1432,7 @@
           <span class="quiz-subject">練習關卡</span>
         </header>
         <div class="flip-first-body">
-          <p class="flip-first-meta">吃子手筋、死活、定式、初步布局</p>
+          <p class="flip-first-meta">每題盤上有 A／B／C，選完看說明。吃子、死活、定式、布局都有。</p>
           <div id="go-drill-list" class="gomoku-mode-btns"></div>
         </div>
       </section>
@@ -1986,7 +1986,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v40.4").catch((e) => {
+      import("./js/app.js?v=app-v40.5").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

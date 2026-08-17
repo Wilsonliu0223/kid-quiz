@@ -30,8 +30,8 @@ import {
   resetGomokuBoardZoom,
   shouldSuppressGomokuCellTap,
 } from "./gomoku-board-zoom.js";
-import lessons from "./go/lessons.js?v=go-v4";
-import drills from "./go/drills.js?v=go-v4";
+import lessons from "./go/lessons.js?v=go-v5";
+import drills from "./go/drills.js?v=go-v5";
 
 /** @type {{ showView:(v:string)=>void, getChildNames:()=>Record<string,string> }|null} */
 let deps = null;
@@ -69,6 +69,11 @@ let lessonPos = null;
 let drillIndex = 0;
 /** @type {import('./go-core.js').GoPosition|null} */
 let drillPos = null;
+let drillAnswered = false;
+/** @type {{r:number,c:number,label:string,state:string,why:string,ok?:boolean}[]} */
+let drillChoiceMarks = [];
+/** @type {string} */
+let drillFeedback = "";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -537,27 +542,137 @@ function renderDrillList() {
   }
 }
 
+function wrongWhyForKind(kind) {
+  if (kind === "capture") return "這裡提不到／叫吃不到。再看別的字母。";
+  if (kind === "life") return "這裡不是做眼／破眼的要點。";
+  if (kind === "joseki") return "不是這個定式常見應手。";
+  if (kind === "fuseki") return "這一手大場不在這裡。";
+  return "還不是。再試試別的字母。";
+}
+
+/**
+ * 練習關卡：優先用資料裡的 choices；否則自動產生 1 個正解 + 2 個干擾點。
+ * @param {any} d
+ * @param {import('./go-core.js').GoPosition} pos
+ */
+function buildDrillChoiceList(d, pos) {
+  const labels = ["A", "B", "C", "D"];
+  if (d.choices?.length) {
+    const list = d.choices.map((c) => ({
+      r: c.r,
+      c: c.c,
+      ok: !!c.ok,
+      why: c.why || (c.ok ? d.explain : wrongWhyForKind(d.kind)),
+      label: "A",
+      state: "idle",
+    }));
+    shuffleInPlace(list);
+    list.forEach((c, i) => {
+      c.label = labels[i] || String(i + 1);
+    });
+    return list;
+  }
+
+  const answerSet = new Set((d.answers || []).map(([r, c]) => `${r},${c}`));
+  const [ar, ac] = d.answers[0];
+  const ok = {
+    r: ar,
+    c: ac,
+    ok: true,
+    why: d.explain || "答對了。",
+    label: "A",
+    state: "idle",
+  };
+
+  /** @type {[number,number][]} */
+  const pool = [];
+  for (let r = 0; r < pos.size; r++) {
+    for (let c = 0; c < pos.size; c++) {
+      if (pos.board[r][c] !== 0) continue;
+      if (answerSet.has(`${r},${c}`)) continue;
+      pool.push([r, c]);
+    }
+  }
+  const near = [];
+  const far = [];
+  for (const [r, c] of pool) {
+    const dist = Math.abs(r - ar) + Math.abs(c - ac);
+    if (dist > 0 && dist <= 3) near.push([r, c]);
+    else far.push([r, c]);
+  }
+  shuffleInPlace(near);
+  shuffleInPlace(far);
+  const picks = [...near, ...far].slice(0, 2);
+  const wrongs = picks.map(([r, c]) => ({
+    r,
+    c,
+    ok: false,
+    why: wrongWhyForKind(d.kind),
+    label: "A",
+    state: "idle",
+  }));
+
+  const list = [ok, ...wrongs];
+  shuffleInPlace(list);
+  list.forEach((c, i) => {
+    c.label = labels[i] || String(i + 1);
+  });
+  return list;
+}
+
+function renderDrillPlay() {
+  const d = drills[drillIndex];
+  if (!d || !drillPos) return;
+  const choiceMarks = drillAnswered ? [] : drillChoiceMarks;
+  renderGoBoardSvg(ensureGoBoardSvg($("#go-drill-board"), onDrillPoint), drillPos, {
+    choiceMarks,
+    lastMove: drillPos.lastMove,
+  });
+  $("#go-drill-play-title").textContent = d.title;
+  const fb = $("#go-drill-feedback");
+  if (!fb) return;
+  if (drillAnswered) {
+    fb.textContent = drillFeedback;
+  } else {
+    fb.textContent = `${d.prompt || "哪裡比較好？"}\n點選盤上 A／B／C。${
+      drillFeedback ? `\n\n${drillFeedback}` : ""
+    }`;
+  }
+}
+
 function openDrill(i) {
   drillIndex = i;
   const d = drills[i];
   drillPos = positionFromAscii(d.setup, d.turn || BLACK);
-  $("#go-drill-feedback").textContent = d.prompt || "點正確的交叉點。";
+  drillAnswered = false;
+  drillFeedback = "";
+  drillChoiceMarks = buildDrillChoiceList(d, drillPos);
   deps?.showView("goDrillPlay");
-  renderGoBoardSvg(ensureGoBoardSvg($("#go-drill-board"), onDrillPoint), drillPos, { marks: [] });
-  $("#go-drill-play-title").textContent = d.title;
+  renderDrillPlay();
 }
 
 function onDrillPoint(r, c) {
   const d = drills[drillIndex];
-  if (!d || !drillPos) return;
-  const ok = d.answers.some(([ar, ac]) => ar === r && ac === c);
-  if (!ok) {
-    $("#go-drill-feedback").textContent = "不是這裡。再想想。";
+  if (!d || !drillPos || drillAnswered) return;
+  const hit = drillChoiceMarks.find((x) => x.r === r && x.c === c);
+  if (!hit) {
+    drillFeedback = "請點有字母的位置。";
+    renderDrillPlay();
     return;
   }
-  if (isLegalMove(drillPos, r, c)) drillPos = playMove(drillPos, r, c);
-  renderGoBoardSvg(ensureGoBoardSvg($("#go-drill-board"), onDrillPoint), drillPos, { marks: [[r, c]] });
-  $("#go-drill-feedback").textContent = `答對！${d.explain}`;
+  if (hit.ok) {
+    if (isLegalMove(drillPos, r, c)) drillPos = playMove(drillPos, r, c);
+    drillAnswered = true;
+    drillFeedback = `答對！${hit.why}`;
+    renderDrillPlay();
+    return;
+  }
+  drillChoiceMarks = drillChoiceMarks.map((x) => ({
+    ...x,
+    state: x.r === r && x.c === c ? "bad" : "idle",
+  }));
+  drillFeedback = `還不是。${hit.why}`;
+  renderDrillPlay();
 }
 
 export function beginGoLocal() {
