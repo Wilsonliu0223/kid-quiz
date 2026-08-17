@@ -30,8 +30,8 @@ import {
   resetGomokuBoardZoom,
   shouldSuppressGomokuCellTap,
 } from "./gomoku-board-zoom.js";
-import lessons from "./go/lessons.js?v=go-v2";
-import drills from "./go/drills.js?v=go-v2";
+import lessons from "./go/lessons.js?v=go-v3";
+import drills from "./go/drills.js?v=go-v3";
 
 /** @type {{ showView:(v:string)=>void, getChildNames:()=>Record<string,string> }|null} */
 let deps = null;
@@ -315,7 +315,7 @@ const KIND_LABEL = {
   fuseki: "初步布局",
 };
 
-const KIND_ORDER = ["fuseki", "joseki", "capture", "life"];
+const KIND_ORDER = ["capture", "life", "joseki", "fuseki"];
 
 function renderLessonList() {
   const box = $("#go-lesson-list");
@@ -323,6 +323,9 @@ function renderLessonList() {
   box.innerHTML = "";
   const groups = [
     { key: "rule", title: "規則怎麼走" },
+    { key: "tesuji", title: "吃子手筋" },
+    { key: "life", title: "死活" },
+    { key: "joseki", title: "常見定式" },
     { key: "fuseki", title: "初步布局" },
   ];
   for (const g of groups) {
