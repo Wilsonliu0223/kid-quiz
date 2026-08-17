@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v40.3" />
+    <link rel="stylesheet" href="css/app.css?v=app-v40.4" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1421,7 +1421,7 @@
           <span class="quiz-subject">示範教學棋局</span>
         </header>
         <div class="flip-first-body">
-          <p class="flip-first-meta">選一局逐步看。規則局先看，再看初步布局。</p>
+          <p class="flip-first-meta">每步先猜 A／B／C，再看為何這樣下比較好。</p>
           <div id="go-lesson-list" class="gomoku-mode-btns"></div>
         </div>
       </section>
@@ -1986,7 +1986,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v40.3").catch((e) => {
+      import("./js/app.js?v=app-v40.4").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -30,7 +30,12 @@ export function resetGoBoardSvg(svg) {
 /**
  * @param {SVGSVGElement} svg
  * @param {import('./go-core.js').GoPosition} pos
- * @param {{ lastMove?:[number,number]|null, marks?:[number,number][], ko?:[number,number]|null }} [opts]
+ * @param {{
+ *   lastMove?:[number,number]|null,
+ *   marks?:[number,number][],
+ *   choiceMarks?:{r:number,c:number,label:string,state?:'idle'|'ok'|'bad'}[],
+ *   ko?:[number,number]|null
+ * }} [opts]
  */
 export function renderGoBoardSvg(svg, pos, opts = {}) {
   if (!svg || !pos) return;
@@ -39,9 +44,13 @@ export function renderGoBoardSvg(svg, pos, opts = {}) {
   const box = 640;
   const span = box - pad * 2;
   const gap = n === 1 ? 0 : span / (n - 1);
-  const stars = new Set(starPoints(n).map(([r, c]) => `${r},${c}`));
   const last = opts.lastMove || pos.lastMove;
   const marks = new Set((opts.marks || []).map(([r, c]) => `${r},${c}`));
+  /** @type {Map<string,{label:string,state:string}>} */
+  const choices = new Map();
+  for (const ch of opts.choiceMarks || []) {
+    choices.set(`${ch.r},${ch.c}`, { label: ch.label, state: ch.state || "idle" });
+  }
 
   let lines = "";
   for (let i = 0; i < n; i++) {
@@ -57,6 +66,7 @@ export function renderGoBoardSvg(svg, pos, opts = {}) {
     starDots += `<circle cx="${x}" cy="${y}" r="${n >= 13 ? 4.2 : 5}" class="go-star"/>`;
   }
   let stones = "";
+  const fontSize = Math.max(14, gap * 0.42);
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
       const x = pad + c * gap;
@@ -69,6 +79,11 @@ export function renderGoBoardSvg(svg, pos, opts = {}) {
         if (last && last[0] === r && last[1] === c) {
           stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.16}" class="go-last"/>`;
         }
+      } else if (choices.has(key)) {
+        const ch = choices.get(key);
+        const st = ch.state === "ok" ? "go-choice-ok" : ch.state === "bad" ? "go-choice-bad" : "go-choice-idle";
+        stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.36}" class="go-choice ${st}"/>`;
+        stones += `<text x="${x}" y="${y}" class="go-choice-label" text-anchor="middle" dominant-baseline="central" font-size="${fontSize}">${ch.label}</text>`;
       } else if (marks.has(key)) {
         stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.14}" class="go-mark"/>`;
       } else if (pos.ko && pos.ko[0] === r && pos.ko[1] === c) {

@@ -13,7 +13,7 @@ import {
   positionFromAscii,
   clonePosition,
 } from "./go-core.js?v=go-v1";
-import { ensureGoBoardSvg, renderGoBoardSvg } from "./go-board-ui.js?v=go-v1";
+import { ensureGoBoardSvg, renderGoBoardSvg } from "./go-board-ui.js?v=go-v2";
 import { AI_PLAYER_ID, requestGoAiMove } from "./go-ai.js?v=go-v1";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=go-v1";
 import { getChildName } from "./children.js";
@@ -30,8 +30,8 @@ import {
   resetGomokuBoardZoom,
   shouldSuppressGomokuCellTap,
 } from "./gomoku-board-zoom.js";
-import lessons from "./go/lessons.js?v=go-v3";
-import drills from "./go/drills.js?v=go-v3";
+import lessons from "./go/lessons.js?v=go-v4";
+import drills from "./go/drills.js?v=go-v4";
 
 /** @type {{ showView:(v:string)=>void, getChildNames:()=>Record<string,string> }|null} */
 let deps = null;
@@ -58,6 +58,12 @@ let aiMoveToken = 0;
 let game = null;
 let lessonIndex = 0;
 let lessonStep = 0;
+/** 本步是否已選對（有 choices 的步驟） */
+let lessonAnswered = false;
+/** @type {{r:number,c:number,label:string,state:string,why:string,ok?:boolean}[]} */
+let lessonChoiceMarks = [];
+/** @type {string} */
+let lessonFeedback = "";
 /** @type {import('./go-core.js').GoPosition|null} */
 let lessonPos = null;
 let drillIndex = 0;
@@ -251,25 +257,186 @@ function lessonStartPos(item) {
   return createPosition(item.size || 9);
 }
 
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function stepCorrectChoice(step) {
+  return step?.choices?.find((c) => c.ok) || null;
+}
+
+/** 重播到指定步驟開始（尚未回答） */
+function rebuildLessonTo(targetStep) {
+  const item = lessons[lessonIndex];
+  if (!item) return;
+  lessonPos = lessonStartPos(item);
+  for (let i = 0; i < targetStep; i++) {
+    applyLessonStepSilent(item.steps[i]);
+  }
+  lessonStep = targetStep;
+  lessonAnswered = false;
+  lessonFeedback = "";
+  prepareLessonChoices();
+}
+
+function applyLessonStepSilent(step) {
+  if (!lessonPos || !step) return;
+  if (step.pass) {
+    lessonPos = playPass(lessonPos);
+    return;
+  }
+  if (step.choices) {
+    if (step.place === false) return;
+    const ok = stepCorrectChoice(step);
+    if (ok && isLegalMove(lessonPos, ok.r, ok.c)) {
+      lessonPos = playMove(lessonPos, ok.r, ok.c);
+    }
+    return;
+  }
+  if (step.r != null && step.c != null && isLegalMove(lessonPos, step.r, step.c)) {
+    lessonPos = playMove(lessonPos, step.r, step.c);
+  }
+}
+
+function prepareLessonChoices() {
+  const item = lessons[lessonIndex];
+  const step = item?.steps?.[lessonStep];
+  lessonChoiceMarks = [];
+  if (!step?.choices || lessonAnswered) return;
+  const labels = ["A", "B", "C", "D"];
+  const list = step.choices.map((c, i) => ({
+    r: c.r,
+    c: c.c,
+    why: c.why,
+    ok: !!c.ok,
+    label: labels[i] || String(i + 1),
+    state: "idle",
+  }));
+  shuffleInPlace(list);
+  list.forEach((c, i) => {
+    c.label = labels[i] || String(i + 1);
+  });
+  lessonChoiceMarks = list;
+}
+
 function renderLesson() {
   const item = lessons[lessonIndex];
   if (!item || !lessonPos) return;
-  const step = item.steps[Math.max(0, lessonStep - 1)];
-  const marks = [];
-  if (lessonStep < item.steps.length) {
-    const nxt = item.steps[lessonStep];
-    if (!nxt.pass) marks.push([nxt.r, nxt.c]);
+  const step = item.steps[lessonStep];
+  const total = item.steps.length;
+  const atEnd = lessonStep >= total;
+
+  /** @type {{r:number,c:number,label:string,state?:string}[]} */
+  let choiceMarks = [];
+  if (!atEnd && step?.choices && !lessonAnswered) {
+    choiceMarks = lessonChoiceMarks;
   }
-  renderGoBoardSvg(ensureGoBoardSvg($("#go-lesson-board"), () => {}), lessonPos, { marks });
+
+  renderGoBoardSvg(ensureGoBoardSvg($("#go-lesson-board"), onLessonPoint), lessonPos, {
+    choiceMarks,
+    lastMove: lessonPos.lastMove,
+  });
+
   $("#go-lesson-title").textContent = `${lessonIndex + 1}/${lessons.length} ${item.title}`;
-  $("#go-lesson-intro").textContent = lessonStep === 0 ? item.intro : step?.say || item.intro;
-  $("#go-lesson-progress").textContent = `第 ${lessonStep} / ${item.steps.length} 手`;
+
+  const introEl = $("#go-lesson-intro");
+  const progressEl = $("#go-lesson-progress");
+  const nextBtn = $("#btn-go-lesson-next");
+
+  if (atEnd) {
+    let endText = "這一局學完了。可以按「下一局」或「重來」。";
+    if (item.showScore) {
+      endText = `${formatScoreDetail(scoreChinese(lessonPos))}\n\n${endText}`;
+    }
+    introEl.textContent = endText;
+    progressEl.textContent = `完成 ${total} / ${total}`;
+    if (nextBtn) {
+      nextBtn.disabled = true;
+      nextBtn.textContent = "已結束";
+    }
+    return;
+  }
+
+  if (step.pass) {
+    introEl.textContent = step.say || item.intro;
+    progressEl.textContent = `說明 ${lessonStep + 1} / ${total}`;
+    if (nextBtn) {
+      nextBtn.disabled = false;
+      nextBtn.textContent = "下一步";
+    }
+    return;
+  }
+
+  if (step.choices) {
+    if (!lessonAnswered) {
+      introEl.textContent = `${step.ask || "哪裡比較好？"}\n點選盤上 A／B／C。`;
+      if (lessonFeedback) introEl.textContent += `\n\n${lessonFeedback}`;
+      progressEl.textContent = `猜一猜 ${lessonStep + 1} / ${total}`;
+      if (nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.textContent = "先選位置";
+      }
+    } else {
+      introEl.textContent = lessonFeedback || stepCorrectChoice(step)?.why || "";
+      progressEl.textContent = `答對了 ${lessonStep + 1} / ${total}`;
+      if (nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.textContent = lessonStep + 1 >= total ? "看結果" : "下一步";
+      }
+    }
+    return;
+  }
+
+  introEl.textContent = step.say || item.intro;
+  progressEl.textContent = `第 ${lessonStep + 1} / ${total}`;
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = "下一步";
+  }
+}
+
+function onLessonPoint(r, c) {
+  const item = lessons[lessonIndex];
+  const step = item?.steps?.[lessonStep];
+  if (!step?.choices || lessonAnswered || !lessonPos) return;
+  const hit = lessonChoiceMarks.find((x) => x.r === r && x.c === c);
+  if (!hit) {
+    lessonFeedback = "請點有字母的位置。";
+    renderLesson();
+    return;
+  }
+  if (hit.ok) {
+    lessonChoiceMarks = lessonChoiceMarks.map((x) => ({
+      ...x,
+      state: x.ok ? "ok" : "idle",
+    }));
+    if (step.place !== false && isLegalMove(lessonPos, r, c)) {
+      lessonPos = playMove(lessonPos, r, c);
+    }
+    lessonAnswered = true;
+    lessonFeedback = `答對！${hit.why}`;
+    renderLesson();
+    return;
+  }
+  lessonChoiceMarks = lessonChoiceMarks.map((x) => ({
+    ...x,
+    state: x.r === r && x.c === c ? "bad" : "idle",
+  }));
+  lessonFeedback = `還不是。${hit.why}`;
+  renderLesson();
 }
 
 function openLesson(i) {
   lessonIndex = i;
   lessonStep = 0;
+  lessonAnswered = false;
+  lessonFeedback = "";
   lessonPos = lessonStartPos(lessons[i]);
+  prepareLessonChoices();
   deps?.showView("goLesson");
   renderLesson();
 }
@@ -277,34 +444,36 @@ function openLesson(i) {
 function lessonNext() {
   const item = lessons[lessonIndex];
   if (!item || !lessonPos) return;
+  const step = item.steps[lessonStep];
+
+  if (lessonStep >= item.steps.length) return;
+
+  if (step?.choices && !lessonAnswered) return;
+
+  if (step?.pass) {
+    lessonPos = playPass(lessonPos);
+  }
+
+  lessonStep += 1;
+  lessonAnswered = false;
+  lessonFeedback = "";
+
   if (lessonStep >= item.steps.length) {
-    if (item.showScore) {
-      const sc = scoreChinese(lessonPos);
-      $("#go-lesson-intro").textContent = formatScoreDetail(sc);
-    }
+    renderLesson();
     return;
   }
-  const s = item.steps[lessonStep];
-  lessonPos = s.pass ? playPass(lessonPos) : playMove(lessonPos, s.r, s.c);
-  lessonStep += 1;
+  prepareLessonChoices();
   renderLesson();
-  if (lessonStep >= item.steps.length && item.showScore) {
-    const sc = scoreChinese(lessonPos);
-    $("#go-lesson-intro").textContent = `${lessons[lessonIndex].steps[lessonStep - 1]?.say || ""}\n\n${formatScoreDetail(sc)}`;
-  }
 }
 
 function lessonPrev() {
-  if (lessonStep <= 0) return;
-  const item = lessons[lessonIndex];
-  lessonPos = lessonStartPos(item);
-  const target = lessonStep - 1;
-  lessonStep = 0;
-  for (let i = 0; i < target; i++) {
-    const s = item.steps[i];
-    lessonPos = s.pass ? playPass(lessonPos) : playMove(lessonPos, s.r, s.c);
-    lessonStep++;
+  if (lessonStep <= 0 && !lessonAnswered) return;
+  if (lessonAnswered) {
+    rebuildLessonTo(lessonStep);
+    renderLesson();
+    return;
   }
+  rebuildLessonTo(lessonStep - 1);
   renderLesson();
 }
 
