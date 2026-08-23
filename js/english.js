@@ -15,7 +15,8 @@ export function englishAnswersMatch(typed, expected) {
 }
 
 let speechPrimed = false;
-let activeAudio = null;
+let sharedAudio = null;
+let audioUnlocked = false;
 const dictAudioCache = new Map();
 
 function normalizeAudioUrl(url) {
@@ -25,13 +26,71 @@ function normalizeAudioUrl(url) {
   return u;
 }
 
+function ensureSharedAudio() {
+  if (!sharedAudio) {
+    sharedAudio = new Audio();
+    sharedAudio.setAttribute("playsinline", "true");
+    sharedAudio.playsInline = true;
+    sharedAudio.preload = "auto";
+  }
+  return sharedAudio;
+}
+
 function stopAudio() {
-  if (activeAudio) {
-    activeAudio.pause();
-    activeAudio.src = "";
-    activeAudio = null;
+  if (sharedAudio) {
+    try {
+      sharedAudio.pause();
+      sharedAudio.removeAttribute("src");
+      sharedAudio.load();
+    } catch (e) {
+      console.warn("stopAudio", e);
+    }
   }
   window.speechSynthesis?.cancel();
+}
+
+/**
+ * 必須在 click／touch 同步呼叫，解除手機自動播放限制。
+ * 若先 await 再 play／speak，iOS／Android 常會靜音失敗。
+ */
+export function unlockSpeechFromGesture() {
+  speechPrimed = true;
+  try {
+    window.speechSynthesis?.resume();
+    window.speechSynthesis?.getVoices();
+    // 靜音短句：讓後續 await 之後的 speak 仍可用
+    const warm = new SpeechSynthesisUtterance(" ");
+    warm.volume = 0;
+    warm.rate = 5;
+    warm.lang = "en-US";
+    window.speechSynthesis?.speak(warm);
+  } catch (e) {
+    console.warn("unlock speechSynthesis", e);
+  }
+
+  try {
+    const audio = ensureSharedAudio();
+    audio.muted = true;
+    // 極短無聲 wav，在手勢內 play 以解鎖後續 MP3
+    audio.src =
+      "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+    const p = audio.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => {
+        audio.pause();
+        audio.muted = false;
+        audioUnlocked = true;
+      }).catch(() => {
+        audio.muted = false;
+        audioUnlocked = true;
+      });
+    } else {
+      audio.muted = false;
+      audioUnlocked = true;
+    }
+  } catch (e) {
+    console.warn("unlock Audio", e);
+  }
 }
 
 function playAudioUrl(url) {
@@ -42,9 +101,11 @@ function playAudioUrl(url) {
       return;
     }
     try {
-      stopAudio();
-      const audio = new Audio(src);
-      activeAudio = audio;
+      window.speechSynthesis?.cancel();
+      const audio = ensureSharedAudio();
+      audio.muted = false;
+      audio.onended = null;
+      audio.onerror = null;
       let settled = false;
       const done = (ok) => {
         if (settled) return;
@@ -53,6 +114,7 @@ function playAudioUrl(url) {
       };
       audio.onended = () => done(true);
       audio.onerror = () => done(false);
+      audio.src = src;
       audio.play().then(() => {}).catch(() => done(false));
     } catch (e) {
       console.warn("playAudioUrl", e);
@@ -83,7 +145,10 @@ async function fetchDictionaryAudioUrl(query) {
     const res = await fetch(
       `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`
     );
-    if (!res.ok) return "";
+    if (!res.ok) {
+      dictAudioCache.set(key, "");
+      return "";
+    }
     const data = await res.json();
     for (const entry of data) {
       const url = pickAudioFromEntry(entry);
@@ -92,6 +157,7 @@ async function fetchDictionaryAudioUrl(query) {
         return url;
       }
     }
+    dictAudioCache.set(key, "");
   } catch (e) {
     console.warn("fetchDictionaryAudioUrl", query, e);
   }
@@ -114,6 +180,23 @@ async function speakWithDictionary(text) {
     if (url) return playAudioUrl(url);
   }
   return false;
+}
+
+/** 詞組：逐字播詞典音；任一失敗則整段改語音合成 */
+async function speakPhraseWithDictionary(text) {
+  const parts = String(text)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length < 2) return false;
+
+  for (const part of parts) {
+    const url = await fetchDictionaryAudioUrl(part);
+    if (!url) return false;
+    const ok = await playAudioUrl(url);
+    if (!ok) return false;
+  }
+  return true;
 }
 
 function pickEnglishVoice() {
@@ -172,9 +255,15 @@ function speakWithSynth(text) {
         };
         u.onend = () => done(spoke);
         u.onerror = () => done(false);
-        setTimeout(() => done(spoke), 5000);
+        setTimeout(() => done(spoke), 8000);
 
         window.speechSynthesis.speak(u);
+        // iOS 有時會卡住 paused，點一下 resume
+        setTimeout(() => {
+          try {
+            if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+          } catch (_) {}
+        }, 50);
       } catch (e) {
         console.warn("speakWithSynth", e);
         resolve(false);
@@ -200,16 +289,24 @@ function speakWithSynth(text) {
 
 /**
  * 播放英文：優先詞典真人發音 MP3，其次手機內建語音
+ * 點擊時請先呼叫 unlockSpeechFromGesture()（或由本函式開頭解鎖）
  * @returns {Promise<boolean>}
  */
 export async function speakEnglish(text) {
   const w = String(text || "").trim();
   if (!w) return false;
 
-  primeSpeech();
+  // 若呼叫端已在 click 同步解鎖更好；此處再保險一次
+  if (!audioUnlocked) unlockSpeechFromGesture();
+  else primeSpeech();
 
   const dictOk = await speakWithDictionary(w);
   if (dictOk) return true;
+
+  if (/\s/.test(w)) {
+    const phraseOk = await speakPhraseWithDictionary(w);
+    if (phraseOk) return true;
+  }
 
   return speakWithSynth(w);
 }

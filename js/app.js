@@ -20,6 +20,7 @@ import {
   englishAnswersMatch,
   speakEnglish,
   primeSpeech,
+  unlockSpeechFromGesture,
 } from "./english.js";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
@@ -1080,7 +1081,8 @@ async function playEnglishAudio() {
 
   const btn = $("#btn-speak-en");
   const hint = $("#en-quiz-hint");
-  primeSpeech();
+  // 必須在點擊同步路徑解鎖，否則手機 await 後無法播音
+  unlockSpeechFromGesture();
 
   if (btn) {
     btn.disabled = true;
@@ -2076,7 +2078,7 @@ function bindEvents() {
 
   document.querySelectorAll(".en-mode-picker .chip").forEach((btn) => {
     btn.addEventListener("click", () => {
-      primeSpeech();
+      unlockSpeechFromGesture();
       setEnMode(btn.dataset.enMode);
     });
   });
@@ -2103,7 +2105,9 @@ function bindEvents() {
     $("#en-answer-input").focus();
   });
   $("#btn-submit-en").addEventListener("click", submitEnAnswer);
-  $("#btn-speak-en").addEventListener("click", () => {
+  $("#btn-speak-en").addEventListener("click", (e) => {
+    e.preventDefault();
+    unlockSpeechFromGesture();
     void playEnglishAudio();
   });
   $("#en-answer-input").addEventListener("keydown", (e) => {
