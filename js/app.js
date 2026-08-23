@@ -21,6 +21,7 @@ import {
   speakEnglish,
   primeSpeech,
   unlockSpeechFromGesture,
+  prefetchEnglishAudio,
 } from "./english.js";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
@@ -1179,6 +1180,7 @@ function renderEnQuestion() {
   const input = $("#en-answer-input");
   input.value = "";
   input.focus();
+  if (mode === "listen" && q?.english) prefetchEnglishAudio(q.english);
 }
 
 function showFeedback(type, text, actions = [], options = {}) {

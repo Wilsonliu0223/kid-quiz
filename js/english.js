@@ -199,17 +199,47 @@ async function speakPhraseWithDictionary(text) {
   return true;
 }
 
+/** Google 翻譯 TTS（較像真人；非正式 API，失敗就換下一個） */
+function googleTtsUrl(text) {
+  const q = encodeURIComponent(String(text || "").trim().slice(0, 180));
+  if (!q) return "";
+  return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=en&q=${q}`;
+}
+
+/** 有道美式發音（常有真人感） */
+function youdaoTtsUrl(text) {
+  const q = encodeURIComponent(String(text || "").trim());
+  if (!q) return "";
+  return `https://dict.youdao.com/dictvoice?audio=${q}&type=2`;
+}
+
+async function speakWithOnlineTts(text) {
+  const w = String(text || "").trim();
+  if (!w) return false;
+  for (const url of [googleTtsUrl(w), youdaoTtsUrl(w)]) {
+    if (!url) continue;
+    const ok = await playAudioUrl(url);
+    if (ok) return true;
+  }
+  return false;
+}
+
 function pickEnglishVoice() {
   const voices = window.speechSynthesis?.getVoices() || [];
   const en = voices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
-  return (
-    en.find((v) => /google.*english.*united states/i.test(v.name)) ||
-    en.find((v) => /google/i.test(v.name) && v.lang === "en-US") ||
-    en.find((v) => v.lang === "en-US" && !v.localService) ||
-    en.find((v) => v.lang === "en-US") ||
-    en[0] ||
-    null
-  );
+  const score = (v) => {
+    const n = `${v.name} ${v.lang}`.toLowerCase();
+    let s = 0;
+    if (/neural|natural|premium|enhanced|siri|samantha|karen|moira|daniel/.test(n)) s += 50;
+    if (/google.*us|google us english/.test(n)) s += 40;
+    if (/microsoft.*(aria|jenny|guy|sara)/.test(n)) s += 35;
+    if (v.lang === "en-US") s += 10;
+    if (!v.localService) s += 5;
+    if (/compact|eloquence/.test(n)) s -= 20;
+    return s;
+  };
+  en.sort((a, b) => score(b) - score(a));
+  return en[0] || null;
 }
 
 export function primeSpeech() {
@@ -288,27 +318,46 @@ function speakWithSynth(text) {
 }
 
 /**
- * 播放英文：優先詞典真人發音 MP3，其次手機內建語音
- * 點擊時請先呼叫 unlockSpeechFromGesture()（或由本函式開頭解鎖）
+ * 播放英文：詞典真人 → 線上自然 TTS → 詞組逐字詞典 → 系統語音（最後手段）
+ * 點擊時請先呼叫 unlockSpeechFromGesture()
  * @returns {Promise<boolean>}
  */
 export async function speakEnglish(text) {
   const w = String(text || "").trim();
   if (!w) return false;
 
-  // 若呼叫端已在 click 同步解鎖更好；此處再保險一次
   if (!audioUnlocked) unlockSpeechFromGesture();
   else primeSpeech();
 
+  // 1) 單字詞典真人錄音（有則最自然）
   const dictOk = await speakWithDictionary(w);
   if (dictOk) return true;
 
+  // 2) 線上 TTS（詞組整句較連貫，也比手機機械音自然）
+  const onlineOk = await speakWithOnlineTts(w);
+  if (onlineOk) return true;
+
+  // 3) 詞組拆字播詞典
   if (/\s/.test(w)) {
     const phraseOk = await speakPhraseWithDictionary(w);
     if (phraseOk) return true;
   }
 
+  // 4) 系統語音（較機械，僅備援）
   return speakWithSynth(w);
+}
+
+/** 預載本題發音，縮短第一次點播放的等待 */
+export function prefetchEnglishAudio(text) {
+  const w = String(text || "").trim();
+  if (!w) return;
+  void fetchDictionaryAudioUrl(w);
+  // 預熱線上 TTS：用 Image/Audio preload 不穩定，改靜默建立連結快取
+  try {
+    const a = new Audio();
+    a.preload = "auto";
+    a.src = googleTtsUrl(w);
+  } catch (_) {}
 }
 
 if (typeof window !== "undefined" && window.speechSynthesis) {
