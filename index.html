@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v40.9" />
+    <link rel="stylesheet" href="css/app.css?v=app-v41.0" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -109,6 +109,10 @@
             <button type="button" class="card card-mul" id="btn-start-mul">
               <span class="card-title">九九乘法</span>
               <span class="card-desc">背誦 · 測驗 · 進階挑戰</span>
+            </button>
+            <button type="button" class="card card-sudoku" id="btn-start-sudoku">
+              <span class="card-title">數獨</span>
+              <span class="card-desc">規則教學 · 三難度練習</span>
             </button>
           </div>
         </div>
@@ -1880,6 +1884,85 @@
         </footer>
       </section>
 
+      </section>
+
+      <!-- 數獨：首頁 -->
+      <section id="view-sudoku-home" class="view view-hidden" aria-label="數獨">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-sudoku-home-back">← 返回</button>
+          <span class="quiz-subject">數獨</span>
+        </header>
+        <div class="sudoku-home-body">
+          <h2 class="sudoku-home-title">數獨</h2>
+          <p class="sudoku-home-sub">先看規則教學，再選難度練習</p>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-sudoku-tutorial">
+            規則教學
+          </button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-sudoku-play">
+            開始練習
+          </button>
+        </div>
+      </section>
+
+      <!-- 數獨：規則教學 -->
+      <section id="view-sudoku-tutorial" class="view view-hidden" aria-label="數獨規則教學">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-sudoku-tutorial-back">← 返回</button>
+          <span class="quiz-subject">規則教學</span>
+        </header>
+        <div class="sudoku-tutorial-body">
+          <p class="sudoku-tutorial-progress" id="sudoku-tutorial-progress">步驟 1 / 6</p>
+          <h2 class="sudoku-tutorial-title" id="sudoku-tutorial-title">什麼是數獨？</h2>
+          <p class="sudoku-tutorial-text" id="sudoku-tutorial-body"></p>
+          <div class="sudoku-tutorial-nav">
+            <button type="button" class="btn btn-secondary" id="btn-sudoku-tutorial-prev">上一步</button>
+            <button type="button" class="btn btn-primary" id="btn-sudoku-tutorial-next">下一步</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 數獨：選難度 -->
+      <section id="view-sudoku-diff" class="view view-hidden" aria-label="數獨難度">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-sudoku-diff-back">← 返回</button>
+          <span class="quiz-subject">選難度</span>
+        </header>
+        <div class="sudoku-diff-body">
+          <p class="sudoku-home-sub">空格愈多愈難</p>
+          <button type="button" class="btn btn-primary btn-block" data-sudoku-diff="easy">簡單</button>
+          <button type="button" class="btn btn-secondary btn-block" data-sudoku-diff="medium">普通</button>
+          <button type="button" class="btn btn-secondary btn-block" data-sudoku-diff="hard">困難</button>
+        </div>
+      </section>
+
+      <!-- 數獨：對局 -->
+      <section id="view-sudoku-play" class="view view-hidden" aria-label="數獨練習">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-sudoku-play-back">← 返回</button>
+          <span class="quiz-subject">數獨 · <span id="sudoku-play-diff">簡單</span></span>
+        </header>
+        <div class="sudoku-play-body">
+          <div class="sudoku-grid" id="sudoku-grid" role="grid" aria-label="數獨盤"></div>
+          <div class="sudoku-numpad" role="group" aria-label="數字">
+            <button type="button" class="sudoku-num chip" data-num="1">1</button>
+            <button type="button" class="sudoku-num chip" data-num="2">2</button>
+            <button type="button" class="sudoku-num chip" data-num="3">3</button>
+            <button type="button" class="sudoku-num chip" data-num="4">4</button>
+            <button type="button" class="sudoku-num chip" data-num="5">5</button>
+            <button type="button" class="sudoku-num chip" data-num="6">6</button>
+            <button type="button" class="sudoku-num chip" data-num="7">7</button>
+            <button type="button" class="sudoku-num chip" data-num="8">8</button>
+            <button type="button" class="sudoku-num chip" data-num="9">9</button>
+          </div>
+          <div class="sudoku-actions">
+            <button type="button" class="btn btn-secondary" id="btn-sudoku-erase">清除</button>
+            <button type="button" class="btn btn-secondary" id="btn-sudoku-hint">提示</button>
+            <button type="button" class="btn btn-secondary" id="btn-sudoku-check">檢查</button>
+            <button type="button" class="btn btn-primary" id="btn-sudoku-new">新的一局</button>
+          </div>
+        </div>
+      </section>
+
       <!-- 成績 -->
       <section id="view-result" class="view view-hidden" aria-label="成績">
         <header class="app-header">
@@ -1995,7 +2078,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v40.9").catch((e) => {
+      import("./js/app.js?v=app-v41.0").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

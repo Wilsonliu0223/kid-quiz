@@ -94,6 +94,7 @@ import {
   openMulRaceDuoMode,
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
+import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v1";
 import {
   addMistake,
   removeMistake,
@@ -188,6 +189,10 @@ const views = {
   mulFlipFirst: $("#view-mul-flip-first"),
   mulFlipPlay: $("#view-mul-flip-play"),
   mulFlipResult: $("#view-mul-flip-result"),
+  sudokuHome: $("#view-sudoku-home"),
+  sudokuTutorial: $("#view-sudoku-tutorial"),
+  sudokuDiff: $("#view-sudoku-diff"),
+  sudokuPlay: $("#view-sudoku-play"),
   duoMode: $("#view-duo-mode"),
   onlineFirebaseSetup: $("#view-online-firebase-setup"),
   onlineRoomEntry: $("#view-online-room-entry"),
@@ -2275,9 +2280,32 @@ async function init() {
       );
     },
   });
+  initSudoku({
+    showView,
+    showWarn: (title, sub, onClose) => {
+      showFeedback(
+        "warn",
+        title,
+        [{ label: "好的", primary: true, onClick: () => onClose?.() }],
+        { sub: sub || "" }
+      );
+    },
+    showOk: (title, sub, onClose) => {
+      showFeedback(
+        "ok",
+        title,
+        [{ label: "好耶", primary: true, onClick: () => onClose?.() }],
+        { sub: sub || "" }
+      );
+    },
+  });
   $("#btn-start-mul")?.addEventListener("click", (e) => {
     e.preventDefault();
     openMulHome();
+  });
+  $("#btn-start-sudoku")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openSudokuHome();
   });
   $("#btn-start-sky-shooter")?.addEventListener("click", (e) => {
     e.preventDefault();
