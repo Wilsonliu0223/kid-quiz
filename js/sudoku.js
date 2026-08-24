@@ -1,5 +1,6 @@
 /**
  * 數獨：規則教學（文字步驟）＋ 簡單／普通／困難練習
+ * 防試誤：不即時判錯、檢查不對答案、提示不直接填數字
  */
 import {
   generatePuzzle,
@@ -25,6 +26,9 @@ let selected = -1;
 let paintDigit = null;
 /** @type {boolean[]} */
 let conflict = Array(81).fill(false);
+/** 提示時高亮：同列／同行／同宮 */
+/** @type {boolean[]} */
+let related = Array(81).fill(false);
 let hintFlash = -1;
 
 const TUTORIAL_STEPS = [
@@ -46,7 +50,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "怎麼玩？",
-    body: "① 點選一個空格\n② 再點下方的數字 1～9 填入\n③ 若填錯（同一列／行／九宮有重複），格子會變紅\n④ 卡住時可按「提示」看一格答案\n⑤ 全部填對就過關！",
+    body: "① 點選一個空格\n② 再點下方的數字 1～9 填入\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
   },
   {
     title: "準備開始",
@@ -156,6 +160,7 @@ function startGame(diff) {
   selected = -1;
   paintDigit = null;
   conflict = Array(81).fill(false);
+  related = Array(81).fill(false);
   hintFlash = -1;
 
   const label =
@@ -163,8 +168,18 @@ function startGame(diff) {
   const sub = $("#sudoku-play-diff");
   if (sub) sub.textContent = label;
 
+  document.querySelectorAll(".sudoku-num").forEach((btn) => {
+    btn.classList.remove("chip-active");
+  });
+
   renderBoard();
   deps?.showView("sudokuPlay");
+}
+
+function clearMarks() {
+  conflict = Array(81).fill(false);
+  related = Array(81).fill(false);
+  hintFlash = -1;
 }
 
 function renderBoard() {
@@ -184,15 +199,33 @@ function renderBoard() {
     if (given[i]) cell.classList.add("sudoku-cell-given");
     if (selected === i) cell.classList.add("sudoku-cell-selected");
     if (conflict[i]) cell.classList.add("sudoku-cell-conflict");
+    if (related[i]) cell.classList.add("sudoku-cell-related");
     if (hintFlash === i) cell.classList.add("sudoku-cell-hint");
     if (puzzle[i] != null) cell.textContent = String(puzzle[i]);
     cell.addEventListener("click", () => {
       selected = i;
+      related = Array(81).fill(false);
+      hintFlash = -1;
       if (paintDigit != null && !given[i]) placeDigit(paintDigit);
       else renderBoard();
     });
     grid.appendChild(cell);
   }
+}
+
+function boardIsFull() {
+  return puzzle.every((v) => v != null);
+}
+
+function tryWinIfComplete() {
+  if (!boardIsFull()) return false;
+  const bad = findConflicts(puzzle, given);
+  if (bad.some(Boolean)) return false;
+  if (isSolvedCorrectly(puzzle, solution)) {
+    deps?.showOk?.("完成！", "整盤都合乎規則，太棒了！", () => {});
+    return true;
+  }
+  return false;
 }
 
 /** @param {number} n */
@@ -203,53 +236,91 @@ function placeDigit(n) {
   });
   if (selected < 0 || given[selected]) return;
   puzzle[selected] = n;
-  conflict = findConflicts(puzzle, given);
-  hintFlash = -1;
+  // 不即時紅字，避免用試誤法猜答案
+  clearMarks();
   renderBoard();
-  if (isSolvedCorrectly(puzzle, solution)) {
-    deps?.showOk?.("完成！", "這一盤全部填對了。", () => {});
-  }
+  tryWinIfComplete();
 }
 
 function eraseSelected() {
   if (selected < 0 || given[selected]) return;
   puzzle[selected] = null;
-  conflict = findConflicts(puzzle, given);
-  hintFlash = -1;
+  clearMarks();
   renderBoard();
+}
+
+/** @param {number} index */
+function markRelatedUnits(index) {
+  related = Array(81).fill(false);
+  const r = Math.floor(index / 9);
+  const c = index % 9;
+  const br = Math.floor(r / 3) * 3;
+  const bc = Math.floor(c / 3) * 3;
+  for (let i = 0; i < 9; i++) {
+    related[r * 9 + i] = true;
+    related[i * 9 + c] = true;
+  }
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      related[(br + i) * 9 + (bc + j)] = true;
+    }
+  }
+  related[index] = false;
 }
 
 function applyHint() {
   const h = findHint(puzzle, solution, given);
   if (!h) {
-    deps?.showWarn?.("沒有可提示的空格", "這盤可能已填完或無法提示。");
+    deps?.showWarn?.("沒有可提示的空格", "這盤可能已填完。");
     return;
   }
-  puzzle[h.index] = h.value;
+  // 只指出格子與範圍，不填答案
   selected = h.index;
   hintFlash = h.index;
-  conflict = findConflicts(puzzle, given);
+  conflict = Array(81).fill(false);
+  markRelatedUnits(h.index);
   renderBoard();
-  if (isSolvedCorrectly(puzzle, solution)) {
-    deps?.showOk?.("完成！", "這一盤全部填對了。", () => {});
+
+  const row = Math.floor(h.index / 9) + 1;
+  const col = (h.index % 9) + 1;
+  if (h.candidates.length === 1) {
+    deps?.showWarn?.(
+      "想這一格",
+      `第 ${row} 列、第 ${col} 行（黃格）：看淺色標出的同行、同列、同九宮，已經出現哪些數字？剩下只能填哪一個？`
+    );
+  } else {
+    deps?.showWarn?.(
+      "想這一格",
+      `先看第 ${row} 列、第 ${col} 行（黃格）與淺色範圍。把不可能的數字划掉，再決定填哪個。`
+    );
   }
 }
 
 function checkBoard() {
+  // 只檢查規則衝突（重複），不對照標準答案 → 無法用「檢查」試誤
   conflict = findConflicts(puzzle, given);
-  // 也標出填了但與解答不符的格
-  for (let i = 0; i < 81; i++) {
-    if (given[i]) continue;
-    if (puzzle[i] != null && puzzle[i] !== solution[i]) conflict[i] = true;
-  }
+  related = Array(81).fill(false);
+  hintFlash = -1;
   renderBoard();
+
   const empty = puzzle.filter((v) => v == null).length;
   const wrong = conflict.filter(Boolean).length;
-  if (isSolvedCorrectly(puzzle, solution)) {
-    deps?.showOk?.("全部正確！", "太棒了。", () => {});
-  } else if (wrong) {
-    deps?.showWarn?.("有錯誤", `目前有 ${wrong} 格不合規則或填錯，已用紅色標出。`);
-  } else if (empty) {
-    deps?.showWarn?.("還沒填完", `還剩 ${empty} 個空格，目前沒有發現衝突。`);
+
+  if (boardIsFull() && wrong === 0) {
+    deps?.showOk?.("全部正確！", "整盤都合乎規則。", () => {});
+    return;
+  }
+  if (wrong) {
+    deps?.showWarn?.(
+      "有重複",
+      `有 ${wrong} 格和同行／同列／同九宮重複了（紅格）。改掉重複的數字再檢查。`
+    );
+    return;
+  }
+  if (empty) {
+    deps?.showWarn?.(
+      "規則目前 OK",
+      `還沒發現重複，還剩 ${empty} 個空格。繼續推理填完吧（檢查不會偷偷告訴你對不對）。`
+    );
   }
 }

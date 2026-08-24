@@ -5772,3 +5772,7 @@ button.gomoku-cell:disabled {
 .sudoku-actions .btn {
   min-height: 44px;
 }
+
+.sudoku-cell-related {
+  background: #e8f5ee;
+}

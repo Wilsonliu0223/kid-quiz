@@ -147,24 +147,36 @@ export function generatePuzzle(difficulty) {
  * @param {SudokuBoard} puzzle 題目（含玩家填入）
  * @param {SudokuBoard} solution
  * @param {boolean[]} given 題目給定格
- * @returns {{ index: number, value: number } | null}
+ * @returns {{ index: number, value: number, candidates: number[] } | null}
  */
 export function findHint(puzzle, solution, given) {
   const singles = [];
   const others = [];
   for (let i = 0; i < 81; i++) {
     if (given[i] || puzzle[i] != null) continue;
-    let n = 0;
-    for (let v = 1; v <= 9; v++) {
-      if (isValidPlacement(puzzle, i, v)) n++;
-    }
-    const item = { index: i, value: solution[i] };
-    if (n === 1) singles.push(item);
-    else others.push(item);
+    const candidates = getCandidates(puzzle, i);
+    const item = { index: i, value: solution[i], candidates };
+    if (candidates.length === 1) singles.push(item);
+    else if (candidates.length > 0) others.push(item);
   }
-  const pool = singles.length ? singles : others;
-  if (!pool.length) return null;
+  if (singles.length) {
+    return singles[Math.floor(Math.random() * singles.length)];
+  }
+  if (!others.length) return null;
+  others.sort((a, b) => a.candidates.length - b.candidates.length);
+  const bestLen = others[0].candidates.length;
+  const pool = others.filter((x) => x.candidates.length === bestLen);
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/** @param {SudokuBoard} board @param {number} index */
+export function getCandidates(board, index) {
+  if (board[index] != null) return [];
+  const out = [];
+  for (let v = 1; v <= 9; v++) {
+    if (isValidPlacement(board, index, v)) out.push(v);
+  }
+  return out;
 }
 
 /** @param {SudokuBoard} board @param {boolean[]} given */
