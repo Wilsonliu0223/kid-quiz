@@ -74,7 +74,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "怎麼玩？",
-    body: "① 點空格再點下方數字，或按住數字拖到空格\n② 你填的凸塊也可以再拖到別的空格（題目給的平數字不能拖）\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
+    body: "① 點空格再點下方數字，或按住數字拖到空格\n② 你填的數字也可以再拖到別的空格（題目給的數字不能拖）\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
   },
   {
     title: "準備開始",
@@ -203,7 +203,7 @@ function bindDragInput() {
       const index = Array.prototype.indexOf.call(cells, cell);
       if (index < 0) return;
 
-      // 題目格／空格：只點選；玩家凸塊：可拖到別格
+      // 題目格／空格：只點選；玩家已填：可拖到別格
       if (given[index] || puzzle[index] == null) {
         selected = index;
         related = Array(81).fill(false);
@@ -561,7 +561,7 @@ function placeDigitAt(index, n) {
   tryWinIfComplete();
 }
 
-/** 把玩家已填凸塊搬到另一格（來源清空） */
+/** 把玩家已填數字搬到另一格（來源清空） */
 /** @param {number} fromIndex @param {number} toIndex */
 function movePlayerDigit(fromIndex, toIndex) {
   if (given[fromIndex] || given[toIndex]) {

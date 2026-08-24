@@ -5744,29 +5744,11 @@ button.gomoku-cell:disabled {
   color: #0f3d28;
 }
 .sudoku-token-player {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 82%;
-  height: 82%;
-  border-radius: 50%;
-  font-weight: 800;
-  color: #156b42;
-  background: linear-gradient(160deg, #ffffff 0%, #e6f4ec 42%, #b8dcc8 100%);
-  border: 1px solid #8ec4a8;
-  box-shadow:
-    0 3px 6px rgba(31, 107, 69, 0.28),
-    0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 -2px 5px rgba(31, 107, 69, 0.14) inset;
+  font-weight: 700;
+  color: #1a5fb4;
 }
 .sudoku-cell-conflict .sudoku-token-player {
   color: #b3261e;
-  background: linear-gradient(160deg, #fff8f6 0%, #ffd8d2 45%, #ffb4ab 100%);
-  border-color: #e08a82;
-  box-shadow:
-    0 3px 6px rgba(179, 38, 30, 0.22),
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 -2px 5px rgba(179, 38, 30, 0.12) inset;
 }
 .sudoku-cell-drop-target {
   background: #fff9e6 !important;
@@ -5804,22 +5786,18 @@ button.gomoku-cell:disabled {
   min-height: 40px;
   font-size: 1.1rem;
   font-weight: 800;
-  border-radius: 50%;
-  border: 1px solid #8ec4a8;
-  background: linear-gradient(160deg, #ffffff 0%, #e6f4ec 42%, #b8dcc8 100%);
-  box-shadow:
-    0 3px 5px rgba(31, 107, 69, 0.22),
-    0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 -2px 4px rgba(31, 107, 69, 0.12) inset;
-  color: #156b42;
+  border-radius: 10px;
+  border: 1px solid #c5d4cc;
+  background: #fff;
+  color: #1a3d2a;
+  box-shadow: none;
   touch-action: none;
   cursor: grab;
 }
-.sudoku-num.chip-active {
-  transform: translateY(1px);
-  box-shadow:
-    0 1px 2px rgba(31, 107, 69, 0.2),
-    0 2px 5px rgba(31, 107, 69, 0.18) inset;
+.sudoku-num.chip-active,
+.sudoku-num:active {
+  background: #eef6f1;
+  border-color: #1f6b45;
 }
 .sudoku-cell-movable {
   touch-action: none;
@@ -5833,23 +5811,24 @@ button.gomoku-cell:disabled {
   left: 0;
   top: 0;
   z-index: 9999;
-  width: 48px;
-  height: 48px;
+  width: auto;
+  height: auto;
+  min-width: 1.6em;
   margin: 0;
+  padding: 0;
   will-change: transform;
-  border-radius: 50%;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 800;
-  color: #156b42;
+  color: #1a5fb4;
   pointer-events: none;
-  background: linear-gradient(160deg, #ffffff 0%, #e6f4ec 42%, #b8dcc8 100%);
-  border: 1px solid #8ec4a8;
-  box-shadow:
-    0 12px 22px rgba(31, 107, 69, 0.38),
-    0 1px 0 rgba(255, 255, 255, 0.95) inset;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 body.sudoku-dragging {
   cursor: grabbing;
