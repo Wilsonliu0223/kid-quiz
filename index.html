@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v41.3" />
+    <link rel="stylesheet" href="css/app.css?v=app-v41.4" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -112,7 +112,7 @@
             </button>
             <button type="button" class="card card-sudoku" id="btn-start-sudoku">
               <span class="card-title">數獨</span>
-              <span class="card-desc">規則教學 · 三難度練習</span>
+              <span class="card-desc">規則教學 · 五難度練習</span>
             </button>
           </div>
         </div>
@@ -1927,9 +1927,11 @@
         </header>
         <div class="sudoku-diff-body">
           <p class="sudoku-home-sub">空格愈多愈難</p>
-          <button type="button" class="btn btn-primary btn-block" data-sudoku-diff="easy">簡單</button>
+          <button type="button" class="btn btn-primary btn-block" data-sudoku-diff="beginner">入門</button>
+          <button type="button" class="btn btn-secondary btn-block" data-sudoku-diff="easy">簡單</button>
           <button type="button" class="btn btn-secondary btn-block" data-sudoku-diff="medium">普通</button>
           <button type="button" class="btn btn-secondary btn-block" data-sudoku-diff="hard">困難</button>
+          <button type="button" class="btn btn-secondary btn-block" data-sudoku-diff="expert">專家</button>
         </div>
       </section>
 
@@ -1937,7 +1939,7 @@
       <section id="view-sudoku-play" class="view view-hidden" aria-label="數獨練習">
         <header class="quiz-header">
           <button type="button" class="btn-text" id="btn-sudoku-play-back">← 返回</button>
-          <span class="quiz-subject">數獨 · <span id="sudoku-play-diff">簡單</span></span>
+          <span class="quiz-subject">數獨 · <span id="sudoku-play-diff">入門</span></span>
         </header>
         <div class="sudoku-play-body">
           <div class="sudoku-grid" id="sudoku-grid" role="grid" aria-label="數獨盤"></div>
@@ -2077,7 +2079,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v41.3").catch((e) => {
+      import("./js/app.js?v=app-v41.4").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

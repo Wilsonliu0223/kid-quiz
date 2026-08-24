@@ -1,5 +1,5 @@
 /**
- * 數獨：規則教學（文字步驟）＋ 簡單／普通／困難練習
+ * 數獨：規則教學（文字步驟）＋ 入門～專家五難度練習
  * 防試誤：不即時判錯、檢查不對答案、提示不直接填數字
  */
 import {
@@ -12,8 +12,8 @@ import {
 /** @type {{ showView: (n: string) => void, showOk?: Function, showWarn?: Function } | null} */
 let deps = null;
 
-/** @type {'easy'|'medium'|'hard'} */
-let difficulty = "easy";
+/** @type {'beginner'|'easy'|'medium'|'hard'|'expert'} */
+let difficulty = "beginner";
 /** @type {(number|null)[]} */
 let puzzle = [];
 /** @type {(number|null)[]} */
@@ -56,7 +56,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "準備開始",
-    body: "建議先從「簡單」開始。熟悉規則後再挑戰「普通」或「困難」。按「開始練習」選難度即可。",
+    body: "建議先從「入門」或「簡單」開始。熟悉規則後再挑戰「普通」「困難」，最後試試「專家」。按「開始練習」選難度即可。",
   },
 ];
 
@@ -65,9 +65,19 @@ let tutorialIndex = 0;
 const $ = (sel) => document.querySelector(sel);
 
 const DIFF_MAP = {
-  easy: 1,
-  medium: 2,
-  hard: 3,
+  beginner: 1,
+  easy: 2,
+  medium: 3,
+  hard: 4,
+  expert: 5,
+};
+
+const DIFF_LABEL = {
+  beginner: "入門",
+  easy: "簡單",
+  medium: "普通",
+  hard: "困難",
+  expert: "專家",
 };
 
 /**
@@ -91,7 +101,7 @@ function bindUi() {
   document.querySelectorAll("[data-sudoku-diff]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const d = btn.getAttribute("data-sudoku-diff");
-      if (d === "easy" || d === "medium" || d === "hard") startGame(d);
+      if (d && d in DIFF_MAP) startGame(d);
     });
   });
 
@@ -153,7 +163,7 @@ function renderTutorial() {
   }
 }
 
-/** @param {'easy'|'medium'|'hard'} diff */
+/** @param {keyof typeof DIFF_MAP} diff */
 function startGame(diff) {
   difficulty = diff;
   const { puzzle: p, solution: s } = generatePuzzle(DIFF_MAP[diff]);
@@ -168,10 +178,8 @@ function startGame(diff) {
   undoStack = [];
   syncUndoButton();
 
-  const label =
-    diff === "easy" ? "簡單" : diff === "hard" ? "困難" : "普通";
   const sub = $("#sudoku-play-diff");
-  if (sub) sub.textContent = label;
+  if (sub) sub.textContent = DIFF_LABEL[diff] || "普通";
 
   document.querySelectorAll(".sudoku-num").forEach((btn) => {
     btn.classList.remove("chip-active");

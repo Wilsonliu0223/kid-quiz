@@ -1,6 +1,6 @@
 /**
  * 輕量數獨引擎：產生（唯一解）、驗證、提示、解題。
- * 難度以挖空數量為主（簡單／普通／困難）。
+ * 難度以挖空數量為主（入門～專家五級）。
  */
 
 /** @typedef {(number|null)[]} SudokuBoard 長度 81，null 為空格，數字 1–9 */
@@ -8,11 +8,10 @@
 const SIZE = 9;
 const BOX = 3;
 
-/** @param {number} difficulty 1=簡單 2=普通 3=困難 */
+/** @param {number} difficulty 1=入門 … 5=專家 */
 export function cluesForDifficulty(difficulty) {
-  if (difficulty === 1) return 40; // 約 41 空格
-  if (difficulty === 3) return 28;
-  return 34;
+  const map = { 1: 45, 2: 40, 3: 34, 4: 28, 5: 22 };
+  return map[difficulty] ?? 34;
 }
 
 /** @returns {SudokuBoard} */
@@ -113,7 +112,7 @@ function generateSolved() {
 }
 
 /**
- * @param {number} difficulty 1|2|3
+ * @param {number} difficulty 1|2|3|4|5
  * @returns {{ puzzle: SudokuBoard, solution: SudokuBoard }}
  */
 export function generatePuzzle(difficulty) {
