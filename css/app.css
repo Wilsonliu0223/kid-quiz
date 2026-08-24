@@ -5776,3 +5776,13 @@ button.gomoku-cell:disabled {
 .sudoku-cell-related {
   background: #e8f5ee;
 }
+
+.sudoku-actions {
+  grid-template-columns: 1fr 1fr;
+}
+.sudoku-actions #btn-sudoku-new {
+  grid-column: 1 / -1;
+}
+.sudoku-actions .btn:disabled {
+  opacity: 0.45;
+}

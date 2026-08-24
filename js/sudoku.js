@@ -30,6 +30,8 @@ let conflict = Array(81).fill(false);
 /** @type {boolean[]} */
 let related = Array(81).fill(false);
 let hintFlash = -1;
+/** @type {{ index: number, before: number|null, after: number|null }[]} */
+let undoStack = [];
 
 const TUTORIAL_STEPS = [
   {
@@ -115,6 +117,7 @@ function bindUi() {
   $("#btn-sudoku-new")?.addEventListener("click", () => startGame(difficulty));
   $("#btn-sudoku-hint")?.addEventListener("click", applyHint);
   $("#btn-sudoku-erase")?.addEventListener("click", eraseSelected);
+  $("#btn-sudoku-undo")?.addEventListener("click", undoLast);
   $("#btn-sudoku-check")?.addEventListener("click", checkBoard);
 
   document.querySelectorAll(".sudoku-num").forEach((btn) => {
@@ -162,6 +165,8 @@ function startGame(diff) {
   conflict = Array(81).fill(false);
   related = Array(81).fill(false);
   hintFlash = -1;
+  undoStack = [];
+  syncUndoButton();
 
   const label =
     diff === "easy" ? "簡單" : diff === "hard" ? "困難" : "普通";
@@ -217,15 +222,38 @@ function boardIsFull() {
   return puzzle.every((v) => v != null);
 }
 
-function tryWinIfComplete() {
-  if (!boardIsFull()) return false;
-  const bad = findConflicts(puzzle, given);
-  if (bad.some(Boolean)) return false;
-  if (isSolvedCorrectly(puzzle, solution)) {
-    deps?.showOk?.("完成！", "整盤都合乎規則，太棒了！", () => {});
-    return true;
+function syncUndoButton() {
+  const btn = $("#btn-sudoku-undo");
+  if (btn) btn.disabled = undoStack.length === 0;
+}
+
+/**
+ * @param {number} index
+ * @param {number|null} before
+ * @param {number|null} after
+ */
+function pushUndo(index, before, after) {
+  if (before === after) return;
+  undoStack.push({ index, before, after });
+  syncUndoButton();
+}
+
+function undoLast() {
+  const move = undoStack.pop();
+  syncUndoButton();
+  if (!move) {
+    deps?.showWarn?.("沒有可復原", "還沒有輸入可以退回。");
+    return;
   }
-  return false;
+  if (given[move.index]) {
+    undoLast();
+    return;
+  }
+  puzzle[move.index] = move.before;
+  selected = move.index;
+  clearMarks();
+  clearNumPadSelection();
+  renderBoard();
 }
 
 function clearNumPadSelection() {
@@ -245,9 +273,10 @@ function placeDigit(n) {
     deps?.showWarn?.("不能改", "這格是題目給的數字。");
     return;
   }
+  const before = puzzle[selected];
   puzzle[selected] = n;
+  pushUndo(selected, before, n);
   clearMarks();
-  // 填完立刻取消下方選取，避免連點空格一直填同一個數
   clearNumPadSelection();
   renderBoard();
   tryWinIfComplete();
@@ -255,9 +284,24 @@ function placeDigit(n) {
 
 function eraseSelected() {
   if (selected < 0 || given[selected]) return;
+  const before = puzzle[selected];
+  if (before == null) return;
   puzzle[selected] = null;
+  pushUndo(selected, before, null);
   clearMarks();
+  clearNumPadSelection();
   renderBoard();
+}
+
+function tryWinIfComplete() {
+  if (!boardIsFull()) return false;
+  const bad = findConflicts(puzzle, given);
+  if (bad.some(Boolean)) return false;
+  if (isSolvedCorrectly(puzzle, solution)) {
+    deps?.showOk?.("完成！", "整盤都合乎規則，太棒了！", () => {});
+    return true;
+  }
+  return false;
 }
 
 /** @param {number} index */
