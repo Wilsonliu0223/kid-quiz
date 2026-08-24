@@ -34,10 +34,27 @@ let hintFlash = -1;
 let undoStack = [];
 /** @type {number} */
 let dropTarget = -1;
-/** @type {{ digit: number, startX: number, startY: number, dragging: boolean, pointerId: number } | null} */
+/**
+ * @type {{
+ *   digit: number | null,
+ *   fromIndex: number,
+ *   startX: number,
+ *   startY: number,
+ *   dragging: boolean,
+ *   pointerId: number,
+ *   gridRect: DOMRect | null,
+ *   cells: NodeListOf<Element> | null,
+ * } | null}
+ */
 let dragState = null;
+/** @type {number} */
+let dragRaf = 0;
+/** @type {number} */
+let pendingDragX = 0;
+/** @type {number} */
+let pendingDragY = 0;
 
-const DRAG_THRESHOLD = 10;
+const DRAG_THRESHOLD = 8;
 
 const TUTORIAL_STEPS = [
   {
@@ -58,7 +75,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "怎麼玩？",
-    body: "① 點空格再點下方數字填入，或按住數字拖到空格\n② 你填的數字會是凸起的圓塊，題目給的是平的\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
+    body: "① 點空格再點下方數字，或按住數字拖到空格\n② 你填的凸塊也可以再拖到別的空格（題目給的平數字不能拖）\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
   },
   {
     title: "準備開始",
@@ -140,7 +157,7 @@ function bindUi() {
 }
 
 function getDragGhost() {
-  let ghost = $("#sudoku-drag-ghost");
+  let ghost = /** @type {HTMLElement | null} */ ($("#sudoku-drag-ghost"));
   if (!ghost) {
     ghost = document.createElement("div");
     ghost.id = "sudoku-drag-ghost";
@@ -154,85 +171,203 @@ function getDragGhost() {
 
 function bindDragInput() {
   const numpad = $(".sudoku-numpad");
-  if (!numpad || numpad.dataset.dragBound) return;
-  numpad.dataset.dragBound = "1";
+  if (numpad && !numpad.dataset.dragBound) {
+    numpad.dataset.dragBound = "1";
+    numpad.querySelectorAll(".sudoku-num").forEach((btn) => {
+      btn.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        const n = Number(btn.getAttribute("data-num"));
+        if (n < 1 || n > 9) return;
+        e.preventDefault();
+        startDragGesture({
+          digit: n,
+          fromIndex: -1,
+          x: e.clientX,
+          y: e.clientY,
+          pointerId: e.pointerId,
+          captureEl: btn,
+        });
+      });
+    });
+  }
 
-  numpad.querySelectorAll(".sudoku-num").forEach((btn) => {
-    btn.addEventListener("pointerdown", (e) => {
+  const grid = $("#sudoku-grid");
+  if (grid && !grid.dataset.dragBound) {
+    grid.dataset.dragBound = "1";
+    grid.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      const n = Number(btn.getAttribute("data-num"));
-      if (n < 1 || n > 9) return;
-      dragState = {
-        digit: n,
-        startX: e.clientX,
-        startY: e.clientY,
-        dragging: false,
+      const cell = /** @type {HTMLElement | null} */ (
+        e.target instanceof Element ? e.target.closest(".sudoku-cell") : null
+      );
+      if (!cell) return;
+      const cells = grid.querySelectorAll(".sudoku-cell");
+      const index = Array.prototype.indexOf.call(cells, cell);
+      if (index < 0) return;
+
+      // 題目格／空格：只點選；玩家凸塊：可拖到別格
+      if (given[index] || puzzle[index] == null) {
+        selected = index;
+        related = Array(81).fill(false);
+        hintFlash = -1;
+        renderBoard();
+        return;
+      }
+
+      e.preventDefault();
+      startDragGesture({
+        digit: /** @type {number} */ (puzzle[index]),
+        fromIndex: index,
+        x: e.clientX,
+        y: e.clientY,
         pointerId: e.pointerId,
-      };
-      btn.setPointerCapture(e.pointerId);
+        captureEl: cell,
+      });
     });
-
-    btn.addEventListener("pointermove", (e) => {
-      if (!dragState || dragState.pointerId !== e.pointerId) return;
-      const dx = e.clientX - dragState.startX;
-      const dy = e.clientY - dragState.startY;
-      if (!dragState.dragging && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
-        dragState.dragging = true;
-        const ghost = getDragGhost();
-        ghost.textContent = String(dragState.digit);
-        ghost.hidden = false;
-        document.body.classList.add("sudoku-dragging");
-      }
-      if (dragState.dragging) {
-        const ghost = getDragGhost();
-        ghost.style.left = `${e.clientX}px`;
-        ghost.style.top = `${e.clientY}px`;
-        setDropTarget(cellIndexAt(e.clientX, e.clientY));
-      }
-    });
-
-    const finishDrag = (e) => {
-      if (!dragState || dragState.pointerId !== e.pointerId) return;
-      try {
-        btn.releasePointerCapture(e.pointerId);
-      } catch {
-        /* ignore */
-      }
-      if (dragState.dragging) {
-        const idx = cellIndexAt(e.clientX, e.clientY);
-        if (idx >= 0) placeDigitAt(idx, dragState.digit);
-        clearDropTarget();
-        const ghost = getDragGhost();
-        ghost.hidden = true;
-        document.body.classList.remove("sudoku-dragging");
-      } else {
-        placeDigit(dragState.digit);
-      }
-      dragState = null;
-    };
-
-    btn.addEventListener("pointerup", finishDrag);
-    btn.addEventListener("pointercancel", finishDrag);
-  });
+  }
 }
 
-/** @param {number} x @param {number} y */
-function cellIndexAt(x, y) {
-  const el = document.elementFromPoint(x, y);
-  const cell = el?.closest?.(".sudoku-cell");
-  if (!cell) return -1;
+/**
+ * @param {{
+ *   digit: number,
+ *   fromIndex: number,
+ *   x: number,
+ *   y: number,
+ *   pointerId: number,
+ *   captureEl: Element,
+ * }} opts
+ */
+function startDragGesture(opts) {
+  endDragListeners();
   const grid = $("#sudoku-grid");
-  const cells = grid?.querySelectorAll(".sudoku-cell");
-  if (!cells) return -1;
-  return Array.from(cells).indexOf(cell);
+  dragState = {
+    digit: opts.digit,
+    fromIndex: opts.fromIndex,
+    startX: opts.x,
+    startY: opts.y,
+    dragging: false,
+    pointerId: opts.pointerId,
+    gridRect: grid ? grid.getBoundingClientRect() : null,
+    cells: grid ? grid.querySelectorAll(".sudoku-cell") : null,
+  };
+  try {
+    opts.captureEl.setPointerCapture(opts.pointerId);
+  } catch {
+    /* ignore */
+  }
+  window.addEventListener("pointermove", onDragPointerMove, { passive: false });
+  window.addEventListener("pointerup", onDragPointerUp);
+  window.addEventListener("pointercancel", onDragPointerUp);
+}
+
+function endDragListeners() {
+  window.removeEventListener("pointermove", onDragPointerMove);
+  window.removeEventListener("pointerup", onDragPointerUp);
+  window.removeEventListener("pointercancel", onDragPointerUp);
+  if (dragRaf) {
+    cancelAnimationFrame(dragRaf);
+    dragRaf = 0;
+  }
+}
+
+/** @param {PointerEvent} e */
+function onDragPointerMove(e) {
+  if (!dragState || e.pointerId !== dragState.pointerId) return;
+  e.preventDefault();
+  const dx = e.clientX - dragState.startX;
+  const dy = e.clientY - dragState.startY;
+  if (!dragState.dragging && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
+    beginActiveDrag();
+  }
+  if (!dragState.dragging) return;
+  pendingDragX = e.clientX;
+  pendingDragY = e.clientY;
+  if (!dragRaf) dragRaf = requestAnimationFrame(flushDragVisual);
+}
+
+function beginActiveDrag() {
+  if (!dragState || dragState.digit == null) return;
+  dragState.dragging = true;
+  const grid = $("#sudoku-grid");
+  if (grid) {
+    dragState.gridRect = grid.getBoundingClientRect();
+    dragState.cells = grid.querySelectorAll(".sudoku-cell");
+  }
+  const ghost = getDragGhost();
+  ghost.textContent = String(dragState.digit);
+  ghost.hidden = false;
+  document.body.classList.add("sudoku-dragging");
+  if (dragState.fromIndex >= 0) {
+    dragState.cells?.[dragState.fromIndex]?.classList.add("sudoku-cell-lifted");
+  }
+}
+
+function flushDragVisual() {
+  dragRaf = 0;
+  if (!dragState?.dragging) return;
+  const ghost = getDragGhost();
+  ghost.style.transform = `translate(${pendingDragX}px, ${pendingDragY}px) translate(-50%, -50%)`;
+  setDropTarget(cellIndexFromPoint(pendingDragX, pendingDragY));
+}
+
+/** @param {PointerEvent} e */
+function onDragPointerUp(e) {
+  if (!dragState || e.pointerId !== dragState.pointerId) return;
+  endDragListeners();
+
+  const wasDragging = dragState.dragging;
+  const digit = dragState.digit;
+  const fromIndex = dragState.fromIndex;
+  const idx = wasDragging ? cellIndexFromPoint(e.clientX, e.clientY) : -1;
+
+  if (wasDragging) {
+    clearDropTarget();
+    const ghost = getDragGhost();
+    ghost.hidden = true;
+    document.body.classList.remove("sudoku-dragging");
+    dragState.cells?.[fromIndex]?.classList.remove("sudoku-cell-lifted");
+
+    if (digit != null && idx >= 0 && !given[idx]) {
+      if (fromIndex >= 0) {
+        if (idx !== fromIndex) movePlayerDigit(fromIndex, idx);
+      } else {
+        placeDigitAt(idx, digit);
+      }
+    }
+  } else if (fromIndex >= 0) {
+    selected = fromIndex;
+    related = Array(81).fill(false);
+    hintFlash = -1;
+    renderBoard();
+  } else if (digit != null) {
+    placeDigit(digit);
+  }
+
+  dragState = null;
+}
+
+/** 用棋盤座標算格，避免每幀 elementFromPoint */
+/** @param {number} x @param {number} y */
+function cellIndexFromPoint(x, y) {
+  const rect =
+    dragState?.gridRect || $("#sudoku-grid")?.getBoundingClientRect() || null;
+  if (!rect || rect.width <= 0 || rect.height <= 0) return -1;
+  const relX = x - rect.left;
+  const relY = y - rect.top;
+  if (relX < 0 || relY < 0 || relX >= rect.width || relY >= rect.height) return -1;
+  const col = Math.min(8, Math.floor((relX / rect.width) * 9));
+  const row = Math.min(8, Math.floor((relY / rect.height) * 9));
+  const index = row * 9 + col;
+  // 來源格不當放置目標（放開等於取消）
+  if (dragState && dragState.fromIndex === index) return -1;
+  return index;
 }
 
 /** @param {number} index */
 function setDropTarget(index) {
-  const next = index >= 0 && !given[index] ? index : -1;
+  const next =
+    index >= 0 && !given[index] && index !== dragState?.fromIndex ? index : -1;
   if (dropTarget === next) return;
-  const grid = $("#sudoku-grid");
-  const cells = grid?.querySelectorAll(".sudoku-cell");
+  const cells = dragState?.cells || $("#sudoku-grid")?.querySelectorAll(".sudoku-cell");
   if (cells) {
     if (dropTarget >= 0) cells[dropTarget]?.classList.remove("sudoku-cell-drop-target");
     dropTarget = next;
@@ -332,14 +467,8 @@ function renderBoard() {
         : "sudoku-token sudoku-token-player";
       token.textContent = String(puzzle[i]);
       cell.appendChild(token);
+      if (!given[i]) cell.classList.add("sudoku-cell-movable");
     }
-    cell.addEventListener("click", () => {
-      selected = i;
-      related = Array(81).fill(false);
-      hintFlash = -1;
-      // 只選格，不連續塗數字；必須再點下方 1～9
-      renderBoard();
-    });
     grid.appendChild(cell);
   }
 }
@@ -400,6 +529,30 @@ function placeDigitAt(index, n) {
   if (before === n) return;
   puzzle[index] = n;
   pushUndo(index, before, n);
+  clearMarks();
+  clearNumPadSelection();
+  renderBoard();
+  tryWinIfComplete();
+}
+
+/** 把玩家已填凸塊搬到另一格（來源清空） */
+/** @param {number} fromIndex @param {number} toIndex */
+function movePlayerDigit(fromIndex, toIndex) {
+  if (given[fromIndex] || given[toIndex]) {
+    deps?.showWarn?.("不能改", "這格是題目給的數字。");
+    return;
+  }
+  const digit = puzzle[fromIndex];
+  if (digit == null) return;
+  if (fromIndex === toIndex) return;
+
+  const fromBefore = digit;
+  const toBefore = puzzle[toIndex];
+  puzzle[fromIndex] = null;
+  puzzle[toIndex] = digit;
+  pushUndo(fromIndex, fromBefore, null);
+  pushUndo(toIndex, toBefore, digit);
+  selected = toIndex;
   clearMarks();
   clearNumPadSelection();
   renderBoard();
