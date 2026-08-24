@@ -50,7 +50,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "怎麼玩？",
-    body: "① 點選一個空格\n② 再點下方的數字 1～9 填入\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
+    body: "① 先點選一個空格\n② 再點下方的數字 1～9 填入（填完下方會自動取消選取）\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
   },
   {
     title: "準備開始",
@@ -206,8 +206,8 @@ function renderBoard() {
       selected = i;
       related = Array(81).fill(false);
       hintFlash = -1;
-      if (paintDigit != null && !given[i]) placeDigit(paintDigit);
-      else renderBoard();
+      // 只選格，不連續塗數字；必須再點下方 1～9
+      renderBoard();
     });
     grid.appendChild(cell);
   }
@@ -228,16 +228,27 @@ function tryWinIfComplete() {
   return false;
 }
 
+function clearNumPadSelection() {
+  paintDigit = null;
+  document.querySelectorAll(".sudoku-num").forEach((btn) => {
+    btn.classList.remove("chip-active");
+  });
+}
+
 /** @param {number} n */
 function placeDigit(n) {
-  paintDigit = n;
-  document.querySelectorAll(".sudoku-num").forEach((btn) => {
-    btn.classList.toggle("chip-active", Number(btn.getAttribute("data-num")) === n);
-  });
-  if (selected < 0 || given[selected]) return;
+  if (selected < 0) {
+    deps?.showWarn?.("先選空格", "請先點盤面上的空格，再點下方數字。");
+    return;
+  }
+  if (given[selected]) {
+    deps?.showWarn?.("不能改", "這格是題目給的數字。");
+    return;
+  }
   puzzle[selected] = n;
-  // 不即時紅字，避免用試誤法猜答案
   clearMarks();
+  // 填完立刻取消下方選取，避免連點空格一直填同一個數
+  clearNumPadSelection();
   renderBoard();
   tryWinIfComplete();
 }
