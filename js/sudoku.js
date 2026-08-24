@@ -42,6 +42,9 @@ let dropTarget = -1;
  *   startY: number,
  *   dragging: boolean,
  *   pointerId: number,
+ *   aimOffsetY: number,
+ *   lastAimX: number,
+ *   lastAimY: number,
  *   gridRect: DOMRect | null,
  *   cells: NodeListOf<Element> | null,
  * } | null}
@@ -49,10 +52,6 @@ let dropTarget = -1;
 let dragState = null;
 /** @type {number} */
 let dragRaf = 0;
-/** @type {number} */
-let pendingDragX = 0;
-/** @type {number} */
-let pendingDragY = 0;
 
 const DRAG_THRESHOLD = 8;
 
@@ -246,6 +245,9 @@ function startDragGesture(opts) {
     startY: opts.y,
     dragging: false,
     pointerId: opts.pointerId,
+    aimOffsetY: 0,
+    lastAimX: opts.x,
+    lastAimY: opts.y,
     gridRect: grid ? grid.getBoundingClientRect() : null,
     cells: grid ? grid.querySelectorAll(".sudoku-cell") : null,
   };
@@ -269,6 +271,21 @@ function endDragListeners() {
   }
 }
 
+/** 手指／滑鼠位置 → 浮塊中心（觸控時略往上，避免被手指擋住） */
+/** @param {PointerEvent} e */
+function aimFromEvent(e) {
+  const oy =
+    e.pointerType === "touch" || e.pointerType === "pen" ? -42 : 0;
+  if (dragState) dragState.aimOffsetY = oy;
+  return { x: e.clientX, y: e.clientY + oy };
+}
+
+/** @param {number} x @param {number} y */
+function moveGhostTo(x, y) {
+  const ghost = getDragGhost();
+  ghost.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+}
+
 /** @param {PointerEvent} e */
 function onDragPointerMove(e) {
   if (!dragState || e.pointerId !== dragState.pointerId) return;
@@ -276,15 +293,19 @@ function onDragPointerMove(e) {
   const dx = e.clientX - dragState.startX;
   const dy = e.clientY - dragState.startY;
   if (!dragState.dragging && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
-    beginActiveDrag();
+    beginActiveDrag(e);
   }
   if (!dragState.dragging) return;
-  pendingDragX = e.clientX;
-  pendingDragY = e.clientY;
-  if (!dragRaf) dragRaf = requestAnimationFrame(flushDragVisual);
+  const aim = aimFromEvent(e);
+  dragState.lastAimX = aim.x;
+  dragState.lastAimY = aim.y;
+  // 浮塊立刻跟手；高亮格用 rAF 合併，避免狂刷 class
+  moveGhostTo(aim.x, aim.y);
+  if (!dragRaf) dragRaf = requestAnimationFrame(flushDropHighlight);
 }
 
-function beginActiveDrag() {
+/** @param {PointerEvent} e */
+function beginActiveDrag(e) {
   if (!dragState || dragState.digit == null) return;
   dragState.dragging = true;
   const grid = $("#sudoku-grid");
@@ -292,21 +313,25 @@ function beginActiveDrag() {
     dragState.gridRect = grid.getBoundingClientRect();
     dragState.cells = grid.querySelectorAll(".sudoku-cell");
   }
+  const aim = aimFromEvent(e);
+  dragState.lastAimX = aim.x;
+  dragState.lastAimY = aim.y;
+
   const ghost = getDragGhost();
   ghost.textContent = String(dragState.digit);
   ghost.hidden = false;
+  moveGhostTo(aim.x, aim.y);
   document.body.classList.add("sudoku-dragging");
   if (dragState.fromIndex >= 0) {
     dragState.cells?.[dragState.fromIndex]?.classList.add("sudoku-cell-lifted");
   }
+  setDropTarget(cellIndexFromPoint(aim.x, aim.y));
 }
 
-function flushDragVisual() {
+function flushDropHighlight() {
   dragRaf = 0;
   if (!dragState?.dragging) return;
-  const ghost = getDragGhost();
-  ghost.style.transform = `translate(${pendingDragX}px, ${pendingDragY}px) translate(-50%, -50%)`;
-  setDropTarget(cellIndexFromPoint(pendingDragX, pendingDragY));
+  setDropTarget(cellIndexFromPoint(dragState.lastAimX, dragState.lastAimY));
 }
 
 /** @param {PointerEvent} e */
@@ -317,7 +342,8 @@ function onDragPointerUp(e) {
   const wasDragging = dragState.dragging;
   const digit = dragState.digit;
   const fromIndex = dragState.fromIndex;
-  const idx = wasDragging ? cellIndexFromPoint(e.clientX, e.clientY) : -1;
+  const aim = wasDragging ? aimFromEvent(e) : null;
+  const idx = aim ? cellIndexFromPoint(aim.x, aim.y) : -1;
 
   if (wasDragging) {
     clearDropTarget();
