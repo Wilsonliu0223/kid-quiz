@@ -74,7 +74,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "怎麼玩？",
-    body: "① 點空格再點下方數字，或按住數字拖到空格\n② 你填的數字也可以再拖到別的空格（題目給的數字不能拖）\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
+    body: "① 點空格再點下方數字，或按住數字拖到空格\n② 你填的數字可以拖到別格：空格＝搬過去，已有數字＝兩者交換（題目給的不能拖）\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
   },
   {
     title: "準備開始",
@@ -592,23 +592,31 @@ function placeDigitAt(index, n) {
   tryWinIfComplete();
 }
 
-/** 把玩家已填數字搬到另一格（來源清空） */
+/** 搬移或交換玩家已填數字（題目格不可） */
 /** @param {number} fromIndex @param {number} toIndex */
 function movePlayerDigit(fromIndex, toIndex) {
   if (given[fromIndex] || given[toIndex]) {
     deps?.showWarn?.("不能改", "這格是題目給的數字。");
     return;
   }
-  const digit = puzzle[fromIndex];
-  if (digit == null) return;
+  const fromVal = puzzle[fromIndex];
+  if (fromVal == null) return;
   if (fromIndex === toIndex) return;
 
-  const fromBefore = digit;
-  const toBefore = puzzle[toIndex];
-  puzzle[fromIndex] = null;
-  puzzle[toIndex] = digit;
-  pushUndo(fromIndex, fromBefore, null);
-  pushUndo(toIndex, toBefore, digit);
+  const toVal = puzzle[toIndex];
+  // 目標有數字 → 交換；空格 → 搬過去
+  puzzle[fromIndex] = toVal;
+  puzzle[toIndex] = fromVal;
+  undoStack.push({
+    index: -1,
+    before: null,
+    after: null,
+    batch: [
+      { index: fromIndex, before: fromVal, after: toVal },
+      { index: toIndex, before: toVal, after: fromVal },
+    ],
+  });
+  syncUndoButton();
   selected = toIndex;
   clearMarks();
   clearNumPadSelection();
