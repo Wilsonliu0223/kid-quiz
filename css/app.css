@@ -5730,6 +5730,48 @@ button.gomoku-cell:disabled {
   margin: 0;
   aspect-ratio: 1;
   touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sudoku-token {
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+.sudoku-token-given {
+  font-weight: 800;
+  color: #0f3d28;
+}
+.sudoku-token-player {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  font-weight: 800;
+  color: #156b42;
+  background: linear-gradient(160deg, #ffffff 0%, #e6f4ec 42%, #b8dcc8 100%);
+  border: 1px solid #8ec4a8;
+  box-shadow:
+    0 3px 6px rgba(31, 107, 69, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 -2px 5px rgba(31, 107, 69, 0.14) inset;
+}
+.sudoku-cell-conflict .sudoku-token-player {
+  color: #b3261e;
+  background: linear-gradient(160deg, #fff8f6 0%, #ffd8d2 45%, #ffb4ab 100%);
+  border-color: #e08a82;
+  box-shadow:
+    0 3px 6px rgba(179, 38, 30, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 -2px 5px rgba(179, 38, 30, 0.12) inset;
+}
+.sudoku-cell-drop-target {
+  background: #fff9e6 !important;
+  outline: 2px dashed #e85d2a;
+  outline-offset: -2px;
 }
 .sudoku-cell-box-l { border-left: 2px solid #1f6b45; }
 .sudoku-cell-box-t { border-top: 2px solid #1f6b45; }
@@ -5761,7 +5803,51 @@ button.gomoku-cell:disabled {
 .sudoku-num {
   min-height: 40px;
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 800;
+  border-radius: 50%;
+  border: 1px solid #8ec4a8;
+  background: linear-gradient(160deg, #ffffff 0%, #e6f4ec 42%, #b8dcc8 100%);
+  box-shadow:
+    0 3px 5px rgba(31, 107, 69, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 -2px 4px rgba(31, 107, 69, 0.12) inset;
+  color: #156b42;
+  touch-action: none;
+  cursor: grab;
+}
+.sudoku-num.chip-active {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 2px rgba(31, 107, 69, 0.2),
+    0 2px 5px rgba(31, 107, 69, 0.18) inset;
+}
+.sudoku-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  width: 46px;
+  height: 46px;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #156b42;
+  pointer-events: none;
+  background: linear-gradient(160deg, #ffffff 0%, #e6f4ec 42%, #b8dcc8 100%);
+  border: 1px solid #8ec4a8;
+  box-shadow:
+    0 10px 18px rgba(31, 107, 69, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset;
+}
+body.sudoku-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+body.sudoku-dragging .sudoku-num {
+  cursor: grabbing;
 }
 .sudoku-actions {
   display: grid;

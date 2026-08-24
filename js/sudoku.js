@@ -32,6 +32,12 @@ let related = Array(81).fill(false);
 let hintFlash = -1;
 /** @type {{ index: number, before: number|null, after: number|null }[]} */
 let undoStack = [];
+/** @type {number} */
+let dropTarget = -1;
+/** @type {{ digit: number, startX: number, startY: number, dragging: boolean, pointerId: number } | null} */
+let dragState = null;
+
+const DRAG_THRESHOLD = 10;
 
 const TUTORIAL_STEPS = [
   {
@@ -52,7 +58,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "怎麼玩？",
-    body: "① 先點選一個空格\n② 再點下方的數字 1～9 填入（填完下方會自動取消選取）\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
+    body: "① 點空格再點下方數字填入，或按住數字拖到空格\n② 你填的數字會是凸起的圓塊，題目給的是平的\n③ 想檢查時再按「檢查」（只看有沒有重複，不會告訴你答案）\n④ 卡住時按「提示」：會指出該想哪一格，但不會直接填答案\n⑤ 全部填完且沒有重複就過關！",
   },
   {
     title: "準備開始",
@@ -130,12 +136,114 @@ function bindUi() {
   $("#btn-sudoku-undo")?.addEventListener("click", undoLast);
   $("#btn-sudoku-check")?.addEventListener("click", checkBoard);
 
-  document.querySelectorAll(".sudoku-num").forEach((btn) => {
-    btn.addEventListener("click", () => {
+  bindDragInput();
+}
+
+function getDragGhost() {
+  let ghost = $("#sudoku-drag-ghost");
+  if (!ghost) {
+    ghost = document.createElement("div");
+    ghost.id = "sudoku-drag-ghost";
+    ghost.className = "sudoku-drag-ghost";
+    ghost.hidden = true;
+    ghost.setAttribute("aria-hidden", "true");
+    document.body.appendChild(ghost);
+  }
+  return ghost;
+}
+
+function bindDragInput() {
+  const numpad = $(".sudoku-numpad");
+  if (!numpad || numpad.dataset.dragBound) return;
+  numpad.dataset.dragBound = "1";
+
+  numpad.querySelectorAll(".sudoku-num").forEach((btn) => {
+    btn.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
       const n = Number(btn.getAttribute("data-num"));
-      if (n >= 1 && n <= 9) placeDigit(n);
+      if (n < 1 || n > 9) return;
+      dragState = {
+        digit: n,
+        startX: e.clientX,
+        startY: e.clientY,
+        dragging: false,
+        pointerId: e.pointerId,
+      };
+      btn.setPointerCapture(e.pointerId);
     });
+
+    btn.addEventListener("pointermove", (e) => {
+      if (!dragState || dragState.pointerId !== e.pointerId) return;
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      if (!dragState.dragging && Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
+        dragState.dragging = true;
+        const ghost = getDragGhost();
+        ghost.textContent = String(dragState.digit);
+        ghost.hidden = false;
+        document.body.classList.add("sudoku-dragging");
+      }
+      if (dragState.dragging) {
+        const ghost = getDragGhost();
+        ghost.style.left = `${e.clientX}px`;
+        ghost.style.top = `${e.clientY}px`;
+        setDropTarget(cellIndexAt(e.clientX, e.clientY));
+      }
+    });
+
+    const finishDrag = (e) => {
+      if (!dragState || dragState.pointerId !== e.pointerId) return;
+      try {
+        btn.releasePointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+      if (dragState.dragging) {
+        const idx = cellIndexAt(e.clientX, e.clientY);
+        if (idx >= 0) placeDigitAt(idx, dragState.digit);
+        clearDropTarget();
+        const ghost = getDragGhost();
+        ghost.hidden = true;
+        document.body.classList.remove("sudoku-dragging");
+      } else {
+        placeDigit(dragState.digit);
+      }
+      dragState = null;
+    };
+
+    btn.addEventListener("pointerup", finishDrag);
+    btn.addEventListener("pointercancel", finishDrag);
   });
+}
+
+/** @param {number} x @param {number} y */
+function cellIndexAt(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const cell = el?.closest?.(".sudoku-cell");
+  if (!cell) return -1;
+  const grid = $("#sudoku-grid");
+  const cells = grid?.querySelectorAll(".sudoku-cell");
+  if (!cells) return -1;
+  return Array.from(cells).indexOf(cell);
+}
+
+/** @param {number} index */
+function setDropTarget(index) {
+  const next = index >= 0 && !given[index] ? index : -1;
+  if (dropTarget === next) return;
+  const grid = $("#sudoku-grid");
+  const cells = grid?.querySelectorAll(".sudoku-cell");
+  if (cells) {
+    if (dropTarget >= 0) cells[dropTarget]?.classList.remove("sudoku-cell-drop-target");
+    dropTarget = next;
+    if (dropTarget >= 0) cells[dropTarget]?.classList.add("sudoku-cell-drop-target");
+  } else {
+    dropTarget = next;
+  }
+}
+
+function clearDropTarget() {
+  setDropTarget(-1);
 }
 
 function openTutorial() {
@@ -176,6 +284,8 @@ function startGame(diff) {
   related = Array(81).fill(false);
   hintFlash = -1;
   undoStack = [];
+  dropTarget = -1;
+  dragState = null;
   syncUndoButton();
 
   const sub = $("#sudoku-play-diff");
@@ -214,7 +324,15 @@ function renderBoard() {
     if (conflict[i]) cell.classList.add("sudoku-cell-conflict");
     if (related[i]) cell.classList.add("sudoku-cell-related");
     if (hintFlash === i) cell.classList.add("sudoku-cell-hint");
-    if (puzzle[i] != null) cell.textContent = String(puzzle[i]);
+    if (dropTarget === i && !given[i]) cell.classList.add("sudoku-cell-drop-target");
+    if (puzzle[i] != null) {
+      const token = document.createElement("span");
+      token.className = given[i]
+        ? "sudoku-token sudoku-token-given"
+        : "sudoku-token sudoku-token-player";
+      token.textContent = String(puzzle[i]);
+      cell.appendChild(token);
+    }
     cell.addEventListener("click", () => {
       selected = i;
       related = Array(81).fill(false);
@@ -271,23 +389,33 @@ function clearNumPadSelection() {
   });
 }
 
-/** @param {number} n */
-function placeDigit(n) {
-  if (selected < 0) {
-    deps?.showWarn?.("先選空格", "請先點盤面上的空格，再點下方數字。");
-    return;
-  }
-  if (given[selected]) {
+/** @param {number} index @param {number} n */
+function placeDigitAt(index, n) {
+  if (given[index]) {
     deps?.showWarn?.("不能改", "這格是題目給的數字。");
     return;
   }
-  const before = puzzle[selected];
-  puzzle[selected] = n;
-  pushUndo(selected, before, n);
+  selected = index;
+  const before = puzzle[index];
+  if (before === n) return;
+  puzzle[index] = n;
+  pushUndo(index, before, n);
   clearMarks();
   clearNumPadSelection();
   renderBoard();
   tryWinIfComplete();
+}
+
+/** @param {number} n */
+function placeDigit(n) {
+  if (selected < 0) {
+    deps?.showWarn?.(
+      "先選空格",
+      "請先點盤面上的空格，再點下方數字；也可以按住數字拖到空格。"
+    );
+    return;
+  }
+  placeDigitAt(selected, n);
 }
 
 function eraseSelected() {

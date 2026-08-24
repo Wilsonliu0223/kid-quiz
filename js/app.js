@@ -94,7 +94,7 @@ import {
   openMulRaceDuoMode,
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
-import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v5";
+import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v6";
 import {
   addMistake,
   removeMistake,
