@@ -163,6 +163,7 @@ function getDragGhost() {
     ghost.id = "sudoku-drag-ghost";
     ghost.className = "sudoku-drag-ghost";
     ghost.hidden = true;
+    ghost.style.display = "none";
     ghost.setAttribute("aria-hidden", "true");
     document.body.appendChild(ghost);
   }
@@ -281,6 +282,18 @@ function aimFromEvent(e) {
   return { x: e.clientX, y: e.clientY + oy };
 }
 
+/** @param {boolean} show */
+function setGhostVisible(show) {
+  const ghost = getDragGhost();
+  ghost.hidden = !show;
+  // 必須用 style.display：CSS 的 display:flex 會蓋掉 hidden，導致放開後浮字還留在格上（看起來像 33）
+  ghost.style.display = show ? "flex" : "none";
+  if (!show) {
+    ghost.textContent = "";
+    ghost.style.transform = "translate3d(-9999px, -9999px, 0)";
+  }
+}
+
 /** @param {number} x @param {number} y */
 function moveGhostTo(x, y) {
   const ghost = getDragGhost();
@@ -320,7 +333,7 @@ function beginActiveDrag(e) {
 
   const ghost = getDragGhost();
   ghost.textContent = String(dragState.digit);
-  ghost.hidden = false;
+  setGhostVisible(true);
   moveGhostTo(aim.x, aim.y);
   document.body.classList.add("sudoku-dragging");
   if (dragState.fromIndex >= 0) {
@@ -348,8 +361,7 @@ function onDragPointerUp(e) {
 
   if (wasDragging) {
     clearDropTarget();
-    const ghost = getDragGhost();
-    ghost.hidden = true;
+    setGhostVisible(false);
     document.body.classList.remove("sudoku-dragging");
     dragState.cells?.[fromIndex]?.classList.remove("sudoku-cell-lifted");
 
@@ -359,6 +371,9 @@ function onDragPointerUp(e) {
       } else {
         placeDigitAt(idx, digit);
       }
+    } else if (fromIndex >= 0) {
+      // 取消拖曳時重繪，避免 lifted／殘影
+      renderBoard();
     }
   } else if (fromIndex >= 0) {
     selected = fromIndex;
@@ -560,15 +575,17 @@ function clearNumPadSelection() {
 
 /** @param {number} index @param {number} n */
 function placeDigitAt(index, n) {
+  const digit = Number(n);
+  if (!Number.isInteger(digit) || digit < 1 || digit > 9) return;
   if (given[index]) {
     deps?.showWarn?.("不能改", "這格是題目給的數字。");
     return;
   }
   selected = index;
   const before = puzzle[index];
-  if (before === n) return;
-  puzzle[index] = n;
-  pushUndo(index, before, n);
+  if (before === digit) return;
+  puzzle[index] = digit;
+  pushUndo(index, before, digit);
   clearMarks();
   clearNumPadSelection();
   renderBoard();

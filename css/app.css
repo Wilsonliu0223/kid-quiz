@@ -5818,7 +5818,7 @@ button.gomoku-cell:disabled {
   padding: 0;
   will-change: transform;
   border-radius: 0;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   font-size: 1.45rem;
@@ -5829,6 +5829,9 @@ button.gomoku-cell:disabled {
   border: none;
   box-shadow: none;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.sudoku-drag-ghost[hidden] {
+  display: none !important;
 }
 body.sudoku-dragging {
   cursor: grabbing;
