@@ -30,7 +30,7 @@ let conflict = Array(81).fill(false);
 /** @type {boolean[]} */
 let related = Array(81).fill(false);
 let hintFlash = -1;
-/** @type {{ index: number, before: number|null, after: number|null }[]} */
+/** @type {{ index: number, before: number|null, after: number|null, batch?: { index: number, before: number|null, after: number|null }[] }[]} */
 let undoStack = [];
 /** @type {number} */
 let dropTarget = -1;
@@ -149,6 +149,7 @@ function bindUi() {
   $("#btn-sudoku-new")?.addEventListener("click", () => startGame(difficulty));
   $("#btn-sudoku-hint")?.addEventListener("click", applyHint);
   $("#btn-sudoku-erase")?.addEventListener("click", eraseSelected);
+  $("#btn-sudoku-clear-all")?.addEventListener("click", clearAllPlayer);
   $("#btn-sudoku-undo")?.addEventListener("click", undoLast);
   $("#btn-sudoku-check")?.addEventListener("click", checkBoard);
 
@@ -526,6 +527,19 @@ function undoLast() {
     deps?.showWarn?.("沒有可復原", "還沒有輸入可以退回。");
     return;
   }
+  if (move.batch) {
+    let last = -1;
+    for (const m of move.batch) {
+      if (given[m.index]) continue;
+      puzzle[m.index] = m.before;
+      last = m.index;
+    }
+    if (last >= 0) selected = last;
+    clearMarks();
+    clearNumPadSelection();
+    renderBoard();
+    return;
+  }
   if (given[move.index]) {
     undoLast();
     return;
@@ -603,6 +617,26 @@ function eraseSelected() {
   if (before == null) return;
   puzzle[selected] = null;
   pushUndo(selected, before, null);
+  clearMarks();
+  clearNumPadSelection();
+  renderBoard();
+}
+
+/** 清除所有玩家填入（題目格保留）；可用復原一次全部退回 */
+function clearAllPlayer() {
+  /** @type {{ index: number, before: number|null, after: number|null }[]} */
+  const batch = [];
+  for (let i = 0; i < 81; i++) {
+    if (given[i] || puzzle[i] == null) continue;
+    batch.push({ index: i, before: puzzle[i], after: null });
+    puzzle[i] = null;
+  }
+  if (!batch.length) {
+    deps?.showWarn?.("沒有可清除", "還沒有填入的數字。");
+    return;
+  }
+  undoStack.push({ index: -1, before: null, after: null, batch });
+  syncUndoButton();
   clearMarks();
   clearNumPadSelection();
   renderBoard();

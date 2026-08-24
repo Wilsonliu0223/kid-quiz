@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v41.8" />
+    <link rel="stylesheet" href="css/app.css?v=app-v41.9" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1959,6 +1959,7 @@
             <button type="button" class="btn btn-secondary" id="btn-sudoku-erase">清除</button>
             <button type="button" class="btn btn-secondary" id="btn-sudoku-hint">提示</button>
             <button type="button" class="btn btn-secondary" id="btn-sudoku-check">檢查</button>
+            <button type="button" class="btn btn-secondary" id="btn-sudoku-clear-all">全部清除</button>
             <button type="button" class="btn btn-primary" id="btn-sudoku-new">新的一局</button>
           </div>
         </div>
@@ -2079,7 +2080,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v41.8").catch((e) => {
+      import("./js/app.js?v=app-v41.9").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

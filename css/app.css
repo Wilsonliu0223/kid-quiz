@@ -5857,6 +5857,7 @@ body.sudoku-dragging .sudoku-cell-movable {
 .sudoku-actions {
   grid-template-columns: 1fr 1fr;
 }
+.sudoku-actions #btn-sudoku-clear-all,
 .sudoku-actions #btn-sudoku-new {
   grid-column: 1 / -1;
 }
