@@ -10,12 +10,14 @@
  *
  * 第一次記錄成績會自動建立「成績」工作表；造訪會自動建立「造訪」工作表。
  * 「英文文章」寫入見 docs/英文文章寫入試算表.md（需 Script Properties：EN_ARTICLE_WRITE_TOKEN）
+ * 版本標記：EN_ARTICLE_API_VERSION（部署後可用 pingEnArticles 確認）
  */
 const SHEET_ZH = "國語";
 const SHEET_SCORES = "成績";
 const SHEET_VISITS = "造訪";
 const SHEET_EN_ARTICLES = "英文文章";
 const QUIZ_TYPES = ["生字"];
+const EN_ARTICLE_API_VERSION = "2026-08-26-quiz-v1";
 
 const EN_ARTICLE_HEADERS = [
   "日期",
@@ -45,6 +47,9 @@ function doGet(e) {
   if (p.action === "listEnArticles") {
     return listEnArticles(p);
   }
+  if (p.action === "pingEnArticles") {
+    return pingEnArticles(p);
+  }
   if (p.action === "synthesizeZh") {
     return synthesizeZh(p);
   }
@@ -68,6 +73,9 @@ function doPost(e) {
     }
     if (data.action === "listEnArticles") {
       return listEnArticles(data);
+    }
+    if (data.action === "pingEnArticles") {
+      return pingEnArticles(data);
     }
     if (data.action === "synthesizeZh") {
       return synthesizeZh(data);
@@ -266,6 +274,18 @@ function requireEnArticleToken(p) {
     return { ok: false, error: "unauthorized" };
   }
   return { ok: true };
+}
+
+/** 確認部署版本：POST/GET { action:"pingEnArticles", token } */
+function pingEnArticles(p) {
+  const auth = requireEnArticleToken(p);
+  if (!auth.ok) return jsonOut(auth);
+  return jsonOut({
+    ok: true,
+    version: EN_ARTICLE_API_VERSION,
+    sheet: SHEET_EN_ARTICLES,
+    headers: EN_ARTICLE_HEADERS.slice(),
+  });
 }
 
 function getOrCreateEnArticleSheet() {
