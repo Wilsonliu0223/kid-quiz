@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.4" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.5" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -369,9 +369,12 @@
             </div>
             <p class="en-gloss-phonetic" id="en-gloss-phonetic" hidden></p>
             <div class="en-gloss-text" id="en-gloss-text"></div>
-            <p class="en-gloss-zh-label" id="en-gloss-zh-label" hidden>中文說明</p>
+            <div class="en-gloss-zh-row" id="en-gloss-zh-row" hidden>
+              <span class="en-gloss-zh-title">中文說明</span>
+              <button type="button" class="btn-text" id="btn-en-gloss-zh-speak" aria-label="播放中文說明">🔊</button>
+              <button type="button" class="en-gloss-zh-toggle" id="btn-en-gloss-zh-toggle" aria-expanded="false" aria-label="展開中文說明">▼</button>
+            </div>
             <p class="en-gloss-zh" id="en-gloss-zh" hidden></p>
-            <button type="button" class="btn-text" id="btn-en-gloss-zh-speak" hidden>🔊 中文說明</button>
             <p class="en-gloss-example-label">Example</p>
             <p class="en-gloss-example" id="en-gloss-example"></p>
             <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
@@ -2216,7 +2219,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.4").catch((e) => {
+      import("./js/app.js?v=app-v45.5").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

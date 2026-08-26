@@ -438,7 +438,7 @@ function bindUi() {
   });
   $("#btn-en-gloss-zh-speak")?.addEventListener("click", async () => {
     const zh = $("#en-gloss-zh")?.textContent?.trim();
-    if (!zh) return;
+    if (!zh || zh === "翻譯中…") return;
     unlockSpeechFromGesture();
     showPlayBar("中文說明播放中");
     const ok = await speakEnglish(zh, {
@@ -450,6 +450,9 @@ function bindUi() {
     if (isReaderActive()) {
       showPlayBar(ok ? "點 🔊 播全文" : "中文說明播放失敗");
     }
+  });
+  $("#btn-en-gloss-zh-toggle")?.addEventListener("click", () => {
+    toggleGlossZhExpanded();
   });
   $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
   window.addEventListener("resize", () => syncDockVisibility());
@@ -785,17 +788,40 @@ function popGloss() {
   showGloss(glossStack[glossStack.length - 1]);
 }
 
-function setGlossZhUi(zhText) {
+/** 中文說明句是否展開（預設收合，點 ▼ 才顯示） */
+let glossZhExpanded = false;
+
+function setGlossZhExpanded(open) {
+  glossZhExpanded = Boolean(open);
   const zhEl = $("#en-gloss-zh");
-  const zhLabel = $("#en-gloss-zh-label");
-  const zhSpeak = $("#btn-en-gloss-zh-speak");
-  const has = Boolean(String(zhText || "").trim());
-  if (zhEl) {
-    zhEl.textContent = has ? String(zhText).trim() : "";
-    zhEl.hidden = !has;
+  const toggle = $("#btn-en-gloss-zh-toggle");
+  const text = zhEl?.textContent?.trim() || "";
+  const canShow = Boolean(text) && text !== "翻譯中…";
+  if (zhEl) zhEl.hidden = !(glossZhExpanded && canShow);
+  if (toggle) {
+    toggle.textContent = glossZhExpanded ? "▲" : "▼";
+    toggle.setAttribute("aria-expanded", glossZhExpanded ? "true" : "false");
+    toggle.disabled = !canShow;
   }
-  if (zhLabel) zhLabel.hidden = !has;
-  if (zhSpeak) zhSpeak.hidden = !has;
+}
+
+function toggleGlossZhExpanded() {
+  setGlossZhExpanded(!glossZhExpanded);
+  requestAnimationFrame(() => syncDockVisibility());
+}
+
+function setGlossZhUi(zhText) {
+  const row = $("#en-gloss-zh-row");
+  const zhEl = $("#en-gloss-zh");
+  const speakBtn = $("#btn-en-gloss-zh-speak");
+  const raw = String(zhText || "").trim();
+  const loading = raw === "翻譯中…";
+  const has = Boolean(raw);
+  if (zhEl) zhEl.textContent = has ? raw : "";
+  if (row) row.hidden = !has;
+  if (speakBtn) speakBtn.disabled = !has || loading;
+  // 換字時一律收合；翻譯中也不展開
+  setGlossZhExpanded(false);
 }
 
 /** 英英解釋 → 繁中說明（顯示用）；失敗則隱藏中文區 */
