@@ -5934,6 +5934,12 @@ body.sudoku-dragging .sudoku-cell-movable {
   color: #1a2a4a;
   line-height: 1.35;
 }
+.en-daily-tap-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #1a5bb8;
+  line-height: 1.4;
+}
 .en-daily-article {
   font-size: 1.08rem;
   line-height: 1.7;
@@ -5942,12 +5948,14 @@ body.sudoku-dragging .sudoku-cell-movable {
   border: 1px solid #d5e0f5;
   border-radius: 12px;
   padding: 14px 16px;
+  padding-bottom: 20px;
 }
 .en-word {
   display: inline;
-  padding: 0;
+  padding: 0 1px;
   margin: 0;
   border: none;
+  border-bottom: 1px dotted #7aa2e0;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -5962,6 +5970,8 @@ body.sudoku-dragging .sudoku-cell-movable {
 }
 .en-word-key {
   background: #ffe8c8;
+  border-bottom-color: #e09a3e;
+  border-bottom-style: solid;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
@@ -5976,14 +5986,21 @@ body.sudoku-dragging .sudoku-cell-movable {
   gap: 8px;
 }
 .en-gloss-panel {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
-  margin: 0 -16px -28px;
-  padding: 12px 16px 18px;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+  margin: 0;
+  padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px));
   background: #fff;
   border-top: 2px solid #c5d4f0;
-  box-shadow: 0 -8px 24px rgba(26, 91, 184, 0.12);
-  z-index: 5;
+  box-shadow: 0 -8px 28px rgba(26, 91, 184, 0.18);
+  z-index: 40;
+}
+body.en-gloss-open #view-en-daily-read.view-active {
+  padding-bottom: min(52vh, 420px);
 }
 .en-gloss-toolbar {
   display: flex;

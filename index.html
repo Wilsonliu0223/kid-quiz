@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v43.0" />
+    <link rel="stylesheet" href="css/app.css?v=app-v43.1" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -326,6 +326,7 @@
             <button type="button" class="chip" data-en-daily-level="l3">L3</button>
           </div>
           <h2 class="en-daily-title" id="en-daily-title"></h2>
+          <p class="en-daily-tap-hint">點文章裡的英文單字 → 下方會跳出<strong>英英解釋</strong>（橘色字＝重點單字）</p>
           <div class="en-daily-article" id="en-daily-body"></div>
           <p class="en-daily-review-strip" id="en-daily-review-strip">複習字：</p>
           <div class="en-daily-read-actions">
@@ -2187,7 +2188,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v43.0").catch((e) => {
+      import("./js/app.js?v=app-v43.1").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

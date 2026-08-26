@@ -343,9 +343,10 @@ export function uniqueLessons(items) {
 function gvizCell(row, index) {
   const c = row?.c?.[index];
   if (!c) return "";
+  // 長文字（如 vocab_json）優先用完整 v，f 常被截斷
+  if (c.v != null && c.v !== "") return c.v;
   if (c.f != null && String(c.f).trim() !== "") return String(c.f).trim();
-  if (c.v == null) return "";
-  return c.v;
+  return "";
 }
 
 function parseArticleDate(raw) {

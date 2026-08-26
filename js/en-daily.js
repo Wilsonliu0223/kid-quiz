@@ -346,6 +346,7 @@ function showGloss(entry) {
   const panel = $("#en-gloss-panel");
   if (!panel) return;
   panel.hidden = false;
+  document.body.classList.add("en-gloss-open");
   const w = $("#en-gloss-word");
   const ph = $("#en-gloss-phonetic");
   const g = $("#en-gloss-text");
@@ -373,6 +374,7 @@ function showGloss(entry) {
 function hideGloss() {
   const panel = $("#en-gloss-panel");
   if (panel) panel.hidden = true;
+  document.body.classList.remove("en-gloss-open");
   glossStack = [];
 }
 
