@@ -216,18 +216,72 @@ async function speakPhraseWithDictionary(text) {
 
 /** Google 翻譯 TTS（較像真人；非正式 API，失敗就換下一個） */
 function googleTtsUrl(text, lang = "en") {
-  const tl = lang === "zh" ? "zh-TW" : "en";
-  const max = lang === "zh" ? 100 : 180;
+  const tl = lang === "zh" ? "zh-CN" : lang === "zh-TW" ? "zh-TW" : "en";
+  const max = lang === "zh" || lang === "zh-TW" ? 100 : 180;
   const q = encodeURIComponent(String(text || "").trim().slice(0, max));
   if (!q) return "";
-  return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=${tl}&q=${q}`;
+  // client=tw-ob 中文較常比 gtx 順耳
+  const client = lang === "en" ? "gtx" : "tw-ob";
+  return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=${client}&tl=${tl}&q=${q}`;
 }
 
-/** 有道美式發音（常有真人感） */
+/** 有道美式發音（英文） */
 function youdaoTtsUrl(text) {
   const q = encodeURIComponent(String(text || "").trim().slice(0, 600));
   if (!q) return "";
   return `https://dict.youdao.com/dictvoice?audio=${q}&type=2`;
+}
+
+/** 百度翻譯中文 TTS（通常比 Google 中文自然） */
+function baiduZhTtsUrl(text) {
+  const q = encodeURIComponent(String(text || "").trim().slice(0, 180));
+  if (!q) return "";
+  return `https://fanyi.baidu.com/gettts?lan=zh&text=${q}&spd=4&source=web`;
+}
+
+/** 有道中文 TTS */
+function youdaoZhTtsUrl(text) {
+  const q = encodeURIComponent(String(text || "").trim().slice(0, 400));
+  if (!q) return "";
+  return `https://dict.youdao.com/dictvoice?le=zh&audio=${q}`;
+}
+
+/** 中文依句讀切段，語氣較自然 */
+function chunkZhForTts(text, maxLen = 42) {
+  const s = String(text || "")
+    .trim()
+    .replace(/\s+/g, "");
+  if (!s) return [];
+  if (s.length <= maxLen) return [s];
+
+  const parts = [];
+  const push = (t) => {
+    const x = String(t || "").trim();
+    if (x) parts.push(x);
+  };
+
+  for (const sent of s.split(/(?<=[。！？])/)) {
+    if (!sent) continue;
+    if (sent.length <= maxLen) {
+      const last = parts[parts.length - 1];
+      if (last && last.length + sent.length <= maxLen) {
+        parts[parts.length - 1] = last + sent;
+      } else {
+        push(sent);
+      }
+      continue;
+    }
+    let buf = "";
+    for (const ch of sent) {
+      buf += ch;
+      if (buf.length >= maxLen || /[，、；]/.test(ch)) {
+        push(buf);
+        buf = "";
+      }
+    }
+    push(buf);
+  }
+  return parts;
 }
 
 /** 長文切段，避免 Google TTS 截斷 */
@@ -236,22 +290,8 @@ function chunkTextForTts(text, maxLen = 160) {
     .trim()
     .replace(/\s+/g, " ");
   if (!s) return [];
+  if (/[\u4e00-\u9fff]/.test(s)) return chunkZhForTts(s, Math.min(maxLen, 42));
   if (s.length <= maxLen) return [s];
-
-  // 中文：少空白，依標點／長度切
-  if (/[\u4e00-\u9fff]/.test(s)) {
-    const parts = [];
-    let buf = "";
-    for (const ch of s) {
-      buf += ch;
-      if (buf.length >= maxLen || /[。！？；\n]/.test(ch)) {
-        parts.push(buf.trim());
-        buf = "";
-      }
-    }
-    if (buf.trim()) parts.push(buf.trim());
-    return parts;
-  }
 
   const parts = [];
   let buf = "";
@@ -290,17 +330,22 @@ function chunkTextForTts(text, maxLen = 160) {
 
 const zhTranslateCache = new Map();
 
-/** 英→繁中（非正式 translate API；失敗回空字串） */
-export async function translateEnToZh(text) {
+/** 英→中（非正式 translate API；失敗回空字串）
+ * @param {string} text
+ * @param {'TW'|'CN'} [variant] 朗讀用 CN 搭配百度較自然；顯示可用 TW
+ */
+export async function translateEnToZh(text, variant = "CN") {
   const src = String(text || "").trim();
   if (!src) return "";
-  if (zhTranslateCache.has(src)) return zhTranslateCache.get(src);
+  const cacheKey = `${variant}:${src}`;
+  if (zhTranslateCache.has(cacheKey)) return zhTranslateCache.get(cacheKey);
 
+  const tl = variant === "TW" ? "zh-TW" : "zh-CN";
   try {
     const pieces = chunkTextForTts(src, 400);
     const out = [];
     for (const piece of pieces) {
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${encodeURIComponent(piece)}`;
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tl}&dt=t&q=${encodeURIComponent(piece)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`translate ${res.status}`);
       const data = await res.json();
@@ -308,29 +353,41 @@ export async function translateEnToZh(text) {
       out.push(part);
     }
     const joined = out.join("");
-    zhTranslateCache.set(src, joined);
+    zhTranslateCache.set(cacheKey, joined);
     return joined;
   } catch (e) {
     console.warn("translateEnToZh", e);
-    zhTranslateCache.set(src, "");
+    zhTranslateCache.set(cacheKey, "");
     return "";
   }
 }
 
 async function playOnlineChunk(chunk, lang = "en") {
-  const g = googleTtsUrl(chunk, lang);
-  if (g && (await playAudioUrl(g, { startTimeoutMs: 2500 }))) return true;
-  if (lang === "en") {
-    const y = youdaoTtsUrl(chunk);
-    if (y && (await playAudioUrl(y, { startTimeoutMs: 2500 }))) return true;
+  if (lang === "zh") {
+    // 中文：百度 → 有道 → Google（較自然優先）
+    const urls = [
+      baiduZhTtsUrl(chunk),
+      youdaoZhTtsUrl(chunk),
+      googleTtsUrl(chunk, "zh"),
+      googleTtsUrl(chunk, "zh-TW"),
+    ];
+    for (const url of urls) {
+      if (url && (await playAudioUrl(url, { startTimeoutMs: 3200 }))) return true;
+    }
+    return false;
   }
+
+  const g = googleTtsUrl(chunk, "en");
+  if (g && (await playAudioUrl(g, { startTimeoutMs: 2500 }))) return true;
+  const y = youdaoTtsUrl(chunk);
+  if (y && (await playAudioUrl(y, { startTimeoutMs: 2500 }))) return true;
   return false;
 }
 
 /** 線上自然音；長文分段連播 */
 async function speakWithOnlineTts(text, lang = "en") {
-  const max = lang === "zh" ? 90 : 160;
-  const chunks = chunkTextForTts(text, max);
+  const chunks =
+    lang === "zh" ? chunkZhForTts(text, 42) : chunkTextForTts(text, 160);
   if (!chunks.length) return false;
   for (const chunk of chunks) {
     const ok = await playOnlineChunk(chunk, lang);
@@ -463,7 +520,11 @@ export async function speakEnglish(text, opts = {}) {
   const lang = opts.lang === "zh" ? "zh" : "en";
   let speakText = w;
   if (lang === "zh") {
-    speakText = (await translateEnToZh(w)) || w;
+    // 朗讀用簡中譯文，百度／有道中文 TTS 較自然
+    speakText =
+      (await translateEnToZh(w, "CN")) ||
+      (await translateEnToZh(w, "TW")) ||
+      w;
   }
 
   const wantFast = opts.fast || opts.instant;
