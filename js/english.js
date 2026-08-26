@@ -1,4 +1,6 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
+import { CONFIG } from "./config.site.js";
+
 export function normalizeEnglish(s) {
   return String(s || "")
     .trim()
@@ -362,9 +364,60 @@ export async function translateEnToZh(text, variant = "CN") {
   }
 }
 
+/** Google Speech API 中文（比 translate_tts 清楚；可直接當 audio.src） */
+function googleSpeechZhUrl(text) {
+  const q = encodeURIComponent(String(text || "").trim().slice(0, 180));
+  if (!q) return "";
+  return `https://www.google.com/speech-api/v1/synthesize?enc=mpeg&lang=zh-cn&speed=0.42&client=lr-language-tts&use_google_only_voices=1&text=${q}`;
+}
+
+const zhNeuralUrlCache = new Map();
+
+/** 經 Apps Script 轉 Amazon Polly Zhiyu（需部署最新 google-apps-script.gs） */
+async function resolveZhNeuralUrl(chunk) {
+  const key = String(chunk || "").trim();
+  if (!key) return "";
+  if (zhNeuralUrlCache.has(key)) return zhNeuralUrlCache.get(key);
+
+  const endpoint = String(CONFIG.SCORE_LOG_URL || "").trim();
+  if (!endpoint) return "";
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "synthesizeZh", text: key }),
+      redirect: "follow",
+    });
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      // Apps Script 偶發回整包國語 JSON（部署未更新／導向變 GET）
+      return "";
+    }
+    if (data && data.ok && data.url) {
+      zhNeuralUrlCache.set(key, data.url);
+      return data.url;
+    }
+  } catch (e) {
+    console.warn("resolveZhNeuralUrl", e);
+  }
+  return "";
+}
+
 async function playOnlineChunk(chunk, lang = "en") {
   if (lang === "zh") {
-    // 中文：百度 → 有道 → Google（較自然優先）
+    // 1) Polly 神經網路（Apps Script 代理）→ 2) Google Speech → 3) 舊備援
+    const neural = await resolveZhNeuralUrl(chunk);
+    if (neural && (await playAudioUrl(neural, { startTimeoutMs: 5000 }))) {
+      return true;
+    }
+    const gSpeech = googleSpeechZhUrl(chunk);
+    if (gSpeech && (await playAudioUrl(gSpeech, { startTimeoutMs: 3500 }))) {
+      return true;
+    }
     const urls = [
       baiduZhTtsUrl(chunk),
       youdaoZhTtsUrl(chunk),
@@ -387,7 +440,7 @@ async function playOnlineChunk(chunk, lang = "en") {
 /** 線上自然音；長文分段連播 */
 async function speakWithOnlineTts(text, lang = "en") {
   const chunks =
-    lang === "zh" ? chunkZhForTts(text, 42) : chunkTextForTts(text, 160);
+    lang === "zh" ? chunkZhForTts(text, 72) : chunkTextForTts(text, 160);
   if (!chunks.length) return false;
   for (const chunk of chunks) {
     const ok = await playOnlineChunk(chunk, lang);

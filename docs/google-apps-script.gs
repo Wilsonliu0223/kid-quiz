@@ -44,6 +44,9 @@ function doGet(e) {
   if (p.action === "listEnArticles") {
     return listEnArticles(p);
   }
+  if (p.action === "synthesizeZh") {
+    return synthesizeZh(p);
+  }
   return loadZhJson();
 }
 
@@ -65,10 +68,71 @@ function doPost(e) {
     if (data.action === "listEnArticles") {
       return listEnArticles(data);
     }
+    if (data.action === "synthesizeZh") {
+      return synthesizeZh(data);
+    }
   } catch (err) {
     return jsonOut({ ok: false, error: String(err) });
   }
   return jsonOut({ ok: false, error: "unknown action" });
+}
+
+/**
+ * 中文神經網路語音（ttsmp3 / Amazon Polly Zhiyu）
+ * POST/GET: action=synthesizeZh&text=...
+ * 回傳 { ok, url } 供前端 <audio> 播放（比百度／Google 翻譯音自然很多）
+ */
+function synthesizeZh(p) {
+  const text = String(p.text || "")
+    .trim()
+    .slice(0, 240);
+  if (!text) {
+    return jsonOut({ ok: false, error: "缺少 text" });
+  }
+
+  const cache = CacheService.getScriptCache();
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5,
+    text,
+    Utilities.Charset.UTF_8
+  );
+  const key =
+    "zh6_" +
+    Utilities.base64EncodeWebSafe(digest).replace(/=+$/, "").slice(0, 28);
+  const cachedUrl = cache.get(key);
+  if (cachedUrl) {
+    return jsonOut({ ok: true, url: cachedUrl, cached: true });
+  }
+
+  try {
+    const res = UrlFetchApp.fetch("https://ttsmp3.com/makemp3_new.php", {
+      method: "post",
+      contentType: "application/x-www-form-urlencoded",
+      payload:
+        "msg=" +
+        encodeURIComponent(text) +
+        "&lang=Zhiyu&source=ttsmp3",
+      muteHttpExceptions: true,
+      followRedirects: true,
+    });
+    const raw = res.getContentText();
+    const data = JSON.parse(raw);
+    if (data && Number(data.Error) === 0 && data.URL) {
+      cache.put(key, String(data.URL), 21600);
+      return jsonOut({
+        ok: true,
+        url: String(data.URL),
+        speaker: String(data.Speaker || "Zhiyu"),
+      });
+    }
+    return jsonOut({
+      ok: false,
+      error: "ttsmp3 失敗",
+      detail: String(raw).slice(0, 180),
+    });
+  } catch (err) {
+    return jsonOut({ ok: false, error: String(err) });
+  }
 }
 
 function appendScoreRow(p) {

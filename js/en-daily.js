@@ -2,7 +2,12 @@
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
 import { loadEnArticles } from "./sheets.js";
-import { speakEnglish, unlockSpeechFromGesture, prefetchEnglishAudio, stopSpeaking } from "./english.js?v=en-speak-v5";
+import {
+  speakEnglish,
+  unlockSpeechFromGesture,
+  prefetchEnglishAudio,
+  stopSpeaking,
+} from "./english.js?v=en-speak-v6";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
