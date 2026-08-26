@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js";
+import { CONFIG } from "./config.site.js?v=config-v44.3";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -439,7 +439,9 @@ export function getLastSpeakEngine() {
 }
 
 function zhVoiceCandidates() {
-  const preferred = String(CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural").trim();
+  const preferred = String(
+    CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural"
+  ).trim();
   const list = [
     preferred,
     "zh-CN-YunxiNeural",
@@ -448,6 +450,13 @@ function zhVoiceCandidates() {
     "zh-CN-XiaoxiaoNeural",
   ];
   return [...new Set(list.filter(Boolean))];
+}
+
+function edgeTtsEndpoint() {
+  // 硬編碼備援：避免舊版 config.site.js 快取沒有 EDGE_TTS_URL 時整段跳過
+  return String(
+    CONFIG.EDGE_TTS_URL || "https://tts.wangwangit.com/v1/audio/speech"
+  ).trim();
 }
 
 /**
@@ -460,12 +469,15 @@ async function resolveEdgeZhBlobUrl(chunk) {
     .slice(0, 280);
   if (!text) return "";
 
-  const endpoint = String(CONFIG.EDGE_TTS_URL || "").trim();
+  const endpoint = edgeTtsEndpoint();
   if (!endpoint) return "";
 
   for (const voice of zhVoiceCandidates()) {
     const cacheKey = `${voice}::${text}`;
-    if (edgeZhBlobCache.has(cacheKey)) return edgeZhBlobCache.get(cacheKey);
+    if (edgeZhBlobCache.has(cacheKey)) {
+      lastSpeakEngine = `edge:${voice}`;
+      return edgeZhBlobCache.get(cacheKey);
+    }
     try {
       const res = await fetch(endpoint, {
         method: "POST",
@@ -476,9 +488,17 @@ async function resolveEdgeZhBlobUrl(chunk) {
           speed: 1,
         }),
       });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        console.warn("Edge TTS HTTP", voice, res.status);
+        continue;
+      }
       const buf = await res.arrayBuffer();
       if (!buf || buf.byteLength < 200) continue;
+      const headTxt = new TextDecoder().decode(buf.slice(0, 48)).trim();
+      if (headTxt.startsWith("{") || headTxt.startsWith("<")) {
+        console.warn("Edge TTS not audio", voice, headTxt.slice(0, 80));
+        continue;
+      }
       const url = `data:audio/mpeg;base64,${arrayBufferToBase64(buf)}`;
       edgeZhBlobCache.set(cacheKey, url);
       lastSpeakEngine = `edge:${voice}`;

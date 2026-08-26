@@ -10,7 +10,7 @@ import {
   stopSpeaking,
   setSpeakingSpeed,
   getLastSpeakEngine,
-} from "./english.js?v=en-speak-v10";
+} from "./english.js?v=en-speak-v11";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -144,7 +144,9 @@ async function playWithBar(text, opts = {}) {
     : [raw];
   const labelBase = opts.label || (playLang === "zh" ? "中文播放中" : "英文播放中");
 
-  showPlayBar(playLang === "zh" ? "翻譯中…" : "準備播放…");
+  showPlayBar(
+    playLang === "zh" ? "載入雲希神經音…" : "準備播放…"
+  );
 
   let anyOk = false;
   for (let i = 0; i < sentences.length; i++) {
@@ -154,7 +156,9 @@ async function playWithBar(text, opts = {}) {
       sentences.length > 1
         ? `${labelBase} ${i + 1}/${sentences.length}`
         : labelBase;
-    showPlayBar(status);
+    showPlayBar(
+      playLang === "zh" ? `${status} · 載入雲希…` : status
+    );
     const ok = await speakEnglish(sentences[i], {
       fast: true,
       lang: playLang,
@@ -163,21 +167,21 @@ async function playWithBar(text, opts = {}) {
     if (seq !== playSeq) return;
     if (ok) {
       anyOk = true;
+      const eng = getLastSpeakEngine() || "";
+      let tip = "";
       if (playLang === "zh") {
-        const eng = getLastSpeakEngine() || "";
-        const tip = eng.startsWith("edge")
-          ? "雲希神經音"
-          : eng.startsWith("script")
-            ? "伺服器語音"
-            : eng === "zhiyu"
-              ? "舊女聲"
-              : "備援機械音";
-        showPlayBar(
-          sentences.length > 1
+        if (eng.startsWith("edge")) tip = "✓雲希神經音";
+        else if (eng.startsWith("script")) tip = "伺服器語音";
+        else if (eng === "zhiyu") tip = "舊女聲(備援)";
+        else tip = "⚠備援機械音";
+      }
+      showPlayBar(
+        tip
+          ? sentences.length > 1
             ? `${labelBase} ${i + 1}/${sentences.length} · ${tip}`
             : `${labelBase} · ${tip}`
-        );
-      }
+          : status
+      );
     }
   }
 
