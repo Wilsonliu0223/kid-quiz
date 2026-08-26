@@ -69,22 +69,21 @@ export function unlockSpeechFromGesture() {
 
   try {
     const audio = ensureSharedAudio();
-    audio.muted = true;
     const unlockSrc =
       "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-    // 手勢當下即視為已解鎖，避免等 Promise 才標記
     audioUnlocked = true;
     // 若正在播真正內容就不要打斷
-    if (!audio.paused && audio.src && !audio.src.startsWith("data:")) {
+    if (!audio.paused && audio.src && audio.src !== unlockSrc) {
       audio.muted = false;
       return;
     }
+    audio.muted = true;
     audio.src = unlockSrc;
     const p = audio.play();
     if (p && typeof p.then === "function") {
       p.then(() => {
-        // 勿 pause：可能已換成 Google TTS，pause 會把剛開始的朗讀掐掉
-        if (audio.src.startsWith("data:")) {
+        // 只停解鎖用無聲檔；勿誤停 data:mpeg／blob 真正語音
+        if (audio.src === unlockSrc) {
           try {
             audio.pause();
           } catch (_) {}
@@ -102,6 +101,16 @@ export function unlockSpeechFromGesture() {
   }
 }
 
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const step = 0x8000;
+  for (let i = 0; i < bytes.length; i += step) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
+  }
+  return btoa(binary);
+}
+
 function playAudioUrl(url, opts = {}) {
   return new Promise((resolve) => {
     const src = normalizeAudioUrl(url);
@@ -117,15 +126,14 @@ function playAudioUrl(url, opts = {}) {
       audio.onerror = null;
       audio.onplaying = null;
 
-      // 中文 Zhiyu 偏尖：關閉保持音高略降基速；再乘上使用者語速
       const soften = Boolean(opts.soften);
-      const userSpeed = Number(opts.speed) > 0 ? Number(opts.speed) : activeSpeakSpeed || 1;
+      const userSpeed =
+        Number(opts.speed) > 0 ? Number(opts.speed) : activeSpeakSpeed || 1;
       const base = soften ? 0.86 : 1;
       const rate = base * userSpeed;
       activeSoften = soften;
       activeSpeakSpeed = userSpeed;
       try {
-        // 英文調速保持音高；中文 soften 關閉以降低尖銳感
         audio.preservesPitch = !soften;
         if ("mozPreservesPitch" in audio) audio.mozPreservesPitch = !soften;
         if ("webkitPreservesPitch" in audio) audio.webkitPreservesPitch = !soften;
@@ -146,7 +154,7 @@ function playAudioUrl(url, opts = {}) {
       };
       const startTimer = setTimeout(() => {
         if (!started) done(false);
-      }, opts.startTimeoutMs ?? (soften || userSpeed < 1 ? 4500 : 2800));
+      }, opts.startTimeoutMs ?? (soften || userSpeed < 1 ? 5000 : 3500));
       audio.onplaying = () => {
         started = true;
         clearTimeout(startTimer);
@@ -154,7 +162,18 @@ function playAudioUrl(url, opts = {}) {
       audio.onended = () => done(true);
       audio.onerror = () => done(false);
       audio.src = src;
-      audio.play().then(() => {}).catch(() => done(false));
+      const playP = audio.play();
+      if (playP && typeof playP.then === "function") {
+        playP.catch(() => {
+          // iOS 偶發要再 resume／重試一次
+          try {
+            audio.muted = false;
+            audio.play().then(() => {}).catch(() => done(false));
+          } catch (_) {
+            done(false);
+          }
+        });
+      }
     } catch (e) {
       console.warn("playAudioUrl", e);
       resolve(false);
@@ -412,6 +431,12 @@ function googleSpeechZhUrl(text) {
 
 const edgeZhBlobCache = new Map();
 const zhNeuralUrlCache = new Map();
+/** @type {string} 最近一次實際用到的引擎（給播放條提示） */
+let lastSpeakEngine = "";
+
+export function getLastSpeakEngine() {
+  return lastSpeakEngine;
+}
 
 function zhVoiceCandidates() {
   const preferred = String(CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural").trim();
@@ -427,10 +452,12 @@ function zhVoiceCandidates() {
 
 /**
  * Microsoft Edge 神經語音（經公開代理；CORS *）
- * 預設雲希男聲，遠比 Polly Zhiyu 自然
+ * 手機改用 data: URL，避免 blob: 在 iOS 不播而掉進機械音
  */
 async function resolveEdgeZhBlobUrl(chunk) {
-  const text = String(chunk || "").trim().slice(0, 280);
+  const text = String(chunk || "")
+    .trim()
+    .slice(0, 280);
   if (!text) return "";
 
   const endpoint = String(CONFIG.EDGE_TTS_URL || "").trim();
@@ -450,10 +477,11 @@ async function resolveEdgeZhBlobUrl(chunk) {
         }),
       });
       if (!res.ok) continue;
-      const blob = await res.blob();
-      if (!blob || blob.size < 200) continue;
-      const url = URL.createObjectURL(blob);
+      const buf = await res.arrayBuffer();
+      if (!buf || buf.byteLength < 200) continue;
+      const url = `data:audio/mpeg;base64,${arrayBufferToBase64(buf)}`;
       edgeZhBlobCache.set(cacheKey, url);
+      lastSpeakEngine = `edge:${voice}`;
       return url;
     } catch (e) {
       console.warn("Edge TTS", voice, e);
@@ -462,7 +490,24 @@ async function resolveEdgeZhBlobUrl(chunk) {
   return "";
 }
 
-/** Apps Script 備援（舊 Zhiyu／或日後改 Edge） */
+/** 預熱中文神經語音（進閱讀頁／點中文前呼叫，縮短手機等待） */
+export function prefetchChineseAudio(englishText) {
+  const raw = String(englishText || "").trim();
+  if (!raw) return;
+  void (async () => {
+    try {
+      const zh =
+        (await translateEnToZh(raw, "CN")) ||
+        (await translateEnToZh(raw, "TW")) ||
+        "";
+      if (zh) await resolveEdgeZhBlobUrl(zh);
+    } catch (e) {
+      console.warn("prefetchChineseAudio", e);
+    }
+  })();
+}
+
+/** Apps Script 備援 */
 async function resolveZhNeuralUrl(chunk) {
   const key = String(chunk || "").trim();
   if (!key) return "";
@@ -492,10 +537,12 @@ async function resolveZhNeuralUrl(chunk) {
     if (data && data.ok && data.audioBase64) {
       const url = `data:${data.mime || "audio/mpeg"};base64,${data.audioBase64}`;
       zhNeuralUrlCache.set(key, url);
+      lastSpeakEngine = `script:${data.speaker || "edge"}`;
       return url;
     }
     if (data && data.ok && data.url) {
       zhNeuralUrlCache.set(key, data.url);
+      lastSpeakEngine = "zhiyu";
       return data.url;
     }
   } catch (e) {
@@ -506,22 +553,27 @@ async function resolveZhNeuralUrl(chunk) {
 
 async function playOnlineChunk(chunk, lang = "en", speed = 1) {
   if (lang === "zh") {
-    // 1) Edge 神經語音（雲希等）→ 2) Apps Script → 3) 舊備援
     const edge = await resolveEdgeZhBlobUrl(chunk);
-    if (edge && (await playAudioUrl(edge, { speed, soften: false, startTimeoutMs: 5000 }))) {
-      return true;
-    }
-    const neural = await resolveZhNeuralUrl(chunk);
     if (
-      neural &&
-      (await playAudioUrl(neural, {
-        speed,
-        soften: /ttsmp3|Zhiyu/i.test(neural) ? true : false,
-        startTimeoutMs: 5000,
-      }))
+      edge &&
+      (await playAudioUrl(edge, { speed, soften: false, startTimeoutMs: 6000 }))
     ) {
       return true;
     }
+    const neural = await resolveZhNeuralUrl(chunk);
+    if (neural) {
+      const isZhiyu = lastSpeakEngine === "zhiyu" || /ttsmp3/i.test(neural);
+      if (
+        await playAudioUrl(neural, {
+          speed,
+          soften: isZhiyu,
+          startTimeoutMs: 6000,
+        })
+      ) {
+        return true;
+      }
+    }
+    lastSpeakEngine = "fallback";
     const soft = { soften: true, speed };
     const gSpeech = googleSpeechZhUrl(chunk);
     if (
@@ -541,13 +593,16 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1) {
         return true;
       }
     }
+    lastSpeakEngine = "synth";
     return false;
   }
 
+  lastSpeakEngine = "en-online";
   const g = googleTtsUrl(chunk, "en");
   if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 2500 }))) return true;
   const y = youdaoTtsUrl(chunk);
   if (y && (await playAudioUrl(y, { speed, startTimeoutMs: 2500 }))) return true;
+  lastSpeakEngine = "en-synth";
   return false;
 }
 

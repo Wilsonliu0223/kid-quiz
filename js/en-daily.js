@@ -6,9 +6,11 @@ import {
   speakEnglish,
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
+  prefetchChineseAudio,
   stopSpeaking,
   setSpeakingSpeed,
-} from "./english.js?v=en-speak-v9";
+  getLastSpeakEngine,
+} from "./english.js?v=en-speak-v10";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -159,7 +161,24 @@ async function playWithBar(text, opts = {}) {
       speed: playSpeed,
     });
     if (seq !== playSeq) return;
-    if (ok) anyOk = true;
+    if (ok) {
+      anyOk = true;
+      if (playLang === "zh") {
+        const eng = getLastSpeakEngine() || "";
+        const tip = eng.startsWith("edge")
+          ? "雲希神經音"
+          : eng.startsWith("script")
+            ? "伺服器語音"
+            : eng === "zhiyu"
+              ? "舊女聲"
+              : "備援機械音";
+        showPlayBar(
+          sentences.length > 1
+            ? `${labelBase} ${i + 1}/${sentences.length} · ${tip}`
+            : `${labelBase} · ${tip}`
+        );
+      }
+    }
   }
 
   if (seq !== playSeq) return;
@@ -538,6 +557,9 @@ function renderReader() {
   const body = bodyForLevel(current);
   prefetchEnglishAudio(current.title);
   prefetchEnglishAudio(body);
+  // 預熱前兩句中文神經音，手機較不易落到機械備援
+  const sents = splitEnglishSentences(body).slice(0, 2);
+  for (const s of sents) prefetchChineseAudio(s);
   for (const v of current.vocab || []) {
     if (v.word) prefetchEnglishAudio(v.word);
   }
