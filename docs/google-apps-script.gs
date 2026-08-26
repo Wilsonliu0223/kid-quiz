@@ -78,9 +78,10 @@ function doPost(e) {
 }
 
 /**
- * 中文神經網路語音（ttsmp3 / Amazon Polly Zhiyu）
- * POST/GET: action=synthesizeZh&text=...
- * 回傳 { ok, url } 供前端 <audio> 播放（比百度／Google 翻譯音自然很多）
+ * 中文神經網路語音
+ * 優先 Microsoft Edge（雲希等）→ 失敗再用 ttsmp3 Zhiyu
+ * POST/GET: action=synthesizeZh&text=...&voice=zh-CN-YunxiNeural
+ * 回傳 { ok, audioBase64, mime } 或 { ok, url }
  */
 function synthesizeZh(p) {
   const text = String(p.text || "")
@@ -89,21 +90,66 @@ function synthesizeZh(p) {
   if (!text) {
     return jsonOut({ ok: false, error: "缺少 text" });
   }
+  const voice = String(p.voice || "zh-CN-YunxiNeural").trim();
 
   const cache = CacheService.getScriptCache();
   const digest = Utilities.computeDigest(
     Utilities.DigestAlgorithm.MD5,
-    text,
+    voice + "|" + text,
     Utilities.Charset.UTF_8
   );
   const key =
-    "zh6_" +
+    "zhE_" +
     Utilities.base64EncodeWebSafe(digest).replace(/=+$/, "").slice(0, 28);
-  const cachedUrl = cache.get(key);
-  if (cachedUrl) {
-    return jsonOut({ ok: true, url: cachedUrl, cached: true });
+  const cachedB64 = cache.get(key);
+  if (cachedB64) {
+    return jsonOut({
+      ok: true,
+      audioBase64: cachedB64,
+      mime: "audio/mpeg",
+      speaker: voice,
+      cached: true,
+    });
   }
 
+  // 1) Edge 神經語音代理
+  try {
+    const edgeRes = UrlFetchApp.fetch(
+      "https://tts.wangwangit.com/v1/audio/speech",
+      {
+        method: "post",
+        contentType: "application/json",
+        payload: JSON.stringify({
+          input: text,
+          voice: voice,
+          speed: 1,
+        }),
+        muteHttpExceptions: true,
+        followRedirects: true,
+      }
+    );
+    if (edgeRes.getResponseCode() === 200) {
+      const bytes = edgeRes.getContent();
+      if (bytes && bytes.length > 200) {
+        const b64 = Utilities.base64Encode(bytes);
+        try {
+          cache.put(key, b64, 3600);
+        } catch (cacheErr) {
+          // base64 可能超過 Cache 上限，忽略
+        }
+        return jsonOut({
+          ok: true,
+          audioBase64: b64,
+          mime: "audio/mpeg",
+          speaker: voice,
+        });
+      }
+    }
+  } catch (edgeErr) {
+    // fall through
+  }
+
+  // 2) 舊備援 Zhiyu
   try {
     const res = UrlFetchApp.fetch("https://ttsmp3.com/makemp3_new.php", {
       method: "post",
@@ -118,7 +164,6 @@ function synthesizeZh(p) {
     const raw = res.getContentText();
     const data = JSON.parse(raw);
     if (data && Number(data.Error) === 0 && data.URL) {
-      cache.put(key, String(data.URL), 21600);
       return jsonOut({
         ok: true,
         url: String(data.URL),
@@ -127,7 +172,7 @@ function synthesizeZh(p) {
     }
     return jsonOut({
       ok: false,
-      error: "ttsmp3 失敗",
+      error: "中文 TTS 失敗",
       detail: String(raw).slice(0, 180),
     });
   } catch (err) {

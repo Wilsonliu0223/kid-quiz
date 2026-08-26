@@ -1,7 +1,7 @@
 /** GitHub Pages 用設定（會提交到倉庫） */
 export const CONFIG = {
   /** 首頁標題旁小字版本（每次推送更新請遞增，例：34.0 → 34.1） */
-  APP_VERSION: "44.0",
+  APP_VERSION: "44.1",
 
   /**
    * 涅槃 Rapfi 完整 NNUE 權重（約 40 MB）公開下載網址。
@@ -19,6 +19,15 @@ export const CONFIG = {
   SHEET_EN: "英語",
   /** 每日實事英文短文（讀取用；寫入見 docs/英文文章寫入試算表.md） */
   SHEET_EN_ARTICLE: "英文文章",
+
+  /**
+   * 中文朗讀：Microsoft Edge 神經語音代理（OpenAI 相容）
+   * 預設雲希男聲，比 Amazon Zhiyu 自然、不尖銳
+   */
+  EDGE_TTS_URL: "https://tts.wangwangit.com/v1/audio/speech",
+  /** zh-CN-YunxiNeural 雲希｜zh-TW-HsiaoChenNeural 曉臻｜zh-CN-YunyangNeural 雲揚 */
+  ZH_TTS_VOICE: "zh-CN-YunxiNeural",
+
   QUIZ_TYPES: ["生字"],
   QUIZ_TYPES_ZH: ["生字"],
   QUIZ_TYPES_EN: ["單字"],

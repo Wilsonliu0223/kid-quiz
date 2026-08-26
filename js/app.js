@@ -22,7 +22,7 @@ import {
   primeSpeech,
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
-} from "./english.js?v=en-speak-v8";
+} from "./english.js?v=en-speak-v9";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
   buildHomophoneChoices,

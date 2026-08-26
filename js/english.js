@@ -403,16 +403,66 @@ export async function translateEnToZh(text, variant = "CN") {
   }
 }
 
-/** Google Speech API 中文（比 translate_tts 清楚；可直接當 audio.src） */
+/** Google Speech API 中文（備援） */
 function googleSpeechZhUrl(text) {
   const q = encodeURIComponent(String(text || "").trim().slice(0, 180));
   if (!q) return "";
   return `https://www.google.com/speech-api/v1/synthesize?enc=mpeg&lang=zh-cn&speed=0.42&client=lr-language-tts&use_google_only_voices=1&text=${q}`;
 }
 
+const edgeZhBlobCache = new Map();
 const zhNeuralUrlCache = new Map();
 
-/** 經 Apps Script 轉 Amazon Polly Zhiyu（需部署最新 google-apps-script.gs） */
+function zhVoiceCandidates() {
+  const preferred = String(CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural").trim();
+  const list = [
+    preferred,
+    "zh-CN-YunxiNeural",
+    "zh-TW-HsiaoChenNeural",
+    "zh-CN-YunyangNeural",
+    "zh-CN-XiaoxiaoNeural",
+  ];
+  return [...new Set(list.filter(Boolean))];
+}
+
+/**
+ * Microsoft Edge 神經語音（經公開代理；CORS *）
+ * 預設雲希男聲，遠比 Polly Zhiyu 自然
+ */
+async function resolveEdgeZhBlobUrl(chunk) {
+  const text = String(chunk || "").trim().slice(0, 280);
+  if (!text) return "";
+
+  const endpoint = String(CONFIG.EDGE_TTS_URL || "").trim();
+  if (!endpoint) return "";
+
+  for (const voice of zhVoiceCandidates()) {
+    const cacheKey = `${voice}::${text}`;
+    if (edgeZhBlobCache.has(cacheKey)) return edgeZhBlobCache.get(cacheKey);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          input: text,
+          voice,
+          speed: 1,
+        }),
+      });
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      if (!blob || blob.size < 200) continue;
+      const url = URL.createObjectURL(blob);
+      edgeZhBlobCache.set(cacheKey, url);
+      return url;
+    } catch (e) {
+      console.warn("Edge TTS", voice, e);
+    }
+  }
+  return "";
+}
+
+/** Apps Script 備援（舊 Zhiyu／或日後改 Edge） */
 async function resolveZhNeuralUrl(chunk) {
   const key = String(chunk || "").trim();
   if (!key) return "";
@@ -425,7 +475,11 @@ async function resolveZhNeuralUrl(chunk) {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "synthesizeZh", text: key }),
+      body: JSON.stringify({
+        action: "synthesizeZh",
+        text: key,
+        voice: CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural",
+      }),
       redirect: "follow",
     });
     const raw = await res.text();
@@ -433,8 +487,12 @@ async function resolveZhNeuralUrl(chunk) {
     try {
       data = JSON.parse(raw);
     } catch {
-      // Apps Script 偶發回整包國語 JSON（部署未更新／導向變 GET）
       return "";
+    }
+    if (data && data.ok && data.audioBase64) {
+      const url = `data:${data.mime || "audio/mpeg"};base64,${data.audioBase64}`;
+      zhNeuralUrlCache.set(key, url);
+      return url;
     }
     if (data && data.ok && data.url) {
       zhNeuralUrlCache.set(key, data.url);
@@ -448,14 +506,23 @@ async function resolveZhNeuralUrl(chunk) {
 
 async function playOnlineChunk(chunk, lang = "en", speed = 1) {
   if (lang === "zh") {
-    const soft = { soften: true, speed };
+    // 1) Edge 神經語音（雲希等）→ 2) Apps Script → 3) 舊備援
+    const edge = await resolveEdgeZhBlobUrl(chunk);
+    if (edge && (await playAudioUrl(edge, { speed, soften: false, startTimeoutMs: 5000 }))) {
+      return true;
+    }
     const neural = await resolveZhNeuralUrl(chunk);
     if (
       neural &&
-      (await playAudioUrl(neural, { ...soft, startTimeoutMs: 5000 }))
+      (await playAudioUrl(neural, {
+        speed,
+        soften: /ttsmp3|Zhiyu/i.test(neural) ? true : false,
+        startTimeoutMs: 5000,
+      }))
     ) {
       return true;
     }
+    const soft = { soften: true, speed };
     const gSpeech = googleSpeechZhUrl(chunk);
     if (
       gSpeech &&
