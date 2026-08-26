@@ -1,7 +1,7 @@
 /**
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
-import { loadEnArticles } from "./sheets.js";
+import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v1";
 import {
   speakEnglish,
   unlockSpeechFromGesture,
@@ -37,6 +37,8 @@ let glossCloseTimer = 0;
 /** @type {{ word: string, options: string[], answer: string }[]} */
 let quizQs = [];
 let quizIndex = 0;
+/** @type {(string|null)[]} 每題已選答案（可回頭改） */
+let quizAnswers = [];
 let quizCorrect = 0;
 
 /** @type {'en'|'zh'} */
@@ -497,6 +499,20 @@ function bindUi() {
     if (confirm("離開小測？進度不會儲存。")) {
       deps?.showView("enDailyRead");
     }
+  });
+  $("#btn-en-daily-quiz-prev")?.addEventListener("click", () => {
+    if (quizIndex <= 0) return;
+    quizIndex -= 1;
+    renderQuizQ();
+  });
+  $("#btn-en-daily-quiz-next")?.addEventListener("click", () => {
+    const atLast = quizIndex >= quizQs.length - 1;
+    if (atLast) {
+      void submitMiniQuiz();
+      return;
+    }
+    quizIndex += 1;
+    renderQuizQ();
   });
 }
 
@@ -1013,31 +1029,90 @@ function renderReviewList() {
 
 function startMiniQuiz() {
   if (!current) return;
-  const vocab = [...(current.vocab || [])].filter((v) => v.word && v.gloss);
-  const pool = vocab.length ? vocab : extractFallbackVocab(bodyForLevel(current));
-  if (pool.length < 1) {
-    deps?.showWarn?.("無法出題", "這篇沒有足夠單字資料。");
+  const built = buildQuizQuestions(current);
+  if (!built.length) {
+    deps?.showWarn?.("無法出題", "這篇沒有足夠的小測資料。");
     return;
   }
+  quizQs = built.slice(0, 5);
+  quizAnswers = quizQs.map(() => null);
+  quizIndex = 0;
+  quizCorrect = 0;
+  renderQuizQ();
+  deps?.showView("enDailyQuiz");
+}
+
+/**
+ * 優先用文章 quiz（3 理解 + 2 單字）；不足則用 vocab 補滿至最多 5 題。
+ * @param {object} art
+ */
+function buildQuizQuestions(art) {
+  const fromSheet = normalizeQuizItems(art?.quiz).slice(0, 5);
+  if (fromSheet.length >= 5) return fromSheet;
+
+  const usedWords = new Set(
+    fromSheet
+      .filter((q) => q.type === "vocab")
+      .map((q) => String(q.answer || "").toLowerCase())
+  );
+  const vocab = [...(art.vocab || [])].filter((v) => v.word && v.gloss);
+  let pool = [...vocab];
+  if (pool.length < 5) {
+    const extra = extractFallbackVocab(bodyForLevel(art)).filter(
+      (v) =>
+        !pool.some(
+          (p) => String(p.word).toLowerCase() === String(v.word).toLowerCase()
+        )
+    );
+    pool = [...pool, ...extra];
+  }
+  if (!pool.length && !fromSheet.length) return [];
   const shuffled = shuffle([...pool]);
-  quizQs = shuffled.slice(0, Math.min(3, shuffled.length)).map((v) => {
+  const out = [...fromSheet];
+  for (const v of shuffled) {
+    if (out.length >= 5) break;
     const answer = String(v.word);
+    if (usedWords.has(answer.toLowerCase())) continue;
+    usedWords.add(answer.toLowerCase());
     const distractors = shuffled
       .map((x) => String(x.word))
       .filter((w) => w.toLowerCase() !== answer.toLowerCase());
     const options = shuffle([answer, ...distractors.slice(0, 3)]).slice(0, 4);
     while (options.length < 2) options.push(answer);
-    return {
-      word: answer,
-      gloss: String(v.gloss || fallbackGloss(answer)),
+    out.push({
+      type: "vocab",
+      q: String(v.gloss || fallbackGloss(answer)),
       options: shuffle(options),
       answer,
-    };
-  });
-  quizIndex = 0;
-  quizCorrect = 0;
-  renderQuizQ();
-  deps?.showView("enDailyQuiz");
+    });
+  }
+  return out;
+}
+
+function normalizeQuizItems(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const type = String(item.type || "").toLowerCase() === "vocab" ? "vocab" : "comp";
+    let q = String(item.q || item.prompt || item.gloss || "").trim();
+    let answer = String(item.answer || item.word || "").trim();
+    let options = Array.isArray(item.options)
+      ? item.options.map((o) => String(o || "").trim()).filter(Boolean)
+      : [];
+    if (type === "vocab" && !q && item.gloss) q = String(item.gloss).trim();
+    if (type === "vocab" && !answer && item.word) answer = String(item.word).trim();
+    if (!q || !answer) continue;
+    if (!options.includes(answer)) options = [answer, ...options];
+    options = shuffle([...new Set(options)]).slice(0, 4);
+    if (options.length < 2) continue;
+    if (!options.includes(answer)) {
+      options[0] = answer;
+      options = shuffle(options);
+    }
+    out.push({ type, q, options, answer });
+  }
+  return out;
 }
 
 function extractFallbackVocab(text) {
@@ -1058,32 +1133,92 @@ function shuffle(arr) {
 function renderQuizQ() {
   const q = quizQs[quizIndex];
   const progress = $("#en-daily-quiz-progress");
+  const typeLabel = $("#en-daily-quiz-type-label");
   const prompt = $("#en-daily-quiz-prompt");
   const opts = $("#en-daily-quiz-options");
-  if (progress) progress.textContent = `第 ${quizIndex + 1} / ${quizQs.length} 題`;
-  if (prompt) prompt.textContent = q?.gloss || "";
+  const prevBtn = $("#btn-en-daily-quiz-prev");
+  const nextBtn = $("#btn-en-daily-quiz-next");
+  if (progress) {
+    progress.textContent = `第 ${quizIndex + 1} / ${quizQs.length} 題`;
+  }
+  if (typeLabel) {
+    typeLabel.textContent =
+      q?.type === "vocab" ? "Which word matches this meaning?" : "Reading check";
+  }
+  if (prompt) prompt.textContent = q?.q || "";
+  renderQuizDots();
+  if (prevBtn) prevBtn.disabled = quizIndex <= 0;
+  if (nextBtn) {
+    const atLast = quizIndex >= quizQs.length - 1;
+    nextBtn.textContent = atLast ? "Submit" : "Next →";
+  }
   if (!opts || !q) return;
   opts.innerHTML = "";
+  const selected = quizAnswers[quizIndex];
   for (const opt of q.options) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "btn btn-secondary btn-block";
+    if (selected != null && String(selected) === String(opt)) {
+      btn.classList.add("en-daily-quiz-opt-selected");
+    }
     btn.textContent = opt;
-    btn.addEventListener("click", () => answerQuiz(opt));
+    btn.addEventListener("click", () => selectQuizAnswer(opt));
     opts.appendChild(btn);
   }
 }
 
-async function answerQuiz(choice) {
-  const q = quizQs[quizIndex];
-  if (!q) return;
-  if (choice.toLowerCase() === q.answer.toLowerCase()) quizCorrect++;
-  quizIndex++;
-  if (quizIndex >= quizQs.length) {
-    await finishQuiz();
+function renderQuizDots() {
+  const box = $("#en-daily-quiz-dots");
+  if (!box) return;
+  box.innerHTML = "";
+  quizQs.forEach((_, i) => {
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = "en-daily-quiz-dot";
+    if (quizAnswers[i] != null) dot.classList.add("is-answered");
+    if (i === quizIndex) dot.classList.add("is-current");
+    dot.setAttribute("aria-label", `Go to question ${i + 1}`);
+    dot.addEventListener("click", () => {
+      quizIndex = i;
+      renderQuizQ();
+    });
+    box.appendChild(dot);
+  });
+}
+
+function selectQuizAnswer(choice) {
+  quizAnswers[quizIndex] = choice;
+  renderQuizQ();
+}
+
+async function submitMiniQuiz() {
+  const unanswered = quizAnswers.filter((a) => a == null).length;
+  if (unanswered > 0) {
+    deps?.showWarn?.(
+      "還沒答完",
+      `還有 ${unanswered} 題沒選。請全部選完再送出；可用 Prev 或圓點回頭修改。`
+    );
+    const firstEmpty = quizAnswers.findIndex((a) => a == null);
+    if (firstEmpty >= 0) {
+      quizIndex = firstEmpty;
+      renderQuizQ();
+    }
     return;
   }
-  renderQuizQ();
+  quizCorrect = 0;
+  for (let i = 0; i < quizQs.length; i++) {
+    const q = quizQs[i];
+    const a = quizAnswers[i];
+    if (
+      q &&
+      a != null &&
+      String(a).toLowerCase() === String(q.answer).toLowerCase()
+    ) {
+      quizCorrect++;
+    }
+  }
+  await finishQuiz();
 }
 
 async function finishQuiz() {

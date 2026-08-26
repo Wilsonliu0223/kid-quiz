@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.6" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.7" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -396,17 +396,22 @@
         </div>
       </section>
 
-      <!-- 每日閱讀小測 -->
+      <!-- 每日閱讀小測：5 題可回頭改，送出才計分 -->
       <section id="view-en-daily-quiz" class="view view-hidden" aria-label="每日閱讀小測">
         <header class="quiz-header quiz-header-en">
           <button type="button" class="btn-text btn-text-en" id="btn-en-daily-quiz-back">← 返回</button>
           <span class="quiz-subject">閱讀小測</span>
-          <span class="quiz-progress" id="en-daily-quiz-progress">第 1 / 3 題</span>
+          <span class="quiz-progress" id="en-daily-quiz-progress">第 1 / 5 題</span>
         </header>
         <div class="en-daily-quiz-body">
-          <p class="label">Which word matches this meaning?</p>
+          <div class="en-daily-quiz-dots" id="en-daily-quiz-dots" aria-label="答題進度"></div>
+          <p class="label" id="en-daily-quiz-type-label">Reading check</p>
           <p class="en-daily-quiz-prompt" id="en-daily-quiz-prompt"></p>
           <div id="en-daily-quiz-options" class="en-daily-quiz-options"></div>
+          <div class="en-daily-quiz-nav">
+            <button type="button" class="btn btn-secondary" id="btn-en-daily-quiz-prev">← Prev</button>
+            <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-quiz-next">Next →</button>
+          </div>
         </div>
       </section>
 
@@ -2218,7 +2223,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.6").catch((e) => {
+      import("./js/app.js?v=app-v45.7").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -31,6 +31,7 @@ const EN_ARTICLE_HEADERS = [
   "source_url",
   "狀態",
   "產文備註",
+  "quiz_json",
 ];
 
 function doGet(e) {
@@ -284,32 +285,66 @@ function getOrCreateEnArticleSheet() {
   if (!String(header[0] || "").trim()) {
     sheet.getRange(1, 1, 1, EN_ARTICLE_HEADERS.length).setValues([EN_ARTICLE_HEADERS]);
     sheet.setFrozenRows(1);
+  } else {
+    // 既有表：若缺少 quiz_json 欄就補在最後
+    const hasQuiz = header.some(function (h) {
+      return String(h || "").trim() === "quiz_json";
+    });
+    if (!hasQuiz) {
+      const col = Math.max(sheet.getLastColumn(), header.length) + 1;
+      sheet.getRange(1, col).setValue("quiz_json");
+    }
   }
   return sheet;
 }
 
 function normalizeArticleDate(v) {
-  if (v instanceof Date && !isNaN(v.getTime())) {
-    return Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd");
-  }
-  if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v.getTime())) {
-    return Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  // Apps Script 裡 Date 有時 instanceof 會失敗，改用 duck-typing
+  if (v && typeof v === "object" && typeof v.getTime === "function") {
+    const t = v.getTime();
+    if (!isNaN(t)) {
+      return Utilities.formatDate(new Date(t), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    }
   }
   const s = String(v || "").trim();
   if (!s) return "";
-  // Apps Script / JSON 偶發把 Date 變成長字串
-  if (s.indexOf("GMT") >= 0 || s.indexOf("台北") >= 0) {
-    const parsed = new Date(s);
-    if (!isNaN(parsed.getTime())) {
-      return Utilities.formatDate(parsed, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  const iso = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if (iso) {
+    return (
+      iso[1] +
+      "-" +
+      ("0" + iso[2]).slice(-2) +
+      "-" +
+      ("0" + iso[3]).slice(-2)
+    );
+  }
+  // "Wed Aug 26 2026 00:00:00 GMT+0800 (台北標準時間)"
+  const mon = s.match(
+    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})\s+(\d{4})\b/i
+  );
+  if (mon) {
+    const map = {
+      jan: "01",
+      feb: "02",
+      mar: "03",
+      apr: "04",
+      may: "05",
+      jun: "06",
+      jul: "07",
+      aug: "08",
+      sep: "09",
+      oct: "10",
+      nov: "11",
+      dec: "12",
+    };
+    const mm = map[mon[1].slice(0, 3).toLowerCase()];
+    if (mm) {
+      return mon[3] + "-" + mm + "-" + ("0" + mon[2]).slice(-2);
     }
   }
-  const m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
-  if (m) {
-    const y = m[1];
-    const mo = ("0" + m[2]).slice(-2);
-    const d = ("0" + m[3]).slice(-2);
-    return y + "-" + mo + "-" + d;
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    return Utilities.formatDate(parsed, Session.getScriptTimeZone(), "yyyy-MM-dd");
   }
   return s;
 }
@@ -339,6 +374,7 @@ function rowObjectToValues(row) {
     String(row.source_url || row.sourceUrl || "").trim(),
     String(row.status || row["狀態"] || "draft").trim() || "draft",
     String(row.note || row["產文備註"] || "").trim(),
+    vocabToCell(row.quiz_json != null ? row.quiz_json : row.quiz),
   ];
 }
 

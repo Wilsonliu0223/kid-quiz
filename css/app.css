@@ -6326,3 +6326,40 @@ body.en-gloss-open .en-play-lang-btn {
   flex-direction: column;
   gap: 8px;
 }
+.en-daily-quiz-options .btn.en-daily-quiz-opt-selected {
+  border-color: #3b6fd9;
+  background: #e8f0ff;
+  color: #1a2a4a;
+  font-weight: 600;
+}
+.en-daily-quiz-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.en-daily-quiz-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #9bb3e0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.en-daily-quiz-dot.is-answered {
+  background: #9bb3e0;
+}
+.en-daily-quiz-dot.is-current {
+  border-color: #3b6fd9;
+  background: #3b6fd9;
+  transform: scale(1.15);
+}
+.en-daily-quiz-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.en-daily-quiz-nav .btn {
+  flex: 1;
+}
