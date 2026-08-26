@@ -7,7 +7,9 @@ import {
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
   stopSpeaking,
-} from "./english.js?v=en-speak-v7";
+  setSpeakingSpeed,
+  getSpeakingSpeed,
+} from "./english.js?v=en-speak-v8";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -37,6 +39,10 @@ let playLang = /** @type {'en'|'zh'} */ (
 /** @type {string} */
 let playSourceText = "";
 let playSeq = 0;
+/** 全文逐句跟讀時為 true */
+let playFollowSentences = false;
+/** @type {number} 0.8 | 1 | 1.25 */
+let playSpeed = Number(localStorage.getItem("kid-quiz-en-play-speed") || "1") || 1;
 /** @type {string} 列表目前選的日期 yyyy-MM-dd */
 let selectedDate = localStorage.getItem("kid-quiz-en-daily-date") || "";
 
@@ -59,6 +65,13 @@ function syncPlayLangBtns() {
   });
 }
 
+function syncPlaySpeedBtns() {
+  document.querySelectorAll("[data-en-play-speed]").forEach((btn) => {
+    const v = Number(btn.getAttribute("data-en-play-speed"));
+    btn.classList.toggle("is-active", Math.abs(v - playSpeed) < 0.01);
+  });
+}
+
 function showPlayBar(status) {
   const bar = $("#en-play-bar");
   if (!bar) return;
@@ -67,41 +80,92 @@ function showPlayBar(status) {
   const st = $("#en-play-status");
   if (st) st.textContent = status;
   syncPlayLangBtns();
+  syncPlaySpeedBtns();
 }
 
 function hidePlayBar() {
   const bar = $("#en-play-bar");
   if (bar) bar.hidden = true;
   document.body.classList.remove("en-playing");
+  clearSentenceHighlight();
 }
 
 function stopPlayBar() {
   playSeq += 1;
+  playFollowSentences = false;
   stopSpeaking();
   hidePlayBar();
   playSourceText = "";
 }
 
+/** 英文依句號切段（跟讀反亮用） */
+function splitEnglishSentences(text) {
+  const s = String(text || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (!s) return [];
+  const parts = s.match(/[^.!?]+(?:[.!?]+|(?=$))/g);
+  return (parts || [s]).map((p) => p.trim()).filter(Boolean);
+}
+
+function clearSentenceHighlight() {
+  document
+    .querySelectorAll(".en-sent.is-reading")
+    .forEach((el) => el.classList.remove("is-reading"));
+}
+
+function highlightSentence(index) {
+  clearSentenceHighlight();
+  const el = document.querySelector(`.en-sent[data-en-sent="${index}"]`);
+  if (!el) return;
+  el.classList.add("is-reading");
+  try {
+    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  } catch (_) {}
+}
+
 /**
- * 帶播放條的朗讀（英文／中文可切）
+ * 帶播放條的朗讀（英文／中文可切；全文可逐句反亮）
  * @param {string} text
- * @param {{ label?: string }} [opts]
+ * @param {{ label?: string, followSentences?: boolean }} [opts]
  */
 async function playWithBar(text, opts = {}) {
   const raw = String(text || "").trim();
   if (!raw) return;
   playSourceText = raw;
+  playFollowSentences = Boolean(opts.followSentences);
   const seq = ++playSeq;
   unlockSpeechFromGesture();
+  setSpeakingSpeed(playSpeed);
+
+  const sentences = playFollowSentences
+    ? splitEnglishSentences(raw)
+    : [raw];
+  const labelBase = opts.label || (playLang === "zh" ? "中文播放中" : "英文播放中");
+
   showPlayBar(playLang === "zh" ? "翻譯中…" : "準備播放…");
-  const label = opts.label || (playLang === "zh" ? "中文播放中" : "英文播放中");
-  // 先顯示「播放中」讓使用者知道已點到
-  requestAnimationFrame(() => {
-    if (seq === playSeq) showPlayBar(label);
-  });
-  const ok = await speakEnglish(raw, { fast: true, lang: playLang });
+
+  let anyOk = false;
+  for (let i = 0; i < sentences.length; i++) {
+    if (seq !== playSeq) return;
+    if (playFollowSentences) highlightSentence(i);
+    const status =
+      sentences.length > 1
+        ? `${labelBase} ${i + 1}/${sentences.length}`
+        : labelBase;
+    showPlayBar(status);
+    const ok = await speakEnglish(sentences[i], {
+      fast: true,
+      lang: playLang,
+      speed: playSpeed,
+    });
+    if (seq !== playSeq) return;
+    if (ok) anyOk = true;
+  }
+
   if (seq !== playSeq) return;
-  if (!ok) {
+  clearSentenceHighlight();
+  if (!anyOk) {
     showPlayBar("播放失敗，再點一次");
     setTimeout(() => {
       if (seq === playSeq) hidePlayBar();
@@ -227,7 +291,10 @@ function bindUi() {
   });
   $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
     if (!current) return;
-    await playWithBar(bodyForLevel(current), { label: "全文播放中" });
+    await playWithBar(bodyForLevel(current), {
+      label: "全文播放中",
+      followSentences: true,
+    });
   });
   $("#btn-en-daily-done")?.addEventListener("click", () => {
     stopPlayBar();
@@ -262,8 +329,19 @@ function bindUi() {
       if (playSourceText) {
         await playWithBar(playSourceText, {
           label: playLang === "zh" ? "中文播放中" : "英文播放中",
+          followSentences: playFollowSentences,
         });
       }
+    });
+  });
+  document.querySelectorAll("[data-en-play-speed]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const v = Number(btn.getAttribute("data-en-play-speed"));
+      if (!(v > 0)) return;
+      playSpeed = v;
+      localStorage.setItem("kid-quiz-en-play-speed", String(playSpeed));
+      setSpeakingSpeed(playSpeed);
+      syncPlaySpeedBtns();
     });
   });
 
@@ -452,11 +530,12 @@ function renderReader() {
   const titleEl = $("#en-daily-title");
   const bodyEl = $("#en-daily-body");
   if (titleEl) titleEl.innerHTML = renderClickableText(current.title, current);
-  if (bodyEl) bodyEl.innerHTML = renderClickableText(bodyForLevel(current), current);
+  if (bodyEl) {
+    bodyEl.innerHTML = renderClickableBody(bodyForLevel(current), current);
+  }
   bindWordClicks(titleEl);
   bindWordClicks(bodyEl);
   renderReviewStrip();
-  // 進閱讀頁就暖機發音，點 🔊／單字較快出聲
   const body = bodyForLevel(current);
   prefetchEnglishAudio(current.title);
   prefetchEnglishAudio(body);
@@ -471,6 +550,17 @@ function escapeHtml(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function renderClickableBody(text, art) {
+  const sentences = splitEnglishSentences(text);
+  if (!sentences.length) return renderClickableText(text, art);
+  return sentences
+    .map(
+      (sent, i) =>
+        `<span class="en-sent" data-en-sent="${i}">${renderClickableText(sent, art)}</span>`
+    )
+    .join(" ");
 }
 
 function renderClickableText(text, art) {

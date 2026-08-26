@@ -19,6 +19,9 @@ export function englishAnswersMatch(typed, expected) {
 let speechPrimed = false;
 let sharedAudio = null;
 let audioUnlocked = false;
+/** 使用者語速（播放中可即時改） */
+let activeSpeakSpeed = 1;
+let activeSoften = false;
 const dictAudioCache = new Map();
 
 function normalizeAudioUrl(url) {
@@ -114,10 +117,15 @@ function playAudioUrl(url, opts = {}) {
       audio.onerror = null;
       audio.onplaying = null;
 
-      // 中文 Zhiyu 偏尖：關閉保持音高，略降速＝降音高，較不刺耳
+      // 中文 Zhiyu 偏尖：關閉保持音高略降基速；再乘上使用者語速
       const soften = Boolean(opts.soften);
-      const rate = Number(opts.playbackRate) || (soften ? 0.86 : 1);
+      const userSpeed = Number(opts.speed) > 0 ? Number(opts.speed) : activeSpeakSpeed || 1;
+      const base = soften ? 0.86 : 1;
+      const rate = base * userSpeed;
+      activeSoften = soften;
+      activeSpeakSpeed = userSpeed;
       try {
+        // 英文調速保持音高；中文 soften 關閉以降低尖銳感
         audio.preservesPitch = !soften;
         if ("mozPreservesPitch" in audio) audio.mozPreservesPitch = !soften;
         if ("webkitPreservesPitch" in audio) audio.webkitPreservesPitch = !soften;
@@ -136,10 +144,9 @@ function playAudioUrl(url, opts = {}) {
         } catch (_) {}
         resolve(ok);
       };
-      // 降速後音檔較長，開始逾時略放寬
       const startTimer = setTimeout(() => {
         if (!started) done(false);
-      }, opts.startTimeoutMs ?? (soften ? 4000 : 2800));
+      }, opts.startTimeoutMs ?? (soften || userSpeed < 1 ? 4500 : 2800));
       audio.onplaying = () => {
         started = true;
         clearTimeout(startTimer);
@@ -153,6 +160,23 @@ function playAudioUrl(url, opts = {}) {
       resolve(false);
     }
   });
+}
+
+/** 播放中即時改語速（慢／中／快） */
+export function setSpeakingSpeed(speed) {
+  const s = Number(speed);
+  if (!(s > 0)) return;
+  activeSpeakSpeed = s;
+  if (sharedAudio && !sharedAudio.paused) {
+    const base = activeSoften ? 0.86 : 1;
+    try {
+      sharedAudio.playbackRate = base * s;
+    } catch (_) {}
+  }
+}
+
+export function getSpeakingSpeed() {
+  return activeSpeakSpeed || 1;
 }
 
 function pickAudioFromEntry(entry) {
@@ -422,10 +446,9 @@ async function resolveZhNeuralUrl(chunk) {
   return "";
 }
 
-async function playOnlineChunk(chunk, lang = "en") {
+async function playOnlineChunk(chunk, lang = "en", speed = 1) {
   if (lang === "zh") {
-    // 中文一律 soften：Zhiyu 女聲偏尖，降音高後較耐聽
-    const soft = { soften: true, playbackRate: 0.86 };
+    const soft = { soften: true, speed };
     const neural = await resolveZhNeuralUrl(chunk);
     if (
       neural &&
@@ -455,19 +478,19 @@ async function playOnlineChunk(chunk, lang = "en") {
   }
 
   const g = googleTtsUrl(chunk, "en");
-  if (g && (await playAudioUrl(g, { startTimeoutMs: 2500 }))) return true;
+  if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 2500 }))) return true;
   const y = youdaoTtsUrl(chunk);
-  if (y && (await playAudioUrl(y, { startTimeoutMs: 2500 }))) return true;
+  if (y && (await playAudioUrl(y, { speed, startTimeoutMs: 2500 }))) return true;
   return false;
 }
 
 /** 線上自然音；長文分段連播 */
-async function speakWithOnlineTts(text, lang = "en") {
+async function speakWithOnlineTts(text, lang = "en", speed = 1) {
   const chunks =
     lang === "zh" ? chunkZhForTts(text, 72) : chunkTextForTts(text, 160);
   if (!chunks.length) return false;
   for (const chunk of chunks) {
-    const ok = await playOnlineChunk(chunk, lang);
+    const ok = await playOnlineChunk(chunk, lang, speed);
     if (!ok) return false;
   }
   return true;
@@ -505,7 +528,7 @@ export function primeSpeech() {
   }
 }
 
-function speakWithSynth(text, lang = "en") {
+function speakWithSynth(text, lang = "en", speed = 1) {
   return new Promise((resolve) => {
     if (!window.speechSynthesis) {
       resolve(false);
@@ -519,15 +542,20 @@ function speakWithSynth(text, lang = "en") {
 
         const u = new SpeechSynthesisUtterance(text);
         u.lang = lang === "zh" ? "zh-TW" : "en-US";
-        u.rate = lang === "zh" ? 0.95 : String(text).trim().split(/\s+/).length <= 3 ? 0.95 : 0.88;
-        u.pitch = 1;
+        const baseRate =
+          lang === "zh"
+            ? 0.9
+            : String(text).trim().split(/\s+/).length <= 3
+              ? 0.95
+              : 0.88;
+        u.rate = Math.min(2, Math.max(0.5, baseRate * (Number(speed) || 1)));
+        u.pitch = lang === "zh" ? 0.85 : 1;
         u.volume = 1;
         if (lang === "en") {
           const voice = pickEnglishVoice();
           if (voice) u.voice = voice;
         } else {
           const voices = window.speechSynthesis.getVoices() || [];
-          // 優先較不尖的男聲／雲希系
           const zh =
             voices.find((v) =>
               /yunxi|yunjian|yunye|yunjie|kangkang|male|男/i.test(
@@ -537,8 +565,6 @@ function speakWithSynth(text, lang = "en") {
             voices.find((v) => /zh-TW|zh-HK|zh-CN/i.test(v.lang)) ||
             voices.find((v) => /^zh/i.test(v.lang));
           if (zh) u.voice = zh;
-          u.rate = 0.9;
-          u.pitch = 0.85;
         }
 
         let settled = false;
@@ -591,7 +617,7 @@ function speakWithSynth(text, lang = "en") {
  * 播放英文
  * 點擊時請先呼叫 unlockSpeechFromGesture()
  * @param {string} text
- * @param {{ fast?: boolean, instant?: boolean, lang?: 'en'|'zh' }} [opts]
+ * @param {{ fast?: boolean, instant?: boolean, lang?: 'en'|'zh', speed?: number }} [opts]
  *   fast/instant：跳過詞典 API，直接播線上自然音；lang=zh 先譯成中文再播
  * @returns {Promise<boolean>}
  */
@@ -603,9 +629,11 @@ export async function speakEnglish(text, opts = {}) {
   else primeSpeech();
 
   const lang = opts.lang === "zh" ? "zh" : "en";
+  const speed = Number(opts.speed) > 0 ? Number(opts.speed) : activeSpeakSpeed || 1;
+  activeSpeakSpeed = speed;
+
   let speakText = w;
   if (lang === "zh") {
-    // 朗讀用簡中譯文，百度／有道中文 TTS 較自然
     speakText =
       (await translateEnToZh(w, "CN")) ||
       (await translateEnToZh(w, "TW")) ||
@@ -618,9 +646,9 @@ export async function speakEnglish(text, opts = {}) {
     try {
       sharedAudio?.pause();
     } catch (_) {}
-    const onlineOk = await speakWithOnlineTts(speakText, lang);
+    const onlineOk = await speakWithOnlineTts(speakText, lang, speed);
     if (onlineOk) return true;
-    return speakWithSynth(speakText, lang);
+    return speakWithSynth(speakText, lang, speed);
   }
 
   if (lang === "en") {
@@ -628,7 +656,7 @@ export async function speakEnglish(text, opts = {}) {
     if (dictOk) return true;
   }
 
-  const onlineOk = await speakWithOnlineTts(speakText, lang);
+  const onlineOk = await speakWithOnlineTts(speakText, lang, speed);
   if (onlineOk) return true;
 
   if (lang === "en" && /\s/.test(w)) {
@@ -636,7 +664,7 @@ export async function speakEnglish(text, opts = {}) {
     if (phraseOk) return true;
   }
 
-  return speakWithSynth(speakText, lang);
+  return speakWithSynth(speakText, lang, speed);
 }
 
 /** 預載發音（分段暖機 Google TTS），縮短第一次點播放等待 */

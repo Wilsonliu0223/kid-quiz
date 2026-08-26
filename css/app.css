@@ -6037,13 +6037,13 @@ body.en-gloss-open #view-en-daily-read.view-active {
   padding-bottom: min(52vh, 420px);
 }
 body.en-playing #view-en-daily-read.view-active {
-  padding-bottom: 64px;
+  padding-bottom: 96px;
 }
 body.en-playing.en-gloss-open #view-en-daily-read.view-active {
-  padding-bottom: calc(min(52vh, 420px) + 56px);
+  padding-bottom: calc(min(52vh, 420px) + 88px);
 }
 body.en-playing #en-gloss-panel {
-  bottom: 56px;
+  bottom: 88px;
 }
 .en-play-bar {
   position: fixed;
@@ -6052,8 +6052,9 @@ body.en-playing #en-gloss-panel {
   bottom: 0;
   z-index: 50;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   min-height: 52px;
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
   background: #1a2a4a;
@@ -6094,18 +6095,20 @@ body.en-playing #en-gloss-panel {
 }
 .en-play-status {
   flex: 1 1 auto;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 700;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.en-play-speed,
 .en-play-lang {
   display: flex;
   gap: 4px;
   flex: 0 0 auto;
 }
+.en-play-speed-btn,
 .en-play-lang-btn {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: transparent;
@@ -6116,10 +6119,19 @@ body.en-playing #en-gloss-panel {
   font-weight: 700;
   cursor: pointer;
 }
+.en-play-speed-btn.is-active,
 .en-play-lang-btn.is-active {
   background: #ff8a3d;
   border-color: #ff8a3d;
   color: #fff;
+}
+.en-sent {
+  border-radius: 4px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.en-sent.is-reading {
+  background: #fff3c4;
+  box-shadow: 0 0 0 2px #ffd36a;
 }
 .en-gloss-toolbar {
   display: flex;
