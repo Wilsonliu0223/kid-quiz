@@ -596,6 +596,11 @@ body {
   color: var(--zh-dark);
 }
 
+.card-en {
+  background: linear-gradient(135deg, #f0f6ff 0%, #dceafc 100%);
+  border: 2px solid #a8c8f0;
+}
+
 .card-en .card-title {
   color: #1a5bb8;
 }
