@@ -14,7 +14,7 @@ import {
   translateEnToZh,
 } from "./english.js?v=en-speak-v16";
 import { getSelectedChild } from "./store.js";
-import { logQuizResult } from "./score-log.js";
+import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
 /** @type {{ showView: Function, showWarn?: Function, showOk?: Function, openEnSetup?: Function } | null} */
 let deps = null;
@@ -1206,6 +1206,11 @@ async function submitMiniQuiz() {
     }
     return;
   }
+  const nextBtn = $("#btn-en-daily-quiz-next");
+  if (nextBtn) {
+    nextBtn.disabled = true;
+    nextBtn.textContent = "Submitting…";
+  }
   quizCorrect = 0;
   for (let i = 0; i < quizQs.length; i++) {
     const q = quizQs[i];
@@ -1218,26 +1223,43 @@ async function submitMiniQuiz() {
       quizCorrect++;
     }
   }
-  await finishQuiz();
+  try {
+    await finishQuiz();
+  } catch (e) {
+    console.warn("finishQuiz", e);
+    deps?.showOk?.(
+      `完成！${quizCorrect} / ${quizQs.length}`,
+      "成績已記在本機（上傳時發生錯誤）",
+      () => openDailyList()
+    );
+  } finally {
+    if (nextBtn) {
+      nextBtn.disabled = false;
+      nextBtn.textContent = "Submit";
+    }
+  }
 }
 
 async function finishQuiz() {
   const total = quizQs.length;
   const child = getSelectedChild();
-  const result = await logQuizResult(
-    {
-      subject: "en",
-      child,
-      mode: "daily-read",
-      autoCorrect: quizCorrect,
-      questions: quizQs,
-      pending: 0,
-    },
-    `每日閱讀 ${current?.date || ""} ${current?.category || ""}`.trim()
-  );
-  deps?.showOk?.(
-    `完成！${quizCorrect} / ${total}`,
-    result.message || "",
-    () => openDailyList()
-  );
+  let message = "";
+  try {
+    const result = await logQuizResult(
+      {
+        subject: "en",
+        child,
+        mode: "daily-read",
+        autoCorrect: quizCorrect,
+        questions: quizQs,
+        pending: 0,
+      },
+      `每日閱讀 ${current?.date || ""} ${current?.category || ""}`.trim()
+    );
+    message = result?.message || "";
+  } catch (e) {
+    console.warn("logQuizResult", e);
+    message = "成績已記在本機（試算表稍後再試）";
+  }
+  deps?.showOk?.(`完成！${quizCorrect} / ${total}`, message, () => openDailyList());
 }

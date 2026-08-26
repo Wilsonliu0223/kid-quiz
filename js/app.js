@@ -59,7 +59,7 @@ import {
   formatScoreLine,
   formatScoreSummary,
   scoresForChild,
-} from "./score-log.js";
+} from "./score-log.js?v=score-log-v2";
 import { logSiteVisit } from "./visit-log.js?v=visit-v4";
 import {
   initFlipZh,
@@ -95,7 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
-import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v23";
+import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v24";
 import {
   addMistake,
   removeMistake,

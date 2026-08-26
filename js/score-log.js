@@ -57,34 +57,57 @@ function parseScriptResponse(text) {
   throw new Error("回應不是 JSON");
 }
 
+async function fetchWithTimeout(url, options, ms = 12000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...options, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
+ * Apps Script 網頁應用：POST /exec → 302 → 用 GET 取回 JSON（再 POST 會 405／卡住）
+ */
+async function postAppsScript(url, payload) {
+  const body = JSON.stringify(payload);
+  const headers = { "Content-Type": "text/plain;charset=utf-8" };
+  const res1 = await fetchWithTimeout(url, {
+    method: "POST",
+    headers,
+    body,
+    redirect: "manual",
+  });
+  if (res1.status >= 300 && res1.status < 400) {
+    const loc = res1.headers.get("location");
+    if (!loc) throw new Error("轉向但沒有 Location");
+    const res2 = await fetchWithTimeout(loc, { method: "GET", redirect: "follow" });
+    return parseScriptResponse(await res2.text());
+  }
+  return parseScriptResponse(await res1.text());
+}
+
 async function postToScript(payload) {
   const url = (CONFIG.SCORE_LOG_URL || "").trim();
   if (!url) return { ok: false, reason: "no_url" };
 
   const tryGet = async () => {
     const params = new URLSearchParams(payload);
-    const res = await fetch(`${url}?${params.toString()}`, { redirect: "follow" });
-    return parseScriptResponse(await res.text());
-  };
-
-  const tryPost = async () => {
-    const res = await fetch(url, {
-      method: "POST",
+    const res = await fetchWithTimeout(`${url}?${params.toString()}`, {
       redirect: "follow",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload),
     });
     return parseScriptResponse(await res.text());
   };
 
   let lastError = "network";
-  for (const fn of [tryGet, tryPost]) {
+  for (const fn of [() => postAppsScript(url, payload), tryGet]) {
     try {
       const data = await fn();
       if (data.ok) return { ok: true };
       lastError = data.error || "remote_error";
     } catch (e) {
-      lastError = e.message;
+      lastError = e.name === "AbortError" ? "timeout" : e.message;
       console.warn("寫入試算表失敗，嘗試下一種方式", e);
     }
   }
