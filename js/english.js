@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v44.3";
+import { CONFIG } from "./config.site.js?v=config-v44.4";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -237,6 +237,121 @@ async function fetchDictionaryAudioUrl(query) {
     console.warn("fetchDictionaryAudioUrl", query, e);
   }
   return "";
+}
+
+/** @type {Map<string, { word: string, gloss: string, example: string, phonetic: string } | null>} */
+const glossDefCache = new Map();
+
+function glossWordCandidates(word) {
+  const w = String(word || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z'-]/g, "");
+  if (!w) return [];
+  const out = [w];
+  if (w.endsWith("ies") && w.length > 4) out.push(`${w.slice(0, -3)}y`);
+  if (w.endsWith("es") && w.length > 4) out.push(w.slice(0, -2));
+  if (w.endsWith("s") && !w.endsWith("ss") && w.length > 3) out.push(w.slice(0, -1));
+  if (w.endsWith("ing") && w.length > 5) {
+    out.push(w.slice(0, -3));
+    out.push(`${w.slice(0, -3)}e`);
+  }
+  if (w.endsWith("ed") && w.length > 4) {
+    out.push(w.slice(0, -2));
+    out.push(w.slice(0, -1));
+  }
+  return [...new Set(out)];
+}
+
+function simplifyKidDefinition(def) {
+  let s = String(def || "").trim();
+  if (!s) return "";
+  const parts = s
+    .split(/;\s*/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length > 1) {
+    const ranked = [...parts].sort((a, b) => a.length - b.length);
+    s =
+      ranked.find((p) => !/^used as\b/i.test(p) && p.length >= 12) ||
+      ranked[0];
+  }
+  if (s.length > 140) {
+    s = `${s.slice(0, 137).replace(/\s+\S*$/, "")}…`;
+  }
+  return s;
+}
+
+/**
+ * 線上英英（Free Dictionary API）。文章 vocab 沒有的字用這個補。
+ * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string } | null>}
+ */
+export async function lookupEnglishGloss(word) {
+  const raw = String(word || "").trim();
+  if (!raw) return null;
+  const cacheKey = raw.toLowerCase();
+  if (glossDefCache.has(cacheKey)) return glossDefCache.get(cacheKey);
+
+  for (const q of glossWordCandidates(raw)) {
+    try {
+      const res = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(q)}`
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (!Array.isArray(data) || !data.length) continue;
+      const entry = data[0];
+      const meanings = entry.meanings || [];
+      if (!meanings.length) continue;
+
+      const nounM = meanings.find((m) => m.partOfSpeech === "noun");
+      const verbM = meanings.find((m) => m.partOfSpeech === "verb");
+      const adjM = meanings.find((m) => m.partOfSpeech === "adjective");
+      let preferred = meanings[0];
+      if (nounM && verbM) {
+        const nd = String(nounM.definitions?.[0]?.definition || "");
+        // build 等字名詞常是「身材」罕見義 → 改用動詞
+        preferred = /physique|bodily constitution|body type|frame of (a |the )?body/i.test(
+          nd
+        )
+          ? verbM
+          : nounM;
+      } else {
+        preferred = nounM || verbM || adjM || meanings[0];
+      }
+      const defs = preferred.definitions || [];
+      if (!defs.length) continue;
+
+      const primary = simplifyKidDefinition(defs[0].definition);
+      if (!primary) continue;
+      let gloss = primary;
+      const second = defs[1] ? simplifyKidDefinition(defs[1].definition) : "";
+      // 主義偏長時，補一句較短的第二義當幫助
+      if (second && primary.length > 90 && second.length < 80 && second !== primary) {
+        gloss = `${primary} · ${second}`;
+      }
+
+      const phonetic =
+        String(entry.phonetic || "").replace(/^\/|\/$/g, "") ||
+        (entry.phonetics || [])
+          .map((p) => String(p.text || "").replace(/^\/|\/$/g, ""))
+          .find(Boolean) ||
+        "";
+      const result = {
+        word: entry.word || raw,
+        gloss,
+        example: String(defs[0].example || defs[1]?.example || "").trim(),
+        phonetic,
+      };
+      glossDefCache.set(cacheKey, result);
+      return result;
+    } catch (e) {
+      console.warn("lookupEnglishGloss", q, e);
+    }
+  }
+
+  glossDefCache.set(cacheKey, null);
+  return null;
 }
 
 async function speakWithDictionary(text) {

@@ -10,7 +10,8 @@ import {
   stopSpeaking,
   setSpeakingSpeed,
   getLastSpeakEngine,
-} from "./english.js?v=en-speak-v11";
+  lookupEnglishGloss,
+} from "./english.js?v=en-speak-v12";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -25,8 +26,10 @@ let level = /** @type {'l1'|'l2'|'l3'} */ (
 );
 /** @type {typeof articles[0] | null} */
 let current = null;
-/** @type {{ word: string, gloss: string, example: string }[]} */
+/** @type {{ word: string, gloss: string, example: string, phonetic?: string }[]} */
 let glossStack = [];
+/** 避免連點時舊的字典查詢覆蓋新面板 */
+let glossSeq = 0;
 
 /** @type {{ word: string, options: string[], answer: string }[]} */
 let quizQs = [];
@@ -247,7 +250,7 @@ function vocabMap(art) {
 }
 
 function fallbackGloss(word) {
-  return `This word means something about “${word}”. Try another simple word if you need more help.`;
+  return `Sorry, no simple English meaning found for “${word}”. Try a key (orange) word, or another word nearby.`;
 }
 
 /**
@@ -611,10 +614,10 @@ function bindWordClicks(root) {
   });
 }
 
-function lookupGloss(word) {
+function lookupLocalGloss(word) {
   const key = word.toLowerCase();
   const fromArt = current ? vocabMap(current).get(key) : null;
-  if (fromArt) return fromArt;
+  if (fromArt?.gloss) return fromArt;
   const fromReview = loadReview().find((r) => r.word.toLowerCase() === key);
   if (fromReview?.gloss) {
     return {
@@ -624,18 +627,38 @@ function lookupGloss(word) {
       phonetic: fromReview.phonetic || "",
     };
   }
-  return {
+  return null;
+}
+
+async function openGloss(word, reset) {
+  const seq = ++glossSeq;
+  const local = lookupLocalGloss(word);
+  if (local) {
+    if (reset) glossStack = [local];
+    else glossStack.push(local);
+    showGloss(local);
+    return;
+  }
+
+  const loading = {
+    word,
+    gloss: "Looking up a simple meaning…",
+    example: "",
+    phonetic: "",
+  };
+  if (reset) glossStack = [loading];
+  else glossStack.push(loading);
+  showGloss(loading, { speak: false });
+
+  const online = await lookupEnglishGloss(word);
+  if (seq !== glossSeq) return;
+  const entry = online || {
     word,
     gloss: fallbackGloss(word),
     example: "",
     phonetic: "",
   };
-}
-
-function openGloss(word, reset) {
-  const entry = lookupGloss(word);
-  if (reset) glossStack = [entry];
-  else glossStack.push(entry);
+  glossStack[glossStack.length - 1] = entry;
   showGloss(entry);
 }
 
@@ -648,7 +671,7 @@ function popGloss() {
   showGloss(glossStack[glossStack.length - 1]);
 }
 
-function showGloss(entry) {
+function showGloss(entry, opts = {}) {
   const panel = $("#en-gloss-panel");
   if (!panel) return;
   panel.hidden = false;
@@ -674,7 +697,9 @@ function showGloss(entry) {
   const exSpeak = $("#btn-en-gloss-example-speak");
   if (exSpeak) exSpeak.hidden = !entry.example;
   if (back) back.hidden = glossStack.length <= 1;
-  playWithBar(entry.word, { label: "單字播放中" });
+  if (opts.speak !== false) {
+    playWithBar(entry.word, { label: "單字播放中" });
+  }
 }
 
 function hideGloss() {
