@@ -78,6 +78,10 @@ function syncPlaySpeedBtns() {
   });
 }
 
+function isReaderActive() {
+  return Boolean($("#view-en-daily-read")?.classList.contains("view-active"));
+}
+
 function syncDockVisibility() {
   const dock = $("#en-bottom-dock");
   const bar = $("#en-play-bar");
@@ -109,6 +113,12 @@ function showPlayBar(status) {
   syncDockVisibility();
 }
 
+/** 閱讀頁常駐 idle 播放列（含 中文旁 🔊），離開閱讀頁才真正收掉 */
+function showPlayBarIdle() {
+  showPlayBar("點 🔊 播全文");
+  clearSentenceHighlight();
+}
+
 function hidePlayBar() {
   const bar = $("#en-play-bar");
   if (bar) bar.hidden = true;
@@ -117,12 +127,23 @@ function hidePlayBar() {
   syncDockVisibility();
 }
 
-function stopPlayBar() {
+/**
+ * @param {{ dismiss?: boolean }} [opts] dismiss=true 離開閱讀頁時收掉底板
+ */
+function stopPlayBar(opts = {}) {
   playSeq += 1;
   playFollowSentences = false;
   stopSpeaking();
-  hidePlayBar();
   playSourceText = "";
+  if (opts.dismiss) {
+    hidePlayBar();
+    return;
+  }
+  if (isReaderActive()) {
+    showPlayBarIdle();
+  } else {
+    hidePlayBar();
+  }
 }
 
 /** 英文依句號切段（跟讀反亮用） */
@@ -214,13 +235,13 @@ async function playWithBar(text, opts = {}) {
   if (seq !== playSeq) return;
   clearSentenceHighlight();
   if (!anyOk) {
-    showPlayBar("播放失敗，再點一次");
+    showPlayBar("播放失敗，再點 🔊");
     setTimeout(() => {
-      if (seq === playSeq) hidePlayBar();
+      if (seq === playSeq) showPlayBarIdle();
     }, 1600);
     return;
   }
-  hidePlayBar();
+  showPlayBarIdle();
 }
 
 function todayIso() {
@@ -334,7 +355,8 @@ function bindUi() {
   });
 
   $("#btn-en-daily-read-back")?.addEventListener("click", () => {
-    stopPlayBar();
+    stopPlayBar({ dismiss: true });
+    hideGloss();
     openDailyList();
   });
   $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
@@ -345,11 +367,13 @@ function bindUi() {
     });
   });
   $("#btn-en-daily-done")?.addEventListener("click", () => {
-    stopPlayBar();
+    stopPlayBar({ dismiss: true });
+    hideGloss();
     startMiniQuiz();
   });
   $("#btn-en-daily-next")?.addEventListener("click", () => {
-    stopPlayBar();
+    stopPlayBar({ dismiss: true });
+    hideGloss();
     openNextArticle();
   });
 
@@ -548,7 +572,7 @@ function syncLevelChips() {
 }
 
 function openReader(id) {
-  stopPlayBar();
+  stopPlayBar({ dismiss: true });
   current = articles.find((a) => a.id === id) || null;
   if (!current) {
     deps?.showWarn?.("找不到文章", "請重新載入列表。");
@@ -556,8 +580,8 @@ function openReader(id) {
   }
   glossStack = [];
   hideGloss();
-  renderReader();
   deps?.showView("enDailyRead");
+  renderReader();
 }
 
 function openNextArticle() {
@@ -595,9 +619,7 @@ function renderReader() {
     if (v.word) prefetchEnglishAudio(v.word);
   }
   // 閱讀頁常駐底部播放列，🔊 在「中文」右邊可點全文
-  const bar = $("#en-play-bar");
-  if (bar?.hidden) showPlayBar("點 🔊 播全文");
-  else syncDockVisibility();
+  showPlayBarIdle();
 }
 
 function escapeHtml(s) {
