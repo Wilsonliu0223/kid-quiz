@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v43.5" />
+    <link rel="stylesheet" href="css/app.css?v=app-v43.6" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -305,7 +305,13 @@
             <button type="button" class="chip" data-en-daily-level="l2">Level 2</button>
             <button type="button" class="chip" data-en-daily-level="l3">Level 3</button>
           </div>
-          <p class="en-daily-date-label">日期：<span id="en-daily-date-label">—</span></p>
+          <p class="label">日期</p>
+          <div class="en-daily-date-nav">
+            <button type="button" class="en-daily-date-arrow" id="btn-en-daily-date-prev" aria-label="前一天">‹</button>
+            <div id="en-daily-date-chips" class="lesson-chips en-daily-date-chips" role="group" aria-label="選擇日期"></div>
+            <button type="button" class="en-daily-date-arrow" id="btn-en-daily-date-next" aria-label="後一天">›</button>
+          </div>
+          <p class="en-daily-date-hint" id="en-daily-date-hint"></p>
           <div id="en-daily-list" class="en-daily-list"></div>
           <p id="en-daily-empty" class="en-daily-empty-hint" hidden></p>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-daily-reload">重新載入</button>
@@ -2197,7 +2203,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v43.5").catch((e) => {
+      import("./js/app.js?v=app-v43.6").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

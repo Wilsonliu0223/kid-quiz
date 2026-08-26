@@ -32,6 +32,8 @@ let playLang = /** @type {'en'|'zh'} */ (
 /** @type {string} */
 let playSourceText = "";
 let playSeq = 0;
+/** @type {string} 列表目前選的日期 yyyy-MM-dd */
+let selectedDate = localStorage.getItem("kid-quiz-en-daily-date") || "";
 
 const CAT_LABEL = {
   sport: "運動",
@@ -199,6 +201,9 @@ function bindUi() {
     await openDailyList();
   });
 
+  $("#btn-en-daily-date-prev")?.addEventListener("click", () => shiftSelectedDate(1));
+  $("#btn-en-daily-date-next")?.addEventListener("click", () => shiftSelectedDate(-1));
+
   document.querySelectorAll("[data-en-daily-level]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const lv = btn.getAttribute("data-en-daily-level");
@@ -275,32 +280,113 @@ function bindUi() {
 export async function openDailyList() {
   syncLevelChips();
   const list = $("#en-daily-list");
-  const empty = $("#en-daily-empty");
-  const dateLabel = $("#en-daily-date-label");
   if (list) list.innerHTML = "<p class=\"en-daily-loading\">載入中…</p>";
   deps?.showView("enDailyList");
 
   await ensureArticles();
   syncHubMeta();
+  ensureSelectedDate();
+  renderDateChips();
+  renderArticleList();
+}
 
-  const day = todayIso();
-  if (dateLabel) dateLabel.textContent = day;
+function availableDates() {
+  const set = new Set(articles.map((a) => a.date).filter(Boolean));
+  return [...set].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+}
 
-  let dayArts = articles.filter((a) => a.date === day);
-  if (!dayArts.length && articles.length) {
-    const latest = articles[0].date;
-    dayArts = articles.filter((a) => a.date === latest);
-    if (dateLabel) dateLabel.textContent = `${latest}（最近）`;
+function ensureSelectedDate() {
+  const dates = availableDates();
+  const today = todayIso();
+  if (selectedDate && dates.includes(selectedDate)) return;
+  if (dates.includes(today)) selectedDate = today;
+  else selectedDate = dates[0] || today;
+  localStorage.setItem("kid-quiz-en-daily-date", selectedDate);
+}
+
+function shiftSelectedDate(stepTowardOlder) {
+  const dates = availableDates();
+  if (!dates.length) return;
+  ensureSelectedDate();
+  const i = dates.indexOf(selectedDate);
+  const next = dates[i + stepTowardOlder];
+  if (!next) return;
+  selectedDate = next;
+  localStorage.setItem("kid-quiz-en-daily-date", selectedDate);
+  renderDateChips();
+  renderArticleList();
+}
+
+function renderDateChips() {
+  const box = $("#en-daily-date-chips");
+  const hint = $("#en-daily-date-hint");
+  if (!box) return;
+  const dates = availableDates();
+  box.innerHTML = "";
+  if (!dates.length) {
+    if (hint) hint.textContent = "尚無歷史日期（產文後會出現在這裡）";
+    return;
+  }
+  if (hint) {
+    const today = todayIso();
+    hint.textContent =
+      selectedDate === today
+        ? "今天 · 可左右切換看過去幾天"
+        : `共 ${dates.length} 天有文章 · 點日期或用 ‹ › 切換`;
   }
 
+  for (const d of dates) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip" + (d === selectedDate ? " chip-active" : "");
+    btn.textContent = formatDateChip(d);
+    btn.title = d;
+    btn.addEventListener("click", () => {
+      selectedDate = d;
+      localStorage.setItem("kid-quiz-en-daily-date", selectedDate);
+      renderDateChips();
+      renderArticleList();
+    });
+    box.appendChild(btn);
+  }
+
+  // 讓目前日期晶片滾到可見
+  const active = box.querySelector(".chip-active");
+  active?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+
+  const prev = $("#btn-en-daily-date-prev");
+  const next = $("#btn-en-daily-date-next");
+  const i = dates.indexOf(selectedDate);
+  if (prev) prev.disabled = i < 0 || i >= dates.length - 1;
+  if (next) next.disabled = i <= 0;
+}
+
+function formatDateChip(iso) {
+  const today = todayIso();
+  if (iso === today) return "今天";
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${Number(m[2])}/${Number(m[3])}`;
+}
+
+function renderArticleList() {
+  const list = $("#en-daily-list");
+  const empty = $("#en-daily-empty");
   if (!list) return;
   list.innerHTML = "";
+
+  const dayArts = articles
+    .filter((a) => a.date === selectedDate)
+    .sort((a, b) => a.seq - b.seq);
+
   if (!dayArts.length) {
     if (empty) empty.hidden = false;
     list.appendChild(
       Object.assign(document.createElement("p"), {
         className: "en-daily-empty-hint",
-        textContent: "尚無文章。請先在試算表「英文文章」產文並設為 draft／published。",
+        textContent: selectedDate
+          ? `${selectedDate} 尚無文章。可切換其他日期，或產文後按重新載入。`
+          : "尚無文章。請先在試算表「英文文章」產文。",
       })
     );
     return;
@@ -314,7 +400,7 @@ export async function openDailyList() {
     const cat = CAT_LABEL[art.category] || art.category;
     btn.innerHTML = `<span class="en-daily-card-cat">${escapeHtml(cat)}</span>
       <span class="en-daily-card-title">${escapeHtml(art.title)}</span>
-      <span class="en-daily-card-meta">${art.status === "draft" ? "草稿" : "已發布"} · Level 可切換</span>`;
+      <span class="en-daily-card-meta">${art.status === "draft" ? "草稿" : "已發布"} · ${escapeHtml(art.date)} · Level 可切換</span>`;
     btn.addEventListener("click", () => openReader(art.id));
     list.appendChild(btn);
   }

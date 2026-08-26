@@ -5890,6 +5890,40 @@ body.sudoku-dragging .sudoku-cell-movable {
   color: var(--muted);
   font-size: 0.92rem;
 }
+.en-daily-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.en-daily-date-arrow {
+  flex: 0 0 36px;
+  height: 36px;
+  border: 1px solid #c5d4f0;
+  border-radius: 10px;
+  background: #f5f8ff;
+  color: #1a5bb8;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.en-daily-date-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.en-daily-date-chips {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  gap: 8px;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+.en-daily-date-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
 .en-daily-list {
   display: flex;
   flex-direction: column;
