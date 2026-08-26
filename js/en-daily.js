@@ -82,12 +82,21 @@ function isReaderActive() {
   return Boolean($("#view-en-daily-read")?.classList.contains("view-active"));
 }
 
+/** 閱讀頁內：播放列必須一直在；只在離開文章時才允許收掉 */
 function syncDockVisibility() {
   const dock = $("#en-bottom-dock");
   const bar = $("#en-play-bar");
   const panel = $("#en-gloss-panel");
   if (!dock) return;
+
+  if (isReaderActive() && bar) {
+    bar.hidden = false;
+    document.body.classList.add("en-playing");
+    dock.hidden = false;
+  }
+
   const show =
+    isReaderActive() ||
     (bar && !bar.hidden) ||
     document.body.classList.contains("en-gloss-open") ||
     (panel && !panel.hidden);
@@ -107,7 +116,7 @@ function showPlayBar(status) {
   bar.hidden = false;
   document.body.classList.add("en-playing");
   const st = $("#en-play-status");
-  if (st) st.textContent = status;
+  if (st && status != null) st.textContent = status;
   syncPlayLangBtns();
   syncPlaySpeedBtns();
   syncDockVisibility();
@@ -115,11 +124,22 @@ function showPlayBar(status) {
 
 /** 閱讀頁常駐 idle 播放列（含 中文旁 🔊），離開閱讀頁才真正收掉 */
 function showPlayBarIdle() {
-  showPlayBar("點 🔊 播全文");
+  const st = $("#en-play-status")?.textContent || "";
+  // 若正在播全文／單字，不要蓋掉狀態文字
+  if (/播放中|載入/.test(st) && !/點 🔊/.test(st)) {
+    showPlayBar(st);
+  } else {
+    showPlayBar("點 🔊 播全文");
+  }
   clearSentenceHighlight();
 }
 
-function hidePlayBar() {
+function hidePlayBar(force = false) {
+  // 文章內任何時候都要看得到播放列
+  if (!force && isReaderActive()) {
+    showPlayBarIdle();
+    return;
+  }
   const bar = $("#en-play-bar");
   if (bar) bar.hidden = true;
   document.body.classList.remove("en-playing");
@@ -136,14 +156,11 @@ function stopPlayBar(opts = {}) {
   stopSpeaking();
   playSourceText = "";
   if (opts.dismiss) {
-    hidePlayBar();
+    hidePlayBar(true);
     return;
   }
-  if (isReaderActive()) {
-    showPlayBarIdle();
-  } else {
-    hidePlayBar();
-  }
+  showPlayBar("點 🔊 播全文");
+  clearSentenceHighlight();
 }
 
 /** 英文依句號切段（跟讀反亮用） */
@@ -759,10 +776,13 @@ function showGloss(entry, opts = {}) {
   void panel.offsetHeight;
   document.body.classList.add("en-gloss-open");
 
+  // 查字時也一定先保證播放列在（紅框那條），不可只剩字卡
+  const bar = $("#en-play-bar");
+  if (!bar || bar.hidden) showPlayBarIdle();
+  else syncDockVisibility();
+
   if (willSpeak) {
     showPlayBar("單字播放中");
-  } else {
-    syncDockVisibility();
   }
 
   panel.scrollTop = 0;
@@ -808,9 +828,16 @@ function hideGloss() {
     glossCloseTimer = 0;
     if (document.body.classList.contains("en-gloss-open")) return;
     if (panel) panel.hidden = true;
-    syncDockVisibility();
+    if (isReaderActive()) showPlayBarIdle();
+    else syncDockVisibility();
   }, 280);
-  syncDockVisibility();
+  if (isReaderActive()) {
+    const bar = $("#en-play-bar");
+    if (!bar || bar.hidden) showPlayBarIdle();
+    else syncDockVisibility();
+  } else {
+    syncDockVisibility();
+  }
 }
 
 function addCurrentGlossToReview() {

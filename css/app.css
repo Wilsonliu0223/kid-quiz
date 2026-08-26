@@ -6097,9 +6097,18 @@ body.en-gloss-open .en-gloss-panel {
 body.en-playing:not(.en-gloss-open) .en-play-bar {
   padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
-body.en-gloss-open #view-en-daily-read.view-active,
-body.en-playing #view-en-daily-read.view-active {
-  padding-bottom: calc(var(--en-dock-h, 120px) + 16px);
+body.en-playing #view-en-daily-read.view-active,
+#view-en-daily-read.view-active {
+  padding-bottom: calc(var(--en-dock-h, 64px) + 16px);
+}
+/* 閱讀中播放列／底板不可消失（雙保險） */
+#view-en-daily-read.view-active #en-bottom-dock,
+#view-en-daily-read.view-active #en-bottom-dock[hidden] {
+  display: flex !important;
+}
+#view-en-daily-read.view-active #en-play-bar,
+#view-en-daily-read.view-active #en-play-bar[hidden] {
+  display: flex !important;
 }
 body.en-gloss-open .en-play-status {
   flex: 1 1 auto;
