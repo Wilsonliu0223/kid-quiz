@@ -959,9 +959,11 @@ function renderReviewStrip() {
   if (!el) return;
   const list = loadReview().slice(0, 8);
   if (!list.length) {
-    el.textContent = "複習字：尚無（點字卡可加入）";
+    el.textContent = "";
+    el.hidden = true;
     return;
   }
+  el.hidden = false;
   el.textContent = "複習字：" + list.map((x) => x.word).join(" · ");
 }
 

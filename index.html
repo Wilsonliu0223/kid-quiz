@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.5" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.6" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -332,9 +332,8 @@
             <button type="button" class="chip" data-en-daily-level="l3">L3</button>
           </div>
           <h2 class="en-daily-title" id="en-daily-title"></h2>
-          <p class="en-daily-tap-hint">點文章裡的英文單字 → 下方會跳出<strong>英英解釋</strong>（橘色＝課文精寫；其他字查多來源字典）</p>
           <div class="en-daily-article" id="en-daily-body"></div>
-          <p class="en-daily-review-strip" id="en-daily-review-strip">複習字：</p>
+          <p class="en-daily-review-strip" id="en-daily-review-strip" hidden></p>
           <div class="en-daily-read-actions">
             <button type="button" class="btn btn-secondary" id="btn-en-daily-next">換一篇</button>
             <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-done">完成並小測</button>
@@ -2219,7 +2218,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.5").catch((e) => {
+      import("./js/app.js?v=app-v45.6").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
