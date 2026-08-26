@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v44.7" />
+    <link rel="stylesheet" href="css/app.css?v=app-v44.8" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -340,36 +340,38 @@
             <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-done">完成並小測</button>
           </div>
         </div>
-        <div id="en-gloss-panel" class="en-gloss-panel" hidden>
-          <div class="en-gloss-toolbar">
-            <button type="button" class="btn-text" id="btn-en-gloss-back" hidden>← 上一層</button>
-            <button type="button" class="btn-text" id="btn-en-gloss-close">關閉</button>
+        <div id="en-bottom-dock" class="en-bottom-dock" hidden>
+          <div id="en-play-bar" class="en-play-bar" hidden>
+            <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
+            <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <span class="en-play-status" id="en-play-status">播放中</span>
+            <div class="en-play-speed" role="group" aria-label="語速">
+              <button type="button" class="en-play-speed-btn" data-en-play-speed="0.8">慢</button>
+              <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
+              <button type="button" class="en-play-speed-btn" data-en-play-speed="1.25">快</button>
+            </div>
+            <div class="en-play-lang" role="group" aria-label="朗讀語言">
+              <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
+              <button type="button" class="en-play-lang-btn" data-en-play-lang="zh">中文</button>
+            </div>
           </div>
-          <div class="en-gloss-head">
-            <strong id="en-gloss-word"></strong>
-            <button type="button" class="btn-text" id="btn-en-gloss-speak">🔊</button>
-          </div>
-          <p class="en-gloss-phonetic" id="en-gloss-phonetic" hidden></p>
-          <div class="en-gloss-text" id="en-gloss-text"></div>
-          <p class="en-gloss-example-label">Example</p>
-          <p class="en-gloss-example" id="en-gloss-example"></p>
-          <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
-          <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-gloss-add">
-            ☆ 加入複習字
-          </button>
-        </div>
-        <div id="en-play-bar" class="en-play-bar" hidden>
-          <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
-          <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-          <span class="en-play-status" id="en-play-status">播放中</span>
-          <div class="en-play-speed" role="group" aria-label="語速">
-            <button type="button" class="en-play-speed-btn" data-en-play-speed="0.8">慢</button>
-            <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
-            <button type="button" class="en-play-speed-btn" data-en-play-speed="1.25">快</button>
-          </div>
-          <div class="en-play-lang" role="group" aria-label="朗讀語言">
-            <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
-            <button type="button" class="en-play-lang-btn" data-en-play-lang="zh">中文</button>
+          <div id="en-gloss-panel" class="en-gloss-panel" hidden>
+            <div class="en-gloss-toolbar">
+              <button type="button" class="btn-text" id="btn-en-gloss-back" hidden>← 上一層</button>
+              <button type="button" class="btn-text" id="btn-en-gloss-close">關閉</button>
+            </div>
+            <div class="en-gloss-head">
+              <strong id="en-gloss-word"></strong>
+              <button type="button" class="btn-text" id="btn-en-gloss-speak">🔊</button>
+            </div>
+            <p class="en-gloss-phonetic" id="en-gloss-phonetic" hidden></p>
+            <div class="en-gloss-text" id="en-gloss-text"></div>
+            <p class="en-gloss-example-label">Example</p>
+            <p class="en-gloss-example" id="en-gloss-example"></p>
+            <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
+            <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-gloss-add">
+              ☆ 加入複習字
+            </button>
           </div>
         </div>
       </section>
@@ -2208,7 +2210,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v44.7").catch((e) => {
+      import("./js/app.js?v=app-v44.8").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

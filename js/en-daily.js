@@ -30,6 +30,8 @@ let current = null;
 let glossStack = [];
 /** 避免連點時舊的字典查詢覆蓋新面板 */
 let glossSeq = 0;
+/** 字卡收合動畫 timer */
+let glossCloseTimer = 0;
 
 /** @type {{ word: string, options: string[], answer: string }[]} */
 let quizQs = [];
@@ -76,16 +78,23 @@ function syncPlaySpeedBtns() {
   });
 }
 
-function syncPlayBarHeight() {
+function syncDockVisibility() {
+  const dock = $("#en-bottom-dock");
   const bar = $("#en-play-bar");
-  if (!bar || bar.hidden) {
-    document.documentElement.style.setProperty("--en-play-bar-h", "0px");
-    return;
-  }
-  // 強制 reflow，避免第一次量到 0
-  void bar.offsetHeight;
-  const h = Math.ceil(bar.getBoundingClientRect().height) || 56;
-  document.documentElement.style.setProperty("--en-play-bar-h", `${h}px`);
+  const panel = $("#en-gloss-panel");
+  if (!dock) return;
+  const show =
+    (bar && !bar.hidden) ||
+    document.body.classList.contains("en-gloss-open") ||
+    (panel && !panel.hidden);
+  dock.hidden = !show;
+  void dock.offsetHeight;
+  const h = show ? Math.ceil(dock.getBoundingClientRect().height) || 56 : 0;
+  document.documentElement.style.setProperty("--en-dock-h", `${h}px`);
+}
+
+function syncPlayBarHeight() {
+  syncDockVisibility();
 }
 
 function showPlayBar(status) {
@@ -97,15 +106,15 @@ function showPlayBar(status) {
   if (st) st.textContent = status;
   syncPlayLangBtns();
   syncPlaySpeedBtns();
-  syncPlayBarHeight();
+  syncDockVisibility();
 }
 
 function hidePlayBar() {
   const bar = $("#en-play-bar");
   if (bar) bar.hidden = true;
   document.body.classList.remove("en-playing");
-  document.documentElement.style.setProperty("--en-play-bar-h", "0px");
   clearSentenceHighlight();
+  syncDockVisibility();
 }
 
 function stopPlayBar() {
@@ -355,7 +364,7 @@ function bindUi() {
     if (ex) await playWithBar(ex, { label: "例句播放中" });
   });
   $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
-  window.addEventListener("resize", () => syncPlayBarHeight());
+  window.addEventListener("resize", () => syncDockVisibility());
 
   $("#btn-en-play-stop")?.addEventListener("click", () => stopPlayBar());
   document.querySelectorAll("[data-en-play-lang]").forEach((btn) => {
@@ -691,14 +700,21 @@ function showGloss(entry, opts = {}) {
   if (!panel) return;
   const willSpeak = opts.speak !== false;
 
-  // 先開 gloss class + 播放列並量高度，字卡一出現就已在播放列上方（避免先貼底再跳高）
-  document.body.classList.add("en-gloss-open");
-  if (willSpeak) {
-    showPlayBar("單字播放中");
-    syncPlayBarHeight();
+  if (glossCloseTimer) {
+    clearTimeout(glossCloseTimer);
+    glossCloseTimer = 0;
   }
 
   panel.hidden = false;
+  void panel.offsetHeight;
+  document.body.classList.add("en-gloss-open");
+
+  if (willSpeak) {
+    showPlayBar("單字播放中");
+  } else {
+    syncDockVisibility();
+  }
+
   panel.scrollTop = 0;
   const w = $("#en-gloss-word");
   const ph = $("#en-gloss-phonetic");
@@ -725,19 +741,26 @@ function showGloss(entry, opts = {}) {
   if (exSpeak) exSpeak.hidden = !hasEx;
   if (back) back.hidden = glossStack.length <= 1;
 
+  requestAnimationFrame(() => syncDockVisibility());
+
   if (willSpeak) {
     void playWithBar(entry.word, { label: "單字播放中" });
-  } else {
-    syncPlayBarHeight();
   }
 }
 
 function hideGloss() {
   const panel = $("#en-gloss-panel");
-  if (panel) panel.hidden = true;
   document.body.classList.remove("en-gloss-open");
   glossStack = [];
-  syncPlayBarHeight();
+  if (glossCloseTimer) clearTimeout(glossCloseTimer);
+  // 先往下收合，動畫結束再 hidden
+  glossCloseTimer = window.setTimeout(() => {
+    glossCloseTimer = 0;
+    if (document.body.classList.contains("en-gloss-open")) return;
+    if (panel) panel.hidden = true;
+    syncDockVisibility();
+  }, 280);
+  syncDockVisibility();
 }
 
 function addCurrentGlossToReview() {
