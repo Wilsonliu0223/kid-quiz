@@ -76,6 +76,15 @@ function syncPlaySpeedBtns() {
   });
 }
 
+function syncPlayBarHeight() {
+  const bar = $("#en-play-bar");
+  const h = bar && !bar.hidden ? Math.ceil(bar.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty(
+    "--en-play-bar-h",
+    `${Math.max(h, 0)}px`
+  );
+}
+
 function showPlayBar(status) {
   const bar = $("#en-play-bar");
   if (!bar) return;
@@ -85,12 +94,14 @@ function showPlayBar(status) {
   if (st) st.textContent = status;
   syncPlayLangBtns();
   syncPlaySpeedBtns();
+  requestAnimationFrame(() => syncPlayBarHeight());
 }
 
 function hidePlayBar() {
   const bar = $("#en-play-bar");
   if (bar) bar.hidden = true;
   document.body.classList.remove("en-playing");
+  document.documentElement.style.setProperty("--en-play-bar-h", "0px");
   clearSentenceHighlight();
 }
 
@@ -341,6 +352,7 @@ function bindUi() {
     if (ex) await playWithBar(ex, { label: "例句播放中" });
   });
   $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
+  window.addEventListener("resize", () => syncPlayBarHeight());
 
   $("#btn-en-play-stop")?.addEventListener("click", () => stopPlayBar());
   document.querySelectorAll("[data-en-play-lang]").forEach((btn) => {
@@ -680,6 +692,7 @@ function showGloss(entry, opts = {}) {
   const ph = $("#en-gloss-phonetic");
   const g = $("#en-gloss-text");
   const ex = $("#en-gloss-example");
+  const exLabel = document.querySelector(".en-gloss-example-label");
   const back = $("#btn-en-gloss-back");
   if (w) w.textContent = entry.word;
   if (ph) {
@@ -690,15 +703,23 @@ function showGloss(entry, opts = {}) {
     g.innerHTML = renderClickableText(entry.gloss, current);
     bindWordClicks(g);
   }
+  const hasEx = Boolean(entry.example);
   if (ex) {
     ex.textContent = entry.example || "";
-    ex.hidden = !entry.example;
+    ex.hidden = !hasEx;
   }
+  if (exLabel) exLabel.hidden = !hasEx;
   const exSpeak = $("#btn-en-gloss-example-speak");
-  if (exSpeak) exSpeak.hidden = !entry.example;
+  if (exSpeak) exSpeak.hidden = !hasEx;
   if (back) back.hidden = glossStack.length <= 1;
+  requestAnimationFrame(() => {
+    syncPlayBarHeight();
+    panel.scrollTop = 0;
+  });
   if (opts.speak !== false) {
     playWithBar(entry.word, { label: "單字播放中" });
+  } else {
+    requestAnimationFrame(() => syncPlayBarHeight());
   }
 }
 
@@ -707,6 +728,7 @@ function hideGloss() {
   if (panel) panel.hidden = true;
   document.body.classList.remove("en-gloss-open");
   glossStack = [];
+  requestAnimationFrame(() => syncPlayBarHeight());
 }
 
 function addCurrentGlossToReview() {
