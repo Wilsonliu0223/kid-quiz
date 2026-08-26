@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.2" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.3" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -369,6 +369,9 @@
             </div>
             <p class="en-gloss-phonetic" id="en-gloss-phonetic" hidden></p>
             <div class="en-gloss-text" id="en-gloss-text"></div>
+            <p class="en-gloss-zh-label" id="en-gloss-zh-label" hidden>中文說明</p>
+            <p class="en-gloss-zh" id="en-gloss-zh" hidden></p>
+            <button type="button" class="btn-text" id="btn-en-gloss-zh-speak" hidden>🔊 中文說明</button>
             <p class="en-gloss-example-label">Example</p>
             <p class="en-gloss-example" id="en-gloss-example"></p>
             <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
@@ -2213,7 +2216,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.2").catch((e) => {
+      import("./js/app.js?v=app-v45.3").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

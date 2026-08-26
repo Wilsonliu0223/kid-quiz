@@ -11,7 +11,8 @@ import {
   setSpeakingSpeed,
   getLastSpeakEngine,
   lookupEnglishGloss,
-} from "./english.js?v=en-speak-v14";
+  translateEnToZh,
+} from "./english.js?v=en-speak-v15";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -428,6 +429,21 @@ function bindUi() {
     const ex = $("#en-gloss-example")?.textContent;
     if (ex) await playWithBar(ex, { label: "例句播放中" });
   });
+  $("#btn-en-gloss-zh-speak")?.addEventListener("click", async () => {
+    const zh = $("#en-gloss-zh")?.textContent?.trim();
+    if (!zh) return;
+    unlockSpeechFromGesture();
+    showPlayBar("中文說明播放中");
+    const ok = await speakEnglish(zh, {
+      fast: true,
+      lang: "zh",
+      alreadyZh: true,
+      speed: playSpeed,
+    });
+    if (isReaderActive()) {
+      showPlayBar(ok ? "點 🔊 播全文" : "中文說明播放失敗");
+    }
+  });
   $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
   window.addEventListener("resize", () => syncDockVisibility());
 
@@ -762,10 +778,50 @@ function popGloss() {
   showGloss(glossStack[glossStack.length - 1]);
 }
 
+function setGlossZhUi(zhText) {
+  const zhEl = $("#en-gloss-zh");
+  const zhLabel = $("#en-gloss-zh-label");
+  const zhSpeak = $("#btn-en-gloss-zh-speak");
+  const has = Boolean(String(zhText || "").trim());
+  if (zhEl) {
+    zhEl.textContent = has ? String(zhText).trim() : "";
+    zhEl.hidden = !has;
+  }
+  if (zhLabel) zhLabel.hidden = !has;
+  if (zhSpeak) zhSpeak.hidden = !has;
+}
+
+/** 英英解釋 → 繁中說明（顯示用）；失敗則隱藏中文區 */
+async function fillGlossZh(entry, seq) {
+  const gloss = String(entry?.gloss || "").trim();
+  if (!gloss || /^Looking up/i.test(gloss) || /^Sorry,/i.test(gloss)) {
+    setGlossZhUi("");
+    return;
+  }
+  if (entry.zhGloss) {
+    setGlossZhUi(entry.zhGloss);
+    return;
+  }
+  setGlossZhUi("翻譯中…");
+  const zh =
+    (await translateEnToZh(gloss, "TW")) ||
+    (await translateEnToZh(gloss, "CN")) ||
+    "";
+  if (seq !== glossSeq) return;
+  entry.zhGloss = zh;
+  // 同步寫回 stack 目前這層
+  if (glossStack.length) {
+    glossStack[glossStack.length - 1] = { ...glossStack[glossStack.length - 1], zhGloss: zh };
+  }
+  setGlossZhUi(zh);
+  requestAnimationFrame(() => syncDockVisibility());
+}
+
 function showGloss(entry, opts = {}) {
   const panel = $("#en-gloss-panel");
   if (!panel) return;
   const willSpeak = opts.speak !== false;
+  const seq = glossSeq;
 
   if (glossCloseTimer) {
     clearTimeout(glossCloseTimer);
@@ -801,6 +857,9 @@ function showGloss(entry, opts = {}) {
     g.innerHTML = renderClickableText(entry.gloss, current);
     bindWordClicks(g);
   }
+  setGlossZhUi(entry.zhGloss || "");
+  void fillGlossZh(entry, seq);
+
   const hasEx = Boolean(entry.example);
   if (ex) {
     ex.textContent = entry.example || "";

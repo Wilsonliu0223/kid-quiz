@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.2";
+import { CONFIG } from "./config.site.js?v=config-v45.3";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -1137,8 +1137,8 @@ function speakWithSynth(text, lang = "en", speed = 1) {
  * 播放英文
  * 點擊時請先呼叫 unlockSpeechFromGesture()
  * @param {string} text
- * @param {{ fast?: boolean, instant?: boolean, lang?: 'en'|'zh', speed?: number }} [opts]
- *   fast/instant：跳過詞典 API，直接播線上自然音；lang=zh 先譯成中文再播
+ * @param {{ fast?: boolean, instant?: boolean, lang?: 'en'|'zh', speed?: number, alreadyZh?: boolean }} [opts]
+ *   fast/instant：跳過詞典 API，直接播線上自然音；lang=zh 先譯成中文再播（alreadyZh=true 則直接播中文）
  * @returns {Promise<boolean>}
  */
 export async function speakEnglish(text, opts = {}) {
@@ -1153,7 +1153,7 @@ export async function speakEnglish(text, opts = {}) {
   activeSpeakSpeed = speed;
 
   let speakText = w;
-  if (lang === "zh") {
+  if (lang === "zh" && !opts.alreadyZh) {
     speakText =
       (await translateEnToZh(w, "CN")) ||
       (await translateEnToZh(w, "TW")) ||

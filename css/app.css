@@ -6228,6 +6228,29 @@ body.en-gloss-open .en-play-lang-btn {
   line-height: 1.55;
   font-size: 1.02rem;
 }
+.en-gloss-zh-label {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.en-gloss-zh-label[hidden],
+.en-gloss-zh[hidden],
+#btn-en-gloss-zh-speak[hidden] {
+  display: none !important;
+}
+.en-gloss-zh {
+  margin: 4px 0 6px;
+  line-height: 1.5;
+  font-size: 1rem;
+  color: #1a3a5c;
+  background: #f3f7ff;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+#btn-en-gloss-zh-speak {
+  margin-bottom: 6px;
+}
 .en-gloss-example-label {
   margin: 8px 0 0;
   font-size: 0.75rem;
