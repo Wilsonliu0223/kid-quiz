@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.0";
+import { CONFIG } from "./config.site.js?v=config-v45.1";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -125,6 +125,7 @@ function playAudioUrl(url, opts = {}) {
       audio.onended = null;
       audio.onerror = null;
       audio.onplaying = null;
+      audio.onloadedmetadata = null;
 
       const soften = Boolean(opts.soften);
       const userSpeed =
@@ -142,10 +143,13 @@ function playAudioUrl(url, opts = {}) {
 
       let settled = false;
       let started = false;
+      let endFailsafe = 0;
       const done = (ok) => {
         if (settled) return;
         settled = true;
         clearTimeout(startTimer);
+        if (endFailsafe) clearTimeout(endFailsafe);
+        audio.onloadedmetadata = null;
         try {
           audio.playbackRate = 1;
           audio.preservesPitch = true;
@@ -155,11 +159,45 @@ function playAudioUrl(url, opts = {}) {
       const startTimer = setTimeout(() => {
         if (!started) done(false);
       }, opts.startTimeoutMs ?? (soften || userSpeed < 1 ? 5000 : 3500));
+
+      const armDurationFailsafe = () => {
+        if (endFailsafe) clearTimeout(endFailsafe);
+        const dur = audio.duration;
+        if (!Number.isFinite(dur) || dur <= 0) return;
+        // 依實際長度 + 語速，避免 onended 沒觸發一直卡住；多留 0.8s
+        const ms = Math.ceil((dur / (audio.playbackRate || 1)) * 1000) + 800;
+        endFailsafe = setTimeout(() => done(true), ms);
+      };
+
       audio.onplaying = () => {
         started = true;
         clearTimeout(startTimer);
+        armDurationFailsafe();
       };
-      audio.onended = () => done(true);
+      audio.onloadedmetadata = () => {
+        if (started) armDurationFailsafe();
+      };
+      audio.onended = () => {
+        // 忽略「幾乎沒播就 ended」的假結束（換 src／載入中常見）
+        const dur = audio.duration;
+        const t = audio.currentTime;
+        if (
+          Number.isFinite(dur) &&
+          dur > 0.45 &&
+          Number.isFinite(t) &&
+          t < Math.min(0.2, dur * 0.2)
+        ) {
+          try {
+            if (audio.paused) {
+              audio.play().catch(() => done(true));
+            }
+          } catch (_) {
+            done(true);
+          }
+          return;
+        }
+        done(true);
+      };
       audio.onerror = () => done(false);
       audio.src = src;
       const playP = audio.play();
@@ -607,7 +645,8 @@ async function speakPhraseWithDictionary(text) {
 /** Google 翻譯 TTS（較像真人；非正式 API，失敗就換下一個） */
 function googleTtsUrl(text, lang = "en") {
   const tl = lang === "zh" ? "zh-CN" : lang === "zh-TW" ? "zh-TW" : "en";
-  const max = lang === "zh" || lang === "zh-TW" ? 100 : 180;
+  // 英文超過 ~100 字元常被靜默截斷，音檔提早 ended → 反亮會搶跑
+  const max = lang === "zh" || lang === "zh-TW" ? 100 : 100;
   const q = encodeURIComponent(String(text || "").trim().slice(0, max));
   if (!q) return "";
   // client=tw-ob 中文較常比 gtx 順耳
@@ -958,8 +997,9 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1) {
 
 /** 線上自然音；長文分段連播 */
 async function speakWithOnlineTts(text, lang = "en", speed = 1) {
+  // 英文切段對齊 Google TTS 安全長度，避免單段音檔被截短
   const chunks =
-    lang === "zh" ? chunkZhForTts(text, 72) : chunkTextForTts(text, 160);
+    lang === "zh" ? chunkZhForTts(text, 72) : chunkTextForTts(text, 100);
   if (!chunks.length) return false;
   for (const chunk of chunks) {
     const ok = await playOnlineChunk(chunk, lang, speed);
@@ -1044,6 +1084,7 @@ function speakWithSynth(text, lang = "en", speed = 1) {
         const done = (ok) => {
           if (settled) return;
           settled = true;
+          clearTimeout(maxTimer);
           resolve(ok);
         };
 
@@ -1052,7 +1093,14 @@ function speakWithSynth(text, lang = "en", speed = 1) {
         };
         u.onend = () => done(spoke);
         u.onerror = () => done(false);
-        setTimeout(() => done(spoke), 8000);
+        // 依字數估最長等待，勿固定 8 秒（長句會還沒念完就當結束）
+        const approxMs = /[\u4e00-\u9fff]/.test(text)
+          ? String(text).length * 220
+          : String(text).trim().split(/\s+/).filter(Boolean).length * 420;
+        const maxTimer = setTimeout(
+          () => done(spoke),
+          Math.min(90000, Math.max(12000, approxMs / Math.max(0.5, Number(speed) || 1)))
+        );
 
         window.speechSynthesis.speak(u);
         // iOS 有時會卡住 paused，點一下 resume

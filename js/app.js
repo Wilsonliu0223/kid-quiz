@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.0";
+import { CONFIG } from "./config.site.js?v=config-v45.1";
 import {
   loadZhItems,
   loadEnItems,
@@ -22,7 +22,7 @@ import {
   primeSpeech,
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
-} from "./english.js?v=en-speak-v13";
+} from "./english.js?v=en-speak-v14";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
   buildHomophoneChoices,
@@ -95,7 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
-import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v16";
+import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v17";
 import {
   addMistake,
   removeMistake,

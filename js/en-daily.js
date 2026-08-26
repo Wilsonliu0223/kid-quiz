@@ -11,7 +11,7 @@ import {
   setSpeakingSpeed,
   getLastSpeakEngine,
   lookupEnglishGloss,
-} from "./english.js?v=en-speak-v13";
+} from "./english.js?v=en-speak-v14";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -172,6 +172,22 @@ function highlightSentence(index) {
   } catch (_) {}
 }
 
+/** 依字數估最少朗讀時間，避免音檔被截短時反亮搶跑 */
+function minSpeakHoldMs(text, speed = 1) {
+  const s = String(text || "").trim();
+  if (!s) return 0;
+  const spd = Math.max(0.5, Number(speed) || 1);
+  if (/[\u4e00-\u9fff]/.test(s)) {
+    return Math.ceil((s.length * 160) / spd);
+  }
+  const words = s.split(/\s+/).filter(Boolean).length;
+  return Math.ceil((Math.max(words, 1) * 320) / spd);
+}
+
+function sleepMs(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 /**
  * 帶播放條的朗讀（英文／中文可切；全文可逐句反亮）
  * @param {string} text
@@ -206,12 +222,20 @@ async function playWithBar(text, opts = {}) {
     showPlayBar(
       playLang === "zh" ? `${status} · 載入雲希…` : status
     );
+    const t0 = Date.now();
     const ok = await speakEnglish(sentences[i], {
       fast: true,
       lang: playLang,
       speed: playSpeed,
     });
     if (seq !== playSeq) return;
+    // 音檔若提早 ended，仍等到「合理念完時間」再切下一句／反亮
+    if (playFollowSentences) {
+      const hold = minSpeakHoldMs(sentences[i], playSpeed);
+      const wait = hold - (Date.now() - t0);
+      if (wait > 80) await sleepMs(wait);
+      if (seq !== playSeq) return;
+    }
     if (ok) {
       anyOk = true;
       const eng = getLastSpeakEngine() || "";
