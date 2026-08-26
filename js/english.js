@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v44.4";
+import { CONFIG } from "./config.site.js?v=config-v44.5";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -250,6 +250,7 @@ function glossWordCandidates(word) {
   if (!w) return [];
   const out = [w];
   if (w.endsWith("ies") && w.length > 4) out.push(`${w.slice(0, -3)}y`);
+  if (w.endsWith("ves") && w.length > 4) out.push(`${w.slice(0, -3)}f`);
   if (w.endsWith("es") && w.length > 4) out.push(w.slice(0, -2));
   if (w.endsWith("s") && !w.endsWith("ss") && w.length > 3) out.push(w.slice(0, -1));
   if (w.endsWith("ing") && w.length > 5) {
@@ -260,12 +261,24 @@ function glossWordCandidates(word) {
     out.push(w.slice(0, -2));
     out.push(w.slice(0, -1));
   }
+  if (w.endsWith("er") && w.length > 4) out.push(w.slice(0, -2));
+  if (w.endsWith("est") && w.length > 5) out.push(w.slice(0, -3));
+  if (w.endsWith("ly") && w.length > 4) out.push(w.slice(0, -2));
   return [...new Set(out)];
 }
 
 function simplifyKidDefinition(def) {
-  let s = String(def || "").trim();
+  let s = String(def || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\\t/g, "\t")
+    .trim();
   if (!s) return "";
+  // Datamuse: 先去掉 "n\t"／"v\t"（不可先把 tab 收成空白）
+  s = s.replace(/^[nvadj]\s*[\t:|]\s*/, "");
+  s = s.replace(/^[nvadj]\s+(?=[A-Za-z(])/, "");
+  s = s.replace(/\s+/g, " ").trim();
+  s = s.replace(/^\([^)]*\)\s*/g, "");
+  s = s.replace(/^\([^)]*\)\s*/g, "");
   const parts = s
     .split(/;\s*/)
     .map((p) => p.trim())
@@ -276,14 +289,220 @@ function simplifyKidDefinition(def) {
       ranked.find((p) => !/^used as\b/i.test(p) && p.length >= 12) ||
       ranked[0];
   }
-  if (s.length > 140) {
-    s = `${s.slice(0, 137).replace(/\s+\S*$/, "")}…`;
+  if (s.length > 150) {
+    s = `${s.slice(0, 147).replace(/\s+\S*$/, "")}…`;
   }
   return s;
 }
 
+/** 循環定義／過短／幾乎只重複原字 → 當弱結果，改試其他來源 */
+function isWeakGloss(gloss, word) {
+  const g = String(gloss || "").trim().toLowerCase();
+  const w = String(word || "").trim().toLowerCase();
+  if (!g || g.length < 8) return true;
+  if (/^(a |an )?surname\b/.test(g) || /\bgiven name\b/.test(g)) return true;
+  if (!w) return false;
+  const words = g.split(/[^a-z]+/).filter(Boolean);
+  if (words.length <= 4 && words.includes(w)) return true;
+  if (new RegExp(`^(a |an |the )?${w}\\b`, "i").test(g) && words.length <= 5) {
+    return true;
+  }
+  return false;
+}
+
+function scoreGlossQuality(gloss, word) {
+  if (!gloss) return -1;
+  if (isWeakGloss(gloss, word)) return 0;
+  let score = 40;
+  const len = gloss.length;
+  if (len >= 20 && len <= 120) score += 25;
+  else if (len > 120) score += 10;
+  if (/^to\s+/i.test(gloss)) score += 8;
+  if (/surname|given name|obsolete|archaic/i.test(gloss)) score -= 30;
+  const w = String(word || "").replace(/[^a-z]/gi, "");
+  if (w && !new RegExp(`\\b${w}\\b`, "i").test(gloss)) score += 12;
+  return score;
+}
+
+async function fetchJson(url, timeoutMs = 7000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
- * 線上英英（Free Dictionary API）。文章 vocab 沒有的字用這個補。
+ * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string } | null>}
+ */
+async function glossFromFreeDictionary(q, displayWord) {
+  try {
+    const data = await fetchJson(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(q)}`
+    );
+    if (!Array.isArray(data) || !data.length) return null;
+    const entry = data[0];
+    const meanings = entry.meanings || [];
+    if (!meanings.length) return null;
+
+    const nounM = meanings.find((m) => m.partOfSpeech === "noun");
+    const verbM = meanings.find((m) => m.partOfSpeech === "verb");
+    const adjM = meanings.find((m) => m.partOfSpeech === "adjective");
+    let preferred = meanings[0];
+    if (nounM && verbM) {
+      const nd = String(nounM.definitions?.[0]?.definition || "");
+      preferred = /physique|bodily constitution|body type|frame of (a |the )?body/i.test(
+        nd
+      )
+        ? verbM
+        : nounM;
+    } else {
+      preferred = nounM || verbM || adjM || meanings[0];
+    }
+    const defs = preferred.definitions || [];
+    if (!defs.length) return null;
+    const primary = simplifyKidDefinition(defs[0].definition);
+    if (!primary) return null;
+    let gloss = primary;
+    const second = defs[1] ? simplifyKidDefinition(defs[1].definition) : "";
+    if (second && primary.length > 90 && second.length < 80 && second !== primary) {
+      gloss = `${primary} · ${second}`;
+    }
+    const phonetic =
+      String(entry.phonetic || "").replace(/^\/|\/$/g, "") ||
+      (entry.phonetics || [])
+        .map((p) => String(p.text || "").replace(/^\/|\/$/g, ""))
+        .find(Boolean) ||
+      "";
+    return {
+      word: entry.word || displayWord || q,
+      gloss,
+      example: String(defs[0].example || defs[1]?.example || "").trim(),
+      phonetic,
+    };
+  } catch (e) {
+    console.warn("glossFromFreeDictionary", q, e);
+    return null;
+  }
+}
+
+/**
+ * Datamuse 字義（覆蓋專有名詞／運動用語常比 Free Dictionary 好）
+ * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string } | null>}
+ */
+async function glossFromDatamuse(q, displayWord) {
+  try {
+    const data = await fetchJson(
+      `https://api.datamuse.com/words?sp=${encodeURIComponent(q)}&md=d&max=8`
+    );
+    if (!Array.isArray(data) || !data.length) return null;
+    const hit =
+      data.find((row) => String(row.word || "").toLowerCase() === q.toLowerCase()) ||
+      null;
+    if (!hit?.defs?.length) return null;
+
+    const cleaned = hit.defs
+      .map((d) => ({
+        raw: String(d),
+        gloss: simplifyKidDefinition(d),
+        isVerb: /^v[\t ]/i.test(String(d)),
+      }))
+      .filter((d) => d.gloss && !isWeakGloss(d.gloss, q));
+    if (!cleaned.length) return null;
+
+    const verbs = cleaned.filter((d) => d.isVerb);
+    const others = cleaned.filter((d) => !d.isVerb);
+    let ordered = cleaned;
+    if (verbs.length && others.length) {
+      const topNoun = others[0];
+      const topVerb = verbs[0];
+      if (
+        /physique|bodily constitution|body type|brand or kind|activity for amusement/i.test(
+          topNoun.gloss
+        )
+      ) {
+        ordered = [topVerb, ...others, ...verbs.slice(1)];
+      } else {
+        ordered = [topNoun, topVerb, ...others.slice(1), ...verbs.slice(1)];
+      }
+    }
+    const pick = ordered[0];
+    const alt = ordered.find((d) => d.gloss !== pick.gloss);
+    let gloss = pick.gloss;
+    if (alt && pick.gloss.length > 90 && alt.gloss.length < 80) {
+      gloss = `${pick.gloss} · ${alt.gloss}`;
+    }
+    return {
+      word: hit.word || displayWord || q,
+      gloss,
+      example: "",
+      phonetic: "",
+    };
+  } catch (e) {
+    console.warn("glossFromDatamuse", q, e);
+    return null;
+  }
+}
+
+/**
+ * Simple English Wikipedia 一句話（地名／公司／專有名詞很有用）
+ * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string } | null>}
+ */
+async function glossFromSimpleWiki(q, displayWord) {
+  const title = String(q || "").trim();
+  if (!title || title.length < 2) return null;
+  try {
+    const data = await fetchJson(
+      `https://simple.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+      6000
+    );
+    if (!data || data.type !== "standard") return null;
+    const pageTitle = String(data.title || "").trim();
+    const qNorm = title.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const tNorm = pageTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (qNorm && tNorm && qNorm !== tNorm && !tNorm.startsWith(qNorm) && !qNorm.startsWith(tNorm)) {
+      return null;
+    }
+    const extract = String(data.extract || "").trim();
+    if (!extract) return null;
+    const first = extract.split(/(?<=\.)\s+/)[0] || extract;
+    const gloss = simplifyKidDefinition(first);
+    if (!gloss || isWeakGloss(gloss, title)) return null;
+    return {
+      word: pageTitle || displayWord || title,
+      gloss,
+      example: "",
+      phonetic: "",
+    };
+  } catch (e) {
+    console.warn("glossFromSimpleWiki", title, e);
+    return null;
+  }
+}
+
+function pickBestGloss(candidates, word) {
+  let best = null;
+  let bestScore = -1;
+  for (const c of candidates) {
+    if (!c?.gloss) continue;
+    const score = scoreGlossQuality(c.gloss, word);
+    if (score > bestScore) {
+      best = c;
+      bestScore = score;
+    }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+/**
+ * 線上英英（多來源）：Free Dictionary → Datamuse → Simple Wikipedia
+ * 文章 vocab 沒有的字用這個補；專有名詞／運動用語覆蓋較完整。
  * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string } | null>}
  */
 export async function lookupEnglishGloss(word) {
@@ -292,62 +511,58 @@ export async function lookupEnglishGloss(word) {
   const cacheKey = raw.toLowerCase();
   if (glossDefCache.has(cacheKey)) return glossDefCache.get(cacheKey);
 
-  for (const q of glossWordCandidates(raw)) {
-    try {
-      const res = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(q)}`
-      );
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (!Array.isArray(data) || !data.length) continue;
-      const entry = data[0];
-      const meanings = entry.meanings || [];
-      if (!meanings.length) continue;
+  const forms = glossWordCandidates(raw);
+  /** @type {{ word: string, gloss: string, example: string, phonetic: string }[]} */
+  const found = [];
 
-      const nounM = meanings.find((m) => m.partOfSpeech === "noun");
-      const verbM = meanings.find((m) => m.partOfSpeech === "verb");
-      const adjM = meanings.find((m) => m.partOfSpeech === "adjective");
-      let preferred = meanings[0];
-      if (nounM && verbM) {
-        const nd = String(nounM.definitions?.[0]?.definition || "");
-        // build 等字名詞常是「身材」罕見義 → 改用動詞
-        preferred = /physique|bodily constitution|body type|frame of (a |the )?body/i.test(
-          nd
-        )
-          ? verbM
-          : nounM;
-      } else {
-        preferred = nounM || verbM || adjM || meanings[0];
-      }
-      const defs = preferred.definitions || [];
-      if (!defs.length) continue;
-
-      const primary = simplifyKidDefinition(defs[0].definition);
-      if (!primary) continue;
-      let gloss = primary;
-      const second = defs[1] ? simplifyKidDefinition(defs[1].definition) : "";
-      // 主義偏長時，補一句較短的第二義當幫助
-      if (second && primary.length > 90 && second.length < 80 && second !== primary) {
-        gloss = `${primary} · ${second}`;
-      }
-
-      const phonetic =
-        String(entry.phonetic || "").replace(/^\/|\/$/g, "") ||
-        (entry.phonetics || [])
-          .map((p) => String(p.text || "").replace(/^\/|\/$/g, ""))
-          .find(Boolean) ||
-        "";
-      const result = {
-        word: entry.word || raw,
-        gloss,
-        example: String(defs[0].example || defs[1]?.example || "").trim(),
-        phonetic,
-      };
-      glossDefCache.set(cacheKey, result);
-      return result;
-    } catch (e) {
-      console.warn("lookupEnglishGloss", q, e);
+  // 並行查前兩個詞形（原形 + 第一個變形），再補其餘
+  const primaryForms = forms.slice(0, 2);
+  const restForms = forms.slice(2);
+  for (const batch of [primaryForms, restForms]) {
+    if (!batch.length) continue;
+    const results = await Promise.all(
+      batch.flatMap((q) => [
+        glossFromFreeDictionary(q, raw),
+        glossFromDatamuse(q, raw),
+      ])
+    );
+    for (const r of results) {
+      if (r?.gloss) found.push(r);
     }
+    const bestSoFar = pickBestGloss(found, raw);
+    if (bestSoFar && scoreGlossQuality(bestSoFar.gloss, raw) >= 50) {
+      const withExtras = {
+        ...bestSoFar,
+        example: bestSoFar.example || found.find((f) => f.example)?.example || "",
+        phonetic:
+          bestSoFar.phonetic || found.find((f) => f.phonetic)?.phonetic || "",
+      };
+      glossDefCache.set(cacheKey, withExtras);
+      return withExtras;
+    }
+  }
+
+  const wikiTries = [
+    ...new Set(
+      [raw, raw.charAt(0).toUpperCase() + raw.slice(1), forms[0]].filter(Boolean)
+    ),
+  ];
+  const wikiHits = await Promise.all(
+    wikiTries.map((t) => glossFromSimpleWiki(t, raw))
+  );
+  for (const w of wikiHits) {
+    if (w?.gloss) found.push(w);
+  }
+
+  const best = pickBestGloss(found, raw);
+  if (best) {
+    const withExtras = {
+      ...best,
+      example: best.example || found.find((f) => f.example)?.example || "",
+      phonetic: best.phonetic || found.find((f) => f.phonetic)?.phonetic || "",
+    };
+    glossDefCache.set(cacheKey, withExtras);
+    return withExtras;
   }
 
   glossDefCache.set(cacheKey, null);

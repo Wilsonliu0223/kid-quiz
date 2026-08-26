@@ -11,7 +11,7 @@ import {
   setSpeakingSpeed,
   getLastSpeakEngine,
   lookupEnglishGloss,
-} from "./english.js?v=en-speak-v12";
+} from "./english.js?v=en-speak-v13";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -642,7 +642,7 @@ async function openGloss(word, reset) {
 
   const loading = {
     word,
-    gloss: "Looking up a simple meaning…",
+    gloss: "Looking up meaning…",
     example: "",
     phonetic: "",
   };
