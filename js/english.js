@@ -215,10 +215,12 @@ async function speakPhraseWithDictionary(text) {
 }
 
 /** Google 翻譯 TTS（較像真人；非正式 API，失敗就換下一個） */
-function googleTtsUrl(text) {
-  const q = encodeURIComponent(String(text || "").trim().slice(0, 180));
+function googleTtsUrl(text, lang = "en") {
+  const tl = lang === "zh" ? "zh-TW" : "en";
+  const max = lang === "zh" ? 100 : 180;
+  const q = encodeURIComponent(String(text || "").trim().slice(0, max));
   if (!q) return "";
-  return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=en&q=${q}`;
+  return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=${tl}&q=${q}`;
 }
 
 /** 有道美式發音（常有真人感） */
@@ -235,6 +237,21 @@ function chunkTextForTts(text, maxLen = 160) {
     .replace(/\s+/g, " ");
   if (!s) return [];
   if (s.length <= maxLen) return [s];
+
+  // 中文：少空白，依標點／長度切
+  if (/[\u4e00-\u9fff]/.test(s)) {
+    const parts = [];
+    let buf = "";
+    for (const ch of s) {
+      buf += ch;
+      if (buf.length >= maxLen || /[。！？；\n]/.test(ch)) {
+        parts.push(buf.trim());
+        buf = "";
+      }
+    }
+    if (buf.trim()) parts.push(buf.trim());
+    return parts;
+  }
 
   const parts = [];
   let buf = "";
@@ -271,23 +288,59 @@ function chunkTextForTts(text, maxLen = 160) {
   return parts;
 }
 
-async function playOnlineChunk(chunk) {
-  const g = googleTtsUrl(chunk);
+const zhTranslateCache = new Map();
+
+/** 英→繁中（非正式 translate API；失敗回空字串） */
+export async function translateEnToZh(text) {
+  const src = String(text || "").trim();
+  if (!src) return "";
+  if (zhTranslateCache.has(src)) return zhTranslateCache.get(src);
+
+  try {
+    const pieces = chunkTextForTts(src, 400);
+    const out = [];
+    for (const piece of pieces) {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${encodeURIComponent(piece)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`translate ${res.status}`);
+      const data = await res.json();
+      const part = (data?.[0] || []).map((row) => row?.[0] || "").join("");
+      out.push(part);
+    }
+    const joined = out.join("");
+    zhTranslateCache.set(src, joined);
+    return joined;
+  } catch (e) {
+    console.warn("translateEnToZh", e);
+    zhTranslateCache.set(src, "");
+    return "";
+  }
+}
+
+async function playOnlineChunk(chunk, lang = "en") {
+  const g = googleTtsUrl(chunk, lang);
   if (g && (await playAudioUrl(g, { startTimeoutMs: 2500 }))) return true;
-  const y = youdaoTtsUrl(chunk);
-  if (y && (await playAudioUrl(y, { startTimeoutMs: 2500 }))) return true;
+  if (lang === "en") {
+    const y = youdaoTtsUrl(chunk);
+    if (y && (await playAudioUrl(y, { startTimeoutMs: 2500 }))) return true;
+  }
   return false;
 }
 
-/** 線上自然音：Google → 有道；長文分段連播 */
-async function speakWithOnlineTts(text) {
-  const chunks = chunkTextForTts(text, 160);
+/** 線上自然音；長文分段連播 */
+async function speakWithOnlineTts(text, lang = "en") {
+  const max = lang === "zh" ? 90 : 160;
+  const chunks = chunkTextForTts(text, max);
   if (!chunks.length) return false;
   for (const chunk of chunks) {
-    const ok = await playOnlineChunk(chunk);
+    const ok = await playOnlineChunk(chunk, lang);
     if (!ok) return false;
   }
   return true;
+}
+
+export function stopSpeaking() {
+  stopAudio();
 }
 
 function pickEnglishVoice() {
@@ -318,7 +371,7 @@ export function primeSpeech() {
   }
 }
 
-function speakWithSynth(text) {
+function speakWithSynth(text, lang = "en") {
   return new Promise((resolve) => {
     if (!window.speechSynthesis) {
       resolve(false);
@@ -331,13 +384,20 @@ function speakWithSynth(text) {
         window.speechSynthesis.resume();
 
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = "en-US";
-        // 短字稍快、長文稍慢
-        u.rate = String(text).trim().split(/\s+/).length <= 3 ? 0.95 : 0.88;
+        u.lang = lang === "zh" ? "zh-TW" : "en-US";
+        u.rate = lang === "zh" ? 0.95 : String(text).trim().split(/\s+/).length <= 3 ? 0.95 : 0.88;
         u.pitch = 1;
         u.volume = 1;
-        const voice = pickEnglishVoice();
-        if (voice) u.voice = voice;
+        if (lang === "en") {
+          const voice = pickEnglishVoice();
+          if (voice) u.voice = voice;
+        } else {
+          const voices = window.speechSynthesis.getVoices() || [];
+          const zh =
+            voices.find((v) => /zh-TW|zh-HK/i.test(v.lang)) ||
+            voices.find((v) => /^zh/i.test(v.lang));
+          if (zh) u.voice = zh;
+        }
 
         let settled = false;
         let spoke = false;
@@ -389,8 +449,8 @@ function speakWithSynth(text) {
  * 播放英文
  * 點擊時請先呼叫 unlockSpeechFromGesture()
  * @param {string} text
- * @param {{ fast?: boolean, instant?: boolean }} [opts]
- *   fast/instant：跳過詞典 API，直接播線上自然音（跟手）；失敗才系統語音
+ * @param {{ fast?: boolean, instant?: boolean, lang?: 'en'|'zh' }} [opts]
+ *   fast/instant：跳過詞典 API，直接播線上自然音；lang=zh 先譯成中文再播
  * @returns {Promise<boolean>}
  */
 export async function speakEnglish(text, opts = {}) {
@@ -400,34 +460,37 @@ export async function speakEnglish(text, opts = {}) {
   if (!audioUnlocked) unlockSpeechFromGesture();
   else primeSpeech();
 
+  const lang = opts.lang === "zh" ? "zh" : "en";
+  let speakText = w;
+  if (lang === "zh") {
+    speakText = (await translateEnToZh(w)) || w;
+  }
+
   const wantFast = opts.fast || opts.instant;
   if (wantFast) {
-    // 勿 sharedAudio.load() 重設，以免剛解鎖又被清掉
     window.speechSynthesis?.cancel();
     try {
       sharedAudio?.pause();
     } catch (_) {}
-    const onlineOk = await speakWithOnlineTts(w);
+    const onlineOk = await speakWithOnlineTts(speakText, lang);
     if (onlineOk) return true;
-    return speakWithSynth(w);
+    return speakWithSynth(speakText, lang);
   }
 
-  // 1) 單字詞典真人錄音（有則最自然）
-  const dictOk = await speakWithDictionary(w);
-  if (dictOk) return true;
+  if (lang === "en") {
+    const dictOk = await speakWithDictionary(w);
+    if (dictOk) return true;
+  }
 
-  // 2) 線上 TTS
-  const onlineOk = await speakWithOnlineTts(w);
+  const onlineOk = await speakWithOnlineTts(speakText, lang);
   if (onlineOk) return true;
 
-  // 3) 詞組拆字播詞典
-  if (/\s/.test(w)) {
+  if (lang === "en" && /\s/.test(w)) {
     const phraseOk = await speakPhraseWithDictionary(w);
     if (phraseOk) return true;
   }
 
-  // 4) 系統語音（備援）
-  return speakWithSynth(w);
+  return speakWithSynth(speakText, lang);
 }
 
 /** 預載發音（分段暖機 Google TTS），縮短第一次點播放等待 */

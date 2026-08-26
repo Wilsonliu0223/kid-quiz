@@ -6002,6 +6002,91 @@ body.sudoku-dragging .sudoku-cell-movable {
 body.en-gloss-open #view-en-daily-read.view-active {
   padding-bottom: min(52vh, 420px);
 }
+body.en-playing #view-en-daily-read.view-active {
+  padding-bottom: 64px;
+}
+body.en-playing.en-gloss-open #view-en-daily-read.view-active {
+  padding-bottom: calc(min(52vh, 420px) + 56px);
+}
+body.en-playing #en-gloss-panel {
+  bottom: 56px;
+}
+.en-play-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: #1a2a4a;
+  color: #fff;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.18);
+}
+.en-play-stop {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #ff6b4a;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.en-play-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+}
+.en-play-eq i {
+  display: block;
+  width: 3px;
+  height: 6px;
+  border-radius: 1px;
+  background: #7eb6ff;
+  animation: en-play-eq 0.7s ease-in-out infinite;
+}
+.en-play-eq i:nth-child(2) { animation-delay: 0.1s; height: 12px; }
+.en-play-eq i:nth-child(3) { animation-delay: 0.2s; height: 16px; }
+.en-play-eq i:nth-child(4) { animation-delay: 0.3s; height: 9px; }
+@keyframes en-play-eq {
+  0%, 100% { transform: scaleY(0.45); opacity: 0.7; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+.en-play-status {
+  flex: 1 1 auto;
+  font-size: 0.92rem;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.en-play-lang {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.en-play-lang-btn {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #dce8ff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.en-play-lang-btn.is-active {
+  background: #ff8a3d;
+  border-color: #ff8a3d;
+  color: #fff;
+}
 .en-gloss-toolbar {
   display: flex;
   justify-content: space-between;

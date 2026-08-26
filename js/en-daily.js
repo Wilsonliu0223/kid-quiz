@@ -2,7 +2,7 @@
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
 import { loadEnArticles } from "./sheets.js";
-import { speakEnglish, unlockSpeechFromGesture, prefetchEnglishAudio } from "./english.js?v=en-speak-v3";
+import { speakEnglish, unlockSpeechFromGesture, prefetchEnglishAudio, stopSpeaking } from "./english.js?v=en-speak-v4";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -25,6 +25,14 @@ let quizQs = [];
 let quizIndex = 0;
 let quizCorrect = 0;
 
+/** @type {'en'|'zh'} */
+let playLang = /** @type {'en'|'zh'} */ (
+  localStorage.getItem("kid-quiz-en-play-lang") === "zh" ? "zh" : "en"
+);
+/** @type {string} */
+let playSourceText = "";
+let playSeq = 0;
+
 const CAT_LABEL = {
   sport: "運動",
   world: "國際",
@@ -34,6 +42,67 @@ const CAT_LABEL = {
 };
 
 const $ = (sel) => document.querySelector(sel);
+
+function syncPlayLangBtns() {
+  document.querySelectorAll("[data-en-play-lang]").forEach((btn) => {
+    btn.classList.toggle(
+      "is-active",
+      btn.getAttribute("data-en-play-lang") === playLang
+    );
+  });
+}
+
+function showPlayBar(status) {
+  const bar = $("#en-play-bar");
+  if (!bar) return;
+  bar.hidden = false;
+  document.body.classList.add("en-playing");
+  const st = $("#en-play-status");
+  if (st) st.textContent = status;
+  syncPlayLangBtns();
+}
+
+function hidePlayBar() {
+  const bar = $("#en-play-bar");
+  if (bar) bar.hidden = true;
+  document.body.classList.remove("en-playing");
+}
+
+function stopPlayBar() {
+  playSeq += 1;
+  stopSpeaking();
+  hidePlayBar();
+  playSourceText = "";
+}
+
+/**
+ * 帶播放條的朗讀（英文／中文可切）
+ * @param {string} text
+ * @param {{ label?: string }} [opts]
+ */
+async function playWithBar(text, opts = {}) {
+  const raw = String(text || "").trim();
+  if (!raw) return;
+  playSourceText = raw;
+  const seq = ++playSeq;
+  unlockSpeechFromGesture();
+  showPlayBar(playLang === "zh" ? "翻譯中…" : "準備播放…");
+  const label = opts.label || (playLang === "zh" ? "中文播放中" : "英文播放中");
+  // 先顯示「播放中」讓使用者知道已點到
+  requestAnimationFrame(() => {
+    if (seq === playSeq) showPlayBar(label);
+  });
+  const ok = await speakEnglish(raw, { fast: true, lang: playLang });
+  if (seq !== playSeq) return;
+  if (!ok) {
+    showPlayBar("播放失敗，再點一次");
+    setTimeout(() => {
+      if (seq === playSeq) hidePlayBar();
+    }, 1600);
+    return;
+  }
+  hidePlayBar();
+}
 
 function todayIso() {
   const d = new Date();
@@ -142,28 +211,51 @@ function bindUi() {
     });
   });
 
-  $("#btn-en-daily-read-back")?.addEventListener("click", () => openDailyList());
-  $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
-    unlockSpeechFromGesture();
-    if (!current) return;
-    await speakEnglish(bodyForLevel(current), { fast: true });
+  $("#btn-en-daily-read-back")?.addEventListener("click", () => {
+    stopPlayBar();
+    openDailyList();
   });
-  $("#btn-en-daily-done")?.addEventListener("click", () => startMiniQuiz());
-  $("#btn-en-daily-next")?.addEventListener("click", () => openNextArticle());
+  $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
+    if (!current) return;
+    await playWithBar(bodyForLevel(current), { label: "全文播放中" });
+  });
+  $("#btn-en-daily-done")?.addEventListener("click", () => {
+    stopPlayBar();
+    startMiniQuiz();
+  });
+  $("#btn-en-daily-next")?.addEventListener("click", () => {
+    stopPlayBar();
+    openNextArticle();
+  });
 
   $("#btn-en-gloss-close")?.addEventListener("click", () => hideGloss());
   $("#btn-en-gloss-back")?.addEventListener("click", () => popGloss());
   $("#btn-en-gloss-speak")?.addEventListener("click", async () => {
-    unlockSpeechFromGesture();
     const w = $("#en-gloss-word")?.textContent;
-    if (w) await speakEnglish(w, { fast: true });
+    if (w) await playWithBar(w, { label: "單字播放中" });
   });
   $("#btn-en-gloss-example-speak")?.addEventListener("click", async () => {
-    unlockSpeechFromGesture();
     const ex = $("#en-gloss-example")?.textContent;
-    if (ex) await speakEnglish(ex, { fast: true });
+    if (ex) await playWithBar(ex, { label: "例句播放中" });
   });
   $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
+
+  $("#btn-en-play-stop")?.addEventListener("click", () => stopPlayBar());
+  document.querySelectorAll("[data-en-play-lang]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const lang = btn.getAttribute("data-en-play-lang");
+      if (lang !== "en" && lang !== "zh") return;
+      playLang = lang;
+      localStorage.setItem("kid-quiz-en-play-lang", playLang);
+      syncPlayLangBtns();
+      unlockSpeechFromGesture();
+      if (playSourceText) {
+        await playWithBar(playSourceText, {
+          label: playLang === "zh" ? "中文播放中" : "英文播放中",
+        });
+      }
+    });
+  });
 
   $("#btn-en-review-back")?.addEventListener("click", () => openEnHub());
   $("#btn-en-review-clear")?.addEventListener("click", () => {
@@ -238,6 +330,7 @@ function syncLevelChips() {
 }
 
 function openReader(id) {
+  stopPlayBar();
   current = articles.find((a) => a.id === id) || null;
   if (!current) {
     deps?.showWarn?.("找不到文章", "請重新載入列表。");
@@ -375,7 +468,7 @@ function showGloss(entry) {
   const exSpeak = $("#btn-en-gloss-example-speak");
   if (exSpeak) exSpeak.hidden = !entry.example;
   if (back) back.hidden = glossStack.length <= 1;
-  speakEnglish(entry.word, { fast: true });
+  playWithBar(entry.word, { label: "單字播放中" });
 }
 
 function hideGloss() {
@@ -445,8 +538,7 @@ function renderReviewList() {
     speakBtn.className = "btn btn-secondary";
     speakBtn.textContent = "朗讀";
     speakBtn.addEventListener("click", async () => {
-      unlockSpeechFromGesture();
-      await speakEnglish(item.word, { fast: true });
+      await playWithBar(item.word, { label: "單字播放中" });
     });
     const delBtn = document.createElement("button");
     delBtn.type = "button";
