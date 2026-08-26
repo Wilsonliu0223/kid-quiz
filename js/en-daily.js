@@ -78,11 +78,14 @@ function syncPlaySpeedBtns() {
 
 function syncPlayBarHeight() {
   const bar = $("#en-play-bar");
-  const h = bar && !bar.hidden ? Math.ceil(bar.getBoundingClientRect().height) : 0;
-  document.documentElement.style.setProperty(
-    "--en-play-bar-h",
-    `${Math.max(h, 0)}px`
-  );
+  if (!bar || bar.hidden) {
+    document.documentElement.style.setProperty("--en-play-bar-h", "0px");
+    return;
+  }
+  // 強制 reflow，避免第一次量到 0
+  void bar.offsetHeight;
+  const h = Math.ceil(bar.getBoundingClientRect().height) || 56;
+  document.documentElement.style.setProperty("--en-play-bar-h", `${h}px`);
 }
 
 function showPlayBar(status) {
@@ -94,7 +97,7 @@ function showPlayBar(status) {
   if (st) st.textContent = status;
   syncPlayLangBtns();
   syncPlaySpeedBtns();
-  requestAnimationFrame(() => syncPlayBarHeight());
+  syncPlayBarHeight();
 }
 
 function hidePlayBar() {
@@ -686,8 +689,17 @@ function popGloss() {
 function showGloss(entry, opts = {}) {
   const panel = $("#en-gloss-panel");
   if (!panel) return;
-  panel.hidden = false;
+  const willSpeak = opts.speak !== false;
+
+  // 先開 gloss class + 播放列並量高度，字卡一出現就已在播放列上方（避免先貼底再跳高）
   document.body.classList.add("en-gloss-open");
+  if (willSpeak) {
+    showPlayBar("單字播放中");
+    syncPlayBarHeight();
+  }
+
+  panel.hidden = false;
+  panel.scrollTop = 0;
   const w = $("#en-gloss-word");
   const ph = $("#en-gloss-phonetic");
   const g = $("#en-gloss-text");
@@ -712,14 +724,11 @@ function showGloss(entry, opts = {}) {
   const exSpeak = $("#btn-en-gloss-example-speak");
   if (exSpeak) exSpeak.hidden = !hasEx;
   if (back) back.hidden = glossStack.length <= 1;
-  requestAnimationFrame(() => {
-    syncPlayBarHeight();
-    panel.scrollTop = 0;
-  });
-  if (opts.speak !== false) {
-    playWithBar(entry.word, { label: "單字播放中" });
+
+  if (willSpeak) {
+    void playWithBar(entry.word, { label: "單字播放中" });
   } else {
-    requestAnimationFrame(() => syncPlayBarHeight());
+    syncPlayBarHeight();
   }
 }
 
@@ -728,7 +737,7 @@ function hideGloss() {
   if (panel) panel.hidden = true;
   document.body.classList.remove("en-gloss-open");
   glossStack = [];
-  requestAnimationFrame(() => syncPlayBarHeight());
+  syncPlayBarHeight();
 }
 
 function addCurrentGlossToReview() {

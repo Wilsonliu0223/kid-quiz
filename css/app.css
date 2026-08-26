@@ -6044,11 +6044,14 @@ body.en-playing #view-en-daily-read.view-active {
 body.en-playing.en-gloss-open #view-en-daily-read.view-active {
   padding-bottom: calc(min(56vh, 440px) + var(--en-play-bar-h, 96px) + 12px);
 }
-/* 查字卡疊在播放列上方，高度用實測 --en-play-bar-h */
+/* 查字卡疊在播放列上方；未量到前也先用 56px，避免貼底再跳 */
 body.en-playing #en-gloss-panel {
-  bottom: var(--en-play-bar-h, 96px);
+  bottom: var(--en-play-bar-h, 56px);
   max-height: min(48vh, 380px);
   padding-bottom: 16px;
+}
+body.en-gloss-open.en-playing #en-gloss-panel {
+  bottom: var(--en-play-bar-h, 56px);
 }
 .en-play-bar {
   position: fixed;
