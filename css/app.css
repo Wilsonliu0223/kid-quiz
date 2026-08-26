@@ -6174,6 +6174,21 @@ body.en-gloss-open .en-play-lang-btn {
   border-color: #ff8a3d;
   color: #fff;
 }
+.en-play-speak-all {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 138, 61, 0.2);
+  color: #ffd2a8;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.en-play-speak-all:active {
+  background: #ff8a3d;
+  color: #fff;
+}
 .en-sent {
   border-radius: 4px;
   transition: background 0.15s ease, box-shadow 0.15s ease;

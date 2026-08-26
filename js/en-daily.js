@@ -594,6 +594,10 @@ function renderReader() {
   for (const v of current.vocab || []) {
     if (v.word) prefetchEnglishAudio(v.word);
   }
+  // 閱讀頁常駐底部播放列，🔊 在「中文」右邊可點全文
+  const bar = $("#en-play-bar");
+  if (bar?.hidden) showPlayBar("點 🔊 播全文");
+  else syncDockVisibility();
 }
 
 function escapeHtml(s) {
