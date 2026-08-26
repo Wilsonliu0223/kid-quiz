@@ -6,3 +6,8 @@ Thumbs.db
 js/config.js
 node_modules/
 js/vendor/
+
+# 本機機密（英文文章寫入 token 等）
+.local/*
+!.local/*.example
+!.local/.gitkeep

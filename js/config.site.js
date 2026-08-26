@@ -17,6 +17,8 @@ export const CONFIG = {
     "https://script.google.com/macros/s/AKfycbxo0gTXgN_WEaZjhfgPpvMMG5sONKYAkqJCkVN_JLoZ1iq_eBVmD7cwYXRlHPqn_bkRiw/exec",
   SHEET_ZH: "國語",
   SHEET_EN: "英語",
+  /** 每日實事英文短文（讀取用；寫入見 docs/英文文章寫入試算表.md） */
+  SHEET_EN_ARTICLE: "英文文章",
   QUIZ_TYPES: ["生字"],
   QUIZ_TYPES_ZH: ["生字"],
   QUIZ_TYPES_EN: ["單字"],
