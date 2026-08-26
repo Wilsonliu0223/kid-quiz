@@ -8,7 +8,6 @@ import {
   prefetchEnglishAudio,
   stopSpeaking,
   setSpeakingSpeed,
-  getSpeakingSpeed,
 } from "./english.js?v=en-speak-v8";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
