@@ -7,7 +7,7 @@ import {
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
   stopSpeaking,
-} from "./english.js?v=en-speak-v6";
+} from "./english.js?v=en-speak-v7";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 

@@ -113,18 +113,33 @@ function playAudioUrl(url, opts = {}) {
       audio.onended = null;
       audio.onerror = null;
       audio.onplaying = null;
+
+      // 中文 Zhiyu 偏尖：關閉保持音高，略降速＝降音高，較不刺耳
+      const soften = Boolean(opts.soften);
+      const rate = Number(opts.playbackRate) || (soften ? 0.86 : 1);
+      try {
+        audio.preservesPitch = !soften;
+        if ("mozPreservesPitch" in audio) audio.mozPreservesPitch = !soften;
+        if ("webkitPreservesPitch" in audio) audio.webkitPreservesPitch = !soften;
+      } catch (_) {}
+      audio.playbackRate = rate;
+
       let settled = false;
       let started = false;
       const done = (ok) => {
         if (settled) return;
         settled = true;
         clearTimeout(startTimer);
+        try {
+          audio.playbackRate = 1;
+          audio.preservesPitch = true;
+        } catch (_) {}
         resolve(ok);
       };
-      // 逾時仍未開始播放 → 失敗換下一個來源
+      // 降速後音檔較長，開始逾時略放寬
       const startTimer = setTimeout(() => {
         if (!started) done(false);
-      }, opts.startTimeoutMs ?? 2800);
+      }, opts.startTimeoutMs ?? (soften ? 4000 : 2800));
       audio.onplaying = () => {
         started = true;
         clearTimeout(startTimer);
@@ -409,13 +424,20 @@ async function resolveZhNeuralUrl(chunk) {
 
 async function playOnlineChunk(chunk, lang = "en") {
   if (lang === "zh") {
-    // 1) Polly 神經網路（Apps Script 代理）→ 2) Google Speech → 3) 舊備援
+    // 中文一律 soften：Zhiyu 女聲偏尖，降音高後較耐聽
+    const soft = { soften: true, playbackRate: 0.86 };
     const neural = await resolveZhNeuralUrl(chunk);
-    if (neural && (await playAudioUrl(neural, { startTimeoutMs: 5000 }))) {
+    if (
+      neural &&
+      (await playAudioUrl(neural, { ...soft, startTimeoutMs: 5000 }))
+    ) {
       return true;
     }
     const gSpeech = googleSpeechZhUrl(chunk);
-    if (gSpeech && (await playAudioUrl(gSpeech, { startTimeoutMs: 3500 }))) {
+    if (
+      gSpeech &&
+      (await playAudioUrl(gSpeech, { ...soft, startTimeoutMs: 3500 }))
+    ) {
       return true;
     }
     const urls = [
@@ -425,7 +447,9 @@ async function playOnlineChunk(chunk, lang = "en") {
       googleTtsUrl(chunk, "zh-TW"),
     ];
     for (const url of urls) {
-      if (url && (await playAudioUrl(url, { startTimeoutMs: 3200 }))) return true;
+      if (url && (await playAudioUrl(url, { ...soft, startTimeoutMs: 3200 }))) {
+        return true;
+      }
     }
     return false;
   }
@@ -503,10 +527,18 @@ function speakWithSynth(text, lang = "en") {
           if (voice) u.voice = voice;
         } else {
           const voices = window.speechSynthesis.getVoices() || [];
+          // 優先較不尖的男聲／雲希系
           const zh =
-            voices.find((v) => /zh-TW|zh-HK/i.test(v.lang)) ||
+            voices.find((v) =>
+              /yunxi|yunjian|yunye|yunjie|kangkang|male|男/i.test(
+                `${v.name} ${v.voiceURI}`
+              )
+            ) ||
+            voices.find((v) => /zh-TW|zh-HK|zh-CN/i.test(v.lang)) ||
             voices.find((v) => /^zh/i.test(v.lang));
           if (zh) u.voice = zh;
+          u.rate = 0.9;
+          u.pitch = 0.85;
         }
 
         let settled = false;
