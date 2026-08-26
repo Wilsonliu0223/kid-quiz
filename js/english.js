@@ -266,7 +266,8 @@ function speakWithSynth(text) {
 
         const u = new SpeechSynthesisUtterance(text);
         u.lang = "en-US";
-        u.rate = 0.82;
+        // 短字稍快、長文稍慢
+        u.rate = String(text).trim().split(/\s+/).length <= 3 ? 0.95 : 0.88;
         u.pitch = 1;
         u.volume = 1;
         const voice = pickEnglishVoice();
@@ -310,24 +311,32 @@ function speakWithSynth(text) {
       start();
     };
     window.speechSynthesis.addEventListener("voiceschanged", onVoices);
+    // 不等太久：多數裝置可直接用 lang 開播
     setTimeout(() => {
       window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
       start();
-    }, 400);
+    }, 80);
   });
 }
 
 /**
  * 播放英文：詞典真人 → 線上自然 TTS → 詞組逐字詞典 → 系統語音（最後手段）
  * 點擊時請先呼叫 unlockSpeechFromGesture()
+ * @param {string} text
+ * @param {{ instant?: boolean }} [opts] instant=true 跳過網路，立刻系統語音（點字／按鈕較跟手）
  * @returns {Promise<boolean>}
  */
-export async function speakEnglish(text) {
+export async function speakEnglish(text, opts = {}) {
   const w = String(text || "").trim();
   if (!w) return false;
 
   if (!audioUnlocked) unlockSpeechFromGesture();
   else primeSpeech();
+
+  if (opts.instant) {
+    stopAudio();
+    return speakWithSynth(w);
+  }
 
   // 1) 單字詞典真人錄音（有則最自然）
   const dictOk = await speakWithDictionary(w);

@@ -2,7 +2,7 @@
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
 import { loadEnArticles } from "./sheets.js";
-import { speakEnglish, unlockSpeechFromGesture } from "./english.js";
+import { speakEnglish, unlockSpeechFromGesture } from "./english.js?v=en-speak-v2";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -146,7 +146,7 @@ function bindUi() {
   $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
     unlockSpeechFromGesture();
     if (!current) return;
-    await speakEnglish(bodyForLevel(current));
+    await speakEnglish(bodyForLevel(current), { instant: true });
   });
   $("#btn-en-daily-done")?.addEventListener("click", () => startMiniQuiz());
   $("#btn-en-daily-next")?.addEventListener("click", () => openNextArticle());
@@ -156,12 +156,12 @@ function bindUi() {
   $("#btn-en-gloss-speak")?.addEventListener("click", async () => {
     unlockSpeechFromGesture();
     const w = $("#en-gloss-word")?.textContent;
-    if (w) await speakEnglish(w);
+    if (w) await speakEnglish(w, { instant: true });
   });
   $("#btn-en-gloss-example-speak")?.addEventListener("click", async () => {
     unlockSpeechFromGesture();
     const ex = $("#en-gloss-example")?.textContent;
-    if (ex) await speakEnglish(ex);
+    if (ex) await speakEnglish(ex, { instant: true });
   });
   $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
 
@@ -368,7 +368,7 @@ function showGloss(entry) {
   const exSpeak = $("#btn-en-gloss-example-speak");
   if (exSpeak) exSpeak.hidden = !entry.example;
   if (back) back.hidden = glossStack.length <= 1;
-  speakEnglish(entry.word);
+  speakEnglish(entry.word, { instant: true });
 }
 
 function hideGloss() {
@@ -439,7 +439,7 @@ function renderReviewList() {
     speakBtn.textContent = "朗讀";
     speakBtn.addEventListener("click", async () => {
       unlockSpeechFromGesture();
-      await speakEnglish(item.word);
+      await speakEnglish(item.word, { instant: true });
     });
     const delBtn = document.createElement("button");
     delBtn.type = "button";
