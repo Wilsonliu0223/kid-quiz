@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.3";
+import { CONFIG } from "./config.site.js?v=config-v45.4";
 import {
   loadZhItems,
   loadEnItems,
@@ -22,7 +22,7 @@ import {
   primeSpeech,
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
-} from "./english.js?v=en-speak-v15";
+} from "./english.js?v=en-speak-v16";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
   buildHomophoneChoices,
@@ -95,7 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
-import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v19";
+import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v20";
 import {
   addMistake,
   removeMistake,
@@ -1101,7 +1101,7 @@ async function playEnglishAudio() {
     btn.textContent = "播放中…";
   }
 
-  const ok = await speakEnglish(q.english);
+  const ok = await speakEnglish(q.english, { fast: true, speed: 1 });
 
   if (btn) {
     btn.disabled = false;

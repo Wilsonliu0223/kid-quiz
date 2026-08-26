@@ -1,7 +1,7 @@
 /** GitHub Pages 用設定（會提交到倉庫） */
 export const CONFIG = {
   /** 首頁標題旁小字版本（每次推送更新請遞增，例：34.0 → 34.1） */
-  APP_VERSION: "45.3",
+  APP_VERSION: "45.4",
 
   /**
    * 涅槃 Rapfi 完整 NNUE 權重（約 40 MB）公開下載網址。
@@ -27,6 +27,8 @@ export const CONFIG = {
   EDGE_TTS_URL: "https://tts.wangwangit.com/v1/audio/speech",
   /** zh-CN-YunxiNeural 雲希｜zh-TW-HsiaoChenNeural 曉臻｜zh-CN-YunyangNeural 雲揚 */
   ZH_TTS_VOICE: "zh-CN-YunxiNeural",
+  /** 英文神經音：en-US-JennyNeural｜en-US-GuyNeural｜en-GB-SoniaNeural */
+  EN_TTS_VOICE: "en-US-JennyNeural",
 
   QUIZ_TYPES: ["生字"],
   QUIZ_TYPES_ZH: ["生字"],

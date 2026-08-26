@@ -12,7 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
-} from "./english.js?v=en-speak-v15";
+} from "./english.js?v=en-speak-v16";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -196,10 +196,10 @@ function minSpeakHoldMs(text, speed = 1) {
   if (!s) return 0;
   const spd = Math.max(0.5, Number(speed) || 1);
   if (/[\u4e00-\u9fff]/.test(s)) {
-    return Math.ceil((s.length * 160) / spd);
+    return Math.ceil((s.length * 140) / spd);
   }
   const words = s.split(/\s+/).filter(Boolean).length;
-  return Math.ceil((Math.max(words, 1) * 320) / spd);
+  return Math.ceil((Math.max(words, 1) * 280) / spd);
 }
 
 function sleepMs(ms) {
@@ -247,11 +247,14 @@ async function playWithBar(text, opts = {}) {
       speed: playSpeed,
     });
     if (seq !== playSeq) return;
-    // 音檔若提早 ended，仍等到「合理念完時間」再切下一句／反亮
-    if (playFollowSentences) {
+    // 只有音檔明顯提早結束（疑似截斷）才補一點等待，避免整篇聽起來拖很慢
+    if (playFollowSentences && ok) {
       const hold = minSpeakHoldMs(sentences[i], playSpeed);
-      const wait = hold - (Date.now() - t0);
-      if (wait > 80) await sleepMs(wait);
+      const elapsed = Date.now() - t0;
+      if (elapsed < hold * 0.4) {
+        const wait = hold * 0.5 - elapsed;
+        if (wait > 100) await sleepMs(wait);
+      }
       if (seq !== playSeq) return;
     }
     if (ok) {
@@ -263,6 +266,10 @@ async function playWithBar(text, opts = {}) {
         else if (eng.startsWith("script")) tip = "伺服器語音";
         else if (eng === "zhiyu") tip = "舊女聲(備援)";
         else tip = "⚠備援機械音";
+      } else if (eng.startsWith("edge")) {
+        tip = "✓英文神經音";
+      } else if (eng === "en-synth" || eng === "synth") {
+        tip = "⚠備援機械音";
       }
       showPlayBar(
         tip

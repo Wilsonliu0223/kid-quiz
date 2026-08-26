@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.3";
+import { CONFIG } from "./config.site.js?v=config-v45.4";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -798,7 +798,7 @@ function googleSpeechZhUrl(text) {
   return `https://www.google.com/speech-api/v1/synthesize?enc=mpeg&lang=zh-cn&speed=0.42&client=lr-language-tts&use_google_only_voices=1&text=${q}`;
 }
 
-const edgeZhBlobCache = new Map();
+const edgeSpeechCache = new Map();
 const zhNeuralUrlCache = new Map();
 /** @type {string} 最近一次實際用到的引擎（給播放條提示） */
 let lastSpeakEngine = "";
@@ -821,6 +821,20 @@ function zhVoiceCandidates() {
   return [...new Set(list.filter(Boolean))];
 }
 
+function enVoiceCandidates() {
+  const preferred = String(
+    CONFIG.EN_TTS_VOICE || "en-US-JennyNeural"
+  ).trim();
+  const list = [
+    preferred,
+    "en-US-JennyNeural",
+    "en-US-GuyNeural",
+    "en-US-AriaNeural",
+    "en-GB-SoniaNeural",
+  ];
+  return [...new Set(list.filter(Boolean))];
+}
+
 function edgeTtsEndpoint() {
   // 硬編碼備援：避免舊版 config.site.js 快取沒有 EDGE_TTS_URL 時整段跳過
   return String(
@@ -832,7 +846,7 @@ function edgeTtsEndpoint() {
  * Microsoft Edge 神經語音（經公開代理；CORS *）
  * 手機改用 data: URL，避免 blob: 在 iOS 不播而掉進機械音
  */
-async function resolveEdgeZhBlobUrl(chunk) {
+async function resolveEdgeSpeechUrl(chunk, voices) {
   const text = String(chunk || "")
     .trim()
     .slice(0, 280);
@@ -840,12 +854,14 @@ async function resolveEdgeZhBlobUrl(chunk) {
 
   const endpoint = edgeTtsEndpoint();
   if (!endpoint) return "";
+  const voiceList = (voices || []).filter(Boolean);
+  if (!voiceList.length) return "";
 
-  for (const voice of zhVoiceCandidates()) {
+  for (const voice of voiceList) {
     const cacheKey = `${voice}::${text}`;
-    if (edgeZhBlobCache.has(cacheKey)) {
+    if (edgeSpeechCache.has(cacheKey)) {
       lastSpeakEngine = `edge:${voice}`;
-      return edgeZhBlobCache.get(cacheKey);
+      return edgeSpeechCache.get(cacheKey);
     }
     try {
       const res = await fetch(endpoint, {
@@ -869,7 +885,7 @@ async function resolveEdgeZhBlobUrl(chunk) {
         continue;
       }
       const url = `data:audio/mpeg;base64,${arrayBufferToBase64(buf)}`;
-      edgeZhBlobCache.set(cacheKey, url);
+      edgeSpeechCache.set(cacheKey, url);
       lastSpeakEngine = `edge:${voice}`;
       return url;
     } catch (e) {
@@ -877,6 +893,14 @@ async function resolveEdgeZhBlobUrl(chunk) {
     }
   }
   return "";
+}
+
+async function resolveEdgeZhBlobUrl(chunk) {
+  return resolveEdgeSpeechUrl(chunk, zhVoiceCandidates());
+}
+
+async function resolveEdgeEnBlobUrl(chunk) {
+  return resolveEdgeSpeechUrl(chunk, enVoiceCandidates());
 }
 
 /** 預熱中文神經語音（進閱讀頁／點中文前呼叫，縮短手機等待） */
@@ -987,19 +1011,33 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1) {
   }
 
   lastSpeakEngine = "en-online";
-  const g = googleTtsUrl(chunk, "en");
-  if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 2500 }))) return true;
+  // 英文也優先 Edge 神經音（手機 Google TTS 常失敗 → 機械合成）
+  const edgeEn = await resolveEdgeEnBlobUrl(chunk);
+  if (
+    edgeEn &&
+    (await playAudioUrl(edgeEn, { speed, soften: false, startTimeoutMs: 7000 }))
+  ) {
+    return true;
+  }
   const y = youdaoTtsUrl(chunk);
-  if (y && (await playAudioUrl(y, { speed, startTimeoutMs: 2500 }))) return true;
+  if (y && (await playAudioUrl(y, { speed, startTimeoutMs: 4000 }))) {
+    lastSpeakEngine = "en-youdao";
+    return true;
+  }
+  const g = googleTtsUrl(chunk, "en");
+  if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 4000 }))) {
+    lastSpeakEngine = "en-google";
+    return true;
+  }
   lastSpeakEngine = "en-synth";
   return false;
 }
 
 /** 線上自然音；長文分段連播 */
 async function speakWithOnlineTts(text, lang = "en", speed = 1) {
-  // 英文切段對齊 Google TTS 安全長度，避免單段音檔被截短
+  // Edge 可吃較長；Google 備援仍用短段
   const chunks =
-    lang === "zh" ? chunkZhForTts(text, 72) : chunkTextForTts(text, 100);
+    lang === "zh" ? chunkZhForTts(text, 72) : chunkTextForTts(text, 180);
   if (!chunks.length) return false;
   for (const chunk of chunks) {
     const ok = await playOnlineChunk(chunk, lang, speed);
@@ -1056,10 +1094,10 @@ function speakWithSynth(text, lang = "en", speed = 1) {
         u.lang = lang === "zh" ? "zh-TW" : "en-US";
         const baseRate =
           lang === "zh"
-            ? 0.9
+            ? 0.95
             : String(text).trim().split(/\s+/).length <= 3
-              ? 0.95
-              : 0.88;
+              ? 1
+              : 0.98;
         u.rate = Math.min(2, Math.max(0.5, baseRate * (Number(speed) || 1)));
         u.pitch = lang === "zh" ? 0.85 : 1;
         u.volume = 1;
