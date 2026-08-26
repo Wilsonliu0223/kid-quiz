@@ -2,7 +2,7 @@
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
 import { loadEnArticles } from "./sheets.js";
-import { speakEnglish, unlockSpeechFromGesture } from "./english.js?v=en-speak-v2";
+import { speakEnglish, unlockSpeechFromGesture, prefetchEnglishAudio } from "./english.js?v=en-speak-v3";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js";
 
@@ -146,7 +146,7 @@ function bindUi() {
   $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
     unlockSpeechFromGesture();
     if (!current) return;
-    await speakEnglish(bodyForLevel(current), { instant: true });
+    await speakEnglish(bodyForLevel(current), { fast: true });
   });
   $("#btn-en-daily-done")?.addEventListener("click", () => startMiniQuiz());
   $("#btn-en-daily-next")?.addEventListener("click", () => openNextArticle());
@@ -156,12 +156,12 @@ function bindUi() {
   $("#btn-en-gloss-speak")?.addEventListener("click", async () => {
     unlockSpeechFromGesture();
     const w = $("#en-gloss-word")?.textContent;
-    if (w) await speakEnglish(w, { instant: true });
+    if (w) await speakEnglish(w, { fast: true });
   });
   $("#btn-en-gloss-example-speak")?.addEventListener("click", async () => {
     unlockSpeechFromGesture();
     const ex = $("#en-gloss-example")?.textContent;
-    if (ex) await speakEnglish(ex, { instant: true });
+    if (ex) await speakEnglish(ex, { fast: true });
   });
   $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
 
@@ -272,6 +272,13 @@ function renderReader() {
   bindWordClicks(titleEl);
   bindWordClicks(bodyEl);
   renderReviewStrip();
+  // 進閱讀頁就暖機發音，點 🔊／單字較快出聲
+  const body = bodyForLevel(current);
+  prefetchEnglishAudio(current.title);
+  prefetchEnglishAudio(body);
+  for (const v of current.vocab || []) {
+    if (v.word) prefetchEnglishAudio(v.word);
+  }
 }
 
 function escapeHtml(s) {
@@ -368,7 +375,7 @@ function showGloss(entry) {
   const exSpeak = $("#btn-en-gloss-example-speak");
   if (exSpeak) exSpeak.hidden = !entry.example;
   if (back) back.hidden = glossStack.length <= 1;
-  speakEnglish(entry.word, { instant: true });
+  speakEnglish(entry.word, { fast: true });
 }
 
 function hideGloss() {
@@ -439,7 +446,7 @@ function renderReviewList() {
     speakBtn.textContent = "朗讀";
     speakBtn.addEventListener("click", async () => {
       unlockSpeechFromGesture();
-      await speakEnglish(item.word, { instant: true });
+      await speakEnglish(item.word, { fast: true });
     });
     const delBtn = document.createElement("button");
     delBtn.type = "button";

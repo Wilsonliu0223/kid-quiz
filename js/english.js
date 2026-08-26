@@ -58,12 +58,6 @@ export function unlockSpeechFromGesture() {
   try {
     window.speechSynthesis?.resume();
     window.speechSynthesis?.getVoices();
-    // 靜音短句：讓後續 await 之後的 speak 仍可用
-    const warm = new SpeechSynthesisUtterance(" ");
-    warm.volume = 0;
-    warm.rate = 5;
-    warm.lang = "en-US";
-    window.speechSynthesis?.speak(warm);
   } catch (e) {
     console.warn("unlock speechSynthesis", e);
   }
@@ -71,29 +65,39 @@ export function unlockSpeechFromGesture() {
   try {
     const audio = ensureSharedAudio();
     audio.muted = true;
-    // 極短無聲 wav，在手勢內 play 以解鎖後續 MP3
-    audio.src =
+    const unlockSrc =
       "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+    // 手勢當下即視為已解鎖，避免等 Promise 才標記
+    audioUnlocked = true;
+    // 若正在播真正內容就不要打斷
+    if (!audio.paused && audio.src && !audio.src.startsWith("data:")) {
+      audio.muted = false;
+      return;
+    }
+    audio.src = unlockSrc;
     const p = audio.play();
     if (p && typeof p.then === "function") {
       p.then(() => {
-        audio.pause();
+        // 勿 pause：可能已換成 Google TTS，pause 會把剛開始的朗讀掐掉
+        if (audio.src.startsWith("data:")) {
+          try {
+            audio.pause();
+          } catch (_) {}
+        }
         audio.muted = false;
-        audioUnlocked = true;
       }).catch(() => {
         audio.muted = false;
-        audioUnlocked = true;
       });
     } else {
       audio.muted = false;
-      audioUnlocked = true;
     }
   } catch (e) {
     console.warn("unlock Audio", e);
+    audioUnlocked = true;
   }
 }
 
-function playAudioUrl(url) {
+function playAudioUrl(url, opts = {}) {
   return new Promise((resolve) => {
     const src = normalizeAudioUrl(url);
     if (!src) {
@@ -106,11 +110,22 @@ function playAudioUrl(url) {
       audio.muted = false;
       audio.onended = null;
       audio.onerror = null;
+      audio.onplaying = null;
       let settled = false;
+      let started = false;
       const done = (ok) => {
         if (settled) return;
         settled = true;
+        clearTimeout(startTimer);
         resolve(ok);
+      };
+      // 逾時仍未開始播放 → 失敗換下一個來源
+      const startTimer = setTimeout(() => {
+        if (!started) done(false);
+      }, opts.startTimeoutMs ?? 2800);
+      audio.onplaying = () => {
+        started = true;
+        clearTimeout(startTimer);
       };
       audio.onended = () => done(true);
       audio.onerror = () => done(false);
@@ -208,20 +223,71 @@ function googleTtsUrl(text) {
 
 /** 有道美式發音（常有真人感） */
 function youdaoTtsUrl(text) {
-  const q = encodeURIComponent(String(text || "").trim());
+  const q = encodeURIComponent(String(text || "").trim().slice(0, 600));
   if (!q) return "";
   return `https://dict.youdao.com/dictvoice?audio=${q}&type=2`;
 }
 
-async function speakWithOnlineTts(text) {
-  const w = String(text || "").trim();
-  if (!w) return false;
-  for (const url of [googleTtsUrl(w), youdaoTtsUrl(w)]) {
-    if (!url) continue;
-    const ok = await playAudioUrl(url);
-    if (ok) return true;
+/** 長文切段，避免 Google TTS 截斷 */
+function chunkTextForTts(text, maxLen = 160) {
+  const s = String(text || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (!s) return [];
+  if (s.length <= maxLen) return [s];
+
+  const parts = [];
+  let buf = "";
+  const pushBuf = () => {
+    if (buf) parts.push(buf);
+    buf = "";
+  };
+
+  for (const sentence of s.split(/(?<=[.!?])\s+/)) {
+    if (!sentence) continue;
+    if (sentence.length > maxLen) {
+      pushBuf();
+      const words = sentence.split(" ");
+      for (const word of words) {
+        const next = buf ? `${buf} ${word}` : word;
+        if (next.length > maxLen) {
+          pushBuf();
+          buf = word.slice(0, maxLen);
+        } else {
+          buf = next;
+        }
+      }
+      continue;
+    }
+    const next = buf ? `${buf} ${sentence}` : sentence;
+    if (next.length > maxLen) {
+      pushBuf();
+      buf = sentence;
+    } else {
+      buf = next;
+    }
   }
+  pushBuf();
+  return parts;
+}
+
+async function playOnlineChunk(chunk) {
+  const g = googleTtsUrl(chunk);
+  if (g && (await playAudioUrl(g, { startTimeoutMs: 2500 }))) return true;
+  const y = youdaoTtsUrl(chunk);
+  if (y && (await playAudioUrl(y, { startTimeoutMs: 2500 }))) return true;
   return false;
+}
+
+/** 線上自然音：Google → 有道；長文分段連播 */
+async function speakWithOnlineTts(text) {
+  const chunks = chunkTextForTts(text, 160);
+  if (!chunks.length) return false;
+  for (const chunk of chunks) {
+    const ok = await playOnlineChunk(chunk);
+    if (!ok) return false;
+  }
+  return true;
 }
 
 function pickEnglishVoice() {
@@ -320,10 +386,11 @@ function speakWithSynth(text) {
 }
 
 /**
- * 播放英文：詞典真人 → 線上自然 TTS → 詞組逐字詞典 → 系統語音（最後手段）
+ * 播放英文
  * 點擊時請先呼叫 unlockSpeechFromGesture()
  * @param {string} text
- * @param {{ instant?: boolean }} [opts] instant=true 跳過網路，立刻系統語音（點字／按鈕較跟手）
+ * @param {{ fast?: boolean, instant?: boolean }} [opts]
+ *   fast/instant：跳過詞典 API，直接播線上自然音（跟手）；失敗才系統語音
  * @returns {Promise<boolean>}
  */
 export async function speakEnglish(text, opts = {}) {
@@ -333,8 +400,15 @@ export async function speakEnglish(text, opts = {}) {
   if (!audioUnlocked) unlockSpeechFromGesture();
   else primeSpeech();
 
-  if (opts.instant) {
-    stopAudio();
+  const wantFast = opts.fast || opts.instant;
+  if (wantFast) {
+    // 勿 sharedAudio.load() 重設，以免剛解鎖又被清掉
+    window.speechSynthesis?.cancel();
+    try {
+      sharedAudio?.pause();
+    } catch (_) {}
+    const onlineOk = await speakWithOnlineTts(w);
+    if (onlineOk) return true;
     return speakWithSynth(w);
   }
 
@@ -342,7 +416,7 @@ export async function speakEnglish(text, opts = {}) {
   const dictOk = await speakWithDictionary(w);
   if (dictOk) return true;
 
-  // 2) 線上 TTS（詞組整句較連貫，也比手機機械音自然）
+  // 2) 線上 TTS
   const onlineOk = await speakWithOnlineTts(w);
   if (onlineOk) return true;
 
@@ -352,21 +426,26 @@ export async function speakEnglish(text, opts = {}) {
     if (phraseOk) return true;
   }
 
-  // 4) 系統語音（較機械，僅備援）
+  // 4) 系統語音（備援）
   return speakWithSynth(w);
 }
 
-/** 預載本題發音，縮短第一次點播放的等待 */
+/** 預載發音（分段暖機 Google TTS），縮短第一次點播放等待 */
 export function prefetchEnglishAudio(text) {
-  const w = String(text || "").trim();
-  if (!w) return;
-  void fetchDictionaryAudioUrl(w);
-  // 預熱線上 TTS：用 Image/Audio preload 不穩定，改靜默建立連結快取
-  try {
-    const a = new Audio();
-    a.preload = "auto";
-    a.src = googleTtsUrl(w);
-  } catch (_) {}
+  const chunks = chunkTextForTts(text, 160);
+  for (const c of chunks) {
+    try {
+      const a = new Audio();
+      a.preload = "auto";
+      a.src = googleTtsUrl(c);
+    } catch (_) {}
+    const key = String(c || "")
+      .trim()
+      .toLowerCase();
+    if (key && !/\s/.test(key) && key.length < 40) {
+      void fetchDictionaryAudioUrl(key);
+    }
+  }
 }
 
 if (typeof window !== "undefined" && window.speechSynthesis) {
