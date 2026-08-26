@@ -63,20 +63,37 @@ function getConfig() {
 }
 
 async function postJson(url, body) {
-  const res = await fetch(url, {
+  const payload = JSON.stringify(body);
+  const headers = { "Content-Type": "text/plain;charset=utf-8" };
+
+  // Apps Script：POST /exec → 302 → 必須用 GET 取回結果（再 POST 會 405）
+  const res1 = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(body),
-    redirect: "follow",
+    headers,
+    body: payload,
+    redirect: "manual",
   });
-  const text = await res.text();
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error(`非 JSON 回應 (${res.status}): ${text.slice(0, 300)}`);
+  if (!(res1.status >= 300 && res1.status < 400)) {
+    const textDirect = await res1.text();
+    try {
+      return JSON.parse(textDirect);
+    } catch {
+      throw new Error(
+        `非 JSON 回應 (${res1.status}): ${textDirect.slice(0, 300)}`
+      );
+    }
   }
-  return data;
+  const loc = res1.headers.get("location");
+  if (!loc) {
+    throw new Error(`轉向但沒有 Location（${res1.status}）`);
+  }
+  const res2 = await fetch(loc, { method: "GET", redirect: "follow" });
+  const text = await res2.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`非 JSON 回應 (${res2.status}): ${text.slice(0, 300)}`);
+  }
 }
 
 function parseArgs(argv) {

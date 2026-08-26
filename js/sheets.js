@@ -392,6 +392,20 @@ function parseQuizJson(raw) {
   return parseVocabJson(raw);
 }
 
+/** 從列中取出 quiz JSON（相容表頭錯位／空白欄） */
+function pickQuizRaw(row, idxQuiz, colCount) {
+  if (idxQuiz >= 0) {
+    const direct = gvizCell(row, idxQuiz);
+    if (String(direct || "").trim()) return direct;
+  }
+  const n = Math.max(colCount || 0, row?.c?.length || 0);
+  for (let i = 0; i < n; i++) {
+    const v = String(gvizCell(row, i) || "").trim();
+    if (v.startsWith("[{") && /"type"\s*:/.test(v)) return v;
+  }
+  return "";
+}
+
 /**
  * 讀取「英文文章」工作表。
  * @param {{ includeDraft?: boolean }} [opts] includeDraft 預設 true（方便草稿測試）
@@ -475,7 +489,9 @@ export async function loadEnArticles(opts = {}) {
         bodyL2: String(gvizCell(row, idx.bodyL2) || "").trim(),
         bodyL3: String(gvizCell(row, idx.bodyL3) || "").trim(),
         vocab: parseVocabJson(gvizCell(row, idx.vocab)),
-        quiz: idx.quiz >= 0 ? parseQuizJson(gvizCell(row, idx.quiz)) : [],
+        quiz: parseQuizJson(
+          pickQuizRaw(row, idx.quiz, (table.cols || []).length)
+        ),
         sourceTitle: String(gvizCell(row, idx.sourceTitle) || "").trim(),
         sourceUrl: String(gvizCell(row, idx.sourceUrl) || "").trim(),
         status,

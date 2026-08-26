@@ -1,7 +1,7 @@
 /**
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
-import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v1";
+import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v2";
 import {
   speakEnglish,
   unlockSpeechFromGesture,

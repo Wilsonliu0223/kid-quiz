@@ -1,7 +1,7 @@
 /** GitHub Pages 用設定（會提交到倉庫） */
 export const CONFIG = {
   /** 首頁標題旁小字版本（每次推送更新請遞增，例：34.0 → 34.1） */
-  APP_VERSION: "45.6",
+  APP_VERSION: "45.7",
 
   /**
    * 涅槃 Rapfi 完整 NNUE 權重（約 40 MB）公開下載網址。
@@ -12,9 +12,9 @@ export const CONFIG = {
   SPREADSHEET_ID: "1CIkz0vH-Dp3xj9K3OUvXO_mfaFwq2-qzEJbQcIyWvPg",
   SHEETS_JSON_URL: "",
 
-  /** 成績寫入：同一試算表部署的 Apps Script 網址（見 docs/google-apps-script.gs） */
+  /** 成績寫入：同一試算表部署的 Apps Script 網址（見 docs/英文文章寫入試算表.md） */
   SCORE_LOG_URL:
-    "https://script.google.com/macros/s/AKfycbxo0gTXgN_WEaZjhfgPpvMMG5sONKYAkqJCkVN_JLoZ1iq_eBVmD7cwYXRlHPqn_bkRiw/exec",
+    "https://script.google.com/macros/s/AKfycby6un6lCo712DeJTugRGMCrwo_27X6twNR93BG-CXst-8pUetll7ZAtT2sn5AmAxMXtJA/exec",
   SHEET_ZH: "國語",
   SHEET_EN: "英語",
   /** 每日實事英文短文（讀取用；寫入見 docs/英文文章寫入試算表.md） */

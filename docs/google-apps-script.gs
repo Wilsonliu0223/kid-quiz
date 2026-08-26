@@ -306,11 +306,25 @@ function getOrCreateEnArticleSheet() {
     sheet.getRange(1, 1, 1, EN_ARTICLE_HEADERS.length).setValues([EN_ARTICLE_HEADERS]);
     sheet.setFrozenRows(1);
   } else {
-    // 既有表：若缺少 quiz_json 欄就補在最後
-    const hasQuiz = header.some(function (h) {
-      return String(h || "").trim() === "quiz_json";
-    });
-    if (!hasQuiz) {
+    // 既有表：確保有 quiz_json 欄（優先把空白表頭改名，避免多出一欄錯位）
+    let quizCol = -1;
+    for (let i = 0; i < header.length; i++) {
+      if (String(header[i] || "").trim() === "quiz_json") {
+        quizCol = i;
+        break;
+      }
+    }
+    if (quizCol < 0) {
+      for (let i = 0; i < header.length; i++) {
+        if (!String(header[i] || "").trim()) {
+          quizCol = i;
+          break;
+        }
+      }
+    }
+    if (quizCol >= 0) {
+      sheet.getRange(1, quizCol + 1).setValue("quiz_json");
+    } else {
       const col = Math.max(sheet.getLastColumn(), header.length) + 1;
       sheet.getRange(1, col).setValue("quiz_json");
     }
