@@ -8,7 +8,8 @@ function buildPayload(quiz, lessonFilter) {
   const subject = quiz.subject === "en" ? "英語" : "國語";
   let mode = "";
   if (quiz.subject === "en") {
-    mode = (quiz.mode || "meaning") === "listen" ? "聽音拼字" : "看中拼英";
+    if (quiz.mode === "daily-read") mode = "每日閱讀";
+    else mode = (quiz.mode || "meaning") === "listen" ? "聽音拼字" : "看中拼英";
   } else {
     mode = "手寫";
   }

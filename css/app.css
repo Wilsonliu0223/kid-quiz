@@ -5872,3 +5872,194 @@ body.sudoku-dragging .sudoku-cell-movable {
 .sudoku-actions .btn:disabled {
   opacity: 0.45;
 }
+
+/* —— 每日實事英文 —— */
+.en-hub-body,
+.en-daily-list-body,
+.en-daily-read-body,
+.en-review-body,
+.en-daily-quiz-body {
+  padding: 12px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.en-hub-meta,
+.en-daily-date-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.en-daily-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.en-daily-card {
+  text-align: left;
+  border: 2px solid #c5d4f0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f5f8ff 0%, #eef3ff 100%);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+.en-daily-card-cat {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1a5bb8;
+}
+.en-daily-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1a2a4a;
+  line-height: 1.35;
+}
+.en-daily-card-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.en-daily-empty-hint,
+.en-daily-loading {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.en-daily-title {
+  margin: 4px 0 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1a2a4a;
+  line-height: 1.35;
+}
+.en-daily-article {
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: #243044;
+  background: #f7f9ff;
+  border: 1px solid #d5e0f5;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.en-word {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.en-word:hover,
+.en-word:focus-visible {
+  background: #d6e6ff;
+  outline: none;
+}
+.en-word-key {
+  background: #ffe8c8;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.en-daily-review-strip {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #1a5bb8;
+}
+.en-daily-read-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 8px;
+}
+.en-gloss-panel {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -16px -28px;
+  padding: 12px 16px 18px;
+  background: #fff;
+  border-top: 2px solid #c5d4f0;
+  box-shadow: 0 -8px 24px rgba(26, 91, 184, 0.12);
+  z-index: 5;
+}
+.en-gloss-toolbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.en-gloss-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.35rem;
+  color: #1a5bb8;
+}
+.en-gloss-phonetic {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.en-gloss-text {
+  margin: 8px 0;
+  line-height: 1.55;
+  font-size: 1.02rem;
+}
+.en-gloss-example-label {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.en-gloss-example {
+  margin: 4px 0 8px;
+  font-style: italic;
+  color: #2a3a55;
+}
+.en-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.en-review-item {
+  border: 1px solid #d5e0f5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #f7f9ff;
+}
+.en-review-item strong {
+  color: #1a5bb8;
+  font-size: 1.1rem;
+}
+.en-review-item p {
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+.en-review-ex {
+  font-style: italic;
+  color: #445;
+}
+.en-review-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.en-daily-quiz-prompt {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  font-weight: 600;
+  color: #1a2a4a;
+  background: #f7f9ff;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #d5e0f5;
+}
+.en-daily-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

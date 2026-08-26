@@ -95,6 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
+import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v1";
 import {
   addMistake,
   removeMistake,
@@ -173,6 +174,11 @@ const views = {
   home: $("#view-home"),
   setupZh: $("#view-setup-zh"),
   setupEn: $("#view-setup-en"),
+  enHub: $("#view-en-hub"),
+  enDailyList: $("#view-en-daily-list"),
+  enDailyRead: $("#view-en-daily-read"),
+  enReview: $("#view-en-review"),
+  enDailyQuiz: $("#view-en-daily-quiz"),
   quizZh: $("#view-quiz-zh"),
   quizEn: $("#view-quiz-en"),
   flipFirst: $("#view-flip-first"),
@@ -2034,11 +2040,11 @@ function bindEvents() {
     enMode =
       document.querySelector(".en-mode-picker .chip-active")?.dataset.enMode ||
       "meaning";
-    openEnSetup();
+    openEnHub();
   });
 
   $("#btn-setup-zh-back")?.addEventListener("click", () => showView("home"));
-  $("#btn-setup-en-back")?.addEventListener("click", () => showView("home"));
+  $("#btn-setup-en-back")?.addEventListener("click", () => openEnHub());
   $("#btn-setup-zh-start")?.addEventListener("click", () => startZhQuiz());
   $("#btn-setup-zh-race")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -2282,6 +2288,26 @@ async function init() {
   });
   initSudoku({
     showView,
+    showWarn: (title, sub, onClose) => {
+      showFeedback(
+        "warn",
+        title,
+        [{ label: "好的", primary: true, onClick: () => onClose?.() }],
+        { sub: sub || "" }
+      );
+    },
+    showOk: (title, sub, onClose) => {
+      showFeedback(
+        "ok",
+        title,
+        [{ label: "好耶", primary: true, onClick: () => onClose?.() }],
+        { sub: sub || "" }
+      );
+    },
+  });
+  initEnDaily({
+    showView,
+    openEnSetup,
     showWarn: (title, sub, onClose) => {
       showFeedback(
         "warn",

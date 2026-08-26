@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v42.2" />
+    <link rel="stylesheet" href="css/app.css?v=app-v43.0" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -104,7 +104,7 @@
               data-action="start-en"
             >
               <span class="card-title">英語</span>
-              <span class="card-desc">選範圍 · 拼字測驗</span>
+              <span class="card-desc">測驗 · 每日實事閱讀</span>
             </button>
             <button type="button" class="card card-mul" id="btn-start-mul">
               <span class="card-title">九九乘法</span>
@@ -272,11 +272,118 @@
         </div>
       </section>
 
+      <!-- 英語首頁：測驗／每日閱讀／複習字 -->
+      <section id="view-en-hub" class="view view-hidden" aria-label="英語">
+        <header class="setup-header setup-header-en">
+          <button type="button" class="btn-text" id="btn-en-hub-back">← 返回</button>
+          <span class="setup-subject">英語</span>
+        </header>
+        <div class="en-hub-body">
+          <p class="en-hub-meta" id="en-hub-daily-meta">今日實事與複習字</p>
+          <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-hub-quiz">
+            拼字測驗／搶答
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-daily">
+            每日實事閱讀
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-review">
+            複習字區
+          </button>
+        </div>
+      </section>
+
+      <!-- 每日實事：列表 -->
+      <section id="view-en-daily-list" class="view view-hidden" aria-label="每日實事列表">
+        <header class="setup-header setup-header-en">
+          <button type="button" class="btn-text" id="btn-en-daily-list-back">← 返回</button>
+          <span class="setup-subject">每日實事</span>
+        </header>
+        <div class="en-daily-list-body">
+          <p class="label">閱讀等級</p>
+          <div class="lesson-chips" role="group" aria-label="Level">
+            <button type="button" class="chip chip-active" data-en-daily-level="l1">Level 1</button>
+            <button type="button" class="chip" data-en-daily-level="l2">Level 2</button>
+            <button type="button" class="chip" data-en-daily-level="l3">Level 3</button>
+          </div>
+          <p class="en-daily-date-label">日期：<span id="en-daily-date-label">—</span></p>
+          <div id="en-daily-list" class="en-daily-list"></div>
+          <p id="en-daily-empty" class="en-daily-empty-hint" hidden></p>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-daily-reload">重新載入</button>
+        </div>
+      </section>
+
+      <!-- 每日實事：閱讀 -->
+      <section id="view-en-daily-read" class="view view-hidden" aria-label="每日實事閱讀">
+        <header class="quiz-header quiz-header-en">
+          <button type="button" class="btn-text btn-text-en" id="btn-en-daily-read-back">← 返回</button>
+          <span class="quiz-subject" id="en-daily-read-sub">Level 1</span>
+          <button type="button" class="btn-text btn-text-en" id="btn-en-daily-speak-all">🔊 全文</button>
+        </header>
+        <div class="en-daily-read-body">
+          <div class="lesson-chips en-daily-level-inline" role="group" aria-label="Level">
+            <button type="button" class="chip" data-en-daily-level="l1">L1</button>
+            <button type="button" class="chip" data-en-daily-level="l2">L2</button>
+            <button type="button" class="chip" data-en-daily-level="l3">L3</button>
+          </div>
+          <h2 class="en-daily-title" id="en-daily-title"></h2>
+          <div class="en-daily-article" id="en-daily-body"></div>
+          <p class="en-daily-review-strip" id="en-daily-review-strip">複習字：</p>
+          <div class="en-daily-read-actions">
+            <button type="button" class="btn btn-secondary" id="btn-en-daily-next">換一篇</button>
+            <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-done">完成並小測</button>
+          </div>
+        </div>
+        <div id="en-gloss-panel" class="en-gloss-panel" hidden>
+          <div class="en-gloss-toolbar">
+            <button type="button" class="btn-text" id="btn-en-gloss-back" hidden>← 上一層</button>
+            <button type="button" class="btn-text" id="btn-en-gloss-close">關閉</button>
+          </div>
+          <div class="en-gloss-head">
+            <strong id="en-gloss-word"></strong>
+            <button type="button" class="btn-text" id="btn-en-gloss-speak">🔊</button>
+          </div>
+          <p class="en-gloss-phonetic" id="en-gloss-phonetic" hidden></p>
+          <div class="en-gloss-text" id="en-gloss-text"></div>
+          <p class="en-gloss-example-label">Example</p>
+          <p class="en-gloss-example" id="en-gloss-example"></p>
+          <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
+          <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-gloss-add">
+            ☆ 加入複習字
+          </button>
+        </div>
+      </section>
+
+      <!-- 複習字區 -->
+      <section id="view-en-review" class="view view-hidden" aria-label="複習字區">
+        <header class="setup-header setup-header-en">
+          <button type="button" class="btn-text" id="btn-en-review-back">← 返回</button>
+          <span class="setup-subject">複習字區</span>
+        </header>
+        <div class="en-review-body">
+          <div id="en-review-list" class="en-review-list"></div>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-review-clear">清空複習字</button>
+        </div>
+      </section>
+
+      <!-- 每日閱讀小測 -->
+      <section id="view-en-daily-quiz" class="view view-hidden" aria-label="每日閱讀小測">
+        <header class="quiz-header quiz-header-en">
+          <button type="button" class="btn-text btn-text-en" id="btn-en-daily-quiz-back">← 返回</button>
+          <span class="quiz-subject">閱讀小測</span>
+          <span class="quiz-progress" id="en-daily-quiz-progress">第 1 / 3 題</span>
+        </header>
+        <div class="en-daily-quiz-body">
+          <p class="label">Which word matches this meaning?</p>
+          <p class="en-daily-quiz-prompt" id="en-daily-quiz-prompt"></p>
+          <div id="en-daily-quiz-options" class="en-daily-quiz-options"></div>
+        </div>
+      </section>
+
       <!-- 英語：題數 → 考試範圍 → 開始 -->
       <section id="view-setup-en" class="view view-hidden" aria-label="英語設定">
         <header class="setup-header setup-header-en">
           <button type="button" class="btn-text" id="btn-setup-en-back">← 返回</button>
-          <span class="setup-subject">英語</span>
+          <span class="setup-subject">英語測驗</span>
         </header>
 
         <div class="setup-section">
@@ -2080,7 +2187,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v42.2").catch((e) => {
+      import("./js/app.js?v=app-v43.0").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

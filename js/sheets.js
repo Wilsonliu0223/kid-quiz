@@ -340,6 +340,171 @@ export function uniqueLessons(items) {
   return ["全部", ...[...set].sort()];
 }
 
+function gvizCell(row, index) {
+  const c = row?.c?.[index];
+  if (!c) return "";
+  if (c.f != null && String(c.f).trim() !== "") return String(c.f).trim();
+  if (c.v == null) return "";
+  return c.v;
+}
+
+function parseArticleDate(raw) {
+  if (raw == null || raw === "") return "";
+  if (typeof raw === "string") {
+    const iso = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (iso) return iso[1];
+    const gviz = raw.match(/Date\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (gviz) {
+      const y = gviz[1];
+      const mo = String(Number(gviz[2]) + 1).padStart(2, "0");
+      const d = String(Number(gviz[3])).padStart(2, "0");
+      return `${y}-${mo}-${d}`;
+    }
+    const slash = raw.match(/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/);
+    if (slash) {
+      return `${slash[1]}-${String(slash[2]).padStart(2, "0")}-${String(slash[3]).padStart(2, "0")}`;
+    }
+  }
+  if (typeof raw === "object" && raw instanceof Date && !isNaN(raw.getTime())) {
+    const y = raw.getFullYear();
+    const mo = String(raw.getMonth() + 1).padStart(2, "0");
+    const d = String(raw.getDate()).padStart(2, "0");
+    return `${y}-${mo}-${d}`;
+  }
+  return String(raw).slice(0, 10);
+}
+
+function parseVocabJson(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  const s = String(raw).trim();
+  if (!s) return [];
+  try {
+    const parsed = JSON.parse(s);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 讀取「英文文章」工作表。
+ * @param {{ includeDraft?: boolean }} [opts] includeDraft 預設 true（方便草稿測試）
+ * @returns {Promise<Array<{
+ *   id: string, date: string, seq: number, category: string, topicKey: string,
+ *   title: string, bodyL1: string, bodyL2: string, bodyL3: string,
+ *   vocab: object[], sourceTitle: string, sourceUrl: string, status: string, note: string
+ * }>>}
+ */
+export async function loadEnArticles(opts = {}) {
+  const includeDraft = opts.includeDraft !== false;
+  try {
+    const table = await fetchSheetRows(CONFIG.SHEET_EN_ARTICLE || "英文文章");
+    if (!table?.rows?.length) return [];
+
+    const labels = (table.cols || []).map((c) => String(c.label || "").trim());
+    const idxOf = (...names) => {
+      for (const n of names) {
+        const i = labels.findIndex((l) => l === n || l.startsWith(n));
+        if (i >= 0) return i;
+      }
+      return -1;
+    };
+    let idx = {
+      date: idxOf("日期"),
+      seq: idxOf("序號"),
+      category: idxOf("類別"),
+      topicKey: idxOf("主題關鍵字"),
+      title: idxOf("標題"),
+      bodyL1: idxOf("body_l1"),
+      bodyL2: idxOf("body_l2"),
+      bodyL3: idxOf("body_l3"),
+      vocab: idxOf("vocab_json"),
+      sourceTitle: idxOf("source_title"),
+      sourceUrl: idxOf("source_url"),
+      status: idxOf("狀態"),
+      note: idxOf("產文備註"),
+    };
+    // 欄位辨識失敗時依規劃固定欄序
+    if (idx.date < 0 || idx.bodyL1 < 0) {
+      idx = {
+        date: 0,
+        seq: 1,
+        category: 2,
+        topicKey: 3,
+        title: 4,
+        bodyL1: 5,
+        bodyL2: 6,
+        bodyL3: 7,
+        vocab: 8,
+        sourceTitle: 9,
+        sourceUrl: 10,
+        status: 11,
+        note: 12,
+      };
+    }
+
+    const items = [];
+    for (const row of table.rows) {
+      const date = parseArticleDate(gvizCell(row, idx.date));
+      const bodyL1 = String(gvizCell(row, idx.bodyL1) || "").trim();
+      const title = String(gvizCell(row, idx.title) || "").trim();
+      if (!date || (!bodyL1 && !title)) continue;
+      const status = String(gvizCell(row, idx.status) || "draft")
+        .trim()
+        .toLowerCase();
+      if (!includeDraft && status !== "published") continue;
+      if (status && status !== "published" && status !== "draft") continue;
+
+      const seq = Number(gvizCell(row, idx.seq)) || items.length + 1;
+      items.push({
+        id: `${date}-${seq}-${String(gvizCell(row, idx.category) || "")}`,
+        date,
+        seq,
+        category: String(gvizCell(row, idx.category) || "").trim(),
+        topicKey: String(gvizCell(row, idx.topicKey) || "").trim(),
+        title: title || bodyL1.slice(0, 40),
+        bodyL1,
+        bodyL2: String(gvizCell(row, idx.bodyL2) || "").trim(),
+        bodyL3: String(gvizCell(row, idx.bodyL3) || "").trim(),
+        vocab: parseVocabJson(gvizCell(row, idx.vocab)),
+        sourceTitle: String(gvizCell(row, idx.sourceTitle) || "").trim(),
+        sourceUrl: String(gvizCell(row, idx.sourceUrl) || "").trim(),
+        status,
+        note: String(gvizCell(row, idx.note) || "").trim(),
+      });
+    }
+
+    items.sort((a, b) => {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+      return a.seq - b.seq;
+    });
+
+    // 同日同序號若有 draft+published 重複，保留 published
+    const deduped = [];
+    const seen = new Map();
+    for (const item of items) {
+      const key = `${item.date}|${item.seq}|${item.category}`;
+      const prevIdx = seen.get(key);
+      if (prevIdx == null) {
+        seen.set(key, deduped.length);
+        deduped.push(item);
+        continue;
+      }
+      if (
+        item.status === "published" &&
+        deduped[prevIdx].status !== "published"
+      ) {
+        deduped[prevIdx] = item;
+      }
+    }
+    return deduped;
+  } catch (e) {
+    console.warn("英文文章工作表讀取失敗", e);
+    return [];
+  }
+}
+
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

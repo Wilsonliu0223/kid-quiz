@@ -180,14 +180,16 @@ function getOrCreateEnArticleSheet() {
 }
 
 function normalizeArticleDate(v) {
+  if (v instanceof Date && !isNaN(v.getTime())) {
+    return Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  }
   if (Object.prototype.toString.call(v) === "[object Date]" && !isNaN(v.getTime())) {
     return Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd");
   }
   const s = String(v || "").trim();
   if (!s) return "";
   // Apps Script / JSON 偶發把 Date 變成長字串
-  const fromLong = s.match(/(\d{4})\s+(\w+)\s+(\d{1,2})/);
-  if (fromLong && s.indexOf("GMT") >= 0) {
+  if (s.indexOf("GMT") >= 0 || s.indexOf("台北") >= 0) {
     const parsed = new Date(s);
     if (!isNaN(parsed.getTime())) {
       return Utilities.formatDate(parsed, Session.getScriptTimeZone(), "yyyy-MM-dd");
