@@ -95,7 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
-import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v27";
+import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v28";
 import {
   addMistake,
   removeMistake,
@@ -179,6 +179,7 @@ const views = {
   enDailyRead: $("#view-en-daily-read"),
   enDailyDialogue: $("#view-en-daily-dialogue"),
   enReview: $("#view-en-review"),
+  enDailyDictation: $("#view-en-daily-dictation"),
   enDailyQuiz: $("#view-en-daily-quiz"),
   quizZh: $("#view-quiz-zh"),
   quizEn: $("#view-quiz-en"),

@@ -6259,6 +6259,56 @@ body.en-gloss-open .en-play-lang-btn {
   color: #e06e20;
   margin: 0 0 2px 34px;
 }
+.en-dlg-zh-toggle {
+  margin: 0 0 8px 34px;
+  border: none;
+  background: transparent;
+  color: #1a5bb8;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+.en-dlg-zh {
+  margin: 0 0 10px 34px;
+  color: #3a4a66;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+.en-cloze-card {
+  background: #fff8ee;
+  border: 1px solid #f0d2a8;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.en-cloze-prompt {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #243044;
+}
+.en-cloze-options {
+  display: grid;
+  gap: 8px;
+}
+.en-cloze-options .btn.en-cloze-ok {
+  background: #d8f5e2;
+  border-color: #7bc99a;
+}
+.en-cloze-options .btn.en-cloze-no {
+  background: #ffe1d9;
+  border-color: #f0a090;
+}
+.en-daily-dictation-feedback {
+  margin: 0;
+  font-weight: 700;
+}
+.en-daily-dictation-feedback.is-ok {
+  color: #1a7a3c;
+}
+.en-daily-dictation-feedback.is-no {
+  color: #c0392b;
+}
 .en-gloss-toolbar {
   display: flex;
   justify-content: space-between;

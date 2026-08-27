@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.9" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.10" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -286,6 +286,9 @@
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-daily">
             每日實事閱讀
           </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-dictation">
+            聽寫今日詞
+          </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-review">
             複習字區
           </button>
@@ -334,6 +337,11 @@
           <h2 class="en-daily-title" id="en-daily-title"></h2>
           <div class="en-daily-article" id="en-daily-body"></div>
           <p class="en-daily-review-strip" id="en-daily-review-strip" hidden></p>
+          <div id="en-daily-cloze" class="en-cloze-card" hidden>
+            <p class="label">填空</p>
+            <p class="en-cloze-prompt" id="en-daily-cloze-prompt"></p>
+            <div class="en-cloze-options" id="en-daily-cloze-options"></div>
+          </div>
           <div class="en-daily-read-actions">
             <button type="button" class="btn btn-secondary" id="btn-en-daily-next">換一篇</button>
             <button type="button" class="btn btn-secondary" id="btn-en-daily-dialogue">情境對話</button>
@@ -358,6 +366,11 @@
           <p class="en-dlg-scene" id="en-daily-dialogue-scene"></p>
           <p class="en-dlg-roles" id="en-daily-dialogue-roles"></p>
           <div class="en-daily-article en-dlg-turns" id="en-daily-dialogue-body"></div>
+          <div id="en-dlg-cloze" class="en-cloze-card" hidden>
+            <p class="label">填空</p>
+            <p class="en-cloze-prompt" id="en-dlg-cloze-prompt"></p>
+            <div class="en-cloze-options" id="en-dlg-cloze-options"></div>
+          </div>
           <div class="en-daily-read-actions en-daily-dialogue-actions">
             <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-dialogue-quiz">完成並小測</button>
           </div>
@@ -417,6 +430,35 @@
         <div class="en-review-body">
           <div id="en-review-list" class="en-review-list"></div>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-review-clear">清空複習字</button>
+        </div>
+      </section>
+
+      <!-- 聽寫今日詞 -->
+      <section id="view-en-daily-dictation" class="view view-hidden" aria-label="聽寫今日詞">
+        <header class="quiz-header quiz-header-en">
+          <button type="button" class="btn-text btn-text-en" id="btn-en-daily-dictation-back">← 返回</button>
+          <span class="quiz-subject">聽寫今日詞</span>
+          <span class="quiz-progress" id="en-daily-dictation-progress">第 1 / 6 題</span>
+        </header>
+        <div class="en-daily-quiz-body">
+          <p class="en-listen-prompt" id="en-daily-dictation-listen">請按播放，聽完再拼這個字</p>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-daily-dictation-speak">
+            🔊 播放發音
+          </button>
+          <input
+            id="en-daily-dictation-input"
+            class="en-answer-input"
+            type="text"
+            inputmode="latin"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="輸入英文"
+          />
+          <p class="en-daily-dictation-feedback" id="en-daily-dictation-feedback" hidden></p>
+          <div class="en-daily-quiz-nav">
+            <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-dictation-next">送出</button>
+          </div>
         </div>
       </section>
 

@@ -43,6 +43,15 @@ let quizCorrect = 0;
 /** @type {'read'|'dialogue'} */
 let quizKind = "read";
 
+/** @type {{ word: string, gloss?: string }[]} */
+let dictationQs = [];
+let dictationIndex = 0;
+let dictationCorrect = 0;
+let dictationLocked = false;
+
+/** @type {Map<string, string>} */
+const dlgZhCache = new Map();
+
 /** @type {'en'|'zh'} */
 let playLang = /** @type {'en'|'zh'} */ (
   localStorage.getItem("kid-quiz-en-play-lang") === "zh" ? "zh" : "en"
@@ -436,6 +445,9 @@ function bindUi() {
     deps?.openEnSetup?.();
   });
   $("#btn-en-hub-daily")?.addEventListener("click", () => openDailyList());
+  $("#btn-en-hub-dictation")?.addEventListener("click", () => {
+    void openDictation();
+  });
   $("#btn-en-hub-review")?.addEventListener("click", () => openReview());
 
   $("#btn-en-daily-list-back")?.addEventListener("click", () => openEnHub());
@@ -568,6 +580,22 @@ function bindUi() {
     if (confirm("清空目前小孩的複習字？")) {
       saveReview([]);
       renderReviewList();
+    }
+  });
+
+  $("#btn-en-daily-dictation-back")?.addEventListener("click", () => {
+    if (confirm("離開聽寫？進度不會儲存。")) openEnHub();
+  });
+  $("#btn-en-daily-dictation-speak")?.addEventListener("click", () => {
+    void speakDictationWord();
+  });
+  $("#btn-en-daily-dictation-next")?.addEventListener("click", () => {
+    void onDictationNext();
+  });
+  $("#en-daily-dictation-input")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void onDictationNext();
     }
   });
 
@@ -745,6 +773,7 @@ function openReader(id) {
   }
   glossStack = [];
   hideGloss();
+  dlgZhCache.clear();
   deps?.showView("enDailyRead");
   renderReader();
 }
@@ -776,6 +805,7 @@ function renderReader() {
   bindSentencePlay(bodyEl);
   renderReviewStrip();
   const body = bodyForLevel(current);
+  renderClozeCard("en-daily-cloze", body, current);
   prefetchEnglishAudio(current.title);
   prefetchEnglishAudio(body);
   // 預熱前兩句中文神經音，手機較不易落到機械備援
@@ -968,18 +998,133 @@ function renderDialogue() {
       .map((t, i) => {
         const text = turnText(t);
         const name = escapeHtml(String(t.speaker || `A${i + 1}`));
-        return `<div class="en-dlg-turn"><span class="en-dlg-speaker">${name}</span><span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" data-en-speaker="${name}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(text, current, extra)}</span></span></div>`;
+        return `<div class="en-dlg-turn"><span class="en-dlg-speaker">${name}</span><span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" data-en-speaker="${name}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(text, current, extra)}</span></span><button type="button" class="en-dlg-zh-toggle" data-en-dlg-zh="${i}">中文 ▼</button><p class="en-dlg-zh" data-en-dlg-zh-text="${i}" hidden></p></div>`;
       })
       .join("");
     bindWordClicks(bodyEl);
     bindSentencePlay(bodyEl);
+    bindDialogueZhToggles(bodyEl, d);
   }
   const playList = dialogueTurnPlayList(d);
   prefetchEnglishAudio(playList.chunks.join(" "));
   playList.chunks.slice(0, 2).forEach((s, i) => {
     prefetchChineseAudio(s, voiceForDialogueSpeaker(playList.speakers[i], "zh"));
   });
+  renderClozeCard("en-dlg-cloze", playList.chunks.join(" "), current, extra);
   showPlayBarIdle();
+}
+
+function bindDialogueZhToggles(root, d) {
+  if (!root) return;
+  root.querySelectorAll("[data-en-dlg-zh]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const i = Number(btn.getAttribute("data-en-dlg-zh"));
+      const p = root.querySelector(`[data-en-dlg-zh-text="${i}"]`);
+      if (!p) return;
+      if (!p.hidden && p.textContent && p.textContent !== "翻譯中…") {
+        p.hidden = true;
+        btn.textContent = "中文 ▼";
+        return;
+      }
+      const cacheKey = `${current?.id || ""}|${level}|${i}`;
+      let zh = dlgZhCache.get(cacheKey) || "";
+      p.hidden = false;
+      btn.textContent = "中文 ▲";
+      if (!zh) {
+        p.textContent = "翻譯中…";
+        const src = turnText(d?.turns?.[i]);
+        zh =
+          (await translateEnToZh(src, "TW")) ||
+          (await translateEnToZh(src, "CN")) ||
+          "（暫無中文）";
+        dlgZhCache.set(cacheKey, zh);
+      }
+      p.textContent = zh;
+    });
+  });
+}
+
+function escapeRegex(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildClozeItem(text, art, extraWords) {
+  const map = vocabMap(art, extraWords);
+  const sentences = splitEnglishSentences(text);
+  const hits = [];
+  for (const sent of sentences) {
+    const words = sent.match(/[A-Za-z][A-Za-z'-]*/g) || [];
+    for (const w of words) {
+      if (w.length < 4) continue;
+      const entry = map.get(w.toLowerCase());
+      if (!entry?.word) continue;
+      hits.push({ sent, surface: w, answer: entry.word });
+    }
+  }
+  if (!hits.length) return null;
+  const pick = hits[Math.floor(Math.random() * hits.length)];
+  const sentence = pick.sent.replace(
+    new RegExp(`\\b${escapeRegex(pick.surface)}\\b`),
+    "______"
+  );
+  const pool = [...map.values()]
+    .map((v) => v.word)
+    .filter((w) => w.toLowerCase() !== pick.answer.toLowerCase());
+  const options = shuffle([pick.answer, ...shuffle(pool).slice(0, 3)]).slice(
+    0,
+    4
+  );
+  if (options.length < 2) return null;
+  if (!options.some((o) => o.toLowerCase() === pick.answer.toLowerCase())) {
+    options[0] = pick.answer;
+  }
+  return {
+    sentence,
+    answer: pick.answer,
+    options: shuffle(options),
+  };
+}
+
+function renderClozeCard(idPrefix, text, art, extraWords) {
+  const card = $(`#${idPrefix}`);
+  const prompt = $(`#${idPrefix}-prompt`);
+  const opts = $(`#${idPrefix}-options`);
+  if (!card || !prompt || !opts) return;
+  const item = buildClozeItem(text, art, extraWords);
+  if (!item) {
+    card.hidden = true;
+    opts.innerHTML = "";
+    prompt.textContent = "";
+    return;
+  }
+  card.hidden = false;
+  prompt.textContent = item.sentence;
+  opts.innerHTML = "";
+  let locked = false;
+  for (const opt of item.options) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-secondary btn-block";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => {
+      if (locked) return;
+      locked = true;
+      const ok =
+        String(opt).toLowerCase() === String(item.answer).toLowerCase();
+      btn.classList.add(ok ? "en-cloze-ok" : "en-cloze-no");
+      if (!ok) {
+        opts.querySelectorAll("button").forEach((b) => {
+          if (
+            String(b.textContent).toLowerCase() ===
+            String(item.answer).toLowerCase()
+          ) {
+            b.classList.add("en-cloze-ok");
+          }
+        });
+      }
+    });
+    opts.appendChild(btn);
+  }
 }
 
 function bindWordClicks(root) {
@@ -1273,6 +1418,151 @@ function renderReviewList() {
     row.appendChild(actions);
     box.appendChild(row);
   }
+}
+
+function collectTodayDictationWords() {
+  const today = todayIso();
+  const seen = new Set();
+  const out = [];
+  const add = (word, gloss) => {
+    const w = String(word || "").trim();
+    if (!w || w.length < 2) return;
+    const key = w.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ word: w, gloss: String(gloss || "").trim() });
+  };
+  for (const art of articles.filter((a) => a.date === today)) {
+    for (const v of art.vocab || []) add(v.word, v.gloss);
+  }
+  for (const r of loadReview()) add(r.word, r.gloss);
+  return out;
+}
+
+async function openDictation() {
+  await ensureArticles();
+  const pool = shuffle(collectTodayDictationWords());
+  if (!pool.length) {
+    deps?.showWarn?.(
+      "還沒有今日詞",
+      "先讀今天的文章，或加入複習字，再來聽寫。"
+    );
+    return;
+  }
+  dictationQs = pool.slice(0, Math.min(8, pool.length));
+  dictationIndex = 0;
+  dictationCorrect = 0;
+  dictationLocked = false;
+  deps?.showView("enDailyDictation");
+  renderDictationQ();
+  void speakDictationWord();
+}
+
+function renderDictationQ() {
+  const q = dictationQs[dictationIndex];
+  const progress = $("#en-daily-dictation-progress");
+  const input = $("#en-daily-dictation-input");
+  const fb = $("#en-daily-dictation-feedback");
+  const nextBtn = $("#btn-en-daily-dictation-next");
+  if (progress) {
+    progress.textContent = `第 ${dictationIndex + 1} / ${dictationQs.length} 題`;
+  }
+  if (fb) {
+    fb.hidden = true;
+    fb.textContent = "";
+    fb.classList.remove("is-ok", "is-no");
+  }
+  if (input) {
+    input.value = "";
+    input.disabled = false;
+    input.focus();
+  }
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent =
+      dictationIndex >= dictationQs.length - 1 ? "送出" : "送出";
+  }
+  dictationLocked = false;
+  if (q?.word) prefetchEnglishAudio(q.word);
+}
+
+async function speakDictationWord() {
+  const q = dictationQs[dictationIndex];
+  if (!q?.word) return;
+  unlockSpeechFromGesture();
+  await speakEnglish(q.word, { fast: true, lang: "en", speed: playSpeed });
+}
+
+async function onDictationNext() {
+  const q = dictationQs[dictationIndex];
+  const input = $("#en-daily-dictation-input");
+  const fb = $("#en-daily-dictation-feedback");
+  const nextBtn = $("#btn-en-daily-dictation-next");
+  if (!q) return;
+  if (dictationLocked) {
+    goDictationNext();
+    return;
+  }
+  const typed = String(input?.value || "")
+    .trim()
+    .replace(/[.?!,'"]/g, "");
+  if (!typed) {
+    deps?.showWarn?.("還沒寫", "先聽發音，再拼出這個字。");
+    return;
+  }
+  const ok = typed.toLowerCase() === String(q.word).toLowerCase();
+  dictationLocked = true;
+  if (ok) dictationCorrect += 1;
+  if (fb) {
+    fb.hidden = false;
+    fb.classList.toggle("is-ok", ok);
+    fb.classList.toggle("is-no", !ok);
+    fb.textContent = ok ? "正確！" : `答案是 ${q.word}`;
+  }
+  if (input) input.disabled = true;
+  if (nextBtn) {
+    nextBtn.textContent =
+      dictationIndex >= dictationQs.length - 1 ? "完成" : "下一題";
+  }
+}
+
+async function goDictationNext() {
+  if (dictationIndex >= dictationQs.length - 1) {
+    await finishDictation();
+    return;
+  }
+  dictationIndex += 1;
+  renderDictationQ();
+  void speakDictationWord();
+}
+
+async function finishDictation() {
+  const total = dictationQs.length;
+  const child = getSelectedChild();
+  let message = "";
+  try {
+    const result = await logQuizResult(
+      {
+        subject: "en",
+        child,
+        mode: "daily-dictation",
+        autoCorrect: dictationCorrect,
+        questions: dictationQs.map((q) => ({
+          english: q.word,
+          chinese: q.gloss || "",
+        })),
+        pending: 0,
+      },
+      `聽寫今日詞 ${todayIso()}`
+    );
+    message = result?.message || "";
+  } catch (e) {
+    console.warn("logQuizResult", e);
+    message = "成績已記在本機（試算表稍後再試）";
+  }
+  deps?.showOk?.(`完成！${dictationCorrect} / ${total}`, message, () =>
+    openEnHub()
+  );
 }
 
 function startMiniQuiz() {
