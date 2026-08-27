@@ -183,14 +183,26 @@ function stopPlayBar(opts = {}) {
   clearSentenceHighlight();
 }
 
-/** 英文依句號切段（跟讀反亮用） */
+/** 英文依句號切段（跟讀反亮用）；避開 a.m. / U.S. 等縮寫 */
 function splitEnglishSentences(text) {
   const s = String(text || "")
     .trim()
     .replace(/\s+/g, " ");
   if (!s) return [];
-  const parts = s.match(/[^.!?]+(?:[.!?]+|(?=$))/g);
-  return (parts || [s]).map((p) => p.trim()).filter(Boolean);
+  const holders = [];
+  const protectedText = s.replace(
+    /\b(?:[ap]\.m\.|U\.S\.A?\.|e\.g\.|i\.e\.|Mr\.|Mrs\.|Ms\.|Dr\.)/gi,
+    (m) => {
+      holders.push(m);
+      return `\u0001${holders.length - 1}\u0001`;
+    }
+  );
+  const parts = protectedText.match(/[^.!?]+(?:[.!?]+|(?=$))/g);
+  return (parts || [protectedText])
+    .map((p) =>
+      p.replace(/\u0001(\d+)\u0001/g, (_, i) => holders[Number(i)]).trim()
+    )
+    .filter(Boolean);
 }
 
 function clearSentenceHighlight() {
