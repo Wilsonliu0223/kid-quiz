@@ -65,6 +65,18 @@ let playFollowSentences = false;
 let playChunks = null;
 /** @type {string[] | null} 與 chunks 對齊的說話人（對話配音） */
 let playSpeakers = null;
+/** @type {number | null} */
+let playHighlightIndex = null;
+/** @type {'none'|'sentence'|'all'} 這次播放能不能被反覆（單字卡不算） */
+let playLoopKind = "none";
+/** @type {'off'|'sentence'|'all'} */
+let playRepeat = /** @type {'off'|'sentence'|'all'} */ (
+  ["off", "sentence", "all"].includes(
+    String(localStorage.getItem("kid-quiz-en-play-repeat") || "")
+  )
+    ? localStorage.getItem("kid-quiz-en-play-repeat")
+    : "off"
+);
 /** @type {number} 0.8 | 1 | 1.25 */
 let playSpeed = Number(localStorage.getItem("kid-quiz-en-play-speed") || "1") || 1;
 /** @type {string} 列表目前選的日期 yyyy-MM-dd */
@@ -85,6 +97,15 @@ function syncPlayLangBtns() {
     btn.classList.toggle(
       "is-active",
       btn.getAttribute("data-en-play-lang") === playLang
+    );
+  });
+}
+
+function syncPlayRepeatBtns() {
+  document.querySelectorAll("[data-en-play-repeat]").forEach((btn) => {
+    btn.classList.toggle(
+      "is-active",
+      btn.getAttribute("data-en-play-repeat") === playRepeat
     );
   });
 }
@@ -149,6 +170,7 @@ function showPlayBar(status) {
   if (st && status != null) st.textContent = status;
   syncPlayLangBtns();
   syncPlaySpeedBtns();
+  syncPlayRepeatBtns();
   syncDockVisibility();
 }
 
@@ -185,6 +207,8 @@ function stopPlayBar(opts = {}) {
   playFollowSentences = false;
   playChunks = null;
   playSpeakers = null;
+  playHighlightIndex = null;
+  playLoopKind = "none";
   stopSpeaking();
   playSourceText = "";
   if (opts.dismiss) {
@@ -262,6 +286,17 @@ async function playWithBar(text, opts = {}) {
   playSpeakers =
     Array.isArray(opts.speakers) && opts.speakers.length ? opts.speakers : null;
   playFollowSentences = Boolean(opts.followSentences) || Boolean(playChunks);
+  playHighlightIndex =
+    opts.highlightIndex != null ? Number(opts.highlightIndex) : null;
+  if (opts.label === "單句播放中") playLoopKind = "sentence";
+  else if (opts.label === "全文播放中") playLoopKind = "all";
+  else if (playFollowSentences || (playChunks && playChunks.length > 1)) {
+    playLoopKind = "all";
+  } else if (opts.label === "英文播放中" || opts.label === "中文播放中") {
+    // 語言切換沿用上次 loop kind
+  } else {
+    playLoopKind = "none";
+  }
   const seq = ++playSeq;
   unlockSpeechFromGesture();
   setSpeakingSpeed(playSpeed);
@@ -341,14 +376,32 @@ async function playWithBar(text, opts = {}) {
   }
 
   if (seq !== playSeq) return;
-  clearSentenceHighlight();
   if (!anyOk) {
+    clearSentenceHighlight();
     showPlayBar("播放失敗，再點 🔊");
     setTimeout(() => {
       if (seq === playSeq) showPlayBarIdle();
     }, 1600);
     return;
   }
+  const shouldLoop =
+    isEnSpeakViewActive() &&
+    ((playRepeat === "sentence" && playLoopKind === "sentence") ||
+      (playRepeat === "all" && playLoopKind === "all"));
+  if (shouldLoop) {
+    await sleepMs(450);
+    if (seq !== playSeq) return;
+    await playWithBar(playSourceText, {
+      label: playLoopKind === "all" ? "全文播放中" : "單句播放中",
+      followSentences: playFollowSentences,
+      chunks: playChunks || undefined,
+      speakers: playSpeakers || undefined,
+      highlightIndex:
+        playHighlightIndex != null ? playHighlightIndex : undefined,
+    });
+    return;
+  }
+  clearSentenceHighlight();
   showPlayBarIdle();
 }
 
@@ -560,8 +613,19 @@ function bindUi() {
           followSentences: playFollowSentences,
           chunks: playChunks || undefined,
           speakers: playSpeakers || undefined,
+          highlightIndex:
+            playHighlightIndex != null ? playHighlightIndex : undefined,
         });
       }
+    });
+  });
+  document.querySelectorAll("[data-en-play-repeat]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const v = btn.getAttribute("data-en-play-repeat");
+      if (v !== "off" && v !== "sentence" && v !== "all") return;
+      playRepeat = v;
+      localStorage.setItem("kid-quiz-en-play-repeat", playRepeat);
+      syncPlayRepeatBtns();
     });
   });
   document.querySelectorAll("[data-en-play-speed]").forEach((btn) => {

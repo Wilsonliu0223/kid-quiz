@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.10" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.11" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -382,6 +382,11 @@
             <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
             <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
             <span class="en-play-status" id="en-play-status">播放中</span>
+            <div class="en-play-repeat" role="group" aria-label="反覆播放">
+              <button type="button" class="en-play-repeat-btn is-active" data-en-play-repeat="off" title="不反覆">關</button>
+              <button type="button" class="en-play-repeat-btn" data-en-play-repeat="sentence" title="單句反覆">句</button>
+              <button type="button" class="en-play-repeat-btn" data-en-play-repeat="all" title="整篇反覆">篇</button>
+            </div>
             <div class="en-play-speed" role="group" aria-label="語速">
               <button type="button" class="en-play-speed-btn" data-en-play-speed="0.8">慢</button>
               <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>

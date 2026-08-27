@@ -6125,7 +6125,8 @@ body.en-gloss-open .en-play-status {
   font-size: 0.8rem;
 }
 body.en-gloss-open .en-play-speed-btn,
-body.en-gloss-open .en-play-lang-btn {
+body.en-gloss-open .en-play-lang-btn,
+body.en-gloss-open .en-play-repeat-btn {
   padding: 4px 8px;
   font-size: 0.75rem;
 }
@@ -6171,13 +6172,15 @@ body.en-gloss-open .en-play-lang-btn {
   white-space: nowrap;
 }
 .en-play-speed,
-.en-play-lang {
+.en-play-lang,
+.en-play-repeat {
   display: flex;
   gap: 4px;
   flex: 0 0 auto;
 }
 .en-play-speed-btn,
-.en-play-lang-btn {
+.en-play-lang-btn,
+.en-play-repeat-btn {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: transparent;
   color: #dce8ff;
@@ -6188,7 +6191,8 @@ body.en-gloss-open .en-play-lang-btn {
   cursor: pointer;
 }
 .en-play-speed-btn.is-active,
-.en-play-lang-btn.is-active {
+.en-play-lang-btn.is-active,
+.en-play-repeat-btn.is-active {
   background: #ff8a3d;
   border-color: #ff8a3d;
   color: #fff;
