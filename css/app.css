@@ -6190,6 +6190,11 @@ body.en-gloss-open .en-play-repeat-btn {
   font-weight: 700;
   cursor: pointer;
 }
+.en-play-repeat-btn {
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
 .en-play-speed-btn.is-active,
 .en-play-lang-btn.is-active,
 .en-play-repeat-btn.is-active {
