@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.8" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.9" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -336,10 +336,35 @@
           <p class="en-daily-review-strip" id="en-daily-review-strip" hidden></p>
           <div class="en-daily-read-actions">
             <button type="button" class="btn btn-secondary" id="btn-en-daily-next">換一篇</button>
+            <button type="button" class="btn btn-secondary" id="btn-en-daily-dialogue">情境對話</button>
             <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-done">完成並小測</button>
           </div>
         </div>
-        <div id="en-bottom-dock" class="en-bottom-dock" hidden>
+      </section>
+
+      <!-- 每日實事：情境對話 -->
+      <section id="view-en-daily-dialogue" class="view view-hidden" aria-label="情境對話">
+        <header class="quiz-header quiz-header-en">
+          <button type="button" class="btn-text btn-text-en" id="btn-en-daily-dialogue-back">← 返回</button>
+          <span class="quiz-subject" id="en-daily-dialogue-sub">情境對話</span>
+          <span class="quiz-header-spacer" aria-hidden="true"></span>
+        </header>
+        <div class="en-daily-read-body">
+          <div class="lesson-chips en-daily-level-inline" role="group" aria-label="Level">
+            <button type="button" class="chip" data-en-daily-level="l1">L1</button>
+            <button type="button" class="chip" data-en-daily-level="l2">L2</button>
+            <button type="button" class="chip" data-en-daily-level="l3">L3</button>
+          </div>
+          <p class="en-dlg-scene" id="en-daily-dialogue-scene"></p>
+          <p class="en-dlg-roles" id="en-daily-dialogue-roles"></p>
+          <div class="en-daily-article en-dlg-turns" id="en-daily-dialogue-body"></div>
+          <div class="en-daily-read-actions en-daily-dialogue-actions">
+            <button type="button" class="btn btn-primary btn-primary-en" id="btn-en-daily-dialogue-quiz">完成並小測</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="en-bottom-dock" class="en-bottom-dock" hidden>
           <div id="en-play-bar" class="en-play-bar" hidden>
             <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
             <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -381,8 +406,7 @@
               ☆ 加入複習字
             </button>
           </div>
-        </div>
-      </section>
+      </div>
 
       <!-- 複習字區 -->
       <section id="view-en-review" class="view view-hidden" aria-label="複習字區">
@@ -400,7 +424,7 @@
       <section id="view-en-daily-quiz" class="view view-hidden" aria-label="每日閱讀小測">
         <header class="quiz-header quiz-header-en">
           <button type="button" class="btn-text btn-text-en" id="btn-en-daily-quiz-back">← 返回</button>
-          <span class="quiz-subject">閱讀小測</span>
+          <span class="quiz-subject" id="en-daily-quiz-subject">閱讀小測</span>
           <span class="quiz-progress" id="en-daily-quiz-progress">第 1 / 5 題</span>
         </header>
         <div class="en-daily-quiz-body">

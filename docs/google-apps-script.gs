@@ -17,7 +17,7 @@ const SHEET_SCORES = "成績";
 const SHEET_VISITS = "造訪";
 const SHEET_EN_ARTICLES = "英文文章";
 const QUIZ_TYPES = ["生字"];
-const EN_ARTICLE_API_VERSION = "2026-08-26-quiz-v1";
+const EN_ARTICLE_API_VERSION = "2026-08-27-dialogue-v1";
 
 const EN_ARTICLE_HEADERS = [
   "日期",
@@ -34,6 +34,7 @@ const EN_ARTICLE_HEADERS = [
   "狀態",
   "產文備註",
   "quiz_json",
+  "dialogue_json",
 ];
 
 function doGet(e) {
@@ -306,30 +307,39 @@ function getOrCreateEnArticleSheet() {
     sheet.getRange(1, 1, 1, EN_ARTICLE_HEADERS.length).setValues([EN_ARTICLE_HEADERS]);
     sheet.setFrozenRows(1);
   } else {
-    // 既有表：確保有 quiz_json 欄（優先把空白表頭改名，避免多出一欄錯位）
-    let quizCol = -1;
+    ensureEnArticleColumn(sheet, header, "quiz_json");
+    const lastCol2 = Math.max(sheet.getLastColumn(), EN_ARTICLE_HEADERS.length);
+    const header2 = sheet
+      .getRange(1, 1, 1, lastCol2)
+      .getValues()[0]
+      .map(String);
+    ensureEnArticleColumn(sheet, header2, "dialogue_json");
+  }
+  return sheet;
+}
+
+function ensureEnArticleColumn(sheet, header, name) {
+  let col = -1;
+  for (let i = 0; i < header.length; i++) {
+    if (String(header[i] || "").trim() === name) {
+      col = i;
+      break;
+    }
+  }
+  if (col < 0) {
     for (let i = 0; i < header.length; i++) {
-      if (String(header[i] || "").trim() === "quiz_json") {
-        quizCol = i;
+      if (!String(header[i] || "").trim()) {
+        col = i;
         break;
       }
     }
-    if (quizCol < 0) {
-      for (let i = 0; i < header.length; i++) {
-        if (!String(header[i] || "").trim()) {
-          quizCol = i;
-          break;
-        }
-      }
-    }
-    if (quizCol >= 0) {
-      sheet.getRange(1, quizCol + 1).setValue("quiz_json");
-    } else {
-      const col = Math.max(sheet.getLastColumn(), header.length) + 1;
-      sheet.getRange(1, col).setValue("quiz_json");
-    }
   }
-  return sheet;
+  if (col >= 0) {
+    sheet.getRange(1, col + 1).setValue(name);
+  } else {
+    const colNew = Math.max(sheet.getLastColumn(), header.length) + 1;
+    sheet.getRange(1, colNew).setValue(name);
+  }
 }
 
 function normalizeArticleDate(v) {
@@ -409,6 +419,9 @@ function rowObjectToValues(row) {
     String(row.status || row["狀態"] || "draft").trim() || "draft",
     String(row.note || row["產文備註"] || "").trim(),
     vocabToCell(row.quiz_json != null ? row.quiz_json : row.quiz),
+    vocabToCell(
+      row.dialogue_json != null ? row.dialogue_json : row.dialogue
+    ),
   ];
 }
 

@@ -6016,8 +6016,14 @@ body.sudoku-dragging .sudoku-cell-movable {
 }
 .en-daily-read-actions {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+#btn-en-daily-done {
+  grid-column: 1 / -1;
+}
+.en-daily-dialogue-actions {
+  grid-template-columns: 1fr;
 }
 /* 底部底板：播放列在上、字卡在下，整塊貼底 */
 .en-bottom-dock {
@@ -6098,16 +6104,20 @@ body.en-playing:not(.en-gloss-open) .en-play-bar {
   padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
 body.en-playing #view-en-daily-read.view-active,
-#view-en-daily-read.view-active {
+#view-en-daily-read.view-active,
+body.en-playing #view-en-daily-dialogue.view-active,
+#view-en-daily-dialogue.view-active {
   padding-bottom: calc(var(--en-dock-h, 64px) + 16px);
 }
-/* 閱讀中播放列／底板不可消失（雙保險） */
-#view-en-daily-read.view-active #en-bottom-dock,
-#view-en-daily-read.view-active #en-bottom-dock[hidden] {
+/* 閱讀／對話中播放列／底板不可消失（雙保險） */
+body.en-playing #en-bottom-dock,
+body.en-playing #en-bottom-dock[hidden],
+#view-en-daily-read.view-active ~ #en-bottom-dock,
+#view-en-daily-dialogue.view-active ~ #en-bottom-dock {
   display: flex !important;
 }
-#view-en-daily-read.view-active #en-play-bar,
-#view-en-daily-read.view-active #en-play-bar[hidden] {
+body.en-playing #en-play-bar,
+body.en-playing #en-play-bar[hidden] {
   display: flex !important;
 }
 body.en-gloss-open .en-play-status {
@@ -6198,13 +6208,56 @@ body.en-gloss-open .en-play-lang-btn {
   background: #ff8a3d;
   color: #fff;
 }
+.en-sent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+.en-sent-play {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  border: none;
+  border-radius: 999px;
+  background: #ff8a3d;
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.en-sent-play:active {
+  background: #e06e20;
+}
 .en-sent {
+  flex: 1 1 auto;
   border-radius: 4px;
   transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 .en-sent.is-reading {
   background: #fff3c4;
   box-shadow: 0 0 0 2px #ffd36a;
+}
+.en-dlg-scene {
+  margin: 0 0 6px;
+  font-weight: 700;
+  color: #1a5bb8;
+}
+.en-dlg-roles {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.en-dlg-turn {
+  margin-bottom: 4px;
+}
+.en-dlg-speaker {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #e06e20;
+  margin: 0 0 2px 34px;
 }
 .en-gloss-toolbar {
   display: flex;

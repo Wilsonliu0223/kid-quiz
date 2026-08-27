@@ -1,7 +1,7 @@
 /**
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
-import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v2";
+import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v3";
 import {
   speakEnglish,
   unlockSpeechFromGesture,
@@ -40,6 +40,8 @@ let quizIndex = 0;
 /** @type {(string|null)[]} 每題已選答案（可回頭改） */
 let quizAnswers = [];
 let quizCorrect = 0;
+/** @type {'read'|'dialogue'} */
+let quizKind = "read";
 
 /** @type {'en'|'zh'} */
 let playLang = /** @type {'en'|'zh'} */ (
@@ -50,6 +52,8 @@ let playSourceText = "";
 let playSeq = 0;
 /** 全文逐句跟讀時為 true */
 let playFollowSentences = false;
+/** @type {string[] | null} 全文播放時的逐段文字（對話用 turns） */
+let playChunks = null;
 /** @type {number} 0.8 | 1 | 1.25 */
 let playSpeed = Number(localStorage.getItem("kid-quiz-en-play-speed") || "1") || 1;
 /** @type {string} 列表目前選的日期 yyyy-MM-dd */
@@ -81,8 +85,20 @@ function syncPlaySpeedBtns() {
   });
 }
 
-function isReaderActive() {
-  return Boolean($("#view-en-daily-read")?.classList.contains("view-active"));
+function isDialogueActive() {
+  return Boolean($("#view-en-daily-dialogue")?.classList.contains("view-active"));
+}
+
+function isEnSpeakViewActive() {
+  return (
+    Boolean($("#view-en-daily-read")?.classList.contains("view-active")) ||
+    isDialogueActive()
+  );
+}
+
+function speakRoot() {
+  if (isDialogueActive()) return $("#en-daily-dialogue-body");
+  return $("#en-daily-body");
 }
 
 /** 閱讀頁內：播放列必須一直在；只在離開文章時才允許收掉 */
@@ -92,14 +108,14 @@ function syncDockVisibility() {
   const panel = $("#en-gloss-panel");
   if (!dock) return;
 
-  if (isReaderActive() && bar) {
+  if (isEnSpeakViewActive() && bar) {
     bar.hidden = false;
     document.body.classList.add("en-playing");
     dock.hidden = false;
   }
 
   const show =
-    isReaderActive() ||
+    isEnSpeakViewActive() ||
     (bar && !bar.hidden) ||
     document.body.classList.contains("en-gloss-open") ||
     (panel && !panel.hidden);
@@ -139,7 +155,7 @@ function showPlayBarIdle() {
 
 function hidePlayBar(force = false) {
   // 文章內任何時候都要看得到播放列
-  if (!force && isReaderActive()) {
+  if (!force && isEnSpeakViewActive()) {
     showPlayBarIdle();
     return;
   }
@@ -156,6 +172,7 @@ function hidePlayBar(force = false) {
 function stopPlayBar(opts = {}) {
   playSeq += 1;
   playFollowSentences = false;
+  playChunks = null;
   stopSpeaking();
   playSourceText = "";
   if (opts.dismiss) {
@@ -184,7 +201,7 @@ function clearSentenceHighlight() {
 
 function highlightSentence(index) {
   clearSentenceHighlight();
-  const el = document.querySelector(`.en-sent[data-en-sent="${index}"]`);
+  const el = speakRoot()?.querySelector(`.en-sent[data-en-sent="${index}"]`);
   if (!el) return;
   el.classList.add("is-reading");
   try {
@@ -211,20 +228,23 @@ function sleepMs(ms) {
 /**
  * 帶播放條的朗讀（英文／中文可切；全文可逐句反亮）
  * @param {string} text
- * @param {{ label?: string, followSentences?: boolean }} [opts]
+ * @param {{ label?: string, followSentences?: boolean, chunks?: string[], highlightIndex?: number }} [opts]
  */
 async function playWithBar(text, opts = {}) {
   const raw = String(text || "").trim();
-  if (!raw) return;
-  playSourceText = raw;
-  playFollowSentences = Boolean(opts.followSentences);
+  if (!raw && !(opts.chunks && opts.chunks.length)) return;
+  playSourceText = raw || (opts.chunks || []).join(" ");
+  playChunks = Array.isArray(opts.chunks) && opts.chunks.length ? opts.chunks : null;
+  playFollowSentences = Boolean(opts.followSentences) || Boolean(playChunks);
   const seq = ++playSeq;
   unlockSpeechFromGesture();
   setSpeakingSpeed(playSpeed);
 
-  const sentences = playFollowSentences
-    ? splitEnglishSentences(raw)
-    : [raw];
+  const sentences = playChunks
+    ? playChunks
+    : playFollowSentences
+      ? splitEnglishSentences(playSourceText)
+      : [playSourceText];
   const labelBase = opts.label || (playLang === "zh" ? "中文播放中" : "英文播放中");
 
   showPlayBar(
@@ -234,7 +254,13 @@ async function playWithBar(text, opts = {}) {
   let anyOk = false;
   for (let i = 0; i < sentences.length; i++) {
     if (seq !== playSeq) return;
-    if (playFollowSentences) highlightSentence(i);
+    const hi =
+      opts.highlightIndex != null
+        ? opts.highlightIndex
+        : playFollowSentences
+          ? i
+          : -1;
+    if (hi >= 0) highlightSentence(hi);
     const status =
       sentences.length > 1
         ? `${labelBase} ${i + 1}/${sentences.length}`
@@ -326,7 +352,7 @@ function bodyForLevel(art) {
   return art.bodyL1;
 }
 
-function vocabMap(art) {
+function vocabMap(art, extraWords = []) {
   /** @type {Map<string, { word: string, gloss: string, example: string, phonetic?: string }>} */
   const map = new Map();
   for (const v of art?.vocab || []) {
@@ -340,6 +366,12 @@ function vocabMap(art) {
       example: String(v.example || "").trim(),
       phonetic: String(v.phonetic || "").trim(),
     });
+  }
+  for (const raw of extraWords || []) {
+    const word = String(raw || "").trim();
+    const w = word.toLowerCase();
+    if (!w || map.has(w)) continue;
+    map.set(w, { word, gloss: "", example: "", phonetic: "" });
   }
   return map;
 }
@@ -400,7 +432,13 @@ function bindUi() {
         level = lv;
         localStorage.setItem("kid-quiz-en-daily-level", level);
         syncLevelChips();
-        if (current) renderReader();
+        if (isDialogueActive()) renderDialogue();
+        else if (
+          current &&
+          $("#view-en-daily-read")?.classList.contains("view-active")
+        ) {
+          renderReader();
+        }
       }
     });
   });
@@ -411,16 +449,30 @@ function bindUi() {
     openDailyList();
   });
   $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
-    if (!current) return;
-    await playWithBar(bodyForLevel(current), {
-      label: "全文播放中",
-      followSentences: true,
-    });
+    await playFullCurrent();
   });
   $("#btn-en-daily-done")?.addEventListener("click", () => {
     stopPlayBar({ dismiss: true });
     hideGloss();
     startMiniQuiz();
+  });
+  $("#btn-en-daily-dialogue")?.addEventListener("click", () => {
+    openDialogue();
+  });
+  $("#btn-en-daily-dialogue-back")?.addEventListener("click", () => {
+    hideGloss();
+    if (current) {
+      deps?.showView("enDailyRead");
+      renderReader();
+    } else {
+      stopPlayBar({ dismiss: true });
+      openDailyList();
+    }
+  });
+  $("#btn-en-daily-dialogue-quiz")?.addEventListener("click", () => {
+    stopPlayBar({ dismiss: true });
+    hideGloss();
+    startDialogueQuiz();
   });
   $("#btn-en-daily-next")?.addEventListener("click", () => {
     stopPlayBar({ dismiss: true });
@@ -449,7 +501,7 @@ function bindUi() {
       alreadyZh: true,
       speed: playSpeed,
     });
-    if (isReaderActive()) {
+    if (isEnSpeakViewActive()) {
       showPlayBar(ok ? "點 🔊 播全文" : "中文說明播放失敗");
     }
   });
@@ -472,6 +524,7 @@ function bindUi() {
         await playWithBar(playSourceText, {
           label: playLang === "zh" ? "中文播放中" : "英文播放中",
           followSentences: playFollowSentences,
+          chunks: playChunks || undefined,
         });
       }
     });
@@ -497,7 +550,13 @@ function bindUi() {
 
   $("#btn-en-daily-quiz-back")?.addEventListener("click", () => {
     if (confirm("離開小測？進度不會儲存。")) {
-      deps?.showView("enDailyRead");
+      if (quizKind === "dialogue") {
+        deps?.showView("enDailyDialogue");
+        renderDialogue();
+      } else {
+        deps?.showView("enDailyRead");
+        if (current) renderReader();
+      }
     }
   });
   $("#btn-en-daily-quiz-prev")?.addEventListener("click", () => {
@@ -691,6 +750,7 @@ function renderReader() {
   }
   bindWordClicks(titleEl);
   bindWordClicks(bodyEl);
+  bindSentencePlay(bodyEl);
   renderReviewStrip();
   const body = bodyForLevel(current);
   prefetchEnglishAudio(current.title);
@@ -713,25 +773,136 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
-function renderClickableBody(text, art) {
+function renderClickableBody(text, art, extraWords) {
   const sentences = splitEnglishSentences(text);
-  if (!sentences.length) return renderClickableText(text, art);
+  if (!sentences.length) return renderClickableText(text, art, extraWords);
   return sentences
     .map(
       (sent, i) =>
-        `<span class="en-sent" data-en-sent="${i}">${renderClickableText(sent, art)}</span>`
+        `<span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(sent, art, extraWords)}</span></span>`
     )
-    .join(" ");
+    .join("");
 }
 
-function renderClickableText(text, art) {
-  const map = vocabMap(art);
+function renderClickableText(text, art, extraWords) {
+  const map = vocabMap(art, extraWords);
   return String(text || "").replace(/([A-Za-z][A-Za-z'-]*)/g, (word) => {
     const key = word.toLowerCase();
     const isKey = map.has(key);
     const cls = isKey ? "en-word en-word-key" : "en-word";
     return `<button type="button" class="${cls}" data-en-word="${escapeHtml(word)}">${escapeHtml(word)}</button>`;
   });
+}
+
+function bindSentencePlay(root) {
+  if (!root) return;
+  root.querySelectorAll("[data-en-sent-play]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const i = Number(btn.getAttribute("data-en-sent-play"));
+      const sentEl = root.querySelector(`.en-sent[data-en-sent="${i}"]`);
+      const text = String(sentEl?.innerText || "").trim();
+      if (!text) return;
+      await playWithBar(text, {
+        label: "單句播放中",
+        highlightIndex: i,
+      });
+    });
+  });
+}
+
+function dialogueOf(art) {
+  const d = art?.dialogue;
+  if (!d || typeof d !== "object") return null;
+  const turns = Array.isArray(d.turns) ? d.turns.filter(Boolean) : [];
+  if (!turns.length) return null;
+  return d;
+}
+
+function dialogueFocusWords(d) {
+  const out = [];
+  for (const t of d?.turns || []) {
+    for (const w of t.focus || t.focus_words || []) {
+      if (w) out.push(String(w));
+    }
+  }
+  return out;
+}
+
+function turnText(turn) {
+  if (!turn) return "";
+  if (level === "l3") return String(turn.l3 || turn.l2 || turn.l1 || "").trim();
+  if (level === "l2") return String(turn.l2 || turn.l1 || turn.l3 || "").trim();
+  return String(turn.l1 || turn.l2 || turn.l3 || "").trim();
+}
+
+function dialogueTurnTexts(d) {
+  return (d?.turns || []).map((t) => turnText(t)).filter(Boolean);
+}
+
+async function playFullCurrent() {
+  if (!current) return;
+  if (isDialogueActive()) {
+    const d = dialogueOf(current);
+    const chunks = dialogueTurnTexts(d);
+    if (!chunks.length) return;
+    await playWithBar(chunks.join(" "), {
+      label: "全文播放中",
+      followSentences: true,
+      chunks,
+    });
+    return;
+  }
+  await playWithBar(bodyForLevel(current), {
+    label: "全文播放中",
+    followSentences: true,
+  });
+}
+
+function openDialogue() {
+  if (!current) return;
+  if (!dialogueOf(current)) {
+    deps?.showWarn?.("尚無情境對話", "這篇還沒有對話資料。請先更新試算表後重新載入。");
+    return;
+  }
+  hideGloss();
+  deps?.showView("enDailyDialogue");
+  renderDialogue();
+}
+
+function renderDialogue() {
+  if (!current) return;
+  const d = dialogueOf(current);
+  if (!d) return;
+  const cat = CAT_LABEL[current.category] || current.category;
+  const sub = $("#en-daily-dialogue-sub");
+  if (sub) sub.textContent = `${level.toUpperCase()} · 情境對話`;
+  const scene = $("#en-daily-dialogue-scene");
+  const roles = $("#en-daily-dialogue-roles");
+  const bodyEl = $("#en-daily-dialogue-body");
+  if (scene) scene.textContent = String(d.scene || current.title || "");
+  if (roles) {
+    const list = Array.isArray(d.roles) ? d.roles.filter(Boolean) : [];
+    roles.textContent = list.length ? `角色：${list.join(" / ")}` : "";
+    roles.hidden = !list.length;
+  }
+  const extra = dialogueFocusWords(d);
+  if (bodyEl) {
+    bodyEl.innerHTML = (d.turns || [])
+      .map((t, i) => {
+        const text = turnText(t);
+        const name = escapeHtml(String(t.speaker || `A${i + 1}`));
+        return `<div class="en-dlg-turn"><span class="en-dlg-speaker">${name}</span><span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(text, current, extra)}</span></span></div>`;
+      })
+      .join("");
+    bindWordClicks(bodyEl);
+    bindSentencePlay(bodyEl);
+  }
+  const chunks = dialogueTurnTexts(d);
+  prefetchEnglishAudio(chunks.join(" "));
+  for (const s of chunks.slice(0, 2)) prefetchChineseAudio(s);
+  showPlayBarIdle();
 }
 
 function bindWordClicks(root) {
@@ -936,10 +1107,10 @@ function hideGloss() {
     glossCloseTimer = 0;
     if (document.body.classList.contains("en-gloss-open")) return;
     if (panel) panel.hidden = true;
-    if (isReaderActive()) showPlayBarIdle();
+    if (isEnSpeakViewActive()) showPlayBarIdle();
     else syncDockVisibility();
   }, 280);
-  if (isReaderActive()) {
+  if (isEnSpeakViewActive()) {
     const bar = $("#en-play-bar");
     if (!bar || bar.hidden) showPlayBarIdle();
     else syncDockVisibility();
@@ -1034,12 +1205,66 @@ function startMiniQuiz() {
     deps?.showWarn?.("無法出題", "這篇沒有足夠的小測資料。");
     return;
   }
+  quizKind = "read";
   quizQs = built.slice(0, 5);
   quizAnswers = quizQs.map(() => null);
   quizIndex = 0;
   quizCorrect = 0;
+  const subj = $("#en-daily-quiz-subject");
+  if (subj) subj.textContent = "閱讀小測";
   renderQuizQ();
   deps?.showView("enDailyQuiz");
+}
+
+function startDialogueQuiz() {
+  if (!current) return;
+  const d = dialogueOf(current);
+  const built = buildDialogueQuizQuestions(current, d);
+  if (!built.length) {
+    deps?.showWarn?.("無法出題", "這篇對話還沒有小測資料。");
+    return;
+  }
+  quizKind = "dialogue";
+  quizQs = built.slice(0, 3);
+  quizAnswers = quizQs.map(() => null);
+  quizIndex = 0;
+  quizCorrect = 0;
+  const subj = $("#en-daily-quiz-subject");
+  if (subj) subj.textContent = "對話小測";
+  renderQuizQ();
+  deps?.showView("enDailyQuiz");
+}
+
+function buildDialogueQuizQuestions(art, d) {
+  const fromSheet = normalizeQuizItems(d?.quiz).slice(0, 3);
+  if (fromSheet.length >= 3) return fromSheet;
+  const used = new Set(
+    fromSheet.map((q) => String(q.answer || "").toLowerCase())
+  );
+  const vocab = [...(art.vocab || [])].filter((v) => v.word && v.gloss);
+  const extra = extractFallbackVocab(
+    dialogueTurnTexts(d).join(" ") || bodyForLevel(art)
+  );
+  const pool = [...vocab, ...extra];
+  const out = [...fromSheet];
+  for (const v of shuffle(pool)) {
+    if (out.length >= 3) break;
+    const answer = String(v.word);
+    if (used.has(answer.toLowerCase())) continue;
+    used.add(answer.toLowerCase());
+    const distractors = pool
+      .map((x) => String(x.word))
+      .filter((w) => w.toLowerCase() !== answer.toLowerCase());
+    const options = shuffle([answer, ...distractors.slice(0, 3)]).slice(0, 4);
+    if (options.length < 2) continue;
+    out.push({
+      type: "vocab",
+      q: String(v.gloss || fallbackGloss(answer)),
+      options: shuffle(options),
+      answer,
+    });
+  }
+  return out;
 }
 
 /**
@@ -1249,12 +1474,12 @@ async function finishQuiz() {
       {
         subject: "en",
         child,
-        mode: "daily-read",
+        mode: quizKind === "dialogue" ? "daily-dialogue" : "daily-read",
         autoCorrect: quizCorrect,
         questions: quizQs,
         pending: 0,
       },
-      `每日閱讀 ${current?.date || ""} ${current?.category || ""}`.trim()
+      `${quizKind === "dialogue" ? "情境對話" : "每日閱讀"} ${current?.date || ""} ${current?.category || ""}`.trim()
     );
     message = result?.message || "";
   } catch (e) {

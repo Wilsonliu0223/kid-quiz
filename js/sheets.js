@@ -392,6 +392,21 @@ function parseQuizJson(raw) {
   return parseVocabJson(raw);
 }
 
+function parseDialogueJson(raw) {
+  if (!raw) return null;
+  if (typeof raw === "object" && !Array.isArray(raw)) return raw;
+  const s = String(raw).trim();
+  if (!s) return null;
+  try {
+    const parsed = JSON.parse(s);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /** 從列中取出 quiz JSON（相容表頭錯位／空白欄） */
 function pickQuizRaw(row, idxQuiz, colCount) {
   if (idxQuiz >= 0) {
@@ -406,13 +421,26 @@ function pickQuizRaw(row, idxQuiz, colCount) {
   return "";
 }
 
+function pickDialogueRaw(row, idxDialogue, colCount) {
+  if (idxDialogue >= 0) {
+    const direct = gvizCell(row, idxDialogue);
+    if (String(direct || "").trim()) return direct;
+  }
+  const n = Math.max(colCount || 0, row?.c?.length || 0);
+  for (let i = 0; i < n; i++) {
+    const v = String(gvizCell(row, i) || "").trim();
+    if (v.startsWith("{") && /"turns"\s*:/.test(v)) return v;
+  }
+  return "";
+}
+
 /**
  * 讀取「英文文章」工作表。
  * @param {{ includeDraft?: boolean }} [opts] includeDraft 預設 true（方便草稿測試）
  * @returns {Promise<Array<{
  *   id: string, date: string, seq: number, category: string, topicKey: string,
  *   title: string, bodyL1: string, bodyL2: string, bodyL3: string,
- *   vocab: object[], quiz: object[], sourceTitle: string, sourceUrl: string, status: string, note: string
+ *   vocab: object[], quiz: object[], dialogue: object|null, sourceTitle: string, sourceUrl: string, status: string, note: string
  * }>>}
  */
 export async function loadEnArticles(opts = {}) {
@@ -444,6 +472,7 @@ export async function loadEnArticles(opts = {}) {
       status: idxOf("狀態"),
       note: idxOf("產文備註"),
       quiz: idxOf("quiz_json"),
+      dialogue: idxOf("dialogue_json"),
     };
     // 欄位辨識失敗時依規劃固定欄序
     if (idx.date < 0 || idx.bodyL1 < 0) {
@@ -462,6 +491,7 @@ export async function loadEnArticles(opts = {}) {
         status: 11,
         note: 12,
         quiz: 13,
+        dialogue: 14,
       };
     }
 
@@ -491,6 +521,9 @@ export async function loadEnArticles(opts = {}) {
         vocab: parseVocabJson(gvizCell(row, idx.vocab)),
         quiz: parseQuizJson(
           pickQuizRaw(row, idx.quiz, (table.cols || []).length)
+        ),
+        dialogue: parseDialogueJson(
+          pickDialogueRaw(row, idx.dialogue, (table.cols || []).length)
         ),
         sourceTitle: String(gvizCell(row, idx.sourceTitle) || "").trim(),
         sourceUrl: String(gvizCell(row, idx.sourceUrl) || "").trim(),
