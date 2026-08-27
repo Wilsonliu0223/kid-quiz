@@ -807,12 +807,10 @@ export function getLastSpeakEngine() {
   return lastSpeakEngine;
 }
 
-function zhVoiceCandidates() {
-  const preferred = String(
-    CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural"
-  ).trim();
+function zhVoiceCandidates(preferred) {
+  const first = String(preferred || CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural").trim();
   const list = [
-    preferred,
+    first,
     "zh-CN-YunxiNeural",
     "zh-TW-HsiaoChenNeural",
     "zh-CN-YunyangNeural",
@@ -821,12 +819,10 @@ function zhVoiceCandidates() {
   return [...new Set(list.filter(Boolean))];
 }
 
-function enVoiceCandidates() {
-  const preferred = String(
-    CONFIG.EN_TTS_VOICE || "en-US-JennyNeural"
-  ).trim();
+function enVoiceCandidates(preferred) {
+  const first = String(preferred || CONFIG.EN_TTS_VOICE || "en-US-JennyNeural").trim();
   const list = [
-    preferred,
+    first,
     "en-US-JennyNeural",
     "en-US-GuyNeural",
     "en-US-AriaNeural",
@@ -895,16 +891,18 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
   return "";
 }
 
-async function resolveEdgeZhBlobUrl(chunk) {
-  return resolveEdgeSpeechUrl(chunk, zhVoiceCandidates());
+async function resolveEdgeZhBlobUrl(chunk, voice) {
+  const voices = voice ? [voice] : zhVoiceCandidates();
+  return resolveEdgeSpeechUrl(chunk, voices);
 }
 
-async function resolveEdgeEnBlobUrl(chunk) {
-  return resolveEdgeSpeechUrl(chunk, enVoiceCandidates());
+async function resolveEdgeEnBlobUrl(chunk, voice) {
+  const voices = voice ? [voice] : enVoiceCandidates();
+  return resolveEdgeSpeechUrl(chunk, voices);
 }
 
 /** 預熱中文神經語音（進閱讀頁／點中文前呼叫，縮短手機等待） */
-export function prefetchChineseAudio(englishText) {
+export function prefetchChineseAudio(englishText, voice) {
   const raw = String(englishText || "").trim();
   if (!raw) return;
   void (async () => {
@@ -913,7 +911,7 @@ export function prefetchChineseAudio(englishText) {
         (await translateEnToZh(raw, "CN")) ||
         (await translateEnToZh(raw, "TW")) ||
         "";
-      if (zh) await resolveEdgeZhBlobUrl(zh);
+      if (zh) await resolveEdgeZhBlobUrl(zh, voice);
     } catch (e) {
       console.warn("prefetchChineseAudio", e);
     }
@@ -921,10 +919,12 @@ export function prefetchChineseAudio(englishText) {
 }
 
 /** Apps Script 備援 */
-async function resolveZhNeuralUrl(chunk) {
+async function resolveZhNeuralUrl(chunk, voice) {
   const key = String(chunk || "").trim();
   if (!key) return "";
-  if (zhNeuralUrlCache.has(key)) return zhNeuralUrlCache.get(key);
+  const useVoice = String(voice || CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural").trim();
+  const cacheKey = `${useVoice}::${key}`;
+  if (zhNeuralUrlCache.has(cacheKey)) return zhNeuralUrlCache.get(cacheKey);
 
   const endpoint = String(CONFIG.SCORE_LOG_URL || "").trim();
   if (!endpoint) return "";
@@ -936,7 +936,7 @@ async function resolveZhNeuralUrl(chunk) {
       body: JSON.stringify({
         action: "synthesizeZh",
         text: key,
-        voice: CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural",
+        voice: useVoice,
       }),
       redirect: "follow",
     });
@@ -949,12 +949,12 @@ async function resolveZhNeuralUrl(chunk) {
     }
     if (data && data.ok && data.audioBase64) {
       const url = `data:${data.mime || "audio/mpeg"};base64,${data.audioBase64}`;
-      zhNeuralUrlCache.set(key, url);
+      zhNeuralUrlCache.set(cacheKey, url);
       lastSpeakEngine = `script:${data.speaker || "edge"}`;
       return url;
     }
     if (data && data.ok && data.url) {
-      zhNeuralUrlCache.set(key, data.url);
+      zhNeuralUrlCache.set(cacheKey, data.url);
       lastSpeakEngine = "zhiyu";
       return data.url;
     }
@@ -964,16 +964,16 @@ async function resolveZhNeuralUrl(chunk) {
   return "";
 }
 
-async function playOnlineChunk(chunk, lang = "en", speed = 1) {
+async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
   if (lang === "zh") {
-    const edge = await resolveEdgeZhBlobUrl(chunk);
+    const edge = await resolveEdgeZhBlobUrl(chunk, voice);
     if (
       edge &&
       (await playAudioUrl(edge, { speed, soften: false, startTimeoutMs: 6000 }))
     ) {
       return true;
     }
-    const neural = await resolveZhNeuralUrl(chunk);
+    const neural = await resolveZhNeuralUrl(chunk, voice);
     if (neural) {
       const isZhiyu = lastSpeakEngine === "zhiyu" || /ttsmp3/i.test(neural);
       if (
@@ -1012,7 +1012,7 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1) {
 
   lastSpeakEngine = "en-online";
   // 英文也優先 Edge 神經音（手機 Google TTS 常失敗 → 機械合成）
-  const edgeEn = await resolveEdgeEnBlobUrl(chunk);
+  const edgeEn = await resolveEdgeEnBlobUrl(chunk, voice);
   if (
     edgeEn &&
     (await playAudioUrl(edgeEn, { speed, soften: false, startTimeoutMs: 7000 }))
@@ -1034,13 +1034,13 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1) {
 }
 
 /** 線上自然音；長文分段連播 */
-async function speakWithOnlineTts(text, lang = "en", speed = 1) {
+async function speakWithOnlineTts(text, lang = "en", speed = 1, voice) {
   // Edge 可吃較長；Google 備援仍用短段
   const chunks =
     lang === "zh" ? chunkZhForTts(text, 72) : chunkTextForTts(text, 180);
   if (!chunks.length) return false;
   for (const chunk of chunks) {
-    const ok = await playOnlineChunk(chunk, lang, speed);
+    const ok = await playOnlineChunk(chunk, lang, speed, voice);
     if (!ok) return false;
   }
   return true;
@@ -1175,8 +1175,9 @@ function speakWithSynth(text, lang = "en", speed = 1) {
  * 播放英文
  * 點擊時請先呼叫 unlockSpeechFromGesture()
  * @param {string} text
- * @param {{ fast?: boolean, instant?: boolean, lang?: 'en'|'zh', speed?: number, alreadyZh?: boolean }} [opts]
+ * @param {{ fast?: boolean, instant?: boolean, lang?: 'en'|'zh', speed?: number, alreadyZh?: boolean, voice?: string }} [opts]
  *   fast/instant：跳過詞典 API，直接播線上自然音；lang=zh 先譯成中文再播（alreadyZh=true 則直接播中文）
+ *   voice：Edge 神經音名稱（情境對話依說話人指定）
  * @returns {Promise<boolean>}
  */
 export async function speakEnglish(text, opts = {}) {
@@ -1189,6 +1190,7 @@ export async function speakEnglish(text, opts = {}) {
   const lang = opts.lang === "zh" ? "zh" : "en";
   const speed = Number(opts.speed) > 0 ? Number(opts.speed) : activeSpeakSpeed || 1;
   activeSpeakSpeed = speed;
+  const voice = String(opts.voice || "").trim() || undefined;
 
   let speakText = w;
   if (lang === "zh" && !opts.alreadyZh) {
@@ -1204,7 +1206,7 @@ export async function speakEnglish(text, opts = {}) {
     try {
       sharedAudio?.pause();
     } catch (_) {}
-    const onlineOk = await speakWithOnlineTts(speakText, lang, speed);
+    const onlineOk = await speakWithOnlineTts(speakText, lang, speed, voice);
     if (onlineOk) return true;
     return speakWithSynth(speakText, lang, speed);
   }
@@ -1214,7 +1216,7 @@ export async function speakEnglish(text, opts = {}) {
     if (dictOk) return true;
   }
 
-  const onlineOk = await speakWithOnlineTts(speakText, lang, speed);
+  const onlineOk = await speakWithOnlineTts(speakText, lang, speed, voice);
   if (onlineOk) return true;
 
   if (lang === "en" && /\s/.test(w)) {

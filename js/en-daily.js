@@ -12,7 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
-} from "./english.js?v=en-speak-v16";
+} from "./english.js?v=en-speak-v17";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -54,6 +54,8 @@ let playSeq = 0;
 let playFollowSentences = false;
 /** @type {string[] | null} 全文播放時的逐段文字（對話用 turns） */
 let playChunks = null;
+/** @type {string[] | null} 與 chunks 對齊的說話人（對話配音） */
+let playSpeakers = null;
 /** @type {number} 0.8 | 1 | 1.25 */
 let playSpeed = Number(localStorage.getItem("kid-quiz-en-play-speed") || "1") || 1;
 /** @type {string} 列表目前選的日期 yyyy-MM-dd */
@@ -173,6 +175,7 @@ function stopPlayBar(opts = {}) {
   playSeq += 1;
   playFollowSentences = false;
   playChunks = null;
+  playSpeakers = null;
   stopSpeaking();
   playSourceText = "";
   if (opts.dismiss) {
@@ -240,13 +243,15 @@ function sleepMs(ms) {
 /**
  * 帶播放條的朗讀（英文／中文可切；全文可逐句反亮）
  * @param {string} text
- * @param {{ label?: string, followSentences?: boolean, chunks?: string[], highlightIndex?: number }} [opts]
+ * @param {{ label?: string, followSentences?: boolean, chunks?: string[], speakers?: string[], highlightIndex?: number }} [opts]
  */
 async function playWithBar(text, opts = {}) {
   const raw = String(text || "").trim();
   if (!raw && !(opts.chunks && opts.chunks.length)) return;
   playSourceText = raw || (opts.chunks || []).join(" ");
   playChunks = Array.isArray(opts.chunks) && opts.chunks.length ? opts.chunks : null;
+  playSpeakers =
+    Array.isArray(opts.speakers) && opts.speakers.length ? opts.speakers : null;
   playFollowSentences = Boolean(opts.followSentences) || Boolean(playChunks);
   const seq = ++playSeq;
   unlockSpeechFromGesture();
@@ -281,10 +286,15 @@ async function playWithBar(text, opts = {}) {
       playLang === "zh" ? `${status} · 載入雲希…` : status
     );
     const t0 = Date.now();
+    const speaker =
+      playSpeakers && playSpeakers.length
+        ? playSpeakers[Math.min(i, playSpeakers.length - 1)]
+        : "";
     const ok = await speakEnglish(sentences[i], {
       fast: true,
       lang: playLang,
       speed: playSpeed,
+      voice: speaker ? voiceForDialogueSpeaker(speaker, playLang) : undefined,
     });
     if (seq !== playSeq) return;
     // 只有音檔明顯提早結束（疑似截斷）才補一點等待，避免整篇聽起來拖很慢
@@ -537,6 +547,7 @@ function bindUi() {
           label: playLang === "zh" ? "中文播放中" : "英文播放中",
           followSentences: playFollowSentences,
           chunks: playChunks || undefined,
+          speakers: playSpeakers || undefined,
         });
       }
     });
@@ -816,9 +827,11 @@ function bindSentencePlay(root) {
       const sentEl = root.querySelector(`.en-sent[data-en-sent="${i}"]`);
       const text = String(sentEl?.innerText || "").trim();
       if (!text) return;
+      const speaker = btn.getAttribute("data-en-speaker") || "";
       await playWithBar(text, {
         label: "單句播放中",
         highlightIndex: i,
+        speakers: speaker ? [speaker] : undefined,
       });
     });
   });
@@ -849,20 +862,70 @@ function turnText(turn) {
   return String(turn.l1 || turn.l2 || turn.l3 || "").trim();
 }
 
+function dialogueSpeakerNames(d) {
+  const names = [];
+  const add = (n) => {
+    const s = String(n || "").trim();
+    if (s && !names.includes(s)) names.push(s);
+  };
+  for (const n of d?.roles || []) add(n);
+  for (const t of d?.turns || []) add(t.speaker);
+  return names;
+}
+
+const EN_DLG_VOICES = [
+  "en-US-GuyNeural",
+  "en-US-JennyNeural",
+  "en-US-DavisNeural",
+  "en-US-AriaNeural",
+  "en-GB-RyanNeural",
+  "en-GB-SoniaNeural",
+];
+const ZH_DLG_VOICES = [
+  "zh-CN-YunxiNeural",
+  "zh-CN-XiaoxiaoNeural",
+  "zh-CN-YunyangNeural",
+  "zh-TW-HsiaoChenNeural",
+  "zh-CN-YunjianNeural",
+  "zh-CN-XiaoyiNeural",
+];
+
+function voiceForDialogueSpeaker(name, lang) {
+  const d = current ? dialogueOf(current) : null;
+  const names = dialogueSpeakerNames(d);
+  let i = names.indexOf(String(name || "").trim());
+  if (i < 0) i = 0;
+  const pool = lang === "zh" ? ZH_DLG_VOICES : EN_DLG_VOICES;
+  return pool[i % pool.length];
+}
+
 function dialogueTurnTexts(d) {
   return (d?.turns || []).map((t) => turnText(t)).filter(Boolean);
+}
+
+function dialogueTurnPlayList(d) {
+  const chunks = [];
+  const speakers = [];
+  (d?.turns || []).forEach((t, i) => {
+    const text = turnText(t);
+    if (!text) return;
+    chunks.push(text);
+    speakers.push(String(t.speaker || `A${i + 1}`).trim());
+  });
+  return { chunks, speakers };
 }
 
 async function playFullCurrent() {
   if (!current) return;
   if (isDialogueActive()) {
     const d = dialogueOf(current);
-    const chunks = dialogueTurnTexts(d);
+    const { chunks, speakers } = dialogueTurnPlayList(d);
     if (!chunks.length) return;
     await playWithBar(chunks.join(" "), {
       label: "全文播放中",
       followSentences: true,
       chunks,
+      speakers,
     });
     return;
   }
@@ -905,15 +968,17 @@ function renderDialogue() {
       .map((t, i) => {
         const text = turnText(t);
         const name = escapeHtml(String(t.speaker || `A${i + 1}`));
-        return `<div class="en-dlg-turn"><span class="en-dlg-speaker">${name}</span><span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(text, current, extra)}</span></span></div>`;
+        return `<div class="en-dlg-turn"><span class="en-dlg-speaker">${name}</span><span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" data-en-speaker="${name}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(text, current, extra)}</span></span></div>`;
       })
       .join("");
     bindWordClicks(bodyEl);
     bindSentencePlay(bodyEl);
   }
-  const chunks = dialogueTurnTexts(d);
-  prefetchEnglishAudio(chunks.join(" "));
-  for (const s of chunks.slice(0, 2)) prefetchChineseAudio(s);
+  const playList = dialogueTurnPlayList(d);
+  prefetchEnglishAudio(playList.chunks.join(" "));
+  playList.chunks.slice(0, 2).forEach((s, i) => {
+    prefetchChineseAudio(s, voiceForDialogueSpeaker(playList.speakers[i], "zh"));
+  });
   showPlayBarIdle();
 }
 
