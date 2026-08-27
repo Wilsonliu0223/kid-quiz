@@ -956,6 +956,17 @@ function turnText(turn) {
   return String(turn.l1 || turn.l2 || turn.l3 || "").trim();
 }
 
+function turnZh(turn) {
+  if (!turn) return "";
+  if (level === "l3") {
+    return String(turn.zh_l3 || turn.zh_l2 || turn.zh_l1 || turn.zh || "").trim();
+  }
+  if (level === "l2") {
+    return String(turn.zh_l2 || turn.zh_l1 || turn.zh_l3 || turn.zh || "").trim();
+  }
+  return String(turn.zh_l1 || turn.zh_l2 || turn.zh || "").trim();
+}
+
 function dialogueSpeakerNames(d) {
   const names = [];
   const add = (n) => {
@@ -1095,12 +1106,16 @@ function bindDialogueZhToggles(root, d) {
       p.hidden = false;
       btn.textContent = "中文 ▲";
       if (!zh) {
-        p.textContent = "翻譯中…";
-        const src = turnText(d?.turns?.[i]);
-        zh =
-          (await translateEnToZh(src, "TW")) ||
-          (await translateEnToZh(src, "CN")) ||
-          "（暫無中文）";
+        const turn = d?.turns?.[i];
+        zh = turnZh(turn);
+        if (!zh) {
+          p.textContent = "翻譯中…";
+          const src = turnText(turn);
+          zh =
+            (await translateEnToZh(src, "TW")) ||
+            (await translateEnToZh(src, "CN")) ||
+            "（暫無中文）";
+        }
         dlgZhCache.set(cacheKey, zh);
       }
       p.textContent = zh;
