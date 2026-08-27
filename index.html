@@ -390,9 +390,9 @@
               <button type="button" class="en-play-repeat-btn" data-en-play-repeat="all" title="整篇反覆播放" aria-label="整篇反覆播放">ALL</button>
             </div>
             <div class="en-play-speed" role="group" aria-label="語速">
-              <button type="button" class="en-play-speed-btn" data-en-play-speed="0.8">慢</button>
+              <button type="button" class="en-play-speed-btn" data-en-play-speed="0.7">慢</button>
               <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
-              <button type="button" class="en-play-speed-btn" data-en-play-speed="1.25">快</button>
+              <button type="button" class="en-play-speed-btn" data-en-play-speed="1.45">快</button>
             </div>
             <div class="en-play-lang" role="group" aria-label="朗讀語言">
               <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
@@ -2296,7 +2296,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.8").catch((e) => {
+      import("./js/app.js?v=app-v45.9").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

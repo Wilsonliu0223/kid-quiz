@@ -12,7 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
-} from "./english.js?v=en-speak-v17";
+} from "./english.js?v=en-speak-v18";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -77,8 +77,19 @@ let playRepeat = /** @type {'off'|'sentence'|'all'} */ (
     ? localStorage.getItem("kid-quiz-en-play-repeat")
     : "off"
 );
-/** @type {number} 0.8 | 1 | 1.25 */
-let playSpeed = Number(localStorage.getItem("kid-quiz-en-play-speed") || "1") || 1;
+function snapPlaySpeed(raw) {
+  const v = Number(raw);
+  if (!(v > 0)) return 1;
+  if (v < 0.9) return 0.7;
+  if (v > 1.12) return 1.45;
+  return 1;
+}
+
+/** @type {number} 0.7 | 1 | 1.45 */
+let playSpeed = snapPlaySpeed(localStorage.getItem("kid-quiz-en-play-speed") || "1");
+if (String(localStorage.getItem("kid-quiz-en-play-speed") || "1") !== String(playSpeed)) {
+  localStorage.setItem("kid-quiz-en-play-speed", String(playSpeed));
+}
 /** @type {string} 列表目前選的日期 yyyy-MM-dd */
 let selectedDate = localStorage.getItem("kid-quiz-en-daily-date") || "";
 

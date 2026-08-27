@@ -111,6 +111,22 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
+function currentPlaybackRate() {
+  const userSpeed = Number(activeSpeakSpeed) > 0 ? Number(activeSpeakSpeed) : 1;
+  const base = activeSoften ? 0.86 : 1;
+  return base * userSpeed;
+}
+
+/** 換 src 後瀏覽器常把 playbackRate 打回 1，要重套 */
+function applyPlaybackRate(audio) {
+  if (!audio) return;
+  const rate = currentPlaybackRate();
+  try {
+    audio.defaultPlaybackRate = rate;
+    audio.playbackRate = rate;
+  } catch (_) {}
+}
+
 function playAudioUrl(url, opts = {}) {
   return new Promise((resolve) => {
     const src = normalizeAudioUrl(url);
@@ -126,12 +142,11 @@ function playAudioUrl(url, opts = {}) {
       audio.onerror = null;
       audio.onplaying = null;
       audio.onloadedmetadata = null;
+      audio.oncanplay = null;
 
       const soften = Boolean(opts.soften);
       const userSpeed =
         Number(opts.speed) > 0 ? Number(opts.speed) : activeSpeakSpeed || 1;
-      const base = soften ? 0.86 : 1;
-      const rate = base * userSpeed;
       activeSoften = soften;
       activeSpeakSpeed = userSpeed;
       try {
@@ -139,21 +154,19 @@ function playAudioUrl(url, opts = {}) {
         if ("mozPreservesPitch" in audio) audio.mozPreservesPitch = !soften;
         if ("webkitPreservesPitch" in audio) audio.webkitPreservesPitch = !soften;
       } catch (_) {}
-      audio.playbackRate = rate;
 
       let settled = false;
       let started = false;
       let endFailsafe = 0;
+      let rateWatch = 0;
       const done = (ok) => {
         if (settled) return;
         settled = true;
         clearTimeout(startTimer);
         if (endFailsafe) clearTimeout(endFailsafe);
+        if (rateWatch) clearInterval(rateWatch);
         audio.onloadedmetadata = null;
-        try {
-          audio.playbackRate = 1;
-          audio.preservesPitch = true;
-        } catch (_) {}
+        audio.oncanplay = null;
         resolve(ok);
       };
       const startTimer = setTimeout(() => {
@@ -165,6 +178,7 @@ function playAudioUrl(url, opts = {}) {
         const dur = audio.duration;
         if (!Number.isFinite(dur) || dur <= 0) return;
         // 依實際長度 + 語速，避免 onended 沒觸發一直卡住；多留 0.8s
+        applyPlaybackRate(audio);
         const ms = Math.ceil((dur / (audio.playbackRate || 1)) * 1000) + 800;
         endFailsafe = setTimeout(() => done(true), ms);
       };
@@ -172,11 +186,14 @@ function playAudioUrl(url, opts = {}) {
       audio.onplaying = () => {
         started = true;
         clearTimeout(startTimer);
+        applyPlaybackRate(audio);
         armDurationFailsafe();
       };
       audio.onloadedmetadata = () => {
+        applyPlaybackRate(audio);
         if (started) armDurationFailsafe();
       };
+      audio.oncanplay = () => applyPlaybackRate(audio);
       audio.onended = () => {
         // 忽略「幾乎沒播就 ended」的假結束（換 src／載入中常見）
         const dur = audio.duration;
@@ -200,6 +217,10 @@ function playAudioUrl(url, opts = {}) {
       };
       audio.onerror = () => done(false);
       audio.src = src;
+      applyPlaybackRate(audio);
+      rateWatch = setInterval(() => {
+        if (!settled) applyPlaybackRate(audio);
+      }, 200);
       const playP = audio.play();
       if (playP && typeof playP.then === "function") {
         playP.catch(() => {
@@ -224,12 +245,7 @@ export function setSpeakingSpeed(speed) {
   const s = Number(speed);
   if (!(s > 0)) return;
   activeSpeakSpeed = s;
-  if (sharedAudio && !sharedAudio.paused) {
-    const base = activeSoften ? 0.86 : 1;
-    try {
-      sharedAudio.playbackRate = base * s;
-    } catch (_) {}
-  }
+  applyPlaybackRate(sharedAudio);
 }
 
 export function getSpeakingSpeed() {
