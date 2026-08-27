@@ -1174,10 +1174,21 @@ function renderClozeCard(idPrefix, text, art, extraWords) {
     card.hidden = true;
     opts.innerHTML = "";
     prompt.textContent = "";
+    const fb0 = $(`#${idPrefix}-feedback`);
+    if (fb0) {
+      fb0.hidden = true;
+      fb0.textContent = "";
+    }
     return;
   }
   card.hidden = false;
   prompt.textContent = item.sentence;
+  const fb = $(`#${idPrefix}-feedback`);
+  if (fb) {
+    fb.hidden = true;
+    fb.textContent = "";
+    fb.classList.remove("is-ok", "is-no");
+  }
   opts.innerHTML = "";
   let locked = false;
   for (const opt of item.options) {
@@ -1188,6 +1199,9 @@ function renderClozeCard(idPrefix, text, art, extraWords) {
     btn.addEventListener("click", () => {
       if (locked) return;
       locked = true;
+      opts.querySelectorAll("button").forEach((b) => {
+        b.disabled = true;
+      });
       const ok =
         String(opt).toLowerCase() === String(item.answer).toLowerCase();
       btn.classList.add(ok ? "en-cloze-ok" : "en-cloze-no");
@@ -1200,6 +1214,19 @@ function renderClozeCard(idPrefix, text, art, extraWords) {
             b.classList.add("en-cloze-ok");
           }
         });
+      }
+      if (fb) {
+        fb.hidden = false;
+        fb.classList.toggle("is-ok", ok);
+        fb.classList.toggle("is-no", !ok);
+        fb.textContent = ok
+          ? `正確！答案是 ${item.answer}`
+          : `不對，答案是 ${item.answer}`;
+      }
+      if (ok) {
+        deps?.showOk?.("正確！", `空格是 ${item.answer}`);
+      } else {
+        deps?.showWarn?.("不對", `答案是 ${item.answer}`);
       }
     });
     opts.appendChild(btn);

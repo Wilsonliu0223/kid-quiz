@@ -6301,12 +6301,27 @@ body.en-gloss-open .en-play-repeat-btn {
   gap: 8px;
 }
 .en-cloze-options .btn.en-cloze-ok {
-  background: #d8f5e2;
-  border-color: #7bc99a;
+  background: #b8f0c8;
+  border-color: #2f9e57;
+  color: #145c2e;
+  font-weight: 800;
 }
 .en-cloze-options .btn.en-cloze-no {
-  background: #ffe1d9;
-  border-color: #f0a090;
+  background: #ffc9bc;
+  border-color: #e05a40;
+  color: #8a2414;
+  font-weight: 800;
+}
+.en-cloze-feedback {
+  margin: 8px 0 0;
+  font-weight: 800;
+  font-size: 1rem;
+}
+.en-cloze-feedback.is-ok {
+  color: #145c2e;
+}
+.en-cloze-feedback.is-no {
+  color: #c0392b;
 }
 .en-daily-dictation-feedback {
   margin: 0;
