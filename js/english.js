@@ -923,10 +923,11 @@ export function prefetchChineseAudio(englishText, voice) {
   if (!raw) return;
   void (async () => {
     try {
-      const zh =
-        (await translateEnToZh(raw, "CN")) ||
-        (await translateEnToZh(raw, "TW")) ||
-        "";
+      const zh = /[\u4e00-\u9fff]/.test(raw)
+        ? raw
+        : (await translateEnToZh(raw, "CN")) ||
+          (await translateEnToZh(raw, "TW")) ||
+          "";
       if (zh) await resolveEdgeZhBlobUrl(zh, voice);
     } catch (e) {
       console.warn("prefetchChineseAudio", e);

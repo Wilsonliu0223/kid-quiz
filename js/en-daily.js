@@ -12,7 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
-} from "./english.js?v=en-speak-v18";
+} from "./english.js?v=en-speak-v19";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -65,6 +65,8 @@ let playFollowSentences = false;
 let playChunks = null;
 /** @type {string[] | null} 與 chunks 對齊的說話人（對話配音） */
 let playSpeakers = null;
+/** @type {string[] | null} 與英文句對齊的人工中文（有就不要機器翻譯） */
+let playZhChunks = null;
 /** @type {number | null} */
 let playHighlightIndex = null;
 /** @type {'none'|'sentence'|'all'} 這次播放能不能被反覆（單字卡不算） */
@@ -218,6 +220,7 @@ function stopPlayBar(opts = {}) {
   playFollowSentences = false;
   playChunks = null;
   playSpeakers = null;
+  playZhChunks = null;
   playHighlightIndex = null;
   playLoopKind = "none";
   stopSpeaking();
@@ -253,6 +256,39 @@ export function splitEnglishSentences(text) {
       p.replace(/\u0001(\d+)\u0001/g, (_, i) => holders[Number(i)]).trim()
     )
     .filter(Boolean);
+}
+
+function splitChineseSentences(text) {
+  const s = String(text || "")
+    .trim()
+    .replace(/\s+/g, "");
+  if (!s) return [];
+  const parts = s.match(/[^。！？]+[。！？]*/g);
+  return (parts || [s]).map((p) => p.trim()).filter(Boolean);
+}
+
+function bodyZhForLevel(art) {
+  const z = art?.dialogue?.article_zh;
+  if (!z || typeof z !== "object") return "";
+  if (level === "l3") return String(z.l3 || z.l2 || z.l1 || "").trim();
+  if (level === "l2") return String(z.l2 || z.l1 || z.l3 || "").trim();
+  return String(z.l1 || z.l2 || z.l3 || "").trim();
+}
+
+function alignedZhChunks(enChunks) {
+  const list = Array.isArray(enChunks) ? enChunks : [];
+  if (!list.length || !current) return null;
+  if (isDialogueActive()) {
+    const d = dialogueOf(current);
+    const zh = [];
+    (d?.turns || []).forEach((t) => {
+      if (!turnText(t)) return;
+      zh.push(turnZh(t));
+    });
+    return zh.length === list.length && zh.every(Boolean) ? zh : null;
+  }
+  const zhSents = splitChineseSentences(bodyZhForLevel(current));
+  return zhSents.length === list.length && zhSents.every(Boolean) ? zhSents : null;
 }
 
 function clearSentenceHighlight() {
@@ -299,6 +335,8 @@ async function playWithBar(text, opts = {}) {
   playChunks = Array.isArray(opts.chunks) && opts.chunks.length ? opts.chunks : null;
   playSpeakers =
     Array.isArray(opts.speakers) && opts.speakers.length ? opts.speakers : null;
+  playZhChunks =
+    Array.isArray(opts.zhChunks) && opts.zhChunks.length ? opts.zhChunks : null;
   playFollowSentences = Boolean(opts.followSentences) || Boolean(playChunks);
   playHighlightIndex =
     opts.highlightIndex != null ? Number(opts.highlightIndex) : null;
@@ -320,6 +358,9 @@ async function playWithBar(text, opts = {}) {
     : playFollowSentences
       ? splitEnglishSentences(playSourceText)
       : [playSourceText];
+  if (!playZhChunks || playZhChunks.length !== sentences.length) {
+    playZhChunks = alignedZhChunks(sentences);
+  }
   const labelBase = opts.label || (playLang === "zh" ? "中文播放中" : "英文播放中");
 
   showPlayBar(
@@ -348,9 +389,16 @@ async function playWithBar(text, opts = {}) {
       playSpeakers && playSpeakers.length
         ? playSpeakers[Math.min(i, playSpeakers.length - 1)]
         : "";
-    const ok = await speakEnglish(sentences[i], {
+    const lineEn = sentences[i];
+    const lineZh =
+      playLang === "zh" && playZhChunks && playZhChunks[i]
+        ? playZhChunks[i]
+        : "";
+    const spoken = lineZh || lineEn;
+    const ok = await speakEnglish(spoken, {
       fast: true,
       lang: playLang,
+      alreadyZh: Boolean(lineZh),
       speed: playSpeed,
       voice: speaker ? voiceForDialogueSpeaker(speaker, playLang) : undefined,
     });
@@ -410,6 +458,7 @@ async function playWithBar(text, opts = {}) {
       followSentences: playFollowSentences,
       chunks: playChunks || undefined,
       speakers: playSpeakers || undefined,
+      zhChunks: playZhChunks || undefined,
       highlightIndex:
         playHighlightIndex != null ? playHighlightIndex : undefined,
     });
@@ -627,6 +676,7 @@ function bindUi() {
           followSentences: playFollowSentences,
           chunks: playChunks || undefined,
           speakers: playSpeakers || undefined,
+          zhChunks: playZhChunks || undefined,
           highlightIndex:
             playHighlightIndex != null ? playHighlightIndex : undefined,
         });
@@ -887,8 +937,10 @@ function renderReader() {
   prefetchEnglishAudio(current.title);
   prefetchEnglishAudio(body);
   // 預熱前兩句中文神經音，手機較不易落到機械備援
-  const sents = splitEnglishSentences(body).slice(0, 2);
-  for (const s of sents) prefetchChineseAudio(s);
+  const sents = splitEnglishSentences(body);
+  const zhSents = splitChineseSentences(bodyZhForLevel(current));
+  const warm = zhSents.length === sents.length ? zhSents : sents;
+  for (const s of warm.slice(0, 2)) prefetchChineseAudio(s);
   for (const v of current.vocab || []) {
     if (v.word) prefetchEnglishAudio(v.word);
   }
@@ -936,10 +988,19 @@ function bindSentencePlay(root) {
       const text = String(sentEl?.innerText || "").trim();
       if (!text) return;
       const speaker = btn.getAttribute("data-en-speaker") || "";
+      let zhOne = "";
+      if (isDialogueActive()) {
+        zhOne = turnZh(dialogueOf(current)?.turns?.[i]);
+      } else {
+        const enSents = splitEnglishSentences(bodyForLevel(current));
+        const zhSents = splitChineseSentences(bodyZhForLevel(current));
+        if (enSents.length === zhSents.length) zhOne = zhSents[i] || "";
+      }
       await playWithBar(text, {
         label: "單句播放中",
         highlightIndex: i,
         speakers: speaker ? [speaker] : undefined,
+        zhChunks: zhOne ? [zhOne] : undefined,
       });
     });
   });
@@ -1045,12 +1106,16 @@ async function playFullCurrent() {
       followSentences: true,
       chunks,
       speakers,
+      zhChunks: alignedZhChunks(chunks) || undefined,
     });
     return;
   }
-  await playWithBar(bodyForLevel(current), {
+  const body = bodyForLevel(current);
+  const enSents = splitEnglishSentences(body);
+  await playWithBar(body, {
     label: "全文播放中",
     followSentences: true,
+    zhChunks: alignedZhChunks(enSents) || undefined,
   });
 }
 
@@ -1096,8 +1161,9 @@ function renderDialogue() {
   }
   const playList = dialogueTurnPlayList(d);
   prefetchEnglishAudio(playList.chunks.join(" "));
+  const zhList = alignedZhChunks(playList.chunks) || [];
   playList.chunks.slice(0, 2).forEach((s, i) => {
-    prefetchChineseAudio(s, voiceForDialogueSpeaker(playList.speakers[i], "zh"));
+    prefetchChineseAudio(zhList[i] || s, voiceForDialogueSpeaker(playList.speakers[i], "zh"));
   });
   renderClozeCard("en-dlg-cloze", playList.chunks.join(" "), current, extra);
   showPlayBarIdle();
