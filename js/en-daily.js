@@ -230,22 +230,25 @@ function stopPlayBar(opts = {}) {
   clearSentenceHighlight();
 }
 
-/** 英文依句號切段（跟讀反亮用）；避開 a.m. / U.S. 等縮寫 */
-function splitEnglishSentences(text) {
-  const s = String(text || "")
+/** 英文依句號切段（跟讀反亮用）；避開 a.m. / U.S. / 3.0 等假句點 */
+export function splitEnglishSentences(text) {
+  let s = String(text || "")
     .trim()
     .replace(/\s+/g, " ");
   if (!s) return [];
   const holders = [];
-  const protectedText = s.replace(
-    /\b(?:[ap]\.m\.|U\.S\.A?\.|e\.g\.|i\.e\.|Mr\.|Mrs\.|Ms\.|Dr\.)/gi,
-    (m) => {
-      holders.push(m);
-      return `\u0001${holders.length - 1}\u0001`;
-    }
+  const hold = (m) => {
+    holders.push(m);
+    return `\u0001${holders.length - 1}\u0001`;
+  };
+  s = s.replace(/\d+\.\d+/g, hold);
+  s = s.replace(/\b[A-Z]\.(?:[A-Z]\.)+/g, hold);
+  s = s.replace(
+    /\b(?:[ap]\.m\.|U\.S\.A?\.|e\.g\.|i\.e\.|Mr\.|Mrs\.|Ms\.|Dr\.|Jr\.|Sr\.|vs\.|No\.|St\.|Prof\.|Inc\.|Ltd\.|etc\.)/gi,
+    hold
   );
-  const parts = protectedText.match(/[^.!?]+(?:[.!?]+|(?=$))/g);
-  return (parts || [protectedText])
+  const parts = s.match(/[^.!?]+(?:[.!?]+|(?=$))/g);
+  return (parts || [s])
     .map((p) =>
       p.replace(/\u0001(\d+)\u0001/g, (_, i) => holders[Number(i)]).trim()
     )
