@@ -6051,14 +6051,16 @@ body.sudoku-dragging .sudoku-cell-movable {
   z-index: 1;
   flex: 0 0 auto;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px 8px;
+  min-width: 0;
+  width: 100%;
   min-height: 48px;
   padding: 8px 12px;
   background: #1a2a4a;
   color: #fff;
-  overflow-x: auto;
+  overflow: hidden;
   box-shadow: none;
 }
 .en-play-bar[hidden] {
@@ -6163,13 +6165,22 @@ body.en-gloss-open .en-play-repeat-btn {
   50% { transform: scaleY(1); opacity: 1; }
 }
 .en-play-status {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   font-size: 0.88rem;
   font-weight: 700;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.en-play-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+  flex: 1 1 100%;
+  min-width: 0;
 }
 .en-play-speed,
 .en-play-lang,
@@ -6216,6 +6227,41 @@ body.en-gloss-open .en-play-repeat-btn {
 .en-play-speak-all:active {
   background: #ff8a3d;
   color: #fff;
+}
+@media (max-width: 760px) {
+  .en-play-eq {
+    display: none;
+  }
+  .en-play-bar {
+    gap: 8px 6px;
+    padding: 8px 10px;
+  }
+  .en-play-status {
+    font-size: 0.8rem;
+  }
+  .en-play-tools {
+    justify-content: space-between;
+  }
+  .en-play-speed-btn,
+  .en-play-lang-btn,
+  .en-play-repeat-btn {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+  }
+  .en-play-repeat-btn {
+    padding: 5px 7px;
+    font-size: 0.68rem;
+  }
+  .en-play-speak-all {
+    padding: 4px 8px;
+  }
+}
+@media (min-width: 761px) {
+  .en-play-tools {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
 }
 .en-sent-row {
   display: flex;

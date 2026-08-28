@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.13" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.14" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -384,22 +384,24 @@
             <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
             <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
             <span class="en-play-status" id="en-play-status">播放中</span>
-            <div class="en-play-repeat" role="group" aria-label="Repeat">
-              <button type="button" class="en-play-repeat-btn is-active" data-en-play-repeat="off" title="不反覆" aria-label="不反覆">OFF</button>
-              <button type="button" class="en-play-repeat-btn" data-en-play-repeat="sentence" title="單句反覆播放" aria-label="單句反覆播放">LINE</button>
-              <button type="button" class="en-play-repeat-btn" data-en-play-repeat="all" title="整篇反覆播放" aria-label="整篇反覆播放">ALL</button>
-            </div>
-            <div class="en-play-speed" role="group" aria-label="語速">
-              <button type="button" class="en-play-speed-btn" data-en-play-speed="0.7">慢</button>
-              <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
-              <button type="button" class="en-play-speed-btn" data-en-play-speed="1.45">快</button>
-            </div>
-            <div class="en-play-lang" role="group" aria-label="朗讀語言">
-              <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
-              <button type="button" class="en-play-lang-btn" data-en-play-lang="zh">中文</button>
-              <button type="button" class="en-play-speak-all" id="btn-en-daily-speak-all" aria-label="播放全文">
-                🔊
-              </button>
+            <button type="button" class="en-play-speak-all" id="btn-en-daily-speak-all" aria-label="播放全文">
+              🔊
+            </button>
+            <div class="en-play-tools">
+              <div class="en-play-repeat" role="group" aria-label="Repeat">
+                <button type="button" class="en-play-repeat-btn is-active" data-en-play-repeat="off" title="不反覆" aria-label="不反覆">OFF</button>
+                <button type="button" class="en-play-repeat-btn" data-en-play-repeat="sentence" title="單句反覆播放" aria-label="單句反覆播放">LINE</button>
+                <button type="button" class="en-play-repeat-btn" data-en-play-repeat="all" title="整篇反覆播放" aria-label="整篇反覆播放">ALL</button>
+              </div>
+              <div class="en-play-speed" role="group" aria-label="語速">
+                <button type="button" class="en-play-speed-btn" data-en-play-speed="0.7">慢</button>
+                <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
+                <button type="button" class="en-play-speed-btn" data-en-play-speed="1.45">快</button>
+              </div>
+              <div class="en-play-lang" role="group" aria-label="朗讀語言">
+                <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
+                <button type="button" class="en-play-lang-btn" data-en-play-lang="zh">中文</button>
+              </div>
             </div>
           </div>
           <div id="en-gloss-panel" class="en-gloss-panel" hidden>
