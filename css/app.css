@@ -6109,6 +6109,8 @@ body.en-playing #view-en-daily-read.view-active,
 #view-en-daily-read.view-active,
 body.en-playing #view-en-daily-dialogue.view-active,
 #view-en-daily-dialogue.view-active {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: calc(var(--en-dock-h, 64px) + 16px);
 }
 /* 閱讀／對話中播放列／底板不可消失（雙保險） */
@@ -6268,6 +6270,8 @@ body.en-gloss-open .en-play-repeat-btn {
   align-items: flex-start;
   gap: 6px;
   margin: 0 0 10px;
+  scroll-margin-top: 12px;
+  scroll-margin-bottom: calc(var(--en-dock-h, 80px) + 20px);
 }
 .en-sent-play {
   flex: 0 0 auto;

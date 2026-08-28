@@ -302,9 +302,46 @@ function highlightSentence(index) {
   const el = speakRoot()?.querySelector(`.en-sent[data-en-sent="${index}"]`);
   if (!el) return;
   el.classList.add("is-reading");
+  scrollSentenceIntoPlayView(el);
+}
+
+function playViewScroller() {
+  const view = isDialogueActive()
+    ? $("#view-en-daily-dialogue")
+    : $("#view-en-daily-read");
+  if (view && view.scrollHeight > view.clientHeight + 4) return view;
+  return document.scrollingElement || document.documentElement;
+}
+
+/** 全文跟讀時把當句捲到播放列上方，不必手滑 */
+function scrollSentenceIntoPlayView(el) {
+  const row = el.closest(".en-sent-row") || el;
+  const scroller = playViewScroller();
+  const header = (isDialogueActive()
+    ? $("#view-en-daily-dialogue")
+    : $("#view-en-daily-read")
+  )?.querySelector(".quiz-header");
+  const headerBottom = header ? header.getBoundingClientRect().bottom : 12;
+  const dockH =
+    Number.parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue("--en-dock-h")
+    ) || 72;
+  const rect = row.getBoundingClientRect();
+  const box =
+    scroller === document.scrollingElement || scroller === document.documentElement
+      ? { top: 0, bottom: window.innerHeight }
+      : scroller.getBoundingClientRect();
+  const safeTop = Math.max(box.top, headerBottom) + 10;
+  const safeBottom = Math.min(box.bottom, window.innerHeight - dockH) - 12;
+  const band = Math.max(64, safeBottom - safeTop);
+  const targetTop = safeTop + Math.min(48, band * 0.16);
+  const delta = rect.top - targetTop;
+  if (Math.abs(delta) < 6) return;
   try {
-    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  } catch (_) {}
+    scroller.scrollBy({ top: delta, behavior: "smooth" });
+  } catch (_) {
+    scroller.scrollTop += delta;
+  }
 }
 
 /** 依字數估最少朗讀時間，避免音檔被截短時反亮搶跑 */
