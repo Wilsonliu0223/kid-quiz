@@ -12,7 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
-} from "./english.js?v=en-speak-v19";
+} from "./english.js?v=en-speak-v21";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -1369,7 +1369,7 @@ function bindWordClicks(root) {
       e.preventDefault();
       unlockSpeechFromGesture();
       const w = btn.getAttribute("data-en-word") || "";
-      const inGloss = Boolean(btn.closest("#en-gloss-text"));
+      const inGloss = Boolean(btn.closest("#en-gloss-text, #en-gloss-senses"));
       openGloss(w, !inGloss);
     });
   });
@@ -1398,6 +1398,14 @@ async function openGloss(word, reset) {
     if (reset) glossStack = [local];
     else glossStack.push(local);
     showGloss(local);
+    const online = await lookupEnglishGloss(word);
+    if (seq !== glossSeq || !online?.senses?.length) return;
+    const upgraded = {
+      ...online,
+      contextGloss: local.gloss,
+    };
+    glossStack[glossStack.length - 1] = upgraded;
+    showGloss(upgraded);
     return;
   }
 
@@ -1452,6 +1460,29 @@ function setGlossZhExpanded(open) {
 function toggleGlossZhExpanded() {
   setGlossZhExpanded(!glossZhExpanded);
   requestAnimationFrame(() => syncDockVisibility());
+}
+
+function renderGlossSenses(senses) {
+  if (!Array.isArray(senses) || !senses.length) return "";
+  return senses
+    .map((sense) => {
+      const pos = escapeHtml(sense?.pos || "");
+      const definition = renderClickableText(
+        String(sense?.definition || ""),
+        current
+      );
+      const zh = String(sense?.zh || "").trim();
+      const example = String(sense?.example || "").trim();
+      return `<div class="en-gloss-sense">
+        <span class="en-gloss-pos">${pos}</span>
+        <div class="en-gloss-sense-body">
+          <p class="en-gloss-sense-en">${definition}</p>
+          ${zh ? `<p class="en-gloss-sense-zh">${escapeHtml(zh)}${sense?.zhSource === "machine" ? " <small>（自動翻譯）</small>" : ""}</p>` : ""}
+          ${example ? `<p class="en-gloss-sense-example">${escapeHtml(example)}</p>` : ""}
+        </div>
+      </div>`;
+    })
+    .join("");
 }
 
 function setGlossZhUi(zhText) {
@@ -1522,22 +1553,38 @@ function showGloss(entry, opts = {}) {
   const w = $("#en-gloss-word");
   const ph = $("#en-gloss-phonetic");
   const g = $("#en-gloss-text");
+  const sensesEl = $("#en-gloss-senses");
   const ex = $("#en-gloss-example");
   const exLabel = document.querySelector(".en-gloss-example-label");
+  const sourceEl = $("#en-gloss-source");
   const back = $("#btn-en-gloss-back");
   if (w) w.textContent = entry.word;
   if (ph) {
     ph.textContent = entry.phonetic ? `/${entry.phonetic}/` : "";
     ph.hidden = !entry.phonetic;
   }
+  const hasSenses = Array.isArray(entry.senses) && entry.senses.length > 0;
+  if (sensesEl) {
+    sensesEl.innerHTML = hasSenses ? renderGlossSenses(entry.senses) : "";
+    sensesEl.hidden = !hasSenses;
+    if (hasSenses) bindWordClicks(sensesEl);
+  }
   if (g) {
-    g.innerHTML = renderClickableText(entry.gloss, current);
+    const contextGloss = String(entry.contextGloss || "").trim();
+    g.innerHTML = contextGloss
+      ? `<span class="en-gloss-context-label">本篇詞義：</span>${renderClickableText(contextGloss, current)}`
+      : renderClickableText(entry.gloss, current);
+    g.hidden = hasSenses && !contextGloss;
     bindWordClicks(g);
   }
-  setGlossZhUi(entry.zhGloss || "");
-  void fillGlossZh(entry, seq);
+  if (hasSenses) {
+    setGlossZhUi("");
+  } else {
+    setGlossZhUi(entry.zhGloss || "");
+    void fillGlossZh(entry, seq);
+  }
 
-  const hasEx = Boolean(entry.example);
+  const hasEx = Boolean(entry.example) && !hasSenses;
   if (ex) {
     ex.textContent = entry.example || "";
     ex.hidden = !hasEx;
@@ -1545,6 +1592,13 @@ function showGloss(entry, opts = {}) {
   if (exLabel) exLabel.hidden = !hasEx;
   const exSpeak = $("#btn-en-gloss-example-speak");
   if (exSpeak) exSpeak.hidden = !hasEx;
+  if (sourceEl) {
+    const source = String(entry.source || "").trim();
+    sourceEl.innerHTML = source
+      ? `資料：<a href="https://freedictionaryapi.com/" target="_blank" rel="noopener noreferrer">FreeDictionaryAPI</a>（<a href="https://en.wiktionary.org/" target="_blank" rel="noopener noreferrer">${escapeHtml(source)}</a>）`
+      : "";
+    sourceEl.hidden = !source;
+  }
   if (back) back.hidden = glossStack.length <= 1;
 
   requestAnimationFrame(() => syncDockVisibility());

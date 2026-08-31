@@ -293,7 +293,7 @@ async function fetchDictionaryAudioUrl(query) {
   return "";
 }
 
-/** @type {Map<string, { word: string, gloss: string, example: string, phonetic: string } | null>} */
+/** @type {Map<string, { word: string, gloss: string, example: string, phonetic: string, senses?: object[], source?: string } | null>} */
 const glossDefCache = new Map();
 
 function glossWordCandidates(word) {
@@ -362,6 +362,113 @@ function isWeakGloss(gloss, word) {
     return true;
   }
   return false;
+}
+
+function dictionaryPosLabel(pos) {
+  const labels = {
+    noun: "n.",
+    verb: "v.",
+    adjective: "adj.",
+    adverb: "adv.",
+    pronoun: "pron.",
+    preposition: "prep.",
+    conjunction: "conj.",
+    interjection: "interj.",
+    determiner: "det.",
+    article: "article.",
+    abbreviation: "abbr.",
+  };
+  return labels[String(pos || "").toLowerCase()] || String(pos || "").trim();
+}
+
+function pickUsIpa(pronunciations) {
+  const list = Array.isArray(pronunciations) ? pronunciations : [];
+  const raw =
+    list.find(
+      (p) =>
+        Array.isArray(p?.tags) &&
+        p.tags.some((tag) => /^us$/i.test(String(tag || "")))
+    )?.text ||
+    list.find((p) => String(p?.type || "").toLowerCase() === "ipa")?.text ||
+    "";
+  return String(raw)
+    .replace(/^\//, "")
+    .replace(/\/$/, "")
+    .replace(/^\[/, "")
+    .replace(/\]$/, "");
+}
+
+function pickChineseTranslation(translations) {
+  const list = Array.isArray(translations) ? translations : [];
+  const hit = list.find((t) => {
+    const code = String(t?.language?.code || "").toLowerCase();
+    const name = String(t?.language?.name || "").toLowerCase();
+    return code === "cmn" || code === "zh" || name.includes("chinese");
+  });
+  if (!hit?.word) return "";
+  // Wiktionary 有時同時提供繁簡，用斜線分隔；第一項通常是繁體。
+  return String(hit.word).split("/")[0].trim();
+}
+
+/**
+ * FreeDictionaryAPI：Wiktionary 結構化資料，免費、免 key、支援 CORS。
+ * 這裡優先保留詞性與多個 sense，讓畫面能做英英／英繁對照。
+ * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string, senses?: object[], source?: string } | null>}
+ */
+async function glossFromFreeDictionaryApi(q, displayWord) {
+  const data = await fetchJson(
+    `https://freedictionaryapi.com/api/v1/entries/en/${encodeURIComponent(
+      q
+    )}?translations=true`,
+    8000
+  );
+  if (!data || !Array.isArray(data.entries)) return null;
+
+  const entries = data.entries.filter(
+    (entry) => String(entry?.language?.code || "").toLowerCase() === "en"
+  );
+  const senses = [];
+  const posCounts = new Map();
+  for (const entry of entries) {
+    const pos = dictionaryPosLabel(entry.partOfSpeech);
+    for (const sense of Array.isArray(entry.senses) ? entry.senses : []) {
+      if ((posCounts.get(pos) || 0) >= 3) break;
+      const definition = simplifyKidDefinition(sense?.definition);
+      if (!definition || isWeakGloss(definition, q)) continue;
+      senses.push({
+        pos,
+        definition,
+        zh: pickChineseTranslation(sense?.translations),
+        example: String(sense?.examples?.[0] || "").trim(),
+      });
+      posCounts.set(pos, (posCounts.get(pos) || 0) + 1);
+    }
+    if (senses.length >= 8) break;
+  }
+  if (!senses.length) return null;
+
+  // 只補前幾個沒有詞典中文的義項，避免一次產生大量翻譯請求。
+  const missing = senses.filter((s) => !s.zh).slice(0, 4);
+  await Promise.all(
+    missing.map(async (sense) => {
+      sense.zh =
+        (await translateEnToZh(sense.definition, "TW")) ||
+        (await translateEnToZh(sense.definition, "CN")) ||
+        "";
+      sense.zhSource = sense.zh ? "machine" : "";
+    })
+  );
+
+  const first = senses[0];
+  return {
+    word: data.word || displayWord || q,
+    gloss: first.definition,
+    example: first.example,
+    phonetic: pickUsIpa(entries[0]?.pronunciations),
+    senses,
+    source: "Wiktionary",
+    sourceUrl: String(data.source?.url || "https://en.wiktionary.org/"),
+  };
 }
 
 function scoreGlossQuality(gloss, word) {
@@ -557,7 +664,7 @@ function pickBestGloss(candidates, word) {
 /**
  * 線上英英（多來源）：Free Dictionary → Datamuse → Simple Wikipedia
  * 文章 vocab 沒有的字用這個補；專有名詞／運動用語覆蓋較完整。
- * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string } | null>}
+ * @returns {Promise<{ word: string, gloss: string, example: string, phonetic: string, senses?: object[], source?: string } | null>}
  */
 export async function lookupEnglishGloss(word) {
   const raw = String(word || "").trim();
@@ -566,8 +673,15 @@ export async function lookupEnglishGloss(word) {
   if (glossDefCache.has(cacheKey)) return glossDefCache.get(cacheKey);
 
   const forms = glossWordCandidates(raw);
-  /** @type {{ word: string, gloss: string, example: string, phonetic: string }[]} */
+  /** @type {{ word: string, gloss: string, example: string, phonetic: string, senses?: object[], source?: string }[]} */
   const found = [];
+
+  // 優先使用有詞性／多義項／翻譯欄位的新免費來源。
+  const structured = await glossFromFreeDictionaryApi(forms[0] || raw, raw);
+  if (structured) {
+    glossDefCache.set(cacheKey, structured);
+    return structured;
+  }
 
   // 並行查前兩個詞形（原形 + 第一個變形），再補其餘
   const primaryForms = forms.slice(0, 2);

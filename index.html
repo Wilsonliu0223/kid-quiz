@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.16" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.17" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -415,6 +415,7 @@
               <button type="button" class="btn-text" id="btn-en-gloss-speak">🔊</button>
             </div>
             <p class="en-gloss-phonetic" id="en-gloss-phonetic" hidden></p>
+            <div class="en-gloss-senses" id="en-gloss-senses" hidden></div>
             <div class="en-gloss-text" id="en-gloss-text"></div>
             <div class="en-gloss-zh-row" id="en-gloss-zh-row" hidden>
               <span class="en-gloss-zh-title">中文說明</span>
@@ -425,6 +426,7 @@
             <p class="en-gloss-example-label">Example</p>
             <p class="en-gloss-example" id="en-gloss-example"></p>
             <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
+            <p class="en-gloss-source" id="en-gloss-source" hidden></p>
             <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-gloss-add">
               ☆ 加入複習字
             </button>
@@ -2299,7 +2301,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.13").catch((e) => {
+      import("./js/app.js?v=app-v45.16").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
