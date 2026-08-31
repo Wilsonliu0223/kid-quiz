@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.18" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.20" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -385,6 +385,7 @@
             <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
             <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
             <span class="en-play-status" id="en-play-status">播放中</span>
+            <button type="button" class="en-play-gloss-close" id="btn-en-gloss-close" hidden>關閉查字</button>
             <button type="button" class="en-play-speak-all" id="btn-en-daily-speak-all" aria-label="播放全文">
               🔊
             </button>
@@ -408,7 +409,6 @@
           <div id="en-gloss-panel" class="en-gloss-panel" hidden>
             <div class="en-gloss-toolbar">
               <button type="button" class="btn-text" id="btn-en-gloss-back" hidden>← 上一層</button>
-              <button type="button" class="btn-text" id="btn-en-gloss-close">關閉</button>
             </div>
             <div class="en-gloss-head">
               <strong id="en-gloss-word"></strong>
@@ -2301,7 +2301,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.19").catch((e) => {
+      import("./js/app.js?v=app-v45.21").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

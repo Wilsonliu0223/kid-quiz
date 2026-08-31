@@ -6200,6 +6200,23 @@ body.en-gloss-open .en-play-repeat-btn {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.en-play-gloss-close {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.en-play-gloss-close:active {
+  background: #ff8a3d;
+}
+.en-play-gloss-close[hidden] {
+  display: none !important;
+}
 .en-play-tools {
   display: flex;
   flex-wrap: wrap;

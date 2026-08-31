@@ -1553,6 +1553,8 @@ function showGloss(entry, opts = {}) {
   panel.hidden = false;
   void panel.offsetHeight;
   document.body.classList.add("en-gloss-open");
+  const closeBtn = $("#btn-en-gloss-close");
+  if (closeBtn) closeBtn.hidden = false;
 
   // 查字時也一定先保證播放列在（紅框那條），不可只剩字卡
   const bar = $("#en-play-bar");
@@ -1624,6 +1626,8 @@ function showGloss(entry, opts = {}) {
 
 function hideGloss() {
   const panel = $("#en-gloss-panel");
+  const closeBtn = $("#btn-en-gloss-close");
+  if (closeBtn) closeBtn.hidden = true;
   document.body.classList.remove("en-gloss-open");
   glossStack = [];
   if (glossCloseTimer) clearTimeout(glossCloseTimer);
