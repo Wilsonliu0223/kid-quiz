@@ -613,8 +613,8 @@ function bindUi() {
     await openDailyList();
   });
 
-  $("#btn-en-daily-date-prev")?.addEventListener("click", () => shiftSelectedDate(1));
-  $("#btn-en-daily-date-next")?.addEventListener("click", () => shiftSelectedDate(-1));
+  $("#btn-en-daily-date-prev")?.addEventListener("click", () => shiftSelectedDate(-1));
+  $("#btn-en-daily-date-next")?.addEventListener("click", () => shiftSelectedDate(1));
 
   document.querySelectorAll("[data-en-daily-level]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -875,8 +875,8 @@ function renderDateChips() {
   const prev = $("#btn-en-daily-date-prev");
   const next = $("#btn-en-daily-date-next");
   const i = dates.indexOf(selectedDate);
-  if (prev) prev.disabled = i < 0 || i >= dates.length - 1;
-  if (next) next.disabled = i <= 0;
+  if (prev) prev.disabled = i <= 0;
+  if (next) next.disabled = i < 0 || i >= dates.length - 1;
 }
 
 function formatDateChip(iso) {
