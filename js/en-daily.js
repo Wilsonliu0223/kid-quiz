@@ -69,6 +69,7 @@ let playSpeakers = null;
 let playZhChunks = null;
 /** @type {number | null} */
 let playHighlightIndex = null;
+let playHighlightOffset = 0;
 /** @type {'none'|'sentence'|'all'} 這次播放能不能被反覆（單字卡不算） */
 let playLoopKind = "none";
 /** @type {'off'|'sentence'|'all'} */
@@ -226,6 +227,7 @@ function stopPlayBar(opts = {}) {
   playSpeakers = null;
   playZhChunks = null;
   playHighlightIndex = null;
+  playHighlightOffset = 0;
   playLoopKind = "none";
   stopSpeaking();
   playSourceText = "";
@@ -367,7 +369,7 @@ function sleepMs(ms) {
 /**
  * 帶播放條的朗讀（英文／中文可切；全文可逐句反亮）
  * @param {string} text
- * @param {{ label?: string, followSentences?: boolean, chunks?: string[], speakers?: string[], highlightIndex?: number }} [opts]
+ * @param {{ label?: string, followSentences?: boolean, chunks?: string[], speakers?: string[], highlightIndex?: number, highlightOffset?: number }} [opts]
  */
 async function playWithBar(text, opts = {}) {
   const raw = String(text || "").trim();
@@ -381,6 +383,7 @@ async function playWithBar(text, opts = {}) {
   playFollowSentences = Boolean(opts.followSentences) || Boolean(playChunks);
   playHighlightIndex =
     opts.highlightIndex != null ? Number(opts.highlightIndex) : null;
+  playHighlightOffset = Number(opts.highlightOffset) || 0;
   if (opts.label === "單句播放中") playLoopKind = "sentence";
   else if (opts.label === "全文播放中") playLoopKind = "all";
   else if (playFollowSentences || (playChunks && playChunks.length > 1)) {
@@ -411,12 +414,13 @@ async function playWithBar(text, opts = {}) {
   let anyOk = false;
   for (let i = 0; i < sentences.length; i++) {
     if (seq !== playSeq) return;
-    const hi =
+    const rawHi =
       opts.highlightIndex != null
         ? opts.highlightIndex
         : playFollowSentences
           ? i
           : -1;
+    const hi = rawHi >= 0 ? rawHi - playHighlightOffset : rawHi;
     if (hi >= 0) highlightSentence(hi);
     const status =
       sentences.length > 1
@@ -502,6 +506,7 @@ async function playWithBar(text, opts = {}) {
       zhChunks: playZhChunks || undefined,
       highlightIndex:
         playHighlightIndex != null ? playHighlightIndex : undefined,
+      highlightOffset: playHighlightOffset || undefined,
     });
     return;
   }
@@ -1161,10 +1166,19 @@ async function playFullCurrent() {
   }
   const body = bodyForLevel(current);
   const enSents = splitEnglishSentences(body);
-  await playWithBar(body, {
+  const title = String(current.title || "").trim();
+  const chunks = [title, ...enSents].filter(Boolean);
+  const zhBody = alignedZhChunks(enSents);
+  const zhChunks =
+    zhBody && zhBody.length === enSents.length
+      ? [titleZhOf(current), ...zhBody]
+      : [titleZhOf(current), ...enSents.map(() => "")];
+  await playWithBar(chunks.join(" "), {
     label: "全文播放中",
     followSentences: true,
-    zhChunks: alignedZhChunks(enSents) || undefined,
+    chunks,
+    zhChunks,
+    highlightOffset: 1,
   });
 }
 
