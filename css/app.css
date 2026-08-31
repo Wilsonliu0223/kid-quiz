@@ -406,6 +406,18 @@ body {
   color: var(--zh-dark);
 }
 
+.en-daily-level-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.en-daily-level-chips .chip {
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
 .lesson-picker {
   margin-bottom: 16px;
 }
