@@ -5951,6 +5951,12 @@ body.sudoku-dragging .sudoku-cell-movable {
   color: #1a2a4a;
   line-height: 1.35;
 }
+.en-daily-card-title-zh {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3d4f73;
+  line-height: 1.4;
+}
 .en-daily-card-meta {
   font-size: 0.8rem;
   color: var(--muted);
@@ -5967,6 +5973,13 @@ body.sudoku-dragging .sudoku-cell-movable {
   font-weight: 800;
   color: #1a2a4a;
   line-height: 1.35;
+}
+.en-daily-title-zh {
+  margin: 2px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3d4f73;
+  line-height: 1.4;
 }
 .en-daily-tap-hint {
   margin: 0;

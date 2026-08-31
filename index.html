@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.13";
+        var V = "39.14";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.15" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.16" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -62,7 +62,7 @@
         <header class="app-header">
           <div class="app-title-row">
             <h1 class="app-title" id="home-title">家裡練習</h1>
-            <span class="app-version" id="app-version" aria-label="版本">v40.1</span>
+            <span class="app-version" id="app-version" aria-label="版本">v40.2</span>
           </div>
           <p class="app-subtitle">長按標題可新增／管理使用者</p>
         </header>
@@ -335,6 +335,7 @@
             <button type="button" class="chip" data-en-daily-level="l3">L3</button>
           </div>
           <h2 class="en-daily-title" id="en-daily-title"></h2>
+          <p class="en-daily-title-zh" id="en-daily-title-zh" hidden></p>
           <div class="en-daily-article" id="en-daily-body"></div>
           <p class="en-daily-review-strip" id="en-daily-review-strip" hidden></p>
           <div id="en-daily-cloze" class="en-cloze-card" hidden>
@@ -2298,7 +2299,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.12").catch((e) => {
+      import("./js/app.js?v=app-v45.13").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

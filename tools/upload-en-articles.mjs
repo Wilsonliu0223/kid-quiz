@@ -136,10 +136,18 @@ async function main() {
     ? args.file
     : path.resolve(process.cwd(), args.file);
   const raw = JSON.parse(fs.readFileSync(abs, "utf8"));
-  const rows = raw.rows || raw;
-  if (!Array.isArray(rows) || !rows.length) {
+  const rowsIn = raw.rows || raw;
+  if (!Array.isArray(rowsIn) || !rowsIn.length) {
     throw new Error("JSON 需含 rows 陣列");
   }
+  const rows = rowsIn.map((row) => {
+    const zh = String(row.title_zh || row.titleZh || "").trim();
+    if (!zh) return row;
+    const d =
+      row.dialogue && typeof row.dialogue === "object" ? { ...row.dialogue } : {};
+    if (!d.title_zh) d.title_zh = zh;
+    return { ...row, dialogue: d, title_zh: zh };
+  });
 
   const date =
     raw.date ||

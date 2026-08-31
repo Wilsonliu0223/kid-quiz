@@ -1,7 +1,7 @@
 /**
  * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
-import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v3";
+import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v4";
 import {
   speakEnglish,
   unlockSpeechFromGesture,
@@ -102,6 +102,10 @@ const CAT_LABEL = {
   entertainment: "娛樂",
   health: "健康",
 };
+
+function titleZhOf(art) {
+  return String(art?.titleZh || art?.dialogue?.title_zh || "").trim();
+}
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -912,8 +916,10 @@ function renderArticleList() {
     btn.type = "button";
     btn.className = "en-daily-card";
     const cat = CAT_LABEL[art.category] || art.category;
+    const zh = titleZhOf(art);
     btn.innerHTML = `<span class="en-daily-card-cat">${escapeHtml(cat)}</span>
       <span class="en-daily-card-title">${escapeHtml(art.title)}</span>
+      ${zh ? `<span class="en-daily-card-title-zh">${escapeHtml(zh)}</span>` : ""}
       <span class="en-daily-card-meta">${art.status === "draft" ? "草稿" : "已發布"} · ${escapeHtml(art.date)} · Level 可切換</span>`;
     btn.addEventListener("click", () => openReader(art.id));
     list.appendChild(btn);
@@ -960,8 +966,14 @@ function renderReader() {
   const sub = $("#en-daily-read-sub");
   if (sub) sub.textContent = `${level.toUpperCase()} · ${cat}`;
   const titleEl = $("#en-daily-title");
+  const titleZhEl = $("#en-daily-title-zh");
   const bodyEl = $("#en-daily-body");
   if (titleEl) titleEl.innerHTML = renderClickableText(current.title, current);
+  if (titleZhEl) {
+    const zh = titleZhOf(current);
+    titleZhEl.textContent = zh;
+    titleZhEl.hidden = !zh;
+  }
   if (bodyEl) {
     bodyEl.innerHTML = renderClickableBody(bodyForLevel(current), current);
   }

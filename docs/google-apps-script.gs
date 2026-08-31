@@ -35,6 +35,7 @@ const EN_ARTICLE_HEADERS = [
   "產文備註",
   "quiz_json",
   "dialogue_json",
+  "title_zh",
 ];
 
 function doGet(e) {
@@ -314,6 +315,12 @@ function getOrCreateEnArticleSheet() {
       .getValues()[0]
       .map(String);
     ensureEnArticleColumn(sheet, header2, "dialogue_json");
+    const lastCol3 = Math.max(sheet.getLastColumn(), EN_ARTICLE_HEADERS.length);
+    const header3 = sheet
+      .getRange(1, 1, 1, lastCol3)
+      .getValues()[0]
+      .map(String);
+    ensureEnArticleColumn(sheet, header3, "title_zh");
   }
   return sheet;
 }
@@ -422,6 +429,7 @@ function rowObjectToValues(row) {
     vocabToCell(
       row.dialogue_json != null ? row.dialogue_json : row.dialogue
     ),
+    String(row.title_zh || row.titleZh || "").trim(),
   ];
 }
 

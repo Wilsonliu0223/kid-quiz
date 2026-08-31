@@ -439,7 +439,7 @@ function pickDialogueRaw(row, idxDialogue, colCount) {
  * @param {{ includeDraft?: boolean }} [opts] includeDraft 預設 true（方便草稿測試）
  * @returns {Promise<Array<{
  *   id: string, date: string, seq: number, category: string, topicKey: string,
- *   title: string, bodyL1: string, bodyL2: string, bodyL3: string,
+ *   title: string, titleZh?: string, bodyL1: string, bodyL2: string, bodyL3: string,
  *   vocab: object[], quiz: object[], dialogue: object|null, sourceTitle: string, sourceUrl: string, status: string, note: string
  * }>>}
  */
@@ -463,6 +463,7 @@ export async function loadEnArticles(opts = {}) {
       category: idxOf("類別"),
       topicKey: idxOf("主題關鍵字"),
       title: idxOf("標題"),
+      titleZh: idxOf("title_zh", "中文標題", "標題中文"),
       bodyL1: idxOf("body_l1"),
       bodyL2: idxOf("body_l2"),
       bodyL3: idxOf("body_l3"),
@@ -482,6 +483,7 @@ export async function loadEnArticles(opts = {}) {
         category: 2,
         topicKey: 3,
         title: 4,
+        titleZh: -1,
         bodyL1: 5,
         bodyL2: 6,
         bodyL3: 7,
@@ -508,6 +510,14 @@ export async function loadEnArticles(opts = {}) {
       if (status && status !== "published" && status !== "draft") continue;
 
       const seq = Number(gvizCell(row, idx.seq)) || items.length + 1;
+      const dialogue = parseDialogueJson(
+        pickDialogueRaw(row, idx.dialogue, (table.cols || []).length)
+      );
+      const titleZh = String(
+        (idx.titleZh >= 0 ? gvizCell(row, idx.titleZh) : "") ||
+          dialogue?.title_zh ||
+          ""
+      ).trim();
       items.push({
         id: `${date}-${seq}-${String(gvizCell(row, idx.category) || "")}`,
         date,
@@ -515,6 +525,7 @@ export async function loadEnArticles(opts = {}) {
         category: String(gvizCell(row, idx.category) || "").trim(),
         topicKey: String(gvizCell(row, idx.topicKey) || "").trim(),
         title: title || bodyL1.slice(0, 40),
+        titleZh,
         bodyL1,
         bodyL2: String(gvizCell(row, idx.bodyL2) || "").trim(),
         bodyL3: String(gvizCell(row, idx.bodyL3) || "").trim(),
@@ -522,9 +533,7 @@ export async function loadEnArticles(opts = {}) {
         quiz: parseQuizJson(
           pickQuizRaw(row, idx.quiz, (table.cols || []).length)
         ),
-        dialogue: parseDialogueJson(
-          pickDialogueRaw(row, idx.dialogue, (table.cols || []).length)
-        ),
+        dialogue,
         sourceTitle: String(gvizCell(row, idx.sourceTitle) || "").trim(),
         sourceUrl: String(gvizCell(row, idx.sourceUrl) || "").trim(),
         status,
