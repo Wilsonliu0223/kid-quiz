@@ -410,6 +410,14 @@ function pickChineseTranslation(translations) {
   return String(hit.word).split("/")[0].trim();
 }
 
+function isUncommonDictionarySense(sense) {
+  const tags = Array.isArray(sense?.tags) ? sense.tags.join(" ") : "";
+  const definition = String(sense?.definition || "");
+  return /\b(?:obsolete|archaic|rare|dated|dialect(?:al)?|poetic|literary|nonstandard|offensive|vulgar|slang|euphemistic|humorous)\b/i.test(
+    `${tags} ${definition}`
+  );
+}
+
 /**
  * FreeDictionaryAPI：Wiktionary 結構化資料，免費、免 key、支援 CORS。
  * 這裡優先保留詞性與多個 sense，讓畫面能做英英／英繁對照。
@@ -427,12 +435,26 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
   const entries = data.entries.filter(
     (entry) => String(entry?.language?.code || "").toLowerCase() === "en"
   );
+  const posTotals = new Map();
+  for (const entry of entries) {
+    const pos = dictionaryPosLabel(entry.partOfSpeech);
+    const total = Array.isArray(entry.senses) ? entry.senses.length : 0;
+    posTotals.set(pos, (posTotals.get(pos) || 0) + total);
+  }
+  const primaryPos = dictionaryPosLabel(entries[0]?.partOfSpeech);
+  const commonPos = new Set([primaryPos]);
+  for (const [pos, total] of posTotals) {
+    // Wiktionary 未必標出「少見」；義項數太少的次要詞性先收起。
+    if (total >= 5) commonPos.add(pos);
+  }
   const senses = [];
   const posCounts = new Map();
   for (const entry of entries) {
     const pos = dictionaryPosLabel(entry.partOfSpeech);
+    if (!commonPos.has(pos)) continue;
     for (const sense of Array.isArray(entry.senses) ? entry.senses : []) {
       if ((posCounts.get(pos) || 0) >= 3) break;
+      if (isUncommonDictionarySense(sense)) continue;
       const definition = simplifyKidDefinition(sense?.definition);
       if (!definition || isWeakGloss(definition, q)) continue;
       senses.push({
