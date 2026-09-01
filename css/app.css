@@ -6233,6 +6233,14 @@ body.en-gloss-open .en-play-repeat-btn {
   gap: 4px;
   flex: 0 0 auto;
 }
+.en-play-lang {
+  flex-wrap: wrap;
+}
+.en-play-lang-btn[data-en-play-lang="en-zh"],
+.en-play-lang-btn[data-en-play-lang="zh-en"] {
+  padding-left: 8px;
+  padding-right: 8px;
+}
 .en-play-speed-btn,
 .en-play-lang-btn,
 .en-play-repeat-btn {

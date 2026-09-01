@@ -52,9 +52,13 @@ let dictationLocked = false;
 /** @type {Map<string, string>} */
 const dlgZhCache = new Map();
 
-/** @type {'en'|'zh'} */
-let playLang = /** @type {'en'|'zh'} */ (
-  localStorage.getItem("kid-quiz-en-play-lang") === "zh" ? "zh" : "en"
+const PLAY_LANGS = ["en", "zh", "en-zh", "zh-en"];
+
+/** @type {'en'|'zh'|'en-zh'|'zh-en'} */
+let playLang = /** @type {'en'|'zh'|'en-zh'|'zh-en'} */ (
+  PLAY_LANGS.includes(String(localStorage.getItem("kid-quiz-en-play-lang") || ""))
+    ? localStorage.getItem("kid-quiz-en-play-lang")
+    : "en"
 );
 /** @type {string} */
 let playSourceText = "";
@@ -366,10 +370,24 @@ function sleepMs(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function playLangSides() {
+  if (playLang === "zh") return ["zh"];
+  if (playLang === "en-zh") return ["en", "zh"];
+  if (playLang === "zh-en") return ["zh", "en"];
+  return ["en"];
+}
+
+function playLangLabel() {
+  if (playLang === "zh") return "中文播放中";
+  if (playLang === "en-zh") return "英→中播放中";
+  if (playLang === "zh-en") return "中→英播放中";
+  return "英文播放中";
+}
+
 /**
- * 帶播放條的朗讀（英文／中文可切；全文可逐句反亮）
+ * 帶播放條的朗讀（英文／中文／逐句英中對照）
  * @param {string} text
- * @param {{ label?: string, followSentences?: boolean, chunks?: string[], speakers?: string[], highlightIndex?: number, highlightOffset?: number }} [opts]
+ * @param {{ label?: string, followSentences?: boolean, chunks?: string[], speakers?: string[], highlightIndex?: number, highlightOffset?: number, zhChunks?: string[] }} [opts]
  */
 async function playWithBar(text, opts = {}) {
   const raw = String(text || "").trim();
@@ -388,7 +406,12 @@ async function playWithBar(text, opts = {}) {
   else if (opts.label === "全文播放中") playLoopKind = "all";
   else if (playFollowSentences || (playChunks && playChunks.length > 1)) {
     playLoopKind = "all";
-  } else if (opts.label === "英文播放中" || opts.label === "中文播放中") {
+  } else if (
+    opts.label === "英文播放中" ||
+    opts.label === "中文播放中" ||
+    opts.label === "英→中播放中" ||
+    opts.label === "中→英播放中"
+  ) {
     // 語言切換沿用上次 loop kind
   } else {
     playLoopKind = "none";
@@ -405,11 +428,11 @@ async function playWithBar(text, opts = {}) {
   if (!playZhChunks || playZhChunks.length !== sentences.length) {
     playZhChunks = alignedZhChunks(sentences);
   }
-  const labelBase = opts.label || (playLang === "zh" ? "中文播放中" : "英文播放中");
+  const sides = playLangSides();
+  const labelBase = opts.label || playLangLabel();
+  const firstSide = sides[0];
 
-  showPlayBar(
-    playLang === "zh" ? "載入雲希神經音…" : "準備播放…"
-  );
+  showPlayBar(firstSide === "zh" ? "載入雲希神經音…" : "準備播放…");
 
   let anyOk = false;
   for (let i = 0; i < sentences.length; i++) {
@@ -422,63 +445,72 @@ async function playWithBar(text, opts = {}) {
           : -1;
     const hi = rawHi >= 0 ? rawHi - playHighlightOffset : rawHi;
     if (hi >= 0) highlightSentence(hi);
-    const status =
-      sentences.length > 1
-        ? `${labelBase} ${i + 1}/${sentences.length}`
-        : labelBase;
-    showPlayBar(
-      playLang === "zh" ? `${status} · 載入雲希…` : status
-    );
-    const t0 = Date.now();
     const speaker =
       playSpeakers && playSpeakers.length
         ? playSpeakers[Math.min(i, playSpeakers.length - 1)]
         : "";
     const lineEn = sentences[i];
-    const lineZh =
-      playLang === "zh" && playZhChunks && playZhChunks[i]
-        ? playZhChunks[i]
-        : "";
-    const spoken = lineZh || lineEn;
-    const ok = await speakEnglish(spoken, {
-      fast: true,
-      lang: playLang,
-      alreadyZh: Boolean(lineZh),
-      speed: playSpeed,
-      voice: speaker ? voiceForDialogueSpeaker(speaker, playLang) : undefined,
-    });
-    if (seq !== playSeq) return;
-    // 只有音檔明顯提早結束（疑似截斷）才補一點等待，避免整篇聽起來拖很慢
-    if (playFollowSentences && ok) {
-      const hold = minSpeakHoldMs(sentences[i], playSpeed);
-      const elapsed = Date.now() - t0;
-      if (elapsed < hold * 0.4) {
-        const wait = hold * 0.5 - elapsed;
-        if (wait > 100) await sleepMs(wait);
-      }
+    const alignedZh = playZhChunks && playZhChunks[i] ? playZhChunks[i] : "";
+
+    for (let s = 0; s < sides.length; s++) {
       if (seq !== playSeq) return;
-    }
-    if (ok) {
-      anyOk = true;
-      const eng = getLastSpeakEngine() || "";
-      let tip = "";
-      if (playLang === "zh") {
-        if (eng.startsWith("edge")) tip = "✓雲希神經音";
-        else if (eng.startsWith("script")) tip = "伺服器語音";
-        else if (eng === "zhiyu") tip = "舊女聲(備援)";
-        else tip = "⚠備援機械音";
-      } else if (eng.startsWith("edge")) {
-        tip = "✓英文神經音";
-      } else if (eng === "en-synth" || eng === "synth") {
-        tip = "⚠備援機械音";
+      const side = sides[s];
+      const sideTag = side === "zh" ? "中" : "英";
+      const status =
+        sentences.length > 1
+          ? `${labelBase} ${i + 1}/${sentences.length}${
+              sides.length > 1 ? ` · ${sideTag}` : ""
+            }`
+          : sides.length > 1
+            ? `${labelBase} · ${sideTag}`
+            : labelBase;
+      showPlayBar(side === "zh" ? `${status} · 載入雲希…` : status);
+      const t0 = Date.now();
+      const lineZh = side === "zh" ? alignedZh : "";
+      const spoken = lineZh || lineEn;
+      const ok = await speakEnglish(spoken, {
+        fast: true,
+        lang: side,
+        alreadyZh: Boolean(lineZh),
+        speed: playSpeed,
+        voice: speaker ? voiceForDialogueSpeaker(speaker, side) : undefined,
+      });
+      if (seq !== playSeq) return;
+      if (playFollowSentences && ok) {
+        const holdSrc = lineZh || lineEn;
+        const hold = minSpeakHoldMs(holdSrc, playSpeed);
+        const elapsed = Date.now() - t0;
+        if (elapsed < hold * 0.4) {
+          const wait = hold * 0.5 - elapsed;
+          if (wait > 100) await sleepMs(wait);
+        }
+        if (seq !== playSeq) return;
       }
-      showPlayBar(
-        tip
-          ? sentences.length > 1
-            ? `${labelBase} ${i + 1}/${sentences.length} · ${tip}`
-            : `${labelBase} · ${tip}`
-          : status
-      );
+      if (ok) {
+        anyOk = true;
+        const eng = getLastSpeakEngine() || "";
+        let tip = "";
+        if (side === "zh") {
+          if (eng.startsWith("edge")) tip = "✓雲希神經音";
+          else if (eng.startsWith("script")) tip = "伺服器語音";
+          else if (eng === "zhiyu") tip = "舊女聲(備援)";
+          else tip = "⚠備援機械音";
+        } else if (eng.startsWith("edge")) {
+          tip = "✓英文神經音";
+        } else if (eng === "en-synth" || eng === "synth") {
+          tip = "⚠備援機械音";
+        }
+        showPlayBar(
+          tip
+            ? sentences.length > 1
+              ? `${labelBase} ${i + 1}/${sentences.length}${
+                  sides.length > 1 ? ` · ${sideTag}` : ""
+                } · ${tip}`
+              : `${labelBase}${sides.length > 1 ? ` · ${sideTag}` : ""} · ${tip}`
+            : status
+        );
+      }
+      if (sides.length > 1 && s === 0) await sleepMs(220);
     }
   }
 
@@ -711,20 +743,21 @@ function bindUi() {
   document.querySelectorAll("[data-en-play-lang]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const lang = btn.getAttribute("data-en-play-lang");
-      if (lang !== "en" && lang !== "zh") return;
-      playLang = lang;
+      if (!PLAY_LANGS.includes(lang || "")) return;
+      playLang = /** @type {'en'|'zh'|'en-zh'|'zh-en'} */ (lang);
       localStorage.setItem("kid-quiz-en-play-lang", playLang);
       syncPlayLangBtns();
       unlockSpeechFromGesture();
       if (playSourceText) {
         await playWithBar(playSourceText, {
-          label: playLang === "zh" ? "中文播放中" : "英文播放中",
+          label: playLangLabel(),
           followSentences: playFollowSentences,
           chunks: playChunks || undefined,
           speakers: playSpeakers || undefined,
           zhChunks: playZhChunks || undefined,
           highlightIndex:
             playHighlightIndex != null ? playHighlightIndex : undefined,
+          highlightOffset: playHighlightOffset || undefined,
         });
       }
     });
