@@ -1,0 +1,17 @@
+你在 kid-quiz 本機自動產「今日」兒童每日英文實事並上傳 Google 試算表。不要問人、不要等審核。直接 published。
+
+日期：用本機今天（Asia/Taipei）。若該日已有 5 則且主題合理，仍可 replace 覆蓋成更好的一組；不要重複近 7 天主題。
+
+必做步驟：
+1. 讀 docs/英文文章寫入試算表.md 的欄位與規則。
+2. node tools/upload-en-articles.mjs --list --days 7 避開重複主題（尤其運動不要連著球類；世界／科技／娛樂／健康也要換題材）。
+3. 上網找 5 則適合孩子的近期新聞（避開戰爭、血腥、成人議題）。五類固定：sport, world, technology, entertainment, health。
+4. 每則含：自然英文 title（不要無生命主詞「要求」人、不要省略 drink water 這類受詞）、title_zh、body_l1/l2/l3、vocab、quiz 5 題、dialogue（含 article_zh 與 turns 中文）、source_title、source_url、status=published。
+5. 字數：L1 80–100、L2 120–150、L3 180–220。中英正文句數必須對齊。標題先文法檢查。
+6. 產文可寫在 .local/（已 gitignore）。用本機驗證字數／句數，通過後：
+   node tools/upload-en-articles.mjs .local/articles-YYYY-MM-DD.json
+   JSON 需 date、replace:true、rows 五則。
+7. 成功條件：腳本印出 ok:true 且 appended:5。失敗就停，不要亂 invent 沒來源的新聞、不要重試到把舊日資料刪掉。
+8. 不要 git add／commit／push。不要改 js／css／index.html。不要讀或印出 .local/en-article-secrets.env 的內容。
+
+上傳憑證已在 .local/en-article-secrets.env，upload 腳本會自己讀。
