@@ -105,6 +105,7 @@ const CAT_LABEL = {
   world: "國際",
   technology: "科技",
   entertainment: "娛樂",
+  gaming: "電玩",
   health: "健康",
 };
 
