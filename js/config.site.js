@@ -17,7 +17,7 @@ export const CONFIG = {
     "https://script.google.com/macros/s/AKfycby6un6lCo712DeJTugRGMCrwo_27X6twNR93BG-CXst-8pUetll7ZAtT2sn5AmAxMXtJA/exec",
   SHEET_ZH: "國語",
   SHEET_EN: "英語",
-  /** 每日實事英文短文（讀取用；寫入見 docs/英文文章寫入試算表.md） */
+  /** 每日時事英文短文（讀取用；寫入見 docs/英文文章寫入試算表.md） */
   SHEET_EN_ARTICLE: "英文文章",
 
   /**

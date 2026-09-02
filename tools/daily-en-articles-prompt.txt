@@ -1,4 +1,4 @@
-你在 kid-quiz 本機自動產「今日」兒童每日英文實事並上傳 Google 試算表。不要問人、不要等審核。直接 published。
+你在 kid-quiz 本機自動產「今日」兒童每日英文時事並上傳 Google 試算表。不要問人、不要等審核。直接 published。
 
 日期：用本機今天（Asia/Taipei）。若該日已有文章，仍可 replace 覆蓋成完整的一組；不要重複近 7 天主題。
 

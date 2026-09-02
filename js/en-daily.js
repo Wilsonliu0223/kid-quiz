@@ -1,5 +1,5 @@
 /**
- * 每日實事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
+ * 每日時事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
 import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v4";
 import {

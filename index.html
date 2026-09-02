@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.14";
+        var V = "39.15";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.21" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.22" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -104,7 +104,7 @@
               data-action="start-en"
             >
               <span class="card-title">英語</span>
-              <span class="card-desc">測驗 · 每日實事閱讀</span>
+              <span class="card-desc">測驗 · 每日時事閱讀</span>
             </button>
             <button type="button" class="card card-mul" id="btn-start-mul">
               <span class="card-title">九九乘法</span>
@@ -279,12 +279,12 @@
           <span class="setup-subject">英語</span>
         </header>
         <div class="en-hub-body">
-          <p class="en-hub-meta" id="en-hub-daily-meta">今日實事與複習字</p>
+          <p class="en-hub-meta" id="en-hub-daily-meta">今日時事與複習字</p>
           <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-hub-quiz">
             拼字測驗／搶答
           </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-daily">
-            每日實事閱讀
+            每日時事閱讀
           </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-dictation">
             聽寫今日詞
@@ -295,11 +295,11 @@
         </div>
       </section>
 
-      <!-- 每日實事：列表 -->
-      <section id="view-en-daily-list" class="view view-hidden" aria-label="每日實事列表">
+      <!-- 每日時事：列表 -->
+      <section id="view-en-daily-list" class="view view-hidden" aria-label="每日時事列表">
         <header class="setup-header setup-header-en">
           <button type="button" class="btn-text" id="btn-en-daily-list-back">← 返回</button>
-          <span class="setup-subject">每日實事</span>
+          <span class="setup-subject">每日時事</span>
         </header>
         <div class="en-daily-list-body">
           <p class="label">閱讀等級</p>
@@ -321,8 +321,8 @@
         </div>
       </section>
 
-      <!-- 每日實事：閱讀 -->
-      <section id="view-en-daily-read" class="view view-hidden" aria-label="每日實事閱讀">
+      <!-- 每日時事：閱讀 -->
+      <section id="view-en-daily-read" class="view view-hidden" aria-label="每日時事閱讀">
         <header class="quiz-header quiz-header-en">
           <button type="button" class="btn-text btn-text-en" id="btn-en-daily-read-back">← 返回</button>
           <span class="quiz-subject" id="en-daily-read-sub">Level 1</span>
@@ -352,7 +352,7 @@
         </div>
       </section>
 
-      <!-- 每日實事：情境對話 -->
+      <!-- 每日時事：情境對話 -->
       <section id="view-en-daily-dialogue" class="view view-hidden" aria-label="情境對話">
         <header class="quiz-header quiz-header-en">
           <button type="button" class="btn-text btn-text-en" id="btn-en-daily-dialogue-back">← 返回</button>
@@ -2303,7 +2303,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.23").catch((e) => {
+      import("./js/app.js?v=app-v45.24").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
