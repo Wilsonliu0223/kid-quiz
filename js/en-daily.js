@@ -784,10 +784,14 @@ function bindUi() {
   });
 
   $("#btn-en-review-back")?.addEventListener("click", () => openEnHub());
+  $("#btn-en-review-dictation")?.addEventListener("click", () => {
+    void openDictation({ reviewOnly: true });
+  });
   $("#btn-en-review-clear")?.addEventListener("click", () => {
     if (confirm("清空目前小孩的複習字？")) {
       saveReview([]);
       renderReviewList();
+      syncHubMeta();
     }
   });
 
@@ -1727,8 +1731,10 @@ function renderReviewList() {
   if (!box) return;
   const list = loadReview();
   box.innerHTML = "";
+  const drillBtn = $("#btn-en-review-dictation");
+  if (drillBtn) drillBtn.disabled = !list.length;
   if (!list.length) {
-    box.innerHTML = "<p class=\"en-daily-empty-hint\">還沒有複習字。閱讀時點生字，再按「加入複習字」。</p>";
+    box.innerHTML = "<p class=\"en-daily-empty-hint\">還沒有複習字。閱讀時點生字，再按「加入複習字」；或先聽寫今日詞，單字會自動進來。</p>";
     return;
   }
   for (const item of list) {
@@ -1761,39 +1767,179 @@ function renderReviewList() {
   }
 }
 
-function collectTodayDictationWords() {
+const DICTATION_N = 8;
+const DICTATION_SEEN_DAYS = 14;
+
+function dictationSeenKey() {
+  return `kid-quiz-en-dictation-seen-${getSelectedChild() || "A"}`;
+}
+
+function loadDictationSeen() {
+  try {
+    const raw = localStorage.getItem(dictationSeenKey());
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveDictationSeen(map) {
+  const cutoff = Date.now() - DICTATION_SEEN_DAYS * 864e5;
+  const out = {};
+  for (const [k, iso] of Object.entries(map || {})) {
+    const t = Date.parse(iso);
+    if (!Number.isNaN(t) && t >= cutoff) out[k] = iso;
+  }
+  localStorage.setItem(dictationSeenKey(), JSON.stringify(out));
+}
+
+function markDictationSeen(words) {
+  const map = loadDictationSeen();
   const today = todayIso();
+  for (const item of words || []) {
+    const k = String(item.word || "")
+      .trim()
+      .toLowerCase();
+    if (k) map[k] = today;
+  }
+  saveDictationSeen(map);
+}
+
+function dictationSeenAgeDays(seenMap, word) {
+  const iso = seenMap[String(word || "").toLowerCase()];
+  if (!iso) return Infinity;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return Infinity;
+  return (Date.now() - t) / 864e5;
+}
+
+function uniqWordEntries(items, source) {
   const seen = new Set();
   const out = [];
-  const add = (word, gloss) => {
-    const w = String(word || "").trim();
-    if (!w || w.length < 2) return;
+  for (const item of items || []) {
+    const w = String(item.word || "").trim();
+    if (!w || w.length < 2) continue;
     const key = w.toLowerCase();
-    if (seen.has(key)) return;
+    if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ word: w, gloss: String(gloss || "").trim() });
-  };
-  for (const art of articles.filter((a) => a.date === today)) {
-    for (const v of art.vocab || []) add(v.word, v.gloss);
+    out.push({
+      word: w,
+      gloss: String(item.gloss || "").trim(),
+      source,
+    });
   }
-  for (const r of loadReview()) add(r.word, r.gloss);
   return out;
 }
 
-async function openDictation() {
+function collectTodayVocab() {
+  const today = todayIso();
+  const items = [];
+  for (const art of articles.filter((a) => a.date === today)) {
+    for (const v of art.vocab || []) items.push(v);
+  }
+  return uniqWordEntries(items, "today");
+}
+
+function collectReviewWords() {
+  return uniqWordEntries(loadReview(), "review");
+}
+
+function pickLeastRecent(pool, n, seenMap) {
+  if (n <= 0 || !pool.length) return [];
+  const ranked = shuffle(pool).sort(
+    (a, b) =>
+      dictationSeenAgeDays(seenMap, b.word) -
+      dictationSeenAgeDays(seenMap, a.word)
+  );
+  return ranked.slice(0, Math.min(n, ranked.length));
+}
+
+function mergePlayedIntoReview(entries) {
+  const list = loadReview();
+  let added = 0;
+  for (const entry of entries || []) {
+    const key = String(entry.word || "")
+      .trim()
+      .toLowerCase();
+    if (!key) continue;
+    if (list.some((x) => String(x.word || "").toLowerCase() === key)) continue;
+    list.unshift({
+      word: entry.word,
+      gloss: entry.gloss || "",
+      example: "",
+      phonetic: "",
+      articleId: "",
+      date: todayIso(),
+      addedAt: new Date().toISOString(),
+    });
+    added += 1;
+  }
+  if (added) saveReview(list);
+  return added;
+}
+
+/** 今日文章單字 ∪ 複習字；優先抽較久沒聽寫過的。reviewOnly 則只抽複習字、不避開近日。 */
+function pickDictationWords({ reviewOnly = false } = {}) {
+  const review = collectReviewWords();
+  if (reviewOnly) {
+    return shuffle(review).slice(0, Math.min(DICTATION_N, review.length));
+  }
+  const seenMap = loadDictationSeen();
+  const today = collectTodayVocab();
+  const todayKeys = new Set(today.map((x) => x.word.toLowerCase()));
+  const reviewExclusive = review.filter(
+    (x) => !todayKeys.has(x.word.toLowerCase())
+  );
+  let nToday = 0;
+  let nRev = 0;
+  if (today.length && reviewExclusive.length) {
+    nToday = Math.min(4, today.length);
+    nRev = Math.min(4, reviewExclusive.length);
+    let remain = DICTATION_N - nToday - nRev;
+    while (remain > 0) {
+      if (nToday < today.length) {
+        nToday += 1;
+        remain -= 1;
+      } else if (nRev < reviewExclusive.length) {
+        nRev += 1;
+        remain -= 1;
+      } else break;
+    }
+  } else if (today.length) {
+    nToday = Math.min(DICTATION_N, today.length);
+  } else {
+    nRev = Math.min(DICTATION_N, reviewExclusive.length);
+  }
+  return shuffle([
+    ...pickLeastRecent(today, nToday, seenMap),
+    ...pickLeastRecent(reviewExclusive, nRev, seenMap),
+  ]);
+}
+
+async function openDictation(opts = {}) {
   await ensureArticles();
-  const pool = shuffle(collectTodayDictationWords());
+  const reviewOnly = !!opts.reviewOnly;
+  const pool = pickDictationWords({ reviewOnly });
   if (!pool.length) {
     deps?.showWarn?.(
-      "還沒有今日詞",
-      "先讀今天的文章，或加入複習字，再來聽寫。"
+      reviewOnly ? "還沒有複習字" : "還沒有可聽寫的字",
+      reviewOnly
+        ? "閱讀時點生字，按「加入複習字」，或先聽寫今日詞讓單字自動進來。"
+        : "先讀今天的文章，或加入複習字，再來聽寫。"
     );
     return;
   }
-  dictationQs = pool.slice(0, Math.min(8, pool.length));
+  dictationQs = pool;
   dictationIndex = 0;
   dictationCorrect = 0;
   dictationLocked = false;
+  mergePlayedIntoReview(pool);
+  markDictationSeen(pool);
+  syncHubMeta();
   deps?.showView("enDailyDictation");
   renderDictationQ();
   void speakDictationWord();
