@@ -1746,31 +1746,24 @@ function renderReviewList() {
   for (const item of list) {
     const row = document.createElement("div");
     row.className = "en-review-item";
-    row.innerHTML = `<strong>${escapeHtml(item.word)}</strong>${
-      item.source === "today" ? '<span class="en-review-tag">今日</span>' : ""
-    }
-      <p>${escapeHtml(item.gloss || "")}</p>
-      <p class="en-review-ex">${escapeHtml(item.example || "")}</p>`;
-    const actions = document.createElement("div");
-    actions.className = "en-review-actions";
-    const speakBtn = document.createElement("button");
-    speakBtn.type = "button";
-    speakBtn.className = "btn btn-secondary";
-    speakBtn.textContent = "朗讀";
-    speakBtn.addEventListener("click", async () => {
+    const ex = String(item.example || "").trim();
+    const gloss = String(item.gloss || "").trim();
+    row.innerHTML = `<div class="en-review-head">
+      <strong>${escapeHtml(item.word)}</strong>
+      <button type="button" class="btn-text en-review-speak" aria-label="朗讀 ${escapeHtml(item.word)}">🔊</button>
+      ${item.source === "today" ? '<span class="en-review-tag">今日</span>' : ""}
+      <button type="button" class="btn-text en-review-remove">移除</button>
+    </div>
+      ${gloss ? `<p>${escapeHtml(gloss)}</p>` : ""}
+      ${ex ? `<p class="en-review-ex">${escapeHtml(ex)}</p>` : ""}`;
+    row.querySelector(".en-review-speak")?.addEventListener("click", async () => {
       await playWithBar(item.word, { label: "單字播放中" });
     });
-    const delBtn = document.createElement("button");
-    delBtn.type = "button";
-    delBtn.className = "btn btn-text";
-    delBtn.textContent = "移除";
-    delBtn.addEventListener("click", () => {
+    row.querySelector(".en-review-remove")?.addEventListener("click", () => {
       saveReview(loadReview().filter((x) => x.word.toLowerCase() !== item.word.toLowerCase()));
       renderReviewList();
       syncHubMeta();
     });
-    actions.append(speakBtn, delBtn);
-    row.appendChild(actions);
     box.appendChild(row);
   }
 }

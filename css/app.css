@@ -6584,18 +6584,33 @@ body.en-gloss-open .en-play-repeat-btn {
 .en-review-item {
   border: 1px solid #d5e0f5;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: #f7f9ff;
+}
+.en-review-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .en-review-item strong {
   color: #1a5bb8;
   font-size: 1.1rem;
 }
+.en-review-speak {
+  flex: 0 0 auto;
+  padding: 0 4px;
+  font-size: 1.05rem;
+  line-height: 1;
+}
 .en-review-tag {
-  margin-left: 0.4em;
+  margin-left: 0.2em;
   font-size: 0.75rem;
   font-weight: 600;
   color: #c45c12;
+}
+.en-review-remove {
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 .en-review-item p {
   margin: 6px 0 0;
@@ -6604,11 +6619,6 @@ body.en-gloss-open .en-play-repeat-btn {
 .en-review-ex {
   font-style: italic;
   color: #445;
-}
-.en-review-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
 }
 .en-daily-quiz-prompt {
   margin: 0;
