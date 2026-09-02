@@ -6591,6 +6591,12 @@ body.en-gloss-open .en-play-repeat-btn {
   color: #1a5bb8;
   font-size: 1.1rem;
 }
+.en-review-tag {
+  margin-left: 0.4em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #c45c12;
+}
 .en-review-item p {
   margin: 6px 0 0;
   line-height: 1.45;

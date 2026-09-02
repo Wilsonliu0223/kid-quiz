@@ -643,7 +643,9 @@ function bindUi() {
   $("#btn-en-hub-dictation")?.addEventListener("click", () => {
     void openDictation();
   });
-  $("#btn-en-hub-review")?.addEventListener("click", () => openReview());
+  $("#btn-en-hub-review")?.addEventListener("click", () => {
+    void openReview();
+  });
 
   $("#btn-en-daily-list-back")?.addEventListener("click", () => openEnHub());
   $("#btn-en-daily-reload")?.addEventListener("click", async () => {
@@ -788,8 +790,8 @@ function bindUi() {
     void openDictation({ reviewOnly: true });
   });
   $("#btn-en-review-clear")?.addEventListener("click", () => {
-    if (confirm("清空目前小孩的複習字？")) {
-      saveReview([]);
+    if (confirm("手點加入的複習字會清掉。今天時事那 8 個聽寫字會留著。")) {
+      clearManualReview();
       renderReviewList();
       syncHubMeta();
     }
@@ -1700,6 +1702,7 @@ function addCurrentGlossToReview() {
       articleId: current?.id || "",
       date: current?.date || todayIso(),
       addedAt: new Date().toISOString(),
+      source: "manual",
     });
     saveReview(list);
   }
@@ -1721,8 +1724,11 @@ function renderReviewStrip() {
   el.textContent = "複習字：" + list.map((x) => x.word).join(" · ");
 }
 
-function openReview() {
+async function openReview() {
+  await ensureArticles();
+  seedTodayPinIntoReview();
   renderReviewList();
+  syncHubMeta();
   deps?.showView("enReview");
 }
 
@@ -1734,13 +1740,15 @@ function renderReviewList() {
   const drillBtn = $("#btn-en-review-dictation");
   if (drillBtn) drillBtn.disabled = !list.length;
   if (!list.length) {
-    box.innerHTML = "<p class=\"en-daily-empty-hint\">還沒有複習字。閱讀時點生字，再按「加入複習字」；或先聽寫今日詞，單字會自動進來。</p>";
+    box.innerHTML = "<p class=\"en-daily-empty-hint\">還沒有複習字。今天時事載入後會自動放進 8 個聽寫字；也可在閱讀時按「加入複習字」。</p>";
     return;
   }
   for (const item of list) {
     const row = document.createElement("div");
     row.className = "en-review-item";
-    row.innerHTML = `<strong>${escapeHtml(item.word)}</strong>
+    row.innerHTML = `<strong>${escapeHtml(item.word)}</strong>${
+      item.source === "today" ? '<span class="en-review-tag">今日</span>' : ""
+    }
       <p>${escapeHtml(item.gloss || "")}</p>
       <p class="en-review-ex">${escapeHtml(item.example || "")}</p>`;
     const actions = document.createElement("div");
@@ -1875,6 +1883,7 @@ function mergePlayedIntoReview(entries) {
       articleId: "",
       date: todayIso(),
       addedAt: new Date().toISOString(),
+      source: entry.source === "today" ? "today" : "manual",
     });
     added += 1;
   }
@@ -1897,12 +1906,43 @@ function collectTodayQuizVocab() {
   return uniqWordEntries(items, "today-quiz");
 }
 
-/** 聽寫今日詞：只抽當天時事 vocab（小測單字優先）。reviewOnly 只抽複習字。 */
-function pickDictationWords({ reviewOnly = false } = {}) {
-  if (reviewOnly) {
-    const review = collectReviewWords();
-    return shuffle(review).slice(0, Math.min(DICTATION_N, review.length));
+function todayPinKey() {
+  return `kid-quiz-en-today-pin-${getSelectedChild() || "A"}`;
+}
+
+function loadTodayPin() {
+  try {
+    const raw = localStorage.getItem(todayPinKey());
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || parsed.date !== todayIso() || !Array.isArray(parsed.words)) {
+      return [];
+    }
+    return parsed.words
+      .map((w) => ({
+        word: String(w?.word || "").trim(),
+        gloss: String(w?.gloss || "").trim(),
+        source: "today",
+      }))
+      .filter((w) => w.word.length >= 2);
+  } catch {
+    return [];
   }
+}
+
+function saveTodayPin(words) {
+  localStorage.setItem(
+    todayPinKey(),
+    JSON.stringify({
+      date: todayIso(),
+      words: (words || []).map((w) => ({
+        word: w.word,
+        gloss: w.gloss || "",
+      })),
+    })
+  );
+}
+
+function pickTodayDictationPool() {
   const seenMap = loadDictationSeen();
   const quizVocab = collectTodayQuizVocab();
   const quizKeys = new Set(quizVocab.map((x) => x.word.toLowerCase()));
@@ -1914,7 +1954,40 @@ function pickDictationWords({ reviewOnly = false } = {}) {
   return shuffle([
     ...pickLeastRecent(quizVocab, nQuiz, seenMap),
     ...pickLeastRecent(rest, nRest, seenMap),
-  ]);
+  ]).map((w) => ({ ...w, source: "today" }));
+}
+
+function ensureTodayPin() {
+  const existing = loadTodayPin();
+  if (existing.length) return existing;
+  const picked = pickTodayDictationPool();
+  if (picked.length) saveTodayPin(picked);
+  return picked;
+}
+
+function seedTodayPinIntoReview() {
+  mergePlayedIntoReview(ensureTodayPin());
+}
+
+function clearManualReview() {
+  const pinKeys = new Set(
+    ensureTodayPin().map((w) => w.word.toLowerCase())
+  );
+  const kept = loadReview().filter((x) =>
+    pinKeys.has(String(x.word || "").toLowerCase())
+  );
+  saveReview(kept);
+  seedTodayPinIntoReview();
+}
+
+/** 聽寫今日詞：當天固定 8 個時事 vocab。reviewOnly 抽複習字區（含今日這 8 個）。 */
+function pickDictationWords({ reviewOnly = false } = {}) {
+  if (reviewOnly) {
+    seedTodayPinIntoReview();
+    const review = collectReviewWords();
+    return shuffle(review).slice(0, Math.min(DICTATION_N, review.length));
+  }
+  return ensureTodayPin();
 }
 
 async function openDictation(opts = {}) {
