@@ -1882,41 +1882,38 @@ function mergePlayedIntoReview(entries) {
   return added;
 }
 
-/** 今日文章單字 ∪ 複習字；優先抽較久沒聽寫過的。reviewOnly 則只抽複習字、不避開近日。 */
+function collectTodayQuizVocab() {
+  const todayVocab = collectTodayVocab();
+  const byKey = new Map(todayVocab.map((x) => [x.word.toLowerCase(), x]));
+  const items = [];
+  for (const art of articles.filter((a) => a.date === todayIso())) {
+    for (const q of art.quiz || []) {
+      if (String(q.type || "").toLowerCase() !== "vocab") continue;
+      const answer = String(q.answer || q.word || "").trim();
+      const hit = byKey.get(answer.toLowerCase());
+      if (hit) items.push(hit);
+    }
+  }
+  return uniqWordEntries(items, "today-quiz");
+}
+
+/** 聽寫今日詞：只抽當天時事 vocab（小測單字優先）。reviewOnly 只抽複習字。 */
 function pickDictationWords({ reviewOnly = false } = {}) {
-  const review = collectReviewWords();
   if (reviewOnly) {
+    const review = collectReviewWords();
     return shuffle(review).slice(0, Math.min(DICTATION_N, review.length));
   }
   const seenMap = loadDictationSeen();
-  const today = collectTodayVocab();
-  const todayKeys = new Set(today.map((x) => x.word.toLowerCase()));
-  const reviewExclusive = review.filter(
-    (x) => !todayKeys.has(x.word.toLowerCase())
+  const quizVocab = collectTodayQuizVocab();
+  const quizKeys = new Set(quizVocab.map((x) => x.word.toLowerCase()));
+  const rest = collectTodayVocab().filter(
+    (x) => !quizKeys.has(x.word.toLowerCase())
   );
-  let nToday = 0;
-  let nRev = 0;
-  if (today.length && reviewExclusive.length) {
-    nToday = Math.min(4, today.length);
-    nRev = Math.min(4, reviewExclusive.length);
-    let remain = DICTATION_N - nToday - nRev;
-    while (remain > 0) {
-      if (nToday < today.length) {
-        nToday += 1;
-        remain -= 1;
-      } else if (nRev < reviewExclusive.length) {
-        nRev += 1;
-        remain -= 1;
-      } else break;
-    }
-  } else if (today.length) {
-    nToday = Math.min(DICTATION_N, today.length);
-  } else {
-    nRev = Math.min(DICTATION_N, reviewExclusive.length);
-  }
+  const nQuiz = Math.min(DICTATION_N, quizVocab.length);
+  const nRest = Math.min(DICTATION_N - nQuiz, rest.length);
   return shuffle([
-    ...pickLeastRecent(today, nToday, seenMap),
-    ...pickLeastRecent(reviewExclusive, nRev, seenMap),
+    ...pickLeastRecent(quizVocab, nQuiz, seenMap),
+    ...pickLeastRecent(rest, nRest, seenMap),
   ]);
 }
 
@@ -1929,7 +1926,7 @@ async function openDictation(opts = {}) {
       reviewOnly ? "還沒有複習字" : "還沒有可聽寫的字",
       reviewOnly
         ? "閱讀時點生字，按「加入複習字」，或先聽寫今日詞讓單字自動進來。"
-        : "先讀今天的文章，或加入複習字，再來聽寫。"
+        : "今天還沒有時事單字。請先等今日文章載入，或到複習字區聽寫收藏的字。"
     );
     return;
   }

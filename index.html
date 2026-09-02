@@ -442,7 +442,7 @@
           <span class="setup-subject">複習字區</span>
         </header>
         <div class="en-review-body">
-          <p class="en-hub-meta" id="en-review-hint">聽寫會抽今日文章單字＋這裡的字。本次聽寫的字也會自動進來。</p>
+          <p class="en-hub-meta" id="en-review-hint">「聽寫今日詞」只抽當天時事的重點單字；這裡的字用下面「聽寫這些字」。聽寫過的字也會自動進來。</p>
           <div id="en-review-list" class="en-review-list"></div>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-review-dictation">
             聽寫這些字
@@ -2307,7 +2307,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.25").catch((e) => {
+      import("./js/app.js?v=app-v45.26").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
