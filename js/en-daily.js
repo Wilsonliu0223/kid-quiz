@@ -107,6 +107,10 @@ const CAT_LABEL = {
   entertainment: "娛樂",
   gaming: "電玩",
   health: "健康",
+  animals: "動物",
+  space: "太空",
+  food: "食物",
+  school: "校園",
 };
 
 function titleZhOf(art) {
