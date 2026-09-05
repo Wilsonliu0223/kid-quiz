@@ -4,10 +4,9 @@
 
 必做步驟：
 1. 讀 docs/英文文章寫入試算表.md 的欄位與規則。
-2. node tools/upload-en-articles.mjs --list --days 7 避開重複主題（運動不要連著球類；世界／科技／娛樂／電玩／健康也要換題材）。
+2. node tools/upload-en-articles.mjs --list --days 7 避開重複主題（運動不要連著球類，也不要菲律賓／印度選手填充；世界／科技／娛樂／電玩／健康也要換題材）。
 3. 上網找 6 則適合孩子的近期新聞（避開戰爭、血腥、成人議題、18+ 遊戲）。六類固定，seq 1–6：
-   sport, world, technology, entertainment, gaming, health
-   - entertainment：電影、音樂、公園表演、博物館藝術等，不要寫電玩／主機遊戲
+   - sport：運動員與賽事盡量選東北亞（台灣、日本、韓國；中國題材須適合孩子）。不要用菲律賓、印度當運動題（含兒童賽、滑冰、體操、西洋棋等「亞運式」填充）。沒有合格東北亞運動新聞時，再找歐美或奧運／世錦賽，仍不要退回菲、印。
    - gaming：電玩、主機、寶可夢、親子遊戲展；不要射擊、恐怖、賭博；不要跟當天娛樂題重複
    - 台灣：每天額外搜一次 Taiwan / Taipei 是否出現在世界主要英文媒體（BBC、Reuters、AP、AFP、The Guardian、NYT、CNN、Al Jazeera English）。若有、且主題適合孩子（運動金牌、科學、保育、文化、兒童活動；不要選舉攻防、兩岸對立、災情死傷、成人政治），就佔六則裡對應的一格（多半是 world，也可以是 sport／technology）。source_url 用該國際媒體英文稿，不要只引用台視／民視而國際沒報。沒有合格台灣題就不要硬塞，其餘仍從全球兒童向新聞補滿。
 4. 每則含：自然英文 title（不要無生命主詞「要求」人、不要省略 drink water 這類受詞）、title_zh、body_l1/l2/l3、vocab、quiz 5 題、dialogue（含 article_zh 與 turns 中文）、source_title、source_url、status=published。
