@@ -9,7 +9,7 @@
    sport, world, technology, entertainment, gaming, health
    - sport：給台灣孩子看、他們較有機會對上或在新聞裡見到的體系。優先台灣、日本、韓國（中國題材須適合孩子）。不是排斥其他國家，而是菲、印等與台灣日常交流少、學校／訓練賽制差較遠，不要拿來當每天運動填充。沒有合格東北亞題時，改找歐美或台灣也會跟的奧運／世錦賽。
    - entertainment：電影、音樂、公園表演、博物館藝術等，不要寫電玩／主機遊戲
-   - gaming：電玩、主機、寶可夢、親子遊戲展；不要射擊、恐怖、賭博；不要跟當天娛樂題重複
+   - gaming：可寫展覽／直面會等活動，也可介紹近期上市或即將上市、適合孩子的遊戲（任天堂、寶可夢、當個創世神、親子向主機或手機遊戲）。要有英文來源（Nintendo、官方網、AP／Reuters／BBC 遊戲稿，或可信英文遊戲新聞）。不要射擊、恐怖、賭博、18+；不要跟當天娛樂題重複。近 7 天已寫過同一款就換題。
    - 台灣：每天額外搜一次 Taiwan / Taipei 是否出現在世界主要英文媒體（BBC、Reuters、AP、AFP、The Guardian、NYT、CNN、Al Jazeera English）。若有、且主題適合孩子（運動金牌、科學、保育、文化、兒童活動；不要選舉攻防、兩岸對立、災情死傷、成人政治），就佔六則裡對應的一格（多半是 world，也可以是 sport／technology）。source_url 用該國際媒體英文稿，不要只引用台視／民視而國際沒報。沒有合格台灣題就不要硬塞，其餘仍從全球兒童向新聞補滿。
 4. 每則含：自然英文 title（不要無生命主詞「要求」人、不要省略 drink water 這類受詞）、title_zh、body_l1/l2/l3、vocab、quiz 5 題、dialogue（含 article_zh 與 turns 中文）、source_title、source_url、status=published。
 5. 字數：L1 80–100、L2 120–150、L3 180–220。中英正文句數必須對齊。標題先文法檢查。
