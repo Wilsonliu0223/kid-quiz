@@ -95,7 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
-import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v52";
+import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v53";
 import {
   addMistake,
   removeMistake,
@@ -2318,11 +2318,13 @@ async function init() {
         { sub: sub || "" }
       );
     },
-    showOk: (title, sub, onClose) => {
+    showOk: (title, sub, onClose, actions) => {
       showFeedback(
         "ok",
         title,
-        [{ label: "好耶", primary: true, onClick: () => onClose?.() }],
+        actions?.length
+          ? actions
+          : [{ label: "好耶", primary: true, onClick: () => onClose?.() }],
         { sub: sub || "" }
       );
     },

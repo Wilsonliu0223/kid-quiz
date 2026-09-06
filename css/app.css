@@ -6642,6 +6642,23 @@ body.en-gloss-open .en-play-repeat-btn {
   color: #1a2a4a;
   font-weight: 600;
 }
+.en-daily-quiz-options .btn.en-daily-quiz-opt-correct {
+  border-color: #2a9d5c;
+  background: #e5f8ec;
+  color: #145c32;
+  font-weight: 700;
+}
+.en-daily-quiz-options .btn.en-daily-quiz-opt-wrong {
+  border-color: #d94a3b;
+  background: #fdecea;
+  color: #8c2418;
+  font-weight: 700;
+}
+.en-daily-quiz-review-hint {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  color: #445;
+}
 .en-daily-quiz-dots {
   display: flex;
   gap: 8px;
@@ -6664,6 +6681,18 @@ body.en-gloss-open .en-play-repeat-btn {
   border-color: #3b6fd9;
   background: #3b6fd9;
   transform: scale(1.15);
+}
+.en-daily-quiz-dot.is-ok {
+  background: #2a9d5c;
+  border-color: #2a9d5c;
+}
+.en-daily-quiz-dot.is-no {
+  background: #d94a3b;
+  border-color: #d94a3b;
+}
+.en-daily-quiz-dot.is-ok.is-current,
+.en-daily-quiz-dot.is-no.is-current {
+  box-shadow: 0 0 0 3px rgba(26, 42, 74, 0.18);
 }
 .en-daily-quiz-nav {
   display: flex;

@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.24" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.25" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -491,6 +491,9 @@
           <div class="en-daily-quiz-dots" id="en-daily-quiz-dots" aria-label="答題進度"></div>
           <p class="label" id="en-daily-quiz-type-label">Reading check</p>
           <p class="en-daily-quiz-prompt" id="en-daily-quiz-prompt"></p>
+          <p class="en-daily-quiz-review-hint" id="en-daily-quiz-review-hint" hidden>
+            綠是正確答案，紅是你選錯的。
+          </p>
           <div id="en-daily-quiz-options" class="en-daily-quiz-options"></div>
           <div class="en-daily-quiz-nav">
             <button type="button" class="btn btn-secondary" id="btn-en-daily-quiz-prev">← Prev</button>
@@ -2307,7 +2310,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.29").catch((e) => {
+      import("./js/app.js?v=app-v45.30").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

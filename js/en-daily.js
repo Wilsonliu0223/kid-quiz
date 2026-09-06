@@ -42,6 +42,8 @@ let quizAnswers = [];
 let quizCorrect = 0;
 /** @type {'read'|'dialogue'} */
 let quizKind = "read";
+/** 送出後逐題看對錯 */
+let quizReviewing = false;
 
 /** @type {{ word: string, gloss?: string }[]} */
 let dictationQs = [];
@@ -818,6 +820,10 @@ function bindUi() {
   });
 
   $("#btn-en-daily-quiz-back")?.addEventListener("click", () => {
+    if (quizReviewing) {
+      leaveQuizReview();
+      return;
+    }
     if (confirm("離開小測？進度不會儲存。")) {
       if (quizKind === "dialogue") {
         deps?.showView("enDailyDialogue");
@@ -835,6 +841,14 @@ function bindUi() {
   });
   $("#btn-en-daily-quiz-next")?.addEventListener("click", () => {
     const atLast = quizIndex >= quizQs.length - 1;
+    if (quizReviewing) {
+      if (atLast) leaveQuizReview();
+      else {
+        quizIndex += 1;
+        renderQuizQ();
+      }
+      return;
+    }
     if (atLast) {
       void submitMiniQuiz();
       return;
@@ -2127,12 +2141,15 @@ function startMiniQuiz() {
     return;
   }
   quizKind = "read";
+  quizReviewing = false;
   quizQs = built.slice(0, 5);
   quizAnswers = quizQs.map(() => null);
   quizIndex = 0;
   quizCorrect = 0;
   const subj = $("#en-daily-quiz-subject");
   if (subj) subj.textContent = "閱讀小測";
+  const back = $("#btn-en-daily-quiz-back");
+  if (back) back.textContent = "← 返回";
   renderQuizQ();
   deps?.showView("enDailyQuiz");
 }
@@ -2146,12 +2163,15 @@ function startDialogueQuiz() {
     return;
   }
   quizKind = "dialogue";
+  quizReviewing = false;
   quizQs = built.slice(0, 3);
   quizAnswers = quizQs.map(() => null);
   quizIndex = 0;
   quizCorrect = 0;
   const subj = $("#en-daily-quiz-subject");
   if (subj) subj.textContent = "對話小測";
+  const back = $("#btn-en-daily-quiz-back");
+  if (back) back.textContent = "← 返回";
   renderQuizQ();
   deps?.showView("enDailyQuiz");
 }
@@ -2276,6 +2296,32 @@ function shuffle(arr) {
   return a;
 }
 
+function quizItemCorrect(i) {
+  const q = quizQs[i];
+  const a = quizAnswers[i];
+  if (!q || a == null) return false;
+  return String(a).toLowerCase() === String(q.answer).toLowerCase();
+}
+
+function enterQuizReview() {
+  quizReviewing = true;
+  quizIndex = 0;
+  const hint = $("#en-daily-quiz-review-hint");
+  if (hint) hint.hidden = false;
+  const back = $("#btn-en-daily-quiz-back");
+  if (back) back.textContent = "← 回列表";
+  renderQuizQ();
+}
+
+function leaveQuizReview() {
+  quizReviewing = false;
+  const hint = $("#en-daily-quiz-review-hint");
+  if (hint) hint.hidden = true;
+  const back = $("#btn-en-daily-quiz-back");
+  if (back) back.textContent = "← 返回";
+  openDailyList();
+}
+
 function renderQuizQ() {
   const q = quizQs[quizIndex];
   const progress = $("#en-daily-quiz-progress");
@@ -2284,32 +2330,54 @@ function renderQuizQ() {
   const opts = $("#en-daily-quiz-options");
   const prevBtn = $("#btn-en-daily-quiz-prev");
   const nextBtn = $("#btn-en-daily-quiz-next");
+  const hint = $("#en-daily-quiz-review-hint");
+  if (hint) hint.hidden = !quizReviewing;
   if (progress) {
     progress.textContent = `第 ${quizIndex + 1} / ${quizQs.length} 題`;
   }
   if (typeLabel) {
-    typeLabel.textContent =
-      q?.type === "vocab" ? "Which word matches this meaning?" : "Reading check";
+    if (quizReviewing) {
+      typeLabel.textContent = quizItemCorrect(quizIndex)
+        ? "這題答對了"
+        : "這題答錯了";
+    } else {
+      typeLabel.textContent =
+        q?.type === "vocab" ? "Which word matches this meaning?" : "Reading check";
+    }
   }
   if (prompt) prompt.textContent = q?.q || "";
   renderQuizDots();
   if (prevBtn) prevBtn.disabled = quizIndex <= 0;
   if (nextBtn) {
     const atLast = quizIndex >= quizQs.length - 1;
-    nextBtn.textContent = atLast ? "Submit" : "Next →";
+    if (quizReviewing) {
+      nextBtn.disabled = false;
+      nextBtn.textContent = atLast ? "回列表" : "Next →";
+    } else {
+      nextBtn.textContent = atLast ? "Submit" : "Next →";
+    }
   }
   if (!opts || !q) return;
   opts.innerHTML = "";
   const selected = quizAnswers[quizIndex];
+  const answer = String(q.answer || "");
   for (const opt of q.options) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "btn btn-secondary btn-block";
-    if (selected != null && String(selected) === String(opt)) {
+    const isSel = selected != null && String(selected) === String(opt);
+    const isAns = String(opt).toLowerCase() === answer.toLowerCase();
+    if (quizReviewing) {
+      btn.disabled = true;
+      if (isAns) btn.classList.add("en-daily-quiz-opt-correct");
+      else if (isSel) btn.classList.add("en-daily-quiz-opt-wrong");
+    } else if (isSel) {
       btn.classList.add("en-daily-quiz-opt-selected");
     }
     btn.textContent = opt;
-    btn.addEventListener("click", () => selectQuizAnswer(opt));
+    if (!quizReviewing) {
+      btn.addEventListener("click", () => selectQuizAnswer(opt));
+    }
     opts.appendChild(btn);
   }
 }
@@ -2322,7 +2390,11 @@ function renderQuizDots() {
     const dot = document.createElement("button");
     dot.type = "button";
     dot.className = "en-daily-quiz-dot";
-    if (quizAnswers[i] != null) dot.classList.add("is-answered");
+    if (quizReviewing) {
+      dot.classList.add(quizItemCorrect(i) ? "is-ok" : "is-no");
+    } else if (quizAnswers[i] != null) {
+      dot.classList.add("is-answered");
+    }
     if (i === quizIndex) dot.classList.add("is-current");
     dot.setAttribute("aria-label", `Go to question ${i + 1}`);
     dot.addEventListener("click", () => {
@@ -2376,7 +2448,11 @@ async function submitMiniQuiz() {
     deps?.showOk?.(
       `完成！${quizCorrect} / ${quizQs.length}`,
       "成績已記在本機（上傳時發生錯誤）",
-      () => openDailyList()
+      null,
+      [
+        { label: "看每題對錯", primary: true, onClick: () => enterQuizReview() },
+        { label: "回列表", onClick: () => leaveQuizReview() },
+      ]
     );
   } finally {
     if (nextBtn) {
@@ -2407,5 +2483,8 @@ async function finishQuiz() {
     console.warn("logQuizResult", e);
     message = "成績已記在本機（試算表稍後再試）";
   }
-  deps?.showOk?.(`完成！${quizCorrect} / ${total}`, message, () => openDailyList());
+  deps?.showOk?.(`完成！${quizCorrect} / ${total}`, message, null, [
+    { label: "看每題對錯", primary: true, onClick: () => enterQuizReview() },
+    { label: "回列表", onClick: () => leaveQuizReview() },
+  ]);
 }
