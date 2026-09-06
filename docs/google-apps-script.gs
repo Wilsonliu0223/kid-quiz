@@ -10,6 +10,7 @@
  *
  * 第一次記錄成績會自動建立「成績」工作表；造訪會自動建立「造訪」工作表。
  * 「英文文章」寫入見 docs/英文文章寫入試算表.md（需 Script Properties：EN_ARTICLE_WRITE_TOKEN）
+ * 家用 Edge 語音：getTtsProxy / setTtsProxy（見 docs/家用Edge語音代理.md）
  * 版本標記：EN_ARTICLE_API_VERSION（部署後可用 pingEnArticles 確認）
  */
 const SHEET_ZH = "國語";
@@ -17,7 +18,7 @@ const SHEET_SCORES = "成績";
 const SHEET_VISITS = "造訪";
 const SHEET_EN_ARTICLES = "英文文章";
 const QUIZ_TYPES = ["生字"];
-const EN_ARTICLE_API_VERSION = "2026-08-27-dialogue-v1";
+const EN_ARTICLE_API_VERSION = "2026-09-06-home-tts-v1";
 
 const EN_ARTICLE_HEADERS = [
   "日期",
@@ -55,6 +56,12 @@ function doGet(e) {
   if (p.action === "synthesizeZh" || p.action === "synthesizeSpeech") {
     return synthesizeZh(p);
   }
+  if (p.action === "getTtsProxy") {
+    return getTtsProxy();
+  }
+  if (p.action === "setTtsProxy") {
+    return setTtsProxy(p);
+  }
   return loadZhJson();
 }
 
@@ -81,6 +88,12 @@ function doPost(e) {
     }
     if (data.action === "synthesizeZh" || data.action === "synthesizeSpeech") {
       return synthesizeZh(data);
+    }
+    if (data.action === "getTtsProxy") {
+      return getTtsProxy();
+    }
+    if (data.action === "setTtsProxy") {
+      return setTtsProxy(data);
     }
   } catch (err) {
     return jsonOut({ ok: false, error: String(err) });
@@ -123,37 +136,42 @@ function synthesizeZh(p) {
     });
   }
 
-  // 1) Edge 神經語音代理
+  // 1) 家用 Edge 神經語音（電腦開著且已 setTtsProxy）
   try {
-    const edgeRes = UrlFetchApp.fetch(
-      "https://tts.wangwangit.com/v1/audio/speech",
-      {
+    const home = readTtsProxyUrl_();
+    const ttsToken = readTtsProxyToken_();
+    if (home) {
+      const headers = {};
+      if (ttsToken) headers["X-Kid-Quiz-Tts"] = ttsToken;
+      const edgeRes = UrlFetchApp.fetch(home, {
         method: "post",
         contentType: "application/json",
+        headers: headers,
         payload: JSON.stringify({
           input: text,
           voice: voice,
           speed: 1,
+          response_format: "mp3",
         }),
         muteHttpExceptions: true,
         followRedirects: true,
-      }
-    );
-    if (edgeRes.getResponseCode() === 200) {
-      const bytes = edgeRes.getContent();
-      if (bytes && bytes.length > 200) {
-        const b64 = Utilities.base64Encode(bytes);
-        try {
-          cache.put(key, b64, 3600);
-        } catch (cacheErr) {
-          // base64 可能超過 Cache 上限，忽略
+      });
+      if (edgeRes.getResponseCode() === 200) {
+        const bytes = edgeRes.getContent();
+        if (bytes && bytes.length > 200) {
+          const b64 = Utilities.base64Encode(bytes);
+          try {
+            cache.put(key, b64, 3600);
+          } catch (cacheErr) {
+            // base64 可能超過 Cache 上限，忽略
+          }
+          return jsonOut({
+            ok: true,
+            audioBase64: b64,
+            mime: "audio/mpeg",
+            speaker: voice,
+          });
         }
-        return jsonOut({
-          ok: true,
-          audioBase64: b64,
-          mime: "audio/mpeg",
-          speaker: voice,
-        });
       }
     }
   } catch (edgeErr) {
@@ -335,6 +353,68 @@ function requireEnArticleToken(p) {
     return { ok: false, error: "unauthorized" };
   }
   return { ok: true };
+}
+
+function normalizeTtsProxyUrl_(raw) {
+  const url = String(raw || "").trim();
+  if (!url) return "";
+  if (!/^https:\/\//i.test(url)) return "";
+  if (/wangwangit/i.test(url)) return "";
+  const noHash = url.split("#")[0].split("?")[0].replace(/\/+$/, "");
+  if (/\/v1\/audio\/speech$/i.test(noHash)) return noHash;
+  return noHash + "/v1/audio/speech";
+}
+
+function readTtsProxyUrl_() {
+  return String(
+    PropertiesService.getScriptProperties().getProperty("TTS_PROXY_URL") || ""
+  ).trim();
+}
+
+function readTtsProxyToken_() {
+  return String(
+    PropertiesService.getScriptProperties().getProperty("TTS_PROXY_TOKEN") ||
+      "kq-home-tts"
+  ).trim();
+}
+
+/** 平板／網頁讀家用代理 HTTPS 網址（trycloudflare 會變，由家用電腦 setTtsProxy） */
+function getTtsProxy() {
+  const url = readTtsProxyUrl_();
+  const updated = String(
+    PropertiesService.getScriptProperties().getProperty("TTS_PROXY_UPDATED") ||
+      ""
+  );
+  return jsonOut({
+    ok: true,
+    url: url,
+    ttsToken: readTtsProxyToken_(),
+    updated: updated,
+  });
+}
+
+/** POST { action:"setTtsProxy", token, url, ttsToken }；url 空字串則清除 */
+function setTtsProxy(p) {
+  const auth = requireEnArticleToken(p);
+  if (!auth.ok) return jsonOut(auth);
+  const props = PropertiesService.getScriptProperties();
+  const raw = String(p.url || "").trim();
+  if (!raw) {
+    props.deleteProperty("TTS_PROXY_URL");
+    props.deleteProperty("TTS_PROXY_UPDATED");
+    return jsonOut({ ok: true, url: "" });
+  }
+  const url = normalizeTtsProxyUrl_(raw);
+  if (!url) {
+    return jsonOut({ ok: false, error: "url 必須是 https（家用 cloudflared）" });
+  }
+  props.setProperty("TTS_PROXY_URL", url);
+  props.setProperty("TTS_PROXY_UPDATED", new Date().toISOString());
+  const ttsToken = String(p.ttsToken || "").trim();
+  if (ttsToken) {
+    props.setProperty("TTS_PROXY_TOKEN", ttsToken);
+  }
+  return jsonOut({ ok: true, url: url });
 }
 
 /** 確認部署版本：POST/GET { action:"pingEnArticles", token } */

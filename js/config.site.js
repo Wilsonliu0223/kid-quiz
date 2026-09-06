@@ -1,7 +1,7 @@
 /** GitHub Pages 用設定（會提交到倉庫） */
 export const CONFIG = {
   /** 首頁標題旁小字版本（每次推送更新請遞增，例：34.0 → 34.1） */
-  APP_VERSION: "45.7",
+  APP_VERSION: "45.8",
 
   /**
    * 涅槃 Rapfi 完整 NNUE 權重（約 40 MB）公開下載網址。
@@ -21,10 +21,12 @@ export const CONFIG = {
   SHEET_EN_ARTICLE: "英文文章",
 
   /**
-   * 中文朗讀：Microsoft Edge 神經語音代理（OpenAI 相容）
-   * 預設雲希男聲，比 Amazon Zhiyu 自然、不尖銳
+   * 家用 Edge 神經音：留空，由 Apps Script getTtsProxy 讀家用電腦登記的 HTTPS。
+   * 勿再填公開第三方代理。電腦沒開則自動改走 Google TTS。
    */
-  EDGE_TTS_URL: "https://tts.wangwangit.com/v1/audio/speech",
+  EDGE_TTS_URL: "",
+  /** 與家用 tools/edge_tts_proxy.py 的 KID_QUIZ_TTS_TOKEN 相同 */
+  EDGE_TTS_TOKEN: "kq-home-tts",
   /** zh-CN-YunxiNeural 雲希｜zh-TW-HsiaoChenNeural 曉臻｜zh-CN-YunyangNeural 雲揚 */
   ZH_TTS_VOICE: "zh-CN-YunxiNeural",
   /** 英文神經音：en-US-JennyNeural｜en-US-GuyNeural｜en-GB-SoniaNeural */

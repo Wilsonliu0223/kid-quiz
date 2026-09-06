@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.7";
+import { CONFIG } from "./config.site.js?v=config-v45.8";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -987,17 +987,79 @@ function enVoiceCandidates(preferred) {
   return [...new Set(list.filter(Boolean))];
 }
 
-let edgeTtsBlocked = false;
+const HOME_TTS_CACHE_KEY = "kid-quiz-home-tts-url";
+let homeTtsUrl = "";
+let homeTtsDiscoverAt = 0;
+let edgeTtsCooldownUntil = 0;
 
-function edgeTtsEndpoint() {
-  // 硬編碼備援：避免舊版 config.site.js 快取沒有 EDGE_TTS_URL 時整段跳過
-  return String(
-    CONFIG.EDGE_TTS_URL || "https://tts.wangwangit.com/v1/audio/speech"
-  ).trim();
+function isUsableTtsUrl(url) {
+  const s = String(url || "").trim();
+  if (!/^https:\/\//i.test(s)) return false;
+  if (/wangwangit/i.test(s)) return false;
+  return true;
+}
+
+function configuredTtsUrl() {
+  return isUsableTtsUrl(CONFIG.EDGE_TTS_URL) ? String(CONFIG.EDGE_TTS_URL).trim() : "";
+}
+
+function cachedHomeTtsUrl() {
+  if (isUsableTtsUrl(homeTtsUrl)) return homeTtsUrl;
+  try {
+    const s = sessionStorage.getItem(HOME_TTS_CACHE_KEY) || "";
+    if (isUsableTtsUrl(s)) {
+      homeTtsUrl = s;
+      return s;
+    }
+  } catch {
+    /* ignore */
+  }
+  return "";
+}
+
+async function discoverHomeTtsProxy() {
+  const now = Date.now();
+  if (homeTtsUrl && now - homeTtsDiscoverAt < 120000) return homeTtsUrl;
+  if (now - homeTtsDiscoverAt < 15000 && cachedHomeTtsUrl()) return homeTtsUrl;
+  homeTtsDiscoverAt = now;
+  const endpoint = String(CONFIG.SCORE_LOG_URL || "").trim();
+  if (!endpoint) return cachedHomeTtsUrl();
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getTtsProxy" }),
+      redirect: "follow",
+    });
+    const data = JSON.parse(await res.text());
+    const url = String((data && data.url) || "").trim();
+    if (isUsableTtsUrl(url)) {
+      homeTtsUrl = url;
+      try {
+        sessionStorage.setItem(HOME_TTS_CACHE_KEY, url);
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch (e) {
+    console.warn("getTtsProxy", e);
+  }
+  return cachedHomeTtsUrl();
+}
+
+async function edgeTtsEndpoint() {
+  const configured = configuredTtsUrl();
+  if (configured) return configured;
+  const cached = cachedHomeTtsUrl();
+  if (cached) {
+    void discoverHomeTtsProxy();
+    return cached;
+  }
+  return (await discoverHomeTtsProxy()) || "";
 }
 
 /**
- * Microsoft Edge 神經語音（經公開代理；CORS *）
+ * Microsoft Edge 神經語音（家用電腦 edge-tts；平板只拿短 mp3）
  * 手機改用 data: URL，避免 blob: 在 iOS 不播而掉進機械音
  */
 async function resolveEdgeSpeechUrl(chunk, voices) {
@@ -1005,12 +1067,13 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
     .trim()
     .slice(0, 280);
   if (!text) return "";
-  if (edgeTtsBlocked) return "";
+  if (Date.now() < edgeTtsCooldownUntil) return "";
 
-  const endpoint = edgeTtsEndpoint();
+  const endpoint = await edgeTtsEndpoint();
   if (!endpoint) return "";
   const voiceList = (voices || []).filter(Boolean);
   if (!voiceList.length) return "";
+  const ttsToken = String(CONFIG.EDGE_TTS_TOKEN || "kq-home-tts").trim();
 
   for (const voice of voiceList) {
     const cacheKey = `${voice}::${text}`;
@@ -1019,9 +1082,11 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
       return edgeSpeechCache.get(cacheKey);
     }
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (ttsToken) headers["X-Kid-Quiz-Tts"] = ttsToken;
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           model: "tts-1",
           input: text,
@@ -1031,7 +1096,13 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
         }),
       });
       if (res.status === 401 || res.status === 403) {
-        edgeTtsBlocked = true;
+        edgeTtsCooldownUntil = Date.now() + 45000;
+        homeTtsUrl = "";
+        try {
+          sessionStorage.removeItem(HOME_TTS_CACHE_KEY);
+        } catch {
+          /* ignore */
+        }
         console.warn("Edge TTS blocked", res.status);
         return "";
       }
