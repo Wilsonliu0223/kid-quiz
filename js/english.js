@@ -37,6 +37,10 @@ function ensureSharedAudio() {
     sharedAudio.setAttribute("playsinline", "true");
     sharedAudio.playsInline = true;
     sharedAudio.preload = "auto";
+    try {
+      sharedAudio.referrerPolicy = "no-referrer";
+    } catch (_) {}
+    sharedAudio.setAttribute("referrerpolicy", "no-referrer");
   }
   return sharedAudio;
 }
@@ -983,6 +987,8 @@ function enVoiceCandidates(preferred) {
   return [...new Set(list.filter(Boolean))];
 }
 
+let edgeTtsBlocked = false;
+
 function edgeTtsEndpoint() {
   // 硬編碼備援：避免舊版 config.site.js 快取沒有 EDGE_TTS_URL 時整段跳過
   return String(
@@ -999,6 +1005,7 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
     .trim()
     .slice(0, 280);
   if (!text) return "";
+  if (edgeTtsBlocked) return "";
 
   const endpoint = edgeTtsEndpoint();
   if (!endpoint) return "";
@@ -1023,6 +1030,11 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
           response_format: "mp3",
         }),
       });
+      if (res.status === 401 || res.status === 403) {
+        edgeTtsBlocked = true;
+        console.warn("Edge TTS blocked", res.status);
+        return "";
+      }
       if (!res.ok) {
         console.warn("Edge TTS HTTP", voice, res.status);
         continue;
@@ -1168,12 +1180,16 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
   }
 
   lastSpeakEngine = "en-online";
-  // 英文也優先 Edge 神經音（手機 Google TTS 常失敗 → 機械合成）
   const edgeEn = await resolveEdgeEnBlobUrl(chunk, voice);
   if (
     edgeEn &&
     (await playAudioUrl(edgeEn, { speed, soften: false, startTimeoutMs: 7000 }))
   ) {
+    return true;
+  }
+  const g = googleTtsUrl(chunk, "en");
+  if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 5000 }))) {
+    lastSpeakEngine = "en-google";
     return true;
   }
   const scriptEn = await resolveZhNeuralUrl(
@@ -1189,11 +1205,6 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
   const y = youdaoTtsUrl(chunk);
   if (y && (await playAudioUrl(y, { speed, startTimeoutMs: 4000 }))) {
     lastSpeakEngine = "en-youdao";
-    return true;
-  }
-  const g = googleTtsUrl(chunk, "en");
-  if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 4000 }))) {
-    lastSpeakEngine = "en-google";
     return true;
   }
   lastSpeakEngine = "en-synth";
