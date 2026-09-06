@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.8";
+import { CONFIG } from "./config.site.js?v=config-v45.9";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -247,9 +247,36 @@ function playAudioUrl(url, opts = {}) {
 /** 播放中即時改語速（慢／中／快） */
 export function setSpeakingSpeed(speed) {
   const s = Number(speed);
-  if (!(s > 0)) return;
-  activeSpeakSpeed = s;
+  if (s > 0) activeSpeakSpeed = s;
   applyPlaybackRate(sharedAudio);
+}
+
+const EN_ACCENT_KEY = "kid-quiz-en-accent";
+const ZH_ACCENT_KEY = "kid-quiz-zh-accent";
+
+export function getEnAccent() {
+  return localStorage.getItem(EN_ACCENT_KEY) === "gb" ? "gb" : "us";
+}
+
+export function setEnAccent(id) {
+  localStorage.setItem(EN_ACCENT_KEY, id === "gb" ? "gb" : "us");
+}
+
+export function getZhAccent() {
+  return localStorage.getItem(ZH_ACCENT_KEY) === "tw" ? "tw" : "cn";
+}
+
+export function setZhAccent(id) {
+  localStorage.setItem(ZH_ACCENT_KEY, id === "tw" ? "tw" : "cn");
+}
+
+export function preferredTtsVoice(lang) {
+  if (lang === "zh") {
+    return getZhAccent() === "tw"
+      ? "zh-TW-HsiaoChenNeural"
+      : "zh-CN-YunxiNeural";
+  }
+  return getEnAccent() === "gb" ? "en-GB-SoniaNeural" : "en-US-JennyNeural";
 }
 
 export function getSpeakingSpeed() {
@@ -800,7 +827,14 @@ async function speakPhraseWithDictionary(text) {
 
 /** Google 翻譯 TTS（較像真人；非正式 API，失敗就換下一個） */
 function googleTtsUrl(text, lang = "en") {
-  const tl = lang === "zh" ? "zh-CN" : lang === "zh-TW" ? "zh-TW" : "en";
+  const tl =
+    lang === "zh" || lang === "zh-CN"
+      ? "zh-CN"
+      : lang === "zh-TW"
+        ? "zh-TW"
+        : lang === "en-GB"
+          ? "en-GB"
+          : "en";
   // 英文超過 ~100 字元常被靜默截斷，音檔提早 ended → 反亮會搶跑
   const max = lang === "zh" || lang === "zh-TW" ? 100 : 100;
   const q = encodeURIComponent(String(text || "").trim().slice(0, max));
@@ -810,11 +844,12 @@ function googleTtsUrl(text, lang = "en") {
   return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=${client}&tl=${tl}&q=${q}`;
 }
 
-/** 有道美式發音（英文） */
-function youdaoTtsUrl(text) {
+/** 有道發音（type=2 美式、type=1 英式） */
+function youdaoTtsUrl(text, accent = "us") {
   const q = encodeURIComponent(String(text || "").trim().slice(0, 600));
   if (!q) return "";
-  return `https://dict.youdao.com/dictvoice?audio=${q}&type=2`;
+  const type = accent === "gb" ? "1" : "2";
+  return `https://dict.youdao.com/dictvoice?audio=${q}&type=${type}`;
 }
 
 /** 百度翻譯中文 TTS（通常比 Google 中文自然） */
@@ -951,7 +986,8 @@ export async function translateEnToZh(text, variant = "CN") {
 function googleSpeechZhUrl(text) {
   const q = encodeURIComponent(String(text || "").trim().slice(0, 180));
   if (!q) return "";
-  return `https://www.google.com/speech-api/v1/synthesize?enc=mpeg&lang=zh-cn&speed=0.42&client=lr-language-tts&use_google_only_voices=1&text=${q}`;
+  const lang = getZhAccent() === "tw" ? "zh-tw" : "zh-cn";
+  return `https://www.google.com/speech-api/v1/synthesize?enc=mpeg&lang=${lang}&speed=0.42&client=lr-language-tts&use_google_only_voices=1&text=${q}`;
 }
 
 const edgeSpeechCache = new Map();
@@ -964,27 +1000,21 @@ export function getLastSpeakEngine() {
 }
 
 function zhVoiceCandidates(preferred) {
-  const first = String(preferred || CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural").trim();
-  const list = [
-    first,
-    "zh-CN-YunxiNeural",
-    "zh-TW-HsiaoChenNeural",
-    "zh-CN-YunyangNeural",
-    "zh-CN-XiaoxiaoNeural",
-  ];
-  return [...new Set(list.filter(Boolean))];
+  const first = String(preferred || preferredTtsVoice("zh")).trim();
+  const rest =
+    getZhAccent() === "tw"
+      ? ["zh-TW-HsiaoChenNeural", "zh-TW-YunJheNeural", "zh-TW-HsiaoYuNeural"]
+      : ["zh-CN-YunxiNeural", "zh-CN-XiaoxiaoNeural", "zh-CN-YunyangNeural"];
+  return [...new Set([first, ...rest].filter(Boolean))];
 }
 
 function enVoiceCandidates(preferred) {
-  const first = String(preferred || CONFIG.EN_TTS_VOICE || "en-US-JennyNeural").trim();
-  const list = [
-    first,
-    "en-US-JennyNeural",
-    "en-US-GuyNeural",
-    "en-US-AriaNeural",
-    "en-GB-SoniaNeural",
-  ];
-  return [...new Set(list.filter(Boolean))];
+  const first = String(preferred || preferredTtsVoice("en")).trim();
+  const rest =
+    getEnAccent() === "gb"
+      ? ["en-GB-SoniaNeural", "en-GB-RyanNeural", "en-GB-LibbyNeural"]
+      : ["en-US-JennyNeural", "en-US-GuyNeural", "en-US-AriaNeural"];
+  return [...new Set([first, ...rest].filter(Boolean))];
 }
 
 const HOME_TTS_CACHE_KEY = "kid-quiz-home-tts-url";
@@ -1160,7 +1190,7 @@ export function prefetchChineseAudio(englishText, voice) {
 async function resolveZhNeuralUrl(chunk, voice) {
   const key = String(chunk || "").trim();
   if (!key) return "";
-  const useVoice = String(voice || CONFIG.ZH_TTS_VOICE || "zh-CN-YunxiNeural").trim();
+  const useVoice = String(voice || preferredTtsVoice("zh")).trim();
   const cacheKey = `${useVoice}::${key}`;
   if (zhNeuralUrlCache.has(cacheKey)) return zhNeuralUrlCache.get(cacheKey);
 
@@ -1238,8 +1268,8 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
     const urls = [
       baiduZhTtsUrl(chunk),
       youdaoZhTtsUrl(chunk),
-      googleTtsUrl(chunk, "zh"),
-      googleTtsUrl(chunk, "zh-TW"),
+      googleTtsUrl(chunk, getZhAccent() === "tw" ? "zh-TW" : "zh"),
+      googleTtsUrl(chunk, getZhAccent() === "tw" ? "zh" : "zh-TW"),
     ];
     for (const url of urls) {
       if (url && (await playAudioUrl(url, { ...soft, startTimeoutMs: 3200 }))) {
@@ -1258,14 +1288,14 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
   ) {
     return true;
   }
-  const g = googleTtsUrl(chunk, "en");
+  const g = googleTtsUrl(chunk, getEnAccent() === "gb" ? "en-GB" : "en");
   if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 5000 }))) {
     lastSpeakEngine = "en-google";
     return true;
   }
   const scriptEn = await resolveZhNeuralUrl(
     chunk,
-    voice || CONFIG.EN_TTS_VOICE || "en-US-JennyNeural"
+    voice || preferredTtsVoice("en")
   );
   if (
     scriptEn &&
@@ -1273,7 +1303,7 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
   ) {
     return true;
   }
-  const y = youdaoTtsUrl(chunk);
+  const y = youdaoTtsUrl(chunk, getEnAccent());
   if (y && (await playAudioUrl(y, { speed, startTimeoutMs: 4000 }))) {
     lastSpeakEngine = "en-youdao";
     return true;
@@ -1301,14 +1331,20 @@ export function stopSpeaking() {
 
 function pickEnglishVoice() {
   const voices = window.speechSynthesis?.getVoices() || [];
+  const wantGb = getEnAccent() === "gb";
   const en = voices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
   const score = (v) => {
     const n = `${v.name} ${v.lang}`.toLowerCase();
     let s = 0;
     if (/neural|natural|premium|enhanced|siri|samantha|karen|moira|daniel/.test(n)) s += 50;
-    if (/google.*us|google us english/.test(n)) s += 40;
-    if (/microsoft.*(aria|jenny|guy|sara)/.test(n)) s += 35;
-    if (v.lang === "en-US") s += 10;
+    if (wantGb) {
+      if (/en-gb|british|uk english|english united kingdom/.test(n) || v.lang === "en-GB") s += 45;
+      if (/google.*uk|google uk english/.test(n)) s += 40;
+    } else {
+      if (/google.*us|google us english/.test(n)) s += 40;
+      if (v.lang === "en-US") s += 10;
+    }
+    if (/microsoft.*(aria|jenny|guy|sara|sonia|ryan)/.test(n)) s += 35;
     if (!v.localService) s += 5;
     if (/compact|eloquence/.test(n)) s -= 20;
     return s;
@@ -1340,7 +1376,14 @@ function speakWithSynth(text, lang = "en", speed = 1) {
         window.speechSynthesis.resume();
 
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = lang === "zh" ? "zh-TW" : "en-US";
+        u.lang =
+          lang === "zh"
+            ? getZhAccent() === "tw"
+              ? "zh-TW"
+              : "zh-CN"
+            : getEnAccent() === "gb"
+              ? "en-GB"
+              : "en-US";
         const baseRate =
           lang === "zh"
             ? 0.95
@@ -1439,13 +1482,14 @@ export async function speakEnglish(text, opts = {}) {
   const lang = opts.lang === "zh" ? "zh" : "en";
   const speed = Number(opts.speed) > 0 ? Number(opts.speed) : activeSpeakSpeed || 1;
   activeSpeakSpeed = speed;
-  const voice = String(opts.voice || "").trim() || undefined;
+  const voice = String(opts.voice || "").trim() || preferredTtsVoice(lang);
 
   let speakText = w;
   if (lang === "zh" && !opts.alreadyZh) {
+    const variant = getZhAccent() === "tw" ? "TW" : "CN";
     speakText =
-      (await translateEnToZh(w, "CN")) ||
-      (await translateEnToZh(w, "TW")) ||
+      (await translateEnToZh(w, variant)) ||
+      (await translateEnToZh(w, variant === "TW" ? "CN" : "TW")) ||
       w;
   }
 

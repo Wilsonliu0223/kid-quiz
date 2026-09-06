@@ -6155,7 +6155,8 @@ body.en-gloss-open .en-play-status {
 }
 body.en-gloss-open .en-play-speed-btn,
 body.en-gloss-open .en-play-lang-btn,
-body.en-gloss-open .en-play-repeat-btn {
+body.en-gloss-open .en-play-repeat-btn,
+body.en-gloss-open .en-play-accent-btn {
   padding: 4px 8px;
   font-size: 0.75rem;
 }
@@ -6228,10 +6229,18 @@ body.en-gloss-open .en-play-repeat-btn {
 }
 .en-play-speed,
 .en-play-lang,
-.en-play-repeat {
+.en-play-repeat,
+.en-play-accent {
   display: flex;
   gap: 4px;
   flex: 0 0 auto;
+  align-items: center;
+}
+.en-play-accent-label {
+  color: rgba(220, 232, 255, 0.7);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0 2px;
 }
 .en-play-lang {
   flex-wrap: wrap;
@@ -6243,7 +6252,8 @@ body.en-gloss-open .en-play-repeat-btn {
 }
 .en-play-speed-btn,
 .en-play-lang-btn,
-.en-play-repeat-btn {
+.en-play-repeat-btn,
+.en-play-accent-btn {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: transparent;
   color: #dce8ff;
@@ -6260,7 +6270,8 @@ body.en-gloss-open .en-play-repeat-btn {
 }
 .en-play-speed-btn.is-active,
 .en-play-lang-btn.is-active,
-.en-play-repeat-btn.is-active {
+.en-play-repeat-btn.is-active,
+.en-play-accent-btn.is-active {
   background: #ff8a3d;
   border-color: #ff8a3d;
   color: #fff;
@@ -6296,7 +6307,8 @@ body.en-gloss-open .en-play-repeat-btn {
   }
   .en-play-speed-btn,
   .en-play-lang-btn,
-  .en-play-repeat-btn {
+  .en-play-repeat-btn,
+  .en-play-accent-btn {
     padding: 5px 8px;
     font-size: 0.75rem;
   }

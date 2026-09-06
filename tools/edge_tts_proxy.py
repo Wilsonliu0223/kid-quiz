@@ -25,12 +25,17 @@ RATE_MAX = 120
 
 ALLOWED_VOICES = {
     "zh-CN-YunxiNeural",
-    "zh-TW-HsiaoChenNeural",
+    "zh-CN-XiaoxiaoNeural",
     "zh-CN-YunyangNeural",
+    "zh-TW-HsiaoChenNeural",
+    "zh-TW-YunJheNeural",
+    "zh-TW-HsiaoYuNeural",
     "en-US-JennyNeural",
     "en-US-GuyNeural",
     "en-US-AriaNeural",
     "en-GB-SoniaNeural",
+    "en-GB-RyanNeural",
+    "en-GB-LibbyNeural",
 }
 
 _rate_lock = threading.Lock()

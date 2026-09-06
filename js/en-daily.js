@@ -12,7 +12,11 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
-} from "./english.js?v=en-speak-v25";
+  getEnAccent,
+  setEnAccent,
+  getZhAccent,
+  setZhAccent,
+} from "./english.js?v=en-speak-v26";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -146,6 +150,23 @@ function syncPlaySpeedBtns() {
   });
 }
 
+function syncPlayAccentBtns() {
+  const en = getEnAccent();
+  const zh = getZhAccent();
+  document.querySelectorAll("[data-en-play-en-accent]").forEach((btn) => {
+    btn.classList.toggle(
+      "is-active",
+      btn.getAttribute("data-en-play-en-accent") === en
+    );
+  });
+  document.querySelectorAll("[data-en-play-zh-accent]").forEach((btn) => {
+    btn.classList.toggle(
+      "is-active",
+      btn.getAttribute("data-en-play-zh-accent") === zh
+    );
+  });
+}
+
 function isDialogueActive() {
   return Boolean($("#view-en-daily-dialogue")?.classList.contains("view-active"));
 }
@@ -200,6 +221,7 @@ function showPlayBar(status) {
   syncPlayLangBtns();
   syncPlaySpeedBtns();
   syncPlayRepeatBtns();
+  syncPlayAccentBtns();
   syncDockVisibility();
 }
 
@@ -790,6 +812,22 @@ function bindUi() {
       syncPlaySpeedBtns();
     });
   });
+  document.querySelectorAll("[data-en-play-en-accent]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const v = btn.getAttribute("data-en-play-en-accent");
+      if (v !== "us" && v !== "gb") return;
+      setEnAccent(v);
+      syncPlayAccentBtns();
+    });
+  });
+  document.querySelectorAll("[data-en-play-zh-accent]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const v = btn.getAttribute("data-en-play-zh-accent");
+      if (v !== "tw" && v !== "cn") return;
+      setZhAccent(v);
+      syncPlayAccentBtns();
+    });
+  });
 
   $("#btn-en-review-back")?.addEventListener("click", () => openEnHub());
   $("#btn-en-review-dictation")?.addEventListener("click", () => {
@@ -1165,21 +1203,25 @@ function dialogueSpeakerNames(d) {
   return names;
 }
 
-const EN_DLG_VOICES = [
+const EN_DLG_VOICES_US = [
   "en-US-GuyNeural",
   "en-US-JennyNeural",
-  "en-US-DavisNeural",
   "en-US-AriaNeural",
+];
+const EN_DLG_VOICES_GB = [
   "en-GB-RyanNeural",
   "en-GB-SoniaNeural",
+  "en-GB-LibbyNeural",
 ];
-const ZH_DLG_VOICES = [
+const ZH_DLG_VOICES_CN = [
   "zh-CN-YunxiNeural",
   "zh-CN-XiaoxiaoNeural",
   "zh-CN-YunyangNeural",
+];
+const ZH_DLG_VOICES_TW = [
+  "zh-TW-YunJheNeural",
   "zh-TW-HsiaoChenNeural",
-  "zh-CN-YunjianNeural",
-  "zh-CN-XiaoyiNeural",
+  "zh-TW-HsiaoYuNeural",
 ];
 
 function voiceForDialogueSpeaker(name, lang) {
@@ -1187,7 +1229,14 @@ function voiceForDialogueSpeaker(name, lang) {
   const names = dialogueSpeakerNames(d);
   let i = names.indexOf(String(name || "").trim());
   if (i < 0) i = 0;
-  const pool = lang === "zh" ? ZH_DLG_VOICES : EN_DLG_VOICES;
+  const pool =
+    lang === "zh"
+      ? getZhAccent() === "tw"
+        ? ZH_DLG_VOICES_TW
+        : ZH_DLG_VOICES_CN
+      : getEnAccent() === "gb"
+        ? EN_DLG_VOICES_GB
+        : EN_DLG_VOICES_US;
   return pool[i % pool.length];
 }
 
