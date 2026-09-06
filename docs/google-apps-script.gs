@@ -52,7 +52,7 @@ function doGet(e) {
   if (p.action === "pingEnArticles") {
     return pingEnArticles(p);
   }
-  if (p.action === "synthesizeZh") {
+  if (p.action === "synthesizeZh" || p.action === "synthesizeSpeech") {
     return synthesizeZh(p);
   }
   return loadZhJson();
@@ -79,7 +79,7 @@ function doPost(e) {
     if (data.action === "pingEnArticles") {
       return pingEnArticles(data);
     }
-    if (data.action === "synthesizeZh") {
+    if (data.action === "synthesizeZh" || data.action === "synthesizeSpeech") {
       return synthesizeZh(data);
     }
   } catch (err) {
@@ -160,7 +160,27 @@ function synthesizeZh(p) {
     // fall through
   }
 
-  // 2) 舊備援 Zhiyu
+  // 2) Google 翻譯 TTS（Edge 代理被擋時仍比系統機械音自然；中英都可用）
+  try {
+    const bytes = fetchGoogleTranslateTts(text, voice);
+    if (bytes && bytes.length > 200) {
+      const b64 = Utilities.base64Encode(bytes);
+      try {
+        cache.put(key, b64, 3600);
+      } catch (cacheErr) {}
+      return jsonOut({
+        ok: true,
+        audioBase64: b64,
+        mime: "audio/mpeg",
+        speaker: "google-tts",
+      });
+    }
+  } catch (gErr) {
+    // fall through
+  }
+
+  // 3) 舊備援 Zhiyu（僅中文）
+  if (!/^en/i.test(voice)) {
   try {
     const res = UrlFetchApp.fetch("https://ttsmp3.com/makemp3_new.php", {
       method: "post",
@@ -189,6 +209,45 @@ function synthesizeZh(p) {
   } catch (err) {
     return jsonOut({ ok: false, error: String(err) });
   }
+  }
+
+  return jsonOut({ ok: false, error: "TTS 失敗" });
+}
+
+function googleTtsLangFromVoice(voice) {
+  const v = String(voice || "").toLowerCase();
+  if (v.indexOf("zh-tw") >= 0 || v.indexOf("hsiao") >= 0) return "zh-TW";
+  if (
+    v.indexOf("zh-") >= 0 ||
+    v.indexOf("yun") >= 0 ||
+    v.indexOf("xiao") >= 0
+  ) {
+    return "zh-CN";
+  }
+  if (v.indexOf("en-gb") >= 0 || v.indexOf("sonia") >= 0) return "en-GB";
+  return "en";
+}
+
+function fetchGoogleTranslateTts(text, voice) {
+  const tl = googleTtsLangFromVoice(voice);
+  const q = encodeURIComponent(String(text || "").trim().slice(0, 100));
+  if (!q) return null;
+  const url =
+    "https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=" +
+    encodeURIComponent(tl) +
+    "&q=" +
+    q;
+  const res = UrlFetchApp.fetch(url, {
+    muteHttpExceptions: true,
+    followRedirects: true,
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    },
+  });
+  if (res.getResponseCode() !== 200) return null;
+  const bytes = res.getContent();
+  return bytes && bytes.length > 200 ? bytes : null;
 }
 
 function appendScoreRow(p) {

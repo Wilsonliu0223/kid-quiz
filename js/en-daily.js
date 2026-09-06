@@ -12,7 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
-} from "./english.js?v=en-speak-v22";
+} from "./english.js?v=en-speak-v23";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 

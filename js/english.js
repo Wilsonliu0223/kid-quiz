@@ -802,7 +802,7 @@ function googleTtsUrl(text, lang = "en") {
   const q = encodeURIComponent(String(text || "").trim().slice(0, max));
   if (!q) return "";
   // client=tw-ob 中文較常比 gtx 順耳
-  const client = lang === "en" ? "gtx" : "tw-ob";
+  const client = "tw-ob";
   return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=${client}&tl=${tl}&q=${q}`;
 }
 
@@ -1016,9 +1016,11 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          model: "tts-1",
           input: text,
           voice,
           speed: 1,
+          response_format: "mp3",
         }),
       });
       if (!res.ok) {
@@ -1082,12 +1084,14 @@ async function resolveZhNeuralUrl(chunk, voice) {
   const endpoint = String(CONFIG.SCORE_LOG_URL || "").trim();
   if (!endpoint) return "";
 
+  const action = /^en/i.test(useVoice) ? "synthesizeSpeech" : "synthesizeZh";
+
   try {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
-        action: "synthesizeZh",
+        action,
         text: key,
         voice: useVoice,
       }),
@@ -1169,6 +1173,16 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
   if (
     edgeEn &&
     (await playAudioUrl(edgeEn, { speed, soften: false, startTimeoutMs: 7000 }))
+  ) {
+    return true;
+  }
+  const scriptEn = await resolveZhNeuralUrl(
+    chunk,
+    voice || CONFIG.EN_TTS_VOICE || "en-US-JennyNeural"
+  );
+  if (
+    scriptEn &&
+    (await playAudioUrl(scriptEn, { speed, soften: false, startTimeoutMs: 8000 }))
   ) {
     return true;
   }
