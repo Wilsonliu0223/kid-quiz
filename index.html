@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.26" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.27" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -400,16 +400,28 @@
                 <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
                 <button type="button" class="en-play-speed-btn" data-en-play-speed="1.45">快</button>
               </div>
-              <div class="en-play-accent" role="group" aria-label="英文口音">
+              <label class="en-play-voice">
                 <span class="en-play-accent-label">英</span>
-                <button type="button" class="en-play-accent-btn is-active" data-en-play-en-accent="us" title="美式">美式</button>
-                <button type="button" class="en-play-accent-btn" data-en-play-en-accent="gb" title="英式">英式</button>
-              </div>
-              <div class="en-play-accent" role="group" aria-label="中文口音">
+                <select id="en-play-en-voice" aria-label="英文聲音">
+                  <option value="en-US-JennyNeural">美女 Jenny</option>
+                  <option value="en-US-AriaNeural">美女 Aria</option>
+                  <option value="en-US-GuyNeural">美男 Guy</option>
+                  <option value="en-GB-SoniaNeural">英女 Sonia</option>
+                  <option value="en-GB-LibbyNeural">英女 Libby</option>
+                  <option value="en-GB-RyanNeural">英男 Ryan</option>
+                </select>
+              </label>
+              <label class="en-play-voice">
                 <span class="en-play-accent-label">中</span>
-                <button type="button" class="en-play-accent-btn" data-en-play-zh-accent="tw" title="台灣">台灣</button>
-                <button type="button" class="en-play-accent-btn is-active" data-en-play-zh-accent="cn" title="大陸">大陸</button>
-              </div>
+                <select id="en-play-zh-voice" aria-label="中文聲音">
+                  <option value="zh-TW-HsiaoChenNeural">台女 曉臻</option>
+                  <option value="zh-TW-HsiaoYuNeural">台女 曉雨</option>
+                  <option value="zh-TW-YunJheNeural">台男 雲哲</option>
+                  <option value="zh-CN-XiaoxiaoNeural">陸女 曉曉</option>
+                  <option value="zh-CN-YunxiNeural" selected>陸男 雲希</option>
+                  <option value="zh-CN-YunyangNeural">陸男 雲揚</option>
+                </select>
+              </label>
               <div class="en-play-lang" role="group" aria-label="朗讀語言">
                 <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
                 <button type="button" class="en-play-lang-btn" data-en-play-lang="zh">中文</button>
@@ -2320,7 +2332,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.34").catch((e) => {
+      import("./js/app.js?v=app-v45.35").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

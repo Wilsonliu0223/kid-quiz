@@ -12,11 +12,14 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
+  getEnVoice,
+  setEnVoice,
+  getZhVoice,
+  setZhVoice,
   getEnAccent,
-  setEnAccent,
   getZhAccent,
-  setZhAccent,
-} from "./english.js?v=en-speak-v26";
+  preferredTtsVoice,
+} from "./english.js?v=en-speak-v27";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -150,21 +153,11 @@ function syncPlaySpeedBtns() {
   });
 }
 
-function syncPlayAccentBtns() {
-  const en = getEnAccent();
-  const zh = getZhAccent();
-  document.querySelectorAll("[data-en-play-en-accent]").forEach((btn) => {
-    btn.classList.toggle(
-      "is-active",
-      btn.getAttribute("data-en-play-en-accent") === en
-    );
-  });
-  document.querySelectorAll("[data-en-play-zh-accent]").forEach((btn) => {
-    btn.classList.toggle(
-      "is-active",
-      btn.getAttribute("data-en-play-zh-accent") === zh
-    );
-  });
+function syncPlayVoiceSelects() {
+  const enSel = $("#en-play-en-voice");
+  const zhSel = $("#en-play-zh-voice");
+  if (enSel) enSel.value = getEnVoice();
+  if (zhSel) zhSel.value = getZhVoice();
 }
 
 function isDialogueActive() {
@@ -221,7 +214,7 @@ function showPlayBar(status) {
   syncPlayLangBtns();
   syncPlaySpeedBtns();
   syncPlayRepeatBtns();
-  syncPlayAccentBtns();
+  syncPlayVoiceSelects();
   syncDockVisibility();
 }
 
@@ -812,21 +805,13 @@ function bindUi() {
       syncPlaySpeedBtns();
     });
   });
-  document.querySelectorAll("[data-en-play-en-accent]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const v = btn.getAttribute("data-en-play-en-accent");
-      if (v !== "us" && v !== "gb") return;
-      setEnAccent(v);
-      syncPlayAccentBtns();
-    });
+  $("#en-play-en-voice")?.addEventListener("change", (e) => {
+    setEnVoice(e.target.value);
+    syncPlayVoiceSelects();
   });
-  document.querySelectorAll("[data-en-play-zh-accent]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const v = btn.getAttribute("data-en-play-zh-accent");
-      if (v !== "tw" && v !== "cn") return;
-      setZhAccent(v);
-      syncPlayAccentBtns();
-    });
+  $("#en-play-zh-voice")?.addEventListener("change", (e) => {
+    setZhVoice(e.target.value);
+    syncPlayVoiceSelects();
   });
 
   $("#btn-en-review-back")?.addEventListener("click", () => openEnHub());
@@ -1229,7 +1214,7 @@ function voiceForDialogueSpeaker(name, lang) {
   const names = dialogueSpeakerNames(d);
   let i = names.indexOf(String(name || "").trim());
   if (i < 0) i = 0;
-  const pool =
+  const rest =
     lang === "zh"
       ? getZhAccent() === "tw"
         ? ZH_DLG_VOICES_TW
@@ -1237,6 +1222,7 @@ function voiceForDialogueSpeaker(name, lang) {
       : getEnAccent() === "gb"
         ? EN_DLG_VOICES_GB
         : EN_DLG_VOICES_US;
+  const pool = [...new Set([preferredTtsVoice(lang), ...rest])];
   return pool[i % pool.length];
 }
 

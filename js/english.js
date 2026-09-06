@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.9";
+import { CONFIG } from "./config.site.js?v=config-v45.10";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -251,32 +251,69 @@ export function setSpeakingSpeed(speed) {
   applyPlaybackRate(sharedAudio);
 }
 
+const EN_VOICE_KEY = "kid-quiz-en-voice";
+const ZH_VOICE_KEY = "kid-quiz-zh-voice";
 const EN_ACCENT_KEY = "kid-quiz-en-accent";
 const ZH_ACCENT_KEY = "kid-quiz-zh-accent";
 
-export function getEnAccent() {
-  return localStorage.getItem(EN_ACCENT_KEY) === "gb" ? "gb" : "us";
+export const EN_TTS_VOICES = [
+  { id: "en-US-JennyNeural", label: "美女 Jenny" },
+  { id: "en-US-AriaNeural", label: "美女 Aria" },
+  { id: "en-US-GuyNeural", label: "美男 Guy" },
+  { id: "en-GB-SoniaNeural", label: "英女 Sonia" },
+  { id: "en-GB-LibbyNeural", label: "英女 Libby" },
+  { id: "en-GB-RyanNeural", label: "英男 Ryan" },
+];
+
+export const ZH_TTS_VOICES = [
+  { id: "zh-TW-HsiaoChenNeural", label: "台女 曉臻" },
+  { id: "zh-TW-HsiaoYuNeural", label: "台女 曉雨" },
+  { id: "zh-TW-YunJheNeural", label: "台男 雲哲" },
+  { id: "zh-CN-XiaoxiaoNeural", label: "陸女 曉曉" },
+  { id: "zh-CN-YunxiNeural", label: "陸男 雲希" },
+  { id: "zh-CN-YunyangNeural", label: "陸男 雲揚" },
+];
+
+function voiceIds(list) {
+  return list.map((v) => v.id);
 }
 
-export function setEnAccent(id) {
-  localStorage.setItem(EN_ACCENT_KEY, id === "gb" ? "gb" : "us");
+export function getEnVoice() {
+  const raw = String(localStorage.getItem(EN_VOICE_KEY) || "").trim();
+  if (voiceIds(EN_TTS_VOICES).includes(raw)) return raw;
+  return localStorage.getItem(EN_ACCENT_KEY) === "gb"
+    ? "en-GB-SoniaNeural"
+    : "en-US-JennyNeural";
+}
+
+export function setEnVoice(id) {
+  const next = voiceIds(EN_TTS_VOICES).includes(id) ? id : "en-US-JennyNeural";
+  localStorage.setItem(EN_VOICE_KEY, next);
+}
+
+export function getZhVoice() {
+  const raw = String(localStorage.getItem(ZH_VOICE_KEY) || "").trim();
+  if (voiceIds(ZH_TTS_VOICES).includes(raw)) return raw;
+  return localStorage.getItem(ZH_ACCENT_KEY) === "tw"
+    ? "zh-TW-HsiaoChenNeural"
+    : "zh-CN-YunxiNeural";
+}
+
+export function setZhVoice(id) {
+  const next = voiceIds(ZH_TTS_VOICES).includes(id) ? id : "zh-CN-YunxiNeural";
+  localStorage.setItem(ZH_VOICE_KEY, next);
+}
+
+export function getEnAccent() {
+  return /en-GB/i.test(getEnVoice()) ? "gb" : "us";
 }
 
 export function getZhAccent() {
-  return localStorage.getItem(ZH_ACCENT_KEY) === "tw" ? "tw" : "cn";
-}
-
-export function setZhAccent(id) {
-  localStorage.setItem(ZH_ACCENT_KEY, id === "tw" ? "tw" : "cn");
+  return /zh-TW/i.test(getZhVoice()) ? "tw" : "cn";
 }
 
 export function preferredTtsVoice(lang) {
-  if (lang === "zh") {
-    return getZhAccent() === "tw"
-      ? "zh-TW-HsiaoChenNeural"
-      : "zh-CN-YunxiNeural";
-  }
-  return getEnAccent() === "gb" ? "en-GB-SoniaNeural" : "en-US-JennyNeural";
+  return lang === "zh" ? getZhVoice() : getEnVoice();
 }
 
 export function getSpeakingSpeed() {

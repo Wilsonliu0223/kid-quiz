@@ -6230,11 +6230,23 @@ body.en-gloss-open .en-play-accent-btn {
 .en-play-speed,
 .en-play-lang,
 .en-play-repeat,
-.en-play-accent {
+.en-play-accent,
+.en-play-voice {
   display: flex;
   gap: 4px;
   flex: 0 0 auto;
   align-items: center;
+}
+.en-play-voice select {
+  max-width: 9.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: #1a2a4a;
+  color: #dce8ff;
+  border-radius: 999px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 .en-play-accent-label {
   color: rgba(220, 232, 255, 0.7);
@@ -6315,6 +6327,11 @@ body.en-gloss-open .en-play-accent-btn {
   .en-play-repeat-btn {
     padding: 5px 7px;
     font-size: 0.68rem;
+  }
+  .en-play-voice select {
+    max-width: 8.6rem;
+    padding: 5px 6px;
+    font-size: 0.72rem;
   }
   .en-play-speak-all {
     padding: 4px 8px;
