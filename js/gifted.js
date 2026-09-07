@@ -1,13 +1,13 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.18";
+import { CONFIG } from "./config.site.js?v=config-v45.19";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
   GIFTED_CAT_LABEL,
   GIFTED_GRADE_LABEL,
-} from "./gifted-bank.js?v=gifted-bank-v5";
+} from "./gifted-bank.js?v=gifted-bank-v6";
 
 const CATS = ["fig", "lang", "math", "mem"];
 const QUOTAS = {
@@ -33,9 +33,17 @@ function key() {
   return `kid-quiz-gifted-blind-${getSelectedChild()}`;
 }
 
+const PAPER_VER = 6;
+
 function loadState() {
   try {
-    return JSON.parse(localStorage.getItem(key()) || "null");
+    const st = JSON.parse(localStorage.getItem(key()) || "null");
+    if (!st) return null;
+    if (st.paperVer !== PAPER_VER && !st.finishedAt) {
+      localStorage.removeItem(key());
+      return null;
+    }
+    return st;
   } catch {
     return null;
   }
@@ -124,7 +132,13 @@ function poolFor(cat, grade, need) {
   return [...same, ...extra];
 }
 
-function takeCat(pool, n, rnd) {
+/** 產生題（fr34-0）同一模板只算一種，手寫題（f001）各算各的。 */
+function familyOf(id) {
+  const m = String(id).match(/^([a-z]{2,})\d+-/i);
+  return m ? m[1].toLowerCase() : id;
+}
+
+function takeCat(pool, n, rnd, famCap) {
   const seen = new Set(loadSeen());
   const fresh = shuffle(
     pool.filter((q) => !seen.has(q.id)),
@@ -136,23 +150,41 @@ function takeCat(pool, n, rnd) {
   );
   const picked = [];
   const used = new Set();
-  for (const q of [...fresh, ...rest]) {
-    if (used.has(q.id)) continue;
+  const famCount = {};
+  const consider = [...fresh, ...rest];
+  const push = (q, ignoreFam) => {
+    if (used.has(q.id)) return false;
+    const fam = familyOf(q.id);
+    if (!ignoreFam && (famCount[fam] || 0) >= famCap) return false;
     used.add(q.id);
+    famCount[fam] = (famCount[fam] || 0) + 1;
     picked.push(q);
+    return true;
+  };
+  for (const q of consider) {
+    push(q, false);
     if (picked.length >= n) break;
+  }
+  if (picked.length < n) {
+    for (const q of consider) {
+      push(q, true);
+      if (picked.length >= n) break;
+    }
   }
   return picked;
 }
 
 function buildPaper(n) {
   const rnd = seedRng(
-    `${getSelectedChild()}|gifted-v4|${n}|${pickGrade}|${Date.now()}`
+    `${getSelectedChild()}|gifted-v5|${n}|${pickGrade}|${Date.now()}`
   );
   const quota = QUOTAS[n] || QUOTAS[10];
+  const famCap = n >= 60 ? 2 : 1;
   const picked = [];
   CATS.forEach((cat, i) => {
-    picked.push(...takeCat(poolFor(cat, pickGrade, quota[i]), quota[i], rnd));
+    picked.push(
+      ...takeCat(poolFor(cat, pickGrade, quota[i]), quota[i], rnd, famCap)
+    );
   });
   return shuffle(picked, rnd).map((q) => {
     const order = shuffle(q.options.map((_, i) => i), rnd);
@@ -336,6 +368,7 @@ function startNew() {
     picks: items.map(() => -1),
     idx: 0,
     finishedAt: 0,
+    paperVer: PAPER_VER,
   });
   openQuiz();
 }
