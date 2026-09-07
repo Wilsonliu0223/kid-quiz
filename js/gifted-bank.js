@@ -314,7 +314,7 @@ export const GIFTED_BANK = [
   { id: "e34-8", cat: "mem", grade: 34, q: "記住：9、0、4、4、1。沒有出現的數字？", options: ["2", "9", "0", "4"], answer: 0, explain: "2 未出現" },
   { id: "e56-1", cat: "mem", grade: 56, q: "記住：5、1、9、3、7、2。倒過來前三個？", options: ["2、7、3", "5、1、9", "1、9、3", "7、2、5"], answer: 0, explain: "尾端" },
   { id: "e56-2", cat: "mem", grade: 56, q: "記住：L、3、K、8、M。第 4 個？", options: ["8", "L", "K", "M"], answer: 0, explain: "數字 8" },
-  { id: "e56-3", cat: "mem", grade: 56, q: "記住：2、8、2、8、9。前面都是 2、8 反覆，最後一個換成什麼？", options: ["9", "2", "8", "0"], answer: 0, explain: "最後一個不是 2 也不是 8，是 9。" },
+  { id: "e56-3", cat: "mem", grade: 56, q: "記住：2、8、2、8、9。最後一個數字是哪一個？", options: ["9", "2", "8", "0"], answer: 0, explain: "這串最後一個是 9。" },
   { id: "e56-4", cat: "mem", grade: 56, q: "記住七項：1、4、9、2、6、5、3。第 6 個？", options: ["5", "6", "3", "2"], answer: 0, explain: "位置 6" },
   { id: "e56-5", cat: "mem", grade: 56, q: "記住：北、西、南、東。這順序較像？", options: ["逆時針繞方位", "只往北", "隨機顏色", "加減法"], answer: 0, explain: "北→西→南→東" },
   { id: "e56-6", cat: "mem", grade: 56, q: "記住：A1、B2、C3。D 對應？", options: ["4", "D", "1", "5"], answer: 0, explain: "字母序對數字序" },
