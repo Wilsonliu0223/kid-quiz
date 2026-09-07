@@ -2267,8 +2267,8 @@
         <div class="gifted-intro-body">
           <h2 class="gifted-title">思考挑戰</h2>
           <p id="gifted-intro-fresh">
-            自編魏氏風格練習：圖形空間、語文理解、數量推理、工作記憶。交卷後會依年齡、難度、對錯與時間給參考指數。
-            <strong>不是官方魏氏／WISC，不是鑑定，不能當 PR。</strong>
+            練習向度對齊臺中市國小一般智能資優初選常見架構：圖形推理（團體智力常見）、國語文、數學；並加工作記憶。年級：1～2／2～3 對應甲組（二升三）偏易；3～4／5～6 對應乙組（四升五）加深。
+            <strong>全是自編，不是市府真題，不是魏氏／WISC，不能當鑑定或 PR。</strong>
           </p>
           <div id="gifted-mode-box" class="gifted-mode-box">
             <p class="gifted-mode-label">題數</p>
@@ -2280,9 +2280,9 @@
             <p class="gifted-mode-label">年級</p>
             <div class="gifted-seg">
               <button type="button" class="gifted-seg-btn is-on" data-gifted-grade="12">1～2年</button>
-              <button type="button" class="gifted-seg-btn" data-gifted-grade="23">2～3年</button>
+              <button type="button" class="gifted-seg-btn" data-gifted-grade="23">2～3年（甲組）</button>
               <button type="button" class="gifted-seg-btn" data-gifted-grade="34">3～4年</button>
-              <button type="button" class="gifted-seg-btn" data-gifted-grade="56">5～6年</button>
+              <button type="button" class="gifted-seg-btn" data-gifted-grade="56">5～6年（乙組）</button>
             </div>
             <p class="gifted-mode-label">小朋友幾歲（滿歲，可填 6.5）</p>
             <input
@@ -2549,7 +2549,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.50").catch((e) => {
+      import("./js/app.js?v=app-v45.51").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

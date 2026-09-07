@@ -1,13 +1,13 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.25";
+import { CONFIG } from "./config.site.js?v=config-v45.26";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
   GIFTED_CAT_LABEL,
   GIFTED_GRADE_LABEL,
-} from "./gifted-bank.js?v=gifted-bank-v8";
+} from "./gifted-bank.js?v=gifted-bank-v9";
 import { visPromptHtml, visChoiceHtml } from "./gifted-fig.js?v=gifted-fig-v1";
 
 const CATS = ["fig", "lang", "math", "mem"];
@@ -34,7 +34,7 @@ function key() {
   return `kid-quiz-gifted-blind-${getSelectedChild()}`;
 }
 
-const PAPER_VER = 8;
+const PAPER_VER = 9;
 
 function loadState() {
   try {

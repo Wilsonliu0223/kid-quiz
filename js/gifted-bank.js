@@ -1,4 +1,4 @@
-/** 自編魏氏風格推理練習（非官方魏氏／WISC 試題，無 IQ、無 PR）。grade：12＝1～2年、23＝2～3年、34＝3～4年、56＝5～6年。 */
+/** 自編練習（非正式鑑定）。對齊臺中市國小一般智能資優初選向度：圖形推理、國語文、數學，另加工作記憶。grade：12＝1～2、23＝2～3（甲組偏易）、34＝3～4、56＝5～6（乙組加深）。非市府真題、非魏氏。 */
 export const GIFTED_BANK = [
   { id: "f001", cat: "fig", grade: 12, q: "哪一個跟其他三個不同類？", options: ["▲▲▲", "●●●", "■■■", "▲▲●"], answer: 3, explain: "前三個都是三個相同圖形。" },
   { id: "f002", cat: "fig", grade: 12, q: "哪一個跟其他三個不同類？", options: ["○△", "□△", "○□", "△△"], answer: 3, explain: "前三個都是兩種不同圖形。" },
@@ -626,7 +626,41 @@ export const GIFTED_BANK = [
   { id: "fv014", cat: "fig", grade: 56, q: "同一列改形狀，同一行改實心空心。右下角該選哪一個？", options: ["", "", "", ""], answer: 0, explain: "列：圓變方；行：實心變空心。所以是空心方。", vis: { kind: "grid2", cells: [{ s: "c", fill: 1 }, { s: "q", fill: 1 }, { s: "c", fill: 0 }, null], choices: [{ s: "q", fill: 0 }, { s: "q", fill: 1 }, { s: "c", fill: 0 }, { s: "t", fill: 0 }] } },
   { id: "fv015", cat: "fig", grade: 56, q: "每次多 1 顆，同時順時針轉 90 度。問號該選哪一個？", options: ["", "", "", ""], answer: 0, explain: "1 顆朝上、2 顆朝右、3 顆朝下，下一個 4 顆朝左。", vis: { kind: "row", cells: [{ s: "t", fill: 1, n: 1, rot: 0 }, { s: "t", fill: 1, n: 2, rot: 90 }, { s: "t", fill: 1, n: 3, rot: 180 }, null], choices: [{ s: "t", fill: 1, n: 4, rot: 270 }, { s: "t", fill: 1, n: 4, rot: 0 }, { s: "t", fill: 1, n: 3, rot: 270 }, { s: "c", fill: 1, n: 4 }] } },
   { id: "fv016", cat: "fig", grade: 56, q: "外框轉 90 度，裡面的圖形實心空心對調。右下角該選哪一個？", options: ["", "", "", ""], answer: 0, explain: "外框跟著右轉，內圓由實心變空心。", vis: { kind: "grid2", cells: [{ s: "q", fill: 0, rot: 0, inner: { s: "c", fill: 1 } }, { s: "q", fill: 0, rot: 90, inner: { s: "c", fill: 0 } }, { s: "t", fill: 0, rot: 0, inner: { s: "c", fill: 1 } }, null], choices: [{ s: "t", fill: 0, rot: 90, inner: { s: "c", fill: 0 } }, { s: "t", fill: 0, rot: 0, inner: { s: "c", fill: 0 } }, { s: "q", fill: 0, rot: 90, inner: { s: "c", fill: 0 } }, { s: "t", fill: 1, rot: 90 }] } },
+  { id: "fv017", cat: "fig", grade: 12, q: "哪一個跟其他三個不同類？", options: ["", "", "", ""], answer: 3, explain: "前三個都是圓，最後一個是正方形。", vis: { kind: "pick", choices: [{ s: "c", fill: 1 }, { s: "c", fill: 0 }, { s: "c", fill: 1, size: "s" }, { s: "q", fill: 1 }] } },
+  { id: "fv018", cat: "fig", grade: 23, q: "少了哪一張：個數每次多 1。", options: ["", "", "", ""], answer: 0, explain: "1、2、3 個正方形後是 4 個。", vis: { kind: "row", cells: [{ s: "q", fill: 1, n: 1 }, { s: "q", fill: 1, n: 2 }, { s: "q", fill: 1, n: 3 }, null], choices: [{ s: "q", fill: 1, n: 4 }, { s: "q", fill: 1, n: 2 }, { s: "c", fill: 1, n: 4 }, { s: "q", fill: 0, n: 3 }] } },
+  { id: "fv019", cat: "fig", grade: 34, q: "左上變右上只變大小。右下該選哪一個？", options: ["", "", "", ""], answer: 0, explain: "小圓變大圓，所以小三角變大三角。", vis: { kind: "grid2", cells: [{ s: "c", fill: 1, size: "s" }, { s: "c", fill: 1, size: "l" }, { s: "t", fill: 1, size: "s" }, null], choices: [{ s: "t", fill: 1, size: "l" }, { s: "t", fill: 1, size: "s" }, { s: "c", fill: 1, size: "l" }, { s: "q", fill: 1, size: "l" }] } },
+  { id: "fv020", cat: "fig", grade: 56, q: "同一列多 1 顆，同一行改成空心。右下該選哪一個？", options: ["", "", "", ""], answer: 0, explain: "右上 2 實心圓，左下 1 空心圓，右下應 2 空心圓。", vis: { kind: "grid2", cells: [{ s: "c", fill: 1, n: 1 }, { s: "c", fill: 1, n: 2 }, { s: "c", fill: 0, n: 1 }, null], choices: [{ s: "c", fill: 0, n: 2 }, { s: "c", fill: 1, n: 2 }, { s: "c", fill: 0, n: 1 }, { s: "q", fill: 0, n: 2 }] } },
+  { id: "tc001", cat: "lang", grade: 12, q: "哪一個跟其他三個不同類？", options: ["下雨", "鉛筆", "橡皮", "書包"], answer: 0, explain: "後三個是文具，下雨不是。" },
+  { id: "tc002", cat: "lang", grade: 12, q: "短文：小華出門帶雨傘，因為天氣預報說下午會下雨。小華帶傘最主要是為了？", options: ["怕下午淋雨", "傘很好看", "要送給同學", "忘記帶帽子"], answer: 0, explain: "文中說下午會下雨。" },
+  { id: "tc003", cat: "lang", grade: 12, q: "手套：手＝帽子：？", options: ["頭", "腳", "桌子", "雨"], answer: 0, explain: "戴在哪個部位。" },
+  { id: "tc004", cat: "lang", grade: 23, q: "把句子排通順：①就去公園 ②吃完午餐 ③小明", options: ["③②①", "①②③", "②①③", "③①②"], answer: 0, explain: "小明吃完午餐就去公園。" },
+  { id: "tc005", cat: "lang", grade: 23, q: "短文：媽媽把便當交給小美，請她帶去學校。文中的「她」是誰？", options: ["小美", "媽媽", "老師", "便當"], answer: 0, explain: "請小美帶去學校。" },
+  { id: "tc006", cat: "lang", grade: 23, q: "短文：書架上有故事書和百科。小華只借走故事書。百科還在嗎？", options: ["還在書架上", "被小華借走了", "文中沒有書架", "百科是便當"], answer: 0, explain: "只借走故事書。" },
+  { id: "tc007", cat: "math", grade: 12, q: "12 顆糖平分給 3 個小朋友，每人幾顆？", options: ["4", "3", "9", "15"], answer: 0, explain: "12÷3＝4。" },
+  { id: "tc008", cat: "math", grade: 12, q: "找規律：2、4、6、8、？", options: ["10", "9", "7", "16"], answer: 0, explain: "每次加 2。" },
+  { id: "tc009", cat: "math", grade: 23, q: "文具店一支筆 12 元。小華帶 50 元，買 3 支筆，還剩多少？", options: ["14", "38", "36", "15"], answer: 0, explain: "12×3＝36，50−36＝14。" },
+  { id: "tc010", cat: "math", grade: 23, q: "紅花 9 朵，黃花比紅花少 4 朵。黃花幾朵？", options: ["5", "13", "4", "9"], answer: 0, explain: "9−4＝5。" },
+  { id: "tc011", cat: "math", grade: 23, q: "表格：星期一借出 3 本，星期二借出 5 本。兩天一共借出幾本？", options: ["8", "2", "15", "35"], answer: 0, explain: "3+5＝8。" },
+  { id: "tc012", cat: "mem", grade: 12, q: "記住顏色順序：紅、黃、藍。最後一個是？", options: ["藍", "紅", "黃", "綠"], answer: 0, explain: "順序最後是藍。" },
+  { id: "tc013", cat: "mem", grade: 23, q: "記住：4、9、1、7、2。從左邊數來第 3 個是？", options: ["1", "4", "7", "2"], answer: 0, explain: "4、9、1。" },
+  { id: "tc014", cat: "lang", grade: 34, q: "短文：阿明每天起床先疊被子、再刷牙，出門從不遲到。這段話主要想說阿明？", options: ["生活有秩序", "最會跑步", "不喜歡學校", "只愛疊被子"], answer: 0, explain: "寫他做事有固定順序、不遲到。" },
+  { id: "tc015", cat: "lang", grade: 34, q: "「井底之蛙」比較接近？", options: ["見識很窄還以為自己全懂", "青蛙住在井裡才對", "要多喝水", "會游泳"], answer: 0, explain: "比喻眼界小。" },
+  { id: "tc016", cat: "lang", grade: 34, q: "哪一句跟「因為下雨，比賽延期」意思差最多？", options: ["大家都很喜歡吃麵", "雨太大所以改期", "比賽因雨延後", "下雨導致不能原日比"], answer: 0, explain: "吃麵跟延期無關。" },
+  { id: "tc017", cat: "lang", grade: 56, q: "短文：圖書館規定「書沒還就不能再借」。小華還有兩本沒還，卻想再借一本漫畫。照規定他現在能借嗎？", options: ["不能", "能，因為漫畫比較薄", "能，只要小聲", "文中沒有圖書館"], answer: 0, explain: "沒還清就不能再借。" },
+  { id: "tc018", cat: "lang", grade: 56, q: "句子：天氣很熱，但是同學們仍然在操場練習。這個「但是」表示？", options: ["後面跟前面預期不一樣", "兩件事完全相同", "在問問題", "在數數字"], answer: 0, explain: "轉折：熱卻還練習。" },
+  { id: "tc019", cat: "math", grade: 34, q: "長方形長 8 公分、寬 3 公分，周長是多少公分？", options: ["22", "24", "11", "5"], answer: 0, explain: "（8+3）×2＝22。" },
+  { id: "tc020", cat: "math", grade: 34, q: "哪一個是 6 的倍數？", options: ["18", "16", "20", "25"], answer: 0, explain: "18＝6×3。" },
+  { id: "tc021", cat: "math", grade: 34, q: "數列：3、6、10、15、？", options: ["21", "20", "18", "16"], answer: 0, explain: "加 3、4、5、6。" },
+  { id: "tc022", cat: "math", grade: 56, q: "一箱有 24 瓶水。買 3 箱，又另買 6 瓶。一共幾瓶？", options: ["78", "72", "30", "18"], answer: 0, explain: "24×3+6＝78。" },
+  { id: "tc023", cat: "math", grade: 56, q: "腳踏車 2 小時走 16 公里。照同樣速度，3 小時走幾公里？", options: ["24", "18", "32", "8"], answer: 0, explain: "每小時 8 公里，3 小時 24。" },
+  { id: "tc024", cat: "math", grade: 56, q: "一條繩子長 12 公尺，先用掉 1/2，剩下的再只用掉 1/3。最後還剩幾公尺？", options: ["4", "2", "6", "8"], answer: 0, explain: "先剩 6，再用掉 2，剩 4。" },
+  { id: "tc025", cat: "mem", grade: 34, q: "記住：6、2、9。從最後一個往回唸，順序是？", options: ["9、2、6", "6、2、9", "2、9、6", "9、6、2"], answer: 0, explain: "倒過來從 9 開始。" },
+  { id: "tc026", cat: "mem", grade: 56, q: "記住：3、8、1、5、0。從最後一個往回唸的前三個是？", options: ["0、5、1", "3、8、1", "5、0、3", "1、8、3"], answer: 0, explain: "倒過來是 0、5、1、8、3。" },
+  { id: "tc027", cat: "fig", grade: 34, q: "四個一樣大的正方形排成一列（一長條）。這樣能不能折成正方體？", options: ["不能", "能", "會變成球", "一定變三角形"], answer: 0, explain: "一列四格包不住正方體。" },
+  { id: "tc028", cat: "fig", grade: 56, q: "從正上方看一個正方體，看到的形狀最接近？", options: ["正方形", "圓", "三角形", "一條線"], answer: 0, explain: "頂面是正方形。" },
+  { id: "tc029", cat: "lang", grade: 12, q: "哪一個順序最合理？", options: ["先穿襪子再穿鞋子", "先穿鞋子再穿襪子", "兩件事同一秒", "先吃飯再買米"], answer: 0, explain: "襪子在鞋子裡面。" },
+  { id: "tc030", cat: "fig", grade: 23, q: "旗子被風吹向右邊。風比較像從哪邊吹來？", options: ["左邊", "右邊", "正下方", "旗桿裡面"], answer: 0, explain: "風把旗往右推，風從左來。" },
 ];
 
 export const GIFTED_CAT_LABEL = { fig: "圖形空間", lang: "語文理解", math: "數量推理", mem: "工作記憶" };
-export const GIFTED_GRADE_LABEL = { 12: "1～2年級", 23: "2～3年級", 34: "3～4年級", 56: "5～6年級" };
+export const GIFTED_GRADE_LABEL = { 12: "1～2年級", 23: "2～3年級（甲組）", 34: "3～4年級", 56: "5～6年級（乙組）" };
