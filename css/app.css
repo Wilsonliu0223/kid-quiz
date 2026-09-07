@@ -6988,6 +6988,25 @@ body.en-gloss-open .en-play-accent-btn {
   background: #e8f1ff;
   outline: none;
 }
+.en-gloss-morph {
+  margin: 8px 0 0;
+}
+.en-morph-combo {
+  margin: 6px 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1a3a6a;
+  line-height: 1.45;
+}
+.en-morph-family-zh {
+  margin: 0 0 8px;
+  color: #3d4f73;
+}
+.en-morph-family {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
 body.en-gloss-open #view-en-review.view-active {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

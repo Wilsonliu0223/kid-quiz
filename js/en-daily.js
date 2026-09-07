@@ -21,6 +21,12 @@ import {
   getZhAccent,
   preferredTtsVoice,
 } from "./english.js?v=en-speak-v29";
+import {
+  analyzeEnglishMorph,
+  familyMembers,
+  getAffixFamily,
+  wordMatchesAffix,
+} from "./en-morph.js?v=en-morph-v2";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -829,6 +835,109 @@ function bindRelatedClicks(root, reset) {
       if (w) openGloss(w, reset);
     });
   });
+  bindMorphClicks(root);
+}
+
+function morphHtml(morph) {
+  if (!morph?.combo) return "";
+  const rows = [`<p class="en-morph-combo">${escapeHtml(morph.combo)}</p>`];
+  if (morph.prefix) {
+    rows.push(
+      `<p class="en-related-row"><span class="en-related-label">字首</span>` +
+        `<button type="button" class="en-related-chip" data-en-morph="prefix:${escapeHtml(morph.prefix.form)}">${escapeHtml(morph.prefix.label)}　${escapeHtml(morph.prefix.zh)}</button></p>`
+    );
+  }
+  if (morph.root) {
+    rows.push(
+      `<p class="en-related-row"><span class="en-related-label">字根</span>` +
+        `<button type="button" class="en-related-chip" data-en-morph="root:${escapeHtml(morph.root.form)}">${escapeHtml(morph.root.label)}　${escapeHtml(morph.root.zh)}</button></p>`
+    );
+  }
+  return rows.join("");
+}
+
+function bindMorphClicks(root) {
+  if (!root) return;
+  root.querySelectorAll("[data-en-morph]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const spec = String(btn.getAttribute("data-en-morph") || "");
+      const [kind, form] = spec.split(":");
+      if ((kind === "prefix" || kind === "root") && form) openMorphFamily(kind, form);
+    });
+  });
+}
+
+function openMorphFamily(kind, form) {
+  const aff = getAffixFamily(kind, form);
+  if (!aff) return;
+  glossSeq += 1;
+  const currentWord = String(glossStack[glossStack.length - 1]?.word || "");
+  const extra = loadReview()
+    .map((x) => x.word)
+    .filter((w) => wordMatchesAffix(w, kind, form));
+  const members = familyMembers(kind, form, extra, currentWord);
+  const label = kind === "prefix" ? `${aff.form}-` : aff.form;
+  const entry = {
+    kind: "family",
+    word: label,
+    gloss: `${kind === "prefix" ? "字首" : "字根"}：${aff.zh}`,
+    phonetic: "",
+    example: "",
+    familyKind: kind,
+    familyForm: aff.form,
+    members,
+  };
+  glossStack.push(entry);
+  showGloss(entry, { speak: false });
+}
+
+function renderMorphBox(morph) {
+  const el = $("#en-gloss-morph");
+  if (!el) return;
+  const html = morphHtml(morph);
+  el.innerHTML = html;
+  el.hidden = !html;
+  bindMorphClicks(el);
+}
+
+async function fillMorphology(entry, seq) {
+  if (!entry?.word || entry.kind === "family") return;
+  if (entry.morph?.combo) {
+    renderMorphBox(entry.morph);
+    requestAnimationFrame(() => syncDockVisibility());
+    return;
+  }
+  const morph = await analyzeEnglishMorph(entry.word);
+  if (seq !== glossSeq) return;
+  if (!morph) {
+    renderMorphBox(null);
+    return;
+  }
+  entry.morph = morph;
+  if (glossStack.length) {
+    const top = glossStack[glossStack.length - 1];
+    if (String(top.word || "").toLowerCase() === String(entry.word).toLowerCase()) {
+      glossStack[glossStack.length - 1] = { ...top, morph };
+    }
+  }
+  renderMorphBox(morph);
+  requestAnimationFrame(() => syncDockVisibility());
+  const list = loadReview();
+  const key = String(entry.word || "").toLowerCase();
+  let changed = false;
+  const next = list.map((item) => {
+    if (String(item.word || "").toLowerCase() !== key) return item;
+    if (item.morph?.combo) return item;
+    changed = true;
+    return { ...item, morph };
+  });
+  if (changed) {
+    saveReview(next);
+    renderReviewStrip();
+    if ($("#view-en-review")?.classList.contains("view-active")) renderReviewList();
+  }
 }
 
 /**
@@ -1718,6 +1827,7 @@ function lookupLocalGloss(word) {
       phonetic: fromReview.phonetic || "",
       synonyms: Array.isArray(fromReview.synonyms) ? fromReview.synonyms : [],
       antonyms: Array.isArray(fromReview.antonyms) ? fromReview.antonyms : [],
+      morph: fromReview.morph || null,
     };
   }
   return null;
@@ -1897,6 +2007,47 @@ function showGloss(entry, opts = {}) {
     ph.textContent = entry.phonetic ? `/${entry.phonetic}/` : "";
     ph.hidden = !entry.phonetic;
   }
+  const addBtn = $("#btn-en-gloss-add");
+  if (addBtn) addBtn.hidden = entry.kind === "family";
+
+  if (entry.kind === "family") {
+    if (sensesEl) {
+      sensesEl.innerHTML = "";
+      sensesEl.hidden = true;
+    }
+    if (g) {
+      const chips = (entry.members || [])
+        .map(
+          (m) =>
+            `<button type="button" class="en-related-chip" data-en-word="${escapeHtml(m)}">${escapeHtml(m)}</button>`
+        )
+        .join("");
+      g.innerHTML = `<p class="en-morph-family-zh">${escapeHtml(entry.gloss || "")}</p><div class="en-morph-family">${chips}</div>`;
+      g.hidden = false;
+      bindRelatedClicks(g, false);
+    }
+    setGlossZhUi("");
+    if (ex) {
+      ex.innerHTML = "";
+      ex.hidden = true;
+    }
+    if (exLabel) exLabel.hidden = true;
+    const familyExSpeak = $("#btn-en-gloss-example-speak");
+    if (familyExSpeak) familyExSpeak.hidden = true;
+    const familyRelated = $("#en-gloss-related");
+    if (familyRelated) {
+      familyRelated.innerHTML = "";
+      familyRelated.hidden = true;
+    }
+    renderMorphBox(null);
+    if (sourceEl) {
+      sourceEl.textContent = "常見字族，點字可查意思";
+      sourceEl.hidden = false;
+    }
+    if (back) back.hidden = glossStack.length <= 1;
+    requestAnimationFrame(() => syncDockVisibility());
+    return;
+  }
   const hasSenses = Array.isArray(entry.senses) && entry.senses.length > 0;
   if (sensesEl) {
     sensesEl.innerHTML = hasSenses ? renderGlossSenses(entry.senses, entry.word) : "";
@@ -1935,6 +2086,8 @@ function showGloss(entry, opts = {}) {
     relatedEl.hidden = !relatedHtml;
     bindRelatedClicks(relatedEl, false);
   }
+  renderMorphBox(entry.morph || null);
+  void fillMorphology(entry, seq);
   if (sourceEl) {
     const source = String(entry.source || "").trim();
     sourceEl.innerHTML = source
@@ -1978,6 +2131,7 @@ function hideGloss() {
 async function addCurrentGlossToReview() {
   if (!glossStack.length) return;
   const entry = glossStack[glossStack.length - 1];
+  if (entry.kind === "family") return;
   const key = String(entry.word || "")
     .trim()
     .toLowerCase();
@@ -2013,6 +2167,10 @@ async function addCurrentGlossToReview() {
       existing.antonyms = entry.antonyms;
       changed = true;
     }
+    if (!existing.morph?.combo && entry.morph?.combo) {
+      existing.morph = entry.morph;
+      changed = true;
+    }
     if (changed) saveReview(list);
     deps?.showOk?.("已在複習字區", zh ? `${entry.word}　${zh}` : entry.word);
     renderReviewStrip();
@@ -2027,6 +2185,7 @@ async function addCurrentGlossToReview() {
     phonetic: entry.phonetic || "",
     synonyms: Array.isArray(entry.synonyms) ? entry.synonyms : [],
     antonyms: Array.isArray(entry.antonyms) ? entry.antonyms : [],
+    morph: entry.morph || null,
     articleId: current?.id || "",
     date: current?.date || todayIso(),
     addedAt: new Date().toISOString(),
@@ -2099,6 +2258,7 @@ function renderReviewList() {
     const relatedHtml =
       relatedWordsHtml("同義", item.synonyms) +
       relatedWordsHtml("反義", item.antonyms);
+    const combo = String(item.morph?.combo || "").trim();
     row.innerHTML = `<div class="en-review-head">
       <button type="button" class="btn-text en-review-word">${escapeHtml(item.word)}</button>
       <button type="button" class="btn-text en-review-speak" aria-label="朗讀 ${escapeHtml(item.word)}">🔊</button>
@@ -2108,6 +2268,7 @@ function renderReviewList() {
       ${zh ? `<p>${escapeHtml(zh)}</p>` : ""}
       ${gloss && gloss !== zh ? `<p>${escapeHtml(gloss)}</p>` : ""}
       ${ex ? `<p class="en-review-ex">${highlightTargetWord(ex, item.word)}</p>` : ""}
+      ${combo ? `<p class="en-morph-combo">${escapeHtml(combo)}</p>` : ""}
       ${relatedHtml}
       ${
         art
