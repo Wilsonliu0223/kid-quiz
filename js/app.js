@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.10";
+import { CONFIG } from "./config.site.js?v=config-v45.11";
 import {
   loadZhItems,
   loadEnItems,
@@ -95,6 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
+import { initGifted } from "./gifted.js?v=gifted-v1";
 import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v56";
 import {
   addMistake,
@@ -197,6 +198,10 @@ const views = {
   mulFlipFirst: $("#view-mul-flip-first"),
   mulFlipPlay: $("#view-mul-flip-play"),
   mulFlipResult: $("#view-mul-flip-result"),
+  giftedIntro: $("#view-gifted-intro"),
+  giftedQuiz: $("#view-gifted-quiz"),
+  giftedDone: $("#view-gifted-done"),
+  giftedParent: $("#view-gifted-parent"),
   sudokuHome: $("#view-sudoku-home"),
   sudokuTutorial: $("#view-sudoku-tutorial"),
   sudokuDiff: $("#view-sudoku-diff"),
@@ -2303,6 +2308,17 @@ async function init() {
         "ok",
         title,
         [{ label: "好耶", primary: true, onClick: () => onClose?.() }],
+        { sub: sub || "" }
+      );
+    },
+  });
+  initGifted({
+    showView,
+    showWarn: (title, sub, onClose) => {
+      showFeedback(
+        "warn",
+        title,
+        [{ label: "好的", primary: true, onClick: () => onClose?.() }],
         { sub: sub || "" }
       );
     },

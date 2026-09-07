@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.27" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.28" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -109,6 +109,10 @@
             <button type="button" class="card card-mul" id="btn-start-mul">
               <span class="card-title">九九乘法</span>
               <span class="card-desc">背誦 · 測驗 · 進階挑戰</span>
+            </button>
+            <button type="button" class="card card-gifted" id="btn-start-gifted">
+              <span class="card-title">思考挑戰</span>
+              <span class="card-desc">二升三資優類似 · 盲測</span>
             </button>
             <button type="button" class="card card-sudoku" id="btn-start-sudoku">
               <span class="card-title">數獨</span>
@@ -2136,6 +2140,63 @@
         </footer>
       </section>
 
+      <section id="view-gifted-intro" class="view view-hidden" aria-label="思考挑戰說明">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-gifted-intro-back">← 返回</button>
+          <span class="quiz-subject">思考挑戰</span>
+        </header>
+        <div class="gifted-intro-body">
+          <h2 class="gifted-title">思考挑戰</h2>
+          <p id="gifted-intro-fresh">
+            類似台中市<strong>小二升小三資優初選</strong>：圖形、語文、數學推理。不是市府考卷，也沒有 PR。
+            共 60 題（每類 20 題）、限時 40 分鐘。這次是盲測，沒有練習關。
+          </p>
+          <p id="gifted-intro-mid" hidden>上次還沒寫完，可以接著寫。時間會繼續算。</p>
+          <p id="gifted-intro-done" hidden>這位小朋友這次已經寫過了。</p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-gifted-start">開始盲測</button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-gifted-resume" hidden>繼續寫</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-parent" hidden>家長看結果</button>
+        </div>
+      </section>
+
+      <section id="view-gifted-quiz" class="view view-hidden" aria-label="思考挑戰作答">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-gifted-quiz-back">← 暫停</button>
+          <span class="quiz-subject" id="gifted-progress">1 / 60</span>
+          <span class="quiz-progress" id="gifted-timer">40:00</span>
+        </header>
+        <div class="gifted-quiz-body">
+          <p class="gifted-q" id="gifted-q"></p>
+          <div class="gifted-choices" id="gifted-choices"></div>
+          <div class="gifted-nav">
+            <button type="button" class="btn btn-secondary" id="btn-gifted-prev">上一題</button>
+            <button type="button" class="btn btn-primary" id="btn-gifted-next">下一題</button>
+            <button type="button" class="btn btn-primary" id="btn-gifted-submit" hidden>交卷</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-gifted-done" class="view view-hidden" aria-label="思考挑戰完成">
+        <header class="app-header">
+          <h2 class="result-title">寫完了</h2>
+          <p id="gifted-done-msg">這次寫完了，謝謝。</p>
+        </header>
+        <footer class="result-footer">
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-done-home">回首頁</button>
+        </footer>
+      </section>
+
+      <section id="view-gifted-parent" class="view view-hidden" aria-label="思考挑戰家長結果">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-gifted-parent-back">← 返回</button>
+          <span class="quiz-subject">家長結果</span>
+        </header>
+        <pre class="gifted-parent-body" id="gifted-parent-body"></pre>
+        <footer class="result-footer">
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-reset">清除後重測</button>
+        </footer>
+      </section>
+
       <!-- 數獨：首頁 -->
       <section id="view-sudoku-home" class="view view-hidden" aria-label="數獨">
         <header class="quiz-header">
@@ -2332,7 +2393,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.35").catch((e) => {
+      import("./js/app.js?v=app-v45.36").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

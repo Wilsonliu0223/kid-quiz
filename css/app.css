@@ -183,7 +183,8 @@ body {
 }
 
 .home-zone-solo .card-mul,
-.home-zone-solo .card-sudoku {
+.home-zone-solo .card-sudoku,
+.home-zone-solo .card-gifted {
   min-height: 68px;
   margin-bottom: 0;
 }
@@ -595,6 +596,58 @@ body {
 
 .card-sudoku .card-title {
   color: #1f6b45;
+}
+
+.card-gifted {
+  background: linear-gradient(135deg, #f4f0ff 0%, #e4dcf8 100%);
+  border: 2px solid #b7a4e0;
+}
+
+.card-gifted .card-title {
+  color: #4a2f8c;
+}
+
+.gifted-intro-body,
+.gifted-quiz-body {
+  padding: 8px 16px 20px;
+  overflow: auto;
+}
+.gifted-title {
+  margin: 8px 0 12px;
+}
+.gifted-q {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 0 0 16px;
+  white-space: pre-wrap;
+}
+.gifted-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gifted-choice.is-picked {
+  background: #5b3fa8;
+  color: #fff;
+  border-color: #5b3fa8;
+}
+.gifted-nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.gifted-parent-body {
+  margin: 0 16px 16px;
+  padding: 12px;
+  background: #f7f4ff;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: 70vh;
 }
 
 .card-disabled {
