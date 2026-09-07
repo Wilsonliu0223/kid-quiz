@@ -364,7 +364,7 @@ async function fetchDictionaryAudioUrl(query) {
 /** @type {Map<string, { word: string, gloss: string, example: string, phonetic: string, senses?: object[], source?: string } | null>} */
 const glossDefCache = new Map();
 
-function glossWordCandidates(word) {
+export function glossWordCandidates(word) {
   const w = String(word || "")
     .trim()
     .toLowerCase()
@@ -486,6 +486,59 @@ function isUncommonDictionarySense(sense) {
   );
 }
 
+/** Wiktionary／Datamuse 常塞古文或片語，國小只留短、常見的單字。 */
+const RELATED_SKIP = new Set([
+  "woe",
+  "damp",
+  "peak",
+  "blue",
+  "down",
+  "low",
+  "dull",
+  "cut",
+  "bad",
+  "sorry",
+  "rue",
+  "dash",
+  "erme",
+]);
+
+/**
+ * @param {unknown} list
+ * @param {string} baseWord
+ * @param {number} [max]
+ * @returns {string[]}
+ */
+export function pickKidRelatedWords(list, baseWord, max = 4) {
+  const base = String(baseWord || "")
+    .trim()
+    .toLowerCase();
+  const seen = new Set(base ? [base] : []);
+  const candidates = [];
+  const raw = Array.isArray(list) ? list : [];
+  for (const item of raw) {
+    const w = String(item || "")
+      .trim()
+      .toLowerCase();
+    if (!/^[a-z]{3,9}$/.test(w)) continue;
+    if (seen.has(w) || RELATED_SKIP.has(w)) continue;
+    seen.add(w);
+    candidates.push(w);
+  }
+  return candidates.slice(0, max);
+}
+
+function collectMeaningRelated(meanings, key) {
+  const out = [];
+  for (const meaning of Array.isArray(meanings) ? meanings : []) {
+    if (Array.isArray(meaning?.[key])) out.push(...meaning[key]);
+    for (const def of Array.isArray(meaning?.definitions) ? meaning.definitions : []) {
+      if (Array.isArray(def?.[key])) out.push(...def[key]);
+    }
+  }
+  return out;
+}
+
 /**
  * FreeDictionaryAPI：Wiktionary 結構化資料，免費、免 key、支援 CORS。
  * 這裡優先保留詞性與多個 sense，讓畫面能做英英／英繁對照。
@@ -517,6 +570,8 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
   }
   const senses = [];
   const posCounts = new Map();
+  const synonymPool = [];
+  const antonymPool = [];
   for (const entry of entries) {
     const pos = dictionaryPosLabel(entry.partOfSpeech);
     if (!commonPos.has(pos)) continue;
@@ -525,6 +580,12 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
       if (isUncommonDictionarySense(sense)) continue;
       const definition = simplifyKidDefinition(sense?.definition);
       if (!definition || isWeakGloss(definition, q)) continue;
+      if (!synonymPool.length && Array.isArray(sense.synonyms)) {
+        synonymPool.push(...sense.synonyms);
+      }
+      if (!antonymPool.length && Array.isArray(sense.antonyms)) {
+        antonymPool.push(...sense.antonyms);
+      }
       senses.push({
         pos,
         definition,
@@ -555,6 +616,8 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
     gloss: first.definition,
     example: first.example,
     phonetic: pickUsIpa(entries[0]?.pronunciations),
+    synonyms: pickKidRelatedWords(synonymPool, q, 4),
+    antonyms: pickKidRelatedWords(antonymPool, q, 4),
     senses,
     source: "Wiktionary",
     sourceUrl: String(data.source?.url || "https://en.wiktionary.org/"),
@@ -636,6 +699,8 @@ async function glossFromFreeDictionary(q, displayWord) {
       gloss,
       example: String(defs[0].example || defs[1]?.example || "").trim(),
       phonetic,
+      synonyms: pickKidRelatedWords(collectMeaningRelated(meanings, "synonyms"), q, 4),
+      antonyms: pickKidRelatedWords(collectMeaningRelated(meanings, "antonyms"), q, 4),
     };
   } catch (e) {
     console.warn("glossFromFreeDictionary", q, e);

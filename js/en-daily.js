@@ -12,6 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
+  glossWordCandidates,
   getEnVoice,
   setEnVoice,
   getZhVoice,
@@ -19,7 +20,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v27";
+} from "./english.js?v=en-speak-v29";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -220,6 +221,20 @@ function isEnSpeakViewActive() {
   );
 }
 
+function isReviewViewActive() {
+  return Boolean($("#view-en-review")?.classList.contains("view-active"));
+}
+
+function shouldShowEnDock() {
+  if (isEnSpeakViewActive()) return true;
+  if (!isReviewViewActive()) return false;
+  const panel = $("#en-gloss-panel");
+  return (
+    document.body.classList.contains("en-gloss-open") ||
+    Boolean(panel && !panel.hidden)
+  );
+}
+
 function speakRoot() {
   if (isDialogueActive()) return $("#en-daily-dialogue-body");
   return $("#en-daily-body");
@@ -230,9 +245,12 @@ function syncDockVisibility() {
   const dock = $("#en-bottom-dock");
   const bar = $("#en-play-bar");
   const panel = $("#en-gloss-panel");
+  const speakAll = $("#btn-en-daily-speak-all");
   if (!dock) return;
 
-  if (!isEnSpeakViewActive()) {
+  if (speakAll) speakAll.hidden = isReviewViewActive();
+
+  if (!shouldShowEnDock()) {
     if (bar) bar.hidden = true;
     if (panel) panel.hidden = true;
     document.body.classList.remove("en-playing");
@@ -276,6 +294,8 @@ function showPlayBarIdle() {
   // 若正在播全文／單字，不要蓋掉狀態文字
   if (/播放中|載入/.test(st) && !/點 🔊/.test(st)) {
     showPlayBar(st);
+  } else if (isReviewViewActive()) {
+    showPlayBar("點 🔊 聽發音");
   } else {
     showPlayBar("點 🔊 播全文");
   }
@@ -766,6 +786,49 @@ function vocabMap(art, extraWords = []) {
 
 function fallbackGloss(word) {
   return `Sorry, no simple English meaning found for “${word}”. Try a key (orange) word, or another word nearby.`;
+}
+
+function highlightTargetWord(text, word) {
+  const raw = String(text || "");
+  if (!raw) return "";
+  const forms = glossWordCandidates(word).filter(Boolean);
+  if (!forms.length) return escapeHtml(raw);
+  const re = new RegExp(`\\b(${forms.map(escapeRegExp).join("|")})\\b`, "gi");
+  let out = "";
+  let last = 0;
+  raw.replace(re, (m, _g, offset) => {
+    out += escapeHtml(raw.slice(last, offset));
+    out += `<mark class="en-ex-word">${escapeHtml(m)}</mark>`;
+    last = offset + m.length;
+    return m;
+  });
+  out += escapeHtml(raw.slice(last));
+  return out;
+}
+
+function relatedWordsHtml(label, words) {
+  const list = Array.isArray(words) ? words.filter(Boolean) : [];
+  if (!list.length) return "";
+  const chips = list
+    .map(
+      (w) =>
+        `<button type="button" class="en-related-chip" data-en-word="${escapeHtml(w)}">${escapeHtml(w)}</button>`
+    )
+    .join("");
+  return `<p class="en-related-row"><span class="en-related-label">${escapeHtml(label)}</span>${chips}</p>`;
+}
+
+function bindRelatedClicks(root, reset) {
+  if (!root) return;
+  root.querySelectorAll("[data-en-word]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      unlockSpeechFromGesture();
+      const w = btn.getAttribute("data-en-word") || "";
+      if (w) openGloss(w, reset);
+    });
+  });
 }
 
 /**
@@ -1634,7 +1697,9 @@ function bindWordClicks(root) {
       e.preventDefault();
       unlockSpeechFromGesture();
       const w = btn.getAttribute("data-en-word") || "";
-      const inGloss = Boolean(btn.closest("#en-gloss-text, #en-gloss-senses"));
+      const inGloss = Boolean(
+        btn.closest("#en-gloss-text, #en-gloss-senses, #en-gloss-related")
+      );
       openGloss(w, !inGloss);
     });
   });
@@ -1651,6 +1716,8 @@ function lookupLocalGloss(word) {
       gloss: fromReview.gloss,
       example: fromReview.example || "",
       phonetic: fromReview.phonetic || "",
+      synonyms: Array.isArray(fromReview.synonyms) ? fromReview.synonyms : [],
+      antonyms: Array.isArray(fromReview.antonyms) ? fromReview.antonyms : [],
     };
   }
   return null;
@@ -1727,7 +1794,7 @@ function toggleGlossZhExpanded() {
   requestAnimationFrame(() => syncDockVisibility());
 }
 
-function renderGlossSenses(senses) {
+function renderGlossSenses(senses, word) {
   if (!Array.isArray(senses) || !senses.length) return "";
   return senses
     .map((sense) => {
@@ -1743,7 +1810,7 @@ function renderGlossSenses(senses) {
         <div class="en-gloss-sense-body">
           <p class="en-gloss-sense-en">${definition}</p>
           ${zh ? `<p class="en-gloss-sense-zh">${escapeHtml(zh)}${sense?.zhSource === "machine" ? " <small>（自動翻譯）</small>" : ""}</p>` : ""}
-          ${example ? `<p class="en-gloss-sense-example">${escapeHtml(example)}</p>` : ""}
+          ${example ? `<p class="en-gloss-sense-example">${highlightTargetWord(example, word)}</p>` : ""}
         </div>
       </div>`;
     })
@@ -1832,7 +1899,7 @@ function showGloss(entry, opts = {}) {
   }
   const hasSenses = Array.isArray(entry.senses) && entry.senses.length > 0;
   if (sensesEl) {
-    sensesEl.innerHTML = hasSenses ? renderGlossSenses(entry.senses) : "";
+    sensesEl.innerHTML = hasSenses ? renderGlossSenses(entry.senses, entry.word) : "";
     sensesEl.hidden = !hasSenses;
     if (hasSenses) bindWordClicks(sensesEl);
   }
@@ -1853,12 +1920,21 @@ function showGloss(entry, opts = {}) {
 
   const hasEx = Boolean(entry.example) && !hasSenses;
   if (ex) {
-    ex.textContent = entry.example || "";
+    ex.innerHTML = hasEx ? highlightTargetWord(entry.example, entry.word) : "";
     ex.hidden = !hasEx;
   }
   if (exLabel) exLabel.hidden = !hasEx;
   const exSpeak = $("#btn-en-gloss-example-speak");
   if (exSpeak) exSpeak.hidden = !hasEx;
+  const relatedEl = $("#en-gloss-related");
+  if (relatedEl) {
+    const relatedHtml =
+      relatedWordsHtml("同義", entry.synonyms) +
+      relatedWordsHtml("反義", entry.antonyms);
+    relatedEl.innerHTML = relatedHtml;
+    relatedEl.hidden = !relatedHtml;
+    bindRelatedClicks(relatedEl, false);
+  }
   if (sourceEl) {
     const source = String(entry.source || "").trim();
     sourceEl.innerHTML = source
@@ -1924,10 +2000,20 @@ async function addCurrentGlossToReview() {
   const list = loadReview();
   const existing = list.find((x) => String(x.word || "").toLowerCase() === key);
   if (existing) {
+    let changed = false;
     if (zh && !shortZh(existing.zh)) {
       existing.zh = zh;
-      saveReview(list);
+      changed = true;
     }
+    if (!existing.synonyms?.length && entry.synonyms?.length) {
+      existing.synonyms = entry.synonyms;
+      changed = true;
+    }
+    if (!existing.antonyms?.length && entry.antonyms?.length) {
+      existing.antonyms = entry.antonyms;
+      changed = true;
+    }
+    if (changed) saveReview(list);
     deps?.showOk?.("已在複習字區", zh ? `${entry.word}　${zh}` : entry.word);
     renderReviewStrip();
     syncHubMeta();
@@ -1939,6 +2025,8 @@ async function addCurrentGlossToReview() {
     zh,
     example: entry.example || "",
     phonetic: entry.phonetic || "",
+    synonyms: Array.isArray(entry.synonyms) ? entry.synonyms : [],
+    antonyms: Array.isArray(entry.antonyms) ? entry.antonyms : [],
     articleId: current?.id || "",
     date: current?.date || todayIso(),
     addedAt: new Date().toISOString(),
@@ -2008,20 +2096,28 @@ function renderReviewList() {
     const zh = String(item.zh || "").trim();
     const art = findArticleForWord(item.word, item.articleId, item.date);
     const artLabel = articleLinkLabel(art);
+    const relatedHtml =
+      relatedWordsHtml("同義", item.synonyms) +
+      relatedWordsHtml("反義", item.antonyms);
     row.innerHTML = `<div class="en-review-head">
-      <strong>${escapeHtml(item.word)}</strong>
+      <button type="button" class="btn-text en-review-word">${escapeHtml(item.word)}</button>
       <button type="button" class="btn-text en-review-speak" aria-label="朗讀 ${escapeHtml(item.word)}">🔊</button>
       ${item.source === "today" ? '<span class="en-review-tag">今日</span>' : ""}
       <button type="button" class="btn-text en-review-remove">移除</button>
     </div>
       ${zh ? `<p>${escapeHtml(zh)}</p>` : ""}
       ${gloss && gloss !== zh ? `<p>${escapeHtml(gloss)}</p>` : ""}
-      ${ex ? `<p class="en-review-ex">${escapeHtml(ex)}</p>` : ""}
+      ${ex ? `<p class="en-review-ex">${highlightTargetWord(ex, item.word)}</p>` : ""}
+      ${relatedHtml}
       ${
         art
           ? `<button type="button" class="btn-text en-review-article">原文：${escapeHtml(artLabel)}</button>`
           : ""
       }`;
+    row.querySelector(".en-review-word")?.addEventListener("click", () => {
+      unlockSpeechFromGesture();
+      void openGloss(item.word, true);
+    });
     row.querySelector(".en-review-speak")?.addEventListener("click", async () => {
       await playWithBar(item.word, { label: "單字播放中" });
     });
@@ -2034,6 +2130,7 @@ function renderReviewList() {
       readerFromReview = true;
       openReader(art.id);
     });
+    bindRelatedClicks(row, true);
     box.appendChild(row);
   }
 }
