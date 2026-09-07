@@ -14,7 +14,7 @@ import {
   listEnReviewItems,
   patchEnReviewZh,
   ensureReviewChinese,
-} from "./en-daily.js?v=en-daily-v64";
+} from "./en-daily.js?v=en-daily-v65";
 import { speakEnglish, unlockSpeechFromGesture } from "./english.js?v=en-speak-v29";
 
 const PAIR_OPTIONS = [10, 20];

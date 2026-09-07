@@ -23,10 +23,11 @@ import {
 } from "./english.js?v=en-speak-v29";
 import {
   analyzeEnglishMorph,
+  mayHaveMorph,
   familyMembers,
   getAffixFamily,
   wordMatchesAffix,
-} from "./en-morph.js?v=en-morph-v2";
+} from "./en-morph.js?v=en-morph-v3";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -909,6 +910,11 @@ async function fillMorphology(entry, seq) {
     requestAnimationFrame(() => syncDockVisibility());
     return;
   }
+  if (!mayHaveMorph(entry.word)) {
+    renderMorphBox(null);
+    return;
+  }
+  renderMorphBox({ combo: "查字首／字根…" });
   const morph = await analyzeEnglishMorph(entry.word);
   if (seq !== glossSeq) return;
   if (!morph) {

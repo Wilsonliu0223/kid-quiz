@@ -228,6 +228,11 @@ function worthTrying(word) {
   return true;
 }
 
+/** 夠長、值得查字首／字根（不保證拆得出來） */
+export function mayHaveMorph(word) {
+  return worthTrying(word);
+}
+
 function localGuess(word) {
   const w = normWord(word);
   if (!worthTrying(w)) return null;
