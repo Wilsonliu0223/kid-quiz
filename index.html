@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.31" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.32" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -104,7 +104,7 @@
               data-action="start-en"
             >
               <span class="card-title">英語</span>
-              <span class="card-desc">測驗 · 每日時事閱讀</span>
+              <span class="card-desc">測驗 · 時事 · 翻牌</span>
             </button>
             <button type="button" class="card card-mul" id="btn-start-mul">
               <span class="card-title">九九乘法</span>
@@ -296,7 +296,126 @@
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-review">
             複習字區
           </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-flip">
+            英語翻牌
+          </button>
         </div>
+      </section>
+
+      <!-- 英語翻牌：設定 -->
+      <section id="view-en-flip-setup" class="view view-hidden" aria-label="英語翻牌設定">
+        <header class="setup-header setup-header-en">
+          <button type="button" class="btn-text" id="btn-en-flip-setup-back">← 返回</button>
+          <span class="setup-subject">英語翻牌</span>
+        </header>
+        <div class="en-hub-body">
+          <p class="setup-section-sub">雙人同機 · 英文配中文 · 最多 20 組（40 張）</p>
+          <div class="flip-players-vs" id="en-flip-players-vs">
+            <span id="en-flip-player-a-name">—</span>
+            <span class="flip-vs">vs</span>
+            <span id="en-flip-player-b-name">—</span>
+          </div>
+          <span class="label">牌組</span>
+          <div class="lesson-chips" role="group" aria-label="牌組">
+            <button type="button" class="chip chip-active" data-en-flip-deck="joy">佳音課本</button>
+            <button type="button" class="chip" data-en-flip-deck="number">英文數字</button>
+            <button type="button" class="chip" data-en-flip-deck="review">複習字</button>
+          </div>
+          <span class="label">幾組？</span>
+          <div class="lesson-chips" role="group" aria-label="組數">
+            <button type="button" class="chip chip-active" data-en-flip-pairs="10">10 組</button>
+            <button type="button" class="chip" data-en-flip-pairs="20">20 組</button>
+          </div>
+          <p class="en-hub-meta">10 組＝20 張 · 20 組＝40 張</p>
+          <div id="en-flip-joy-box">
+            <span class="label">佳音課次</span>
+            <div id="en-flip-exam-books" class="lesson-books"></div>
+          </div>
+          <div id="en-flip-review-box" hidden>
+            <span class="label">複習字</span>
+            <p class="en-hub-meta" id="en-flip-review-meta"></p>
+            <div id="en-flip-review-missing" class="en-flip-missing"></div>
+            <span class="label">手加一組</span>
+            <div class="en-flip-extra-row">
+              <input id="en-flip-extra-en" type="text" inputmode="latin" placeholder="英文" autocomplete="off" />
+              <input id="en-flip-extra-zh" type="text" placeholder="國字" autocomplete="off" />
+              <button type="button" class="btn btn-secondary" id="btn-en-flip-extra-add">加入</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-flip-start">
+            開始翻牌
+          </button>
+        </div>
+      </section>
+
+      <!-- 英語翻牌：誰先 -->
+      <section id="view-en-flip-first" class="view view-hidden" aria-label="英語翻牌誰先">
+        <header class="quiz-header quiz-header-en">
+          <button type="button" class="btn-text btn-text-en" id="btn-en-flip-first-back">← 返回</button>
+          <span class="quiz-subject">英語翻牌</span>
+        </header>
+        <div class="flip-first-body">
+          <h2 class="flip-first-title">誰先翻牌？</h2>
+          <p class="flip-first-meta">
+            <span id="en-flip-first-pairs">10</span> 組 · <span id="en-flip-first-deck">佳音</span>
+          </p>
+          <p class="flip-first-hint">點一下你的名字，你先翻牌</p>
+          <p class="flip-first-meta duo-active-line">
+            誰在練習：<strong id="en-flip-duo-active-name">—</strong>
+          </p>
+          <div class="duo-opponent-picker" role="group" aria-label="對戰對象">
+            <span class="label">對戰對象</span>
+            <div class="lesson-chips" id="en-flip-duo-opponent-chips"></div>
+          </div>
+          <div class="flip-players-vs math-players-vs">
+            <span id="en-flip-duo-matchup-a">—</span>
+            <span class="flip-vs">vs</span>
+            <span id="en-flip-duo-matchup-b">—</span>
+          </div>
+          <div class="flip-pick-btns" id="en-flip-pick-btns"></div>
+        </div>
+      </section>
+
+      <!-- 英語翻牌：對戰 -->
+      <section id="view-en-flip-play" class="view view-hidden" aria-label="英語翻牌對戰">
+        <header class="quiz-header quiz-header-en">
+          <button type="button" class="btn-text btn-text-en" id="btn-en-flip-play-back">← 返回</button>
+          <span class="quiz-subject">英語翻牌</span>
+          <span class="quiz-progress" id="en-flip-progress-label">配對 0 / 10</span>
+        </header>
+        <div class="flip-play-body">
+          <div class="flip-scorebar">
+            <div class="flip-score-block" id="en-flip-score-block-a">
+              <span class="flip-score-name" id="en-flip-play-name-a">—</span>
+              <span class="flip-first-tag" id="en-flip-first-tag-a">先開</span>
+              <span class="flip-score-num" id="en-flip-score-a">0</span>
+            </div>
+            <div class="flip-turn-wrap">
+              <p class="flip-turn-label" id="en-flip-turn-label">輪到</p>
+              <p class="flip-click-label" id="en-flip-click-label">點擊 0 次</p>
+            </div>
+            <div class="flip-score-block" id="en-flip-score-block-b">
+              <span class="flip-score-name" id="en-flip-play-name-b">—</span>
+              <span class="flip-first-tag" id="en-flip-first-tag-b" hidden>先開</span>
+              <span class="flip-score-num" id="en-flip-score-b">0</span>
+            </div>
+          </div>
+          <div class="flip-card-grid" id="en-flip-card-grid"></div>
+        </div>
+      </section>
+
+      <!-- 英語翻牌：結算 -->
+      <section id="view-en-flip-result" class="view view-hidden" aria-label="英語翻牌結算">
+        <header class="app-header">
+          <h2 class="result-title" id="en-flip-result-title">完成</h2>
+          <p class="flip-result-scores" id="en-flip-result-scores"></p>
+          <p class="flip-result-clicks" id="en-flip-result-clicks"></p>
+          <p class="flip-result-detail" id="en-flip-result-detail"></p>
+        </header>
+        <footer class="result-footer">
+          <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-flip-replay">再玩一局</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-flip-home">回英語</button>
+        </footer>
       </section>
 
       <!-- 每日時事：列表 -->
@@ -2429,7 +2548,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.44").catch((e) => {
+      import("./js/app.js?v=app-v45.45").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

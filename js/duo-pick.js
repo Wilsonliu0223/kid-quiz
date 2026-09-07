@@ -156,6 +156,8 @@ function updateDuoMatchupLabels() {
     ["#go-duo-matchup-a", "#go-duo-matchup-b"],
     ["#flip-player-a-name", "#flip-player-b-name"],
     ["#mul-flip-player-a-name", "#mul-flip-player-b-name"],
+    ["#en-flip-player-a-name", "#en-flip-player-b-name"],
+    ["#en-flip-duo-matchup-a", "#en-flip-duo-matchup-b"],
   ];
   for (const [aSel, bSel] of pairs) {
     renderDuoMatchupLine(
@@ -169,7 +171,7 @@ function updateDuoMatchupLabels() {
 export function refreshDuoBattleUI() {
   normalizeSelectedChild();
   const activeName = getChildName(getSelectedChild());
-  for (const id of ["math-duo-active-name", "flip-duo-active-name", "gomoku-duo-active-name", "xiangqi-duo-active-name", "anqi-duo-active-name", "chess-duo-active-name", "go-duo-active-name"]) {
+  for (const id of ["math-duo-active-name", "flip-duo-active-name", "gomoku-duo-active-name", "xiangqi-duo-active-name", "anqi-duo-active-name", "chess-duo-active-name", "go-duo-active-name", "en-flip-duo-active-name"]) {
     const el = document.getElementById(id);
     if (el) el.textContent = activeName;
   }
@@ -183,6 +185,7 @@ export function refreshDuoBattleUI() {
     "#anqi-duo-opponent-chips",
     "#chess-duo-opponent-chips",
     "#go-duo-opponent-chips",
+    "#en-flip-duo-opponent-chips",
   ]) {
     if (document.querySelector(sel)) {
       renderDuoOpponentPicker(sel, { onChange });

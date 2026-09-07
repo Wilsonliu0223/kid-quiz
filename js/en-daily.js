@@ -593,6 +593,37 @@ function saveReview(list) {
   localStorage.setItem(reviewKey(), JSON.stringify(list.slice(0, 200)));
 }
 
+export function listEnReviewItems() {
+  const list = loadReview();
+  return Array.isArray(list) ? list : [];
+}
+
+export function patchEnReviewZh(word, zh) {
+  const key = String(word || "")
+    .trim()
+    .toLowerCase();
+  const text = String(zh || "").trim();
+  if (!key || !text) return;
+  const list = loadReview();
+  let found = false;
+  const next = list.map((item) => {
+    if (String(item.word || "").toLowerCase() !== key) return item;
+    found = true;
+    return { ...item, zh: text };
+  });
+  if (!found) {
+    next.unshift({
+      word: String(word).trim(),
+      gloss: "",
+      zh: text,
+      example: "",
+      source: "flip",
+      addedAt: new Date().toISOString(),
+    });
+  }
+  saveReview(next);
+}
+
 function bodyForLevel(art) {
   if (level === "l2") return art.bodyL2 || art.bodyL1;
   if (level === "l3") return art.bodyL3 || art.bodyL2 || art.bodyL1;

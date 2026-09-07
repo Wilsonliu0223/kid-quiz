@@ -70,7 +70,8 @@ body {
 }
 
 #view-setup-zh.view-active,
-#view-setup-en.view-active {
+#view-setup-en.view-active,
+#view-en-flip-setup.view-active {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -1138,34 +1139,40 @@ body {
 }
 
 /* 20 組：縮小間距、壓縮計分列，把空間留給牌格（國字） */
-#flip-card-grid[data-pairs="20"] {
+#flip-card-grid[data-pairs="20"],
+#en-flip-card-grid[data-pairs="20"] {
   gap: 4px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-scorebar,
-#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-scorebar {
+#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-scorebar,
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-scorebar {
   margin-bottom: 6px;
   gap: 6px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-score-block,
-#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-score-block {
+#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-score-block,
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-score-block {
   padding: 5px 4px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-score-num,
-#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-score-num {
+#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-score-num,
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-score-num {
   font-size: 1.4rem;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-card,
-#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-card {
+#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-card,
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-card {
   border-radius: 8px;
   border-width: 1px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-card-back,
-#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-card-back {
+#view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-card-back,
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-card-back {
   font-size: min(42cqw, 42cqh);
 }
 
@@ -4424,7 +4431,8 @@ button.gomoku-cell:disabled {
   color: #2d6b4a;
 }
 
-#view-mul-flip-play.view-active {
+#view-mul-flip-play.view-active,
+#view-en-flip-play.view-active {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
@@ -6048,6 +6056,63 @@ body.sudoku-dragging .sudoku-cell-movable {
   margin: 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+.en-flip-extra-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.en-flip-extra-row input {
+  flex: 1 1 110px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font: inherit;
+}
+.en-flip-missing {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.en-flip-miss-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.en-flip-miss-row strong {
+  min-width: 4.5em;
+}
+.en-flip-miss-row input {
+  flex: 1 1 100px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+.flip-card-en.flip-card-face-up,
+.flip-card-zh.flip-card-face-up {
+  padding: 4px;
+}
+.flip-card-en .flip-card-inner {
+  font-size: clamp(0.72rem, 3.6vw, 1.15rem);
+  font-weight: 700;
+  color: #1a5bb8;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.flip-card-en-long .flip-card-inner {
+  font-size: clamp(0.62rem, 3vw, 0.95rem);
+}
+.flip-card-zh .flip-card-inner {
+  font-size: clamp(1.1rem, 6vw, 1.85rem);
+  font-weight: 800;
+  color: var(--zh-dark);
+  line-height: 1.1;
+  text-align: center;
 }
 .en-daily-date-nav {
   display: flex;

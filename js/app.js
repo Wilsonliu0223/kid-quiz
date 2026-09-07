@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.19";
+import { CONFIG } from "./config.site.js?v=config-v45.20";
 import {
   loadZhItems,
   loadEnItems,
@@ -96,7 +96,8 @@ import {
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v9";
-import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v56";
+import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v57";
+import { initFlipEn } from "./flip-en.js?v=en-flip-v1";
 import {
   addMistake,
   removeMistake,
@@ -180,6 +181,10 @@ const views = {
   enDailyRead: $("#view-en-daily-read"),
   enDailyDialogue: $("#view-en-daily-dialogue"),
   enReview: $("#view-en-review"),
+  enFlipSetup: $("#view-en-flip-setup"),
+  enFlipFirst: $("#view-en-flip-first"),
+  enFlipPlay: $("#view-en-flip-play"),
+  enFlipResult: $("#view-en-flip-result"),
   enDailyDictation: $("#view-en-daily-dictation"),
   enDailyQuiz: $("#view-en-daily-quiz"),
   quizZh: $("#view-quiz-zh"),
@@ -2354,6 +2359,16 @@ async function init() {
           : [{ label: "好耶", primary: true, onClick: () => onClose?.() }],
         { sub: sub || "" }
       );
+    },
+  });
+  initFlipEn({
+    showView,
+    getEnBank: () => enBank,
+    getChildNames,
+    showWarn: (title, sub) => {
+      showFeedback("warn", title, [{ label: "好的", primary: true, onClick: () => {} }], {
+        sub: sub || "",
+      });
     },
   });
   $("#btn-start-mul")?.addEventListener("click", (e) => {
