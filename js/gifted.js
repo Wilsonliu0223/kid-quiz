@@ -1,7 +1,7 @@
 /**
  * 資優練習：10／20／60 題，程度可選，交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.13";
+import { CONFIG } from "./config.site.js?v=config-v45.14";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
@@ -173,6 +173,7 @@ function showIntro() {
   $("#gifted-mode-box")?.toggleAttribute("hidden", mid);
   $("#btn-gifted-start")?.toggleAttribute("hidden", mid);
   $("#btn-gifted-resume")?.toggleAttribute("hidden", !mid);
+  $("#btn-gifted-restart")?.toggleAttribute("hidden", !mid);
   $("#btn-gifted-parent")?.toggleAttribute("hidden", !done);
   paintModeButtons();
   deps.showView("giftedIntro");
@@ -347,6 +348,18 @@ export function initGifted(d) {
     startNew();
   });
   $("#btn-gifted-resume")?.addEventListener("click", () => openQuiz());
+  $("#btn-gifted-restart")?.addEventListener("click", () => {
+    const go = () => {
+      stopTick();
+      localStorage.removeItem(key());
+      showIntro();
+    };
+    if (deps.confirm) {
+      deps.confirm("重來", "這次寫到一半的會清掉，從頭選題數。", go);
+      return;
+    }
+    go();
+  });
   $("#btn-gifted-quiz-back")?.addEventListener("click", () => {
     stopTick();
     showIntro();

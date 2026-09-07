@@ -2164,10 +2164,11 @@
             </div>
             <p class="gifted-mode-hint">10 題約 8 分鐘、20 題約 16 分鐘、60 題 40 分鐘。</p>
           </div>
-          <p id="gifted-intro-mid" hidden>上次還沒寫完，可以接著寫。時間會繼續算。</p>
+          <p id="gifted-intro-mid" hidden>上次還沒寫完，可以接著寫。時間會繼續算。不想寫也可以重來。</p>
           <p id="gifted-intro-done" hidden>上次已交卷，成績在結果頁。再開始會蓋掉上次紀錄。</p>
           <button type="button" class="btn btn-primary btn-block" id="btn-gifted-start">開始</button>
           <button type="button" class="btn btn-primary btn-block" id="btn-gifted-resume" hidden>繼續寫</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-restart" hidden>重來</button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-parent" hidden>家長看詳解</button>
         </div>
       </section>
@@ -2410,7 +2411,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.38").catch((e) => {
+      import("./js/app.js?v=app-v45.39").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

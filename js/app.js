@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.13";
+import { CONFIG } from "./config.site.js?v=config-v45.14";
 import {
   loadZhItems,
   loadEnItems,
@@ -95,7 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
-import { initGifted } from "./gifted.js?v=gifted-v3";
+import { initGifted } from "./gifted.js?v=gifted-v4";
 import { initEnDaily, openEnHub } from "./en-daily.js?v=en-daily-v56";
 import {
   addMistake,
@@ -2319,6 +2319,17 @@ async function init() {
         "warn",
         title,
         [{ label: "好的", primary: true, onClick: () => onClose?.() }],
+        { sub: sub || "" }
+      );
+    },
+    confirm: (title, sub, onYes) => {
+      showFeedback(
+        "warn",
+        title,
+        [
+          { label: "先不要", onClick: () => {} },
+          { label: "重來", primary: true, onClick: () => onYes?.() },
+        ],
         { sub: sub || "" }
       );
     },
