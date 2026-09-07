@@ -1,7 +1,7 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.26";
+import { CONFIG } from "./config.site.js?v=config-v45.27";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
