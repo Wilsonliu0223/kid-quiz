@@ -1,4 +1,4 @@
-/** 自編練習（非正式鑑定）。對齊臺中市國小一般智能資優初選向度：圖形推理、國語文、數學，另加工作記憶。grade：12＝1～2、23＝2～3（甲組偏易）、34＝3～4、56＝5～6（乙組加深）。非市府真題、非魏氏。 */
+/** 自編練習（非正式鑑定）。grade：12＝1～2、23＝2～3、34＝3～4、56＝5～6。非市府真題、非魏氏。 */
 export const GIFTED_BANK = [
   { id: "f001", cat: "fig", grade: 12, q: "哪一個跟其他三個不同類？", options: ["▲▲▲", "●●●", "■■■", "▲▲●"], answer: 3, explain: "前三個都是三個相同圖形。" },
   { id: "f002", cat: "fig", grade: 12, q: "哪一個跟其他三個不同類？", options: ["○△", "□△", "○□", "△△"], answer: 3, explain: "前三個都是兩種不同圖形。" },
@@ -663,4 +663,4 @@ export const GIFTED_BANK = [
 ];
 
 export const GIFTED_CAT_LABEL = { fig: "圖形空間", lang: "語文理解", math: "數量推理", mem: "工作記憶" };
-export const GIFTED_GRADE_LABEL = { 12: "1～2年級", 23: "2～3年級（甲組）", 34: "3～4年級", 56: "5～6年級（乙組）" };
+export const GIFTED_GRADE_LABEL = { 12: "1～2年級", 23: "2～3年級", 34: "3～4年級", 56: "5～6年級" };

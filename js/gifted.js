@@ -6,7 +6,7 @@ import {
   GIFTED_BANK,
   GIFTED_CAT_LABEL,
   GIFTED_GRADE_LABEL,
-} from "./gifted-bank.js?v=gifted-bank-v10";
+} from "./gifted-bank.js?v=gifted-bank-v11";
 import { visPromptHtml, visChoiceHtml } from "./gifted-fig.js?v=gifted-fig-v2";
 
 const CATS = ["fig", "lang", "math", "mem"];
