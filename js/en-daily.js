@@ -183,20 +183,23 @@ function syncDockVisibility() {
   const panel = $("#en-gloss-panel");
   if (!dock) return;
 
-  if (isEnSpeakViewActive() && bar) {
-    bar.hidden = false;
-    document.body.classList.add("en-playing");
-    dock.hidden = false;
+  if (!isEnSpeakViewActive()) {
+    if (bar) bar.hidden = true;
+    if (panel) panel.hidden = true;
+    document.body.classList.remove("en-playing");
+    document.body.classList.remove("en-gloss-open");
+    dock.hidden = true;
+    document.documentElement.style.setProperty("--en-dock-h", "0px");
+    return;
   }
 
-  const show =
-    isEnSpeakViewActive() ||
-    (bar && !bar.hidden) ||
-    document.body.classList.contains("en-gloss-open") ||
-    (panel && !panel.hidden);
-  dock.hidden = !show;
+  if (bar) {
+    bar.hidden = false;
+    document.body.classList.add("en-playing");
+  }
+  dock.hidden = false;
   void dock.offsetHeight;
-  const h = show ? Math.ceil(dock.getBoundingClientRect().height) || 56 : 0;
+  const h = Math.ceil(dock.getBoundingClientRect().height) || 56;
   document.documentElement.style.setProperty("--en-dock-h", `${h}px`);
 }
 
@@ -725,8 +728,17 @@ export function initEnDaily(d) {
 }
 
 export function openEnHub() {
+  stopPlayBar({ dismiss: true });
+  hideGloss();
   syncHubMeta();
   deps?.showView("enHub");
+}
+
+/** 離開閱讀／對話頁時收掉播放列，避免擋住英語翻牌等畫面 */
+export function onEnViewChange(name) {
+  if (name === "enDailyRead" || name === "enDailyDialogue") return;
+  stopPlayBar({ dismiss: true });
+  hideGloss();
 }
 
 async function ensureArticles() {

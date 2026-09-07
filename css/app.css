@@ -6350,15 +6350,13 @@ body.en-playing #view-en-daily-dialogue.view-active,
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(var(--en-dock-h, 64px) + 16px);
 }
-/* 閱讀／對話中播放列／底板不可消失（雙保險） */
-body.en-playing #en-bottom-dock,
-body.en-playing #en-bottom-dock[hidden],
+/* 只有閱讀／對話頁才強制顯示底板；其他頁（英語翻牌等）不可被 body.en-playing 蓋住 */
 #view-en-daily-read.view-active ~ #en-bottom-dock,
 #view-en-daily-dialogue.view-active ~ #en-bottom-dock {
   display: flex !important;
 }
-body.en-playing #en-play-bar,
-body.en-playing #en-play-bar[hidden] {
+#view-en-daily-read.view-active ~ #en-bottom-dock .en-play-bar,
+#view-en-daily-dialogue.view-active ~ #en-bottom-dock .en-play-bar {
   display: flex !important;
 }
 body.en-gloss-open .en-play-status {
