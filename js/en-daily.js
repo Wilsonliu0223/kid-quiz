@@ -29,7 +29,7 @@ import {
   familyMembers,
   getAffixFamily,
   wordMatchesAffix,
-} from "./en-morph.js?v=en-morph-v5";
+} from "./en-morph.js?v=en-morph-v6";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -847,13 +847,19 @@ function morphHtml(morph) {
   if (morph.prefix) {
     rows.push(
       `<p class="en-related-row"><span class="en-related-label">字首</span>` +
-        `<button type="button" class="en-related-chip" data-en-morph="prefix:${escapeHtml(morph.prefix.form)}">${escapeHtml(morph.prefix.label)}　${escapeHtml(morph.prefix.zh)}</button></p>`
+        `<button type="button" class="en-related-chip" data-en-morph="prefix:${escapeHtml(morph.prefix.form)}">${escapeHtml(morph.prefix.label)}${morph.prefix.zh ? "　" + escapeHtml(morph.prefix.zh) : ""}</button></p>`
     );
   }
   if (morph.root) {
     rows.push(
       `<p class="en-related-row"><span class="en-related-label">字根</span>` +
-        `<button type="button" class="en-related-chip" data-en-morph="root:${escapeHtml(morph.root.form)}">${escapeHtml(morph.root.label)}　${escapeHtml(morph.root.zh)}</button></p>`
+        `<button type="button" class="en-related-chip" data-en-morph="root:${escapeHtml(morph.root.form)}">${escapeHtml(morph.root.label)}${morph.root.zh ? "　" + escapeHtml(morph.root.zh) : ""}</button></p>`
+    );
+  }
+  if (morph.suffix) {
+    rows.push(
+      `<p class="en-related-row"><span class="en-related-label">字尾</span>` +
+        `<button type="button" class="en-related-chip" data-en-morph="suffix:${escapeHtml(morph.suffix.form)}">${escapeHtml(morph.suffix.label)}${morph.suffix.zh ? "　" + escapeHtml(morph.suffix.zh) : ""}</button></p>`
     );
   }
   return rows.join("");
@@ -867,29 +873,30 @@ function bindMorphClicks(root) {
       e.stopPropagation();
       const spec = String(btn.getAttribute("data-en-morph") || "");
       const [kind, form] = spec.split(":");
-      if ((kind === "prefix" || kind === "root") && form) openMorphFamily(kind, form);
+      if ((kind === "prefix" || kind === "root" || kind === "suffix") && form) openMorphFamily(kind, form);
     });
   });
 }
 
 function openMorphFamily(kind, form) {
   const aff = getAffixFamily(kind, form);
-  if (!aff) return;
   glossSeq += 1;
   const currentWord = String(glossStack[glossStack.length - 1]?.word || "");
   const extra = loadReview()
     .map((x) => x.word)
     .filter((w) => wordMatchesAffix(w, kind, form));
   const members = familyMembers(kind, form, extra, currentWord);
-  const label = kind === "prefix" ? `${aff.form}-` : aff.form;
+  const kindZh = kind === "prefix" ? "字首" : kind === "suffix" ? "字尾" : "字根";
+  const label =
+    kind === "prefix" ? `${form}-` : kind === "suffix" ? `-${form}` : form;
   const entry = {
     kind: "family",
     word: label,
-    gloss: `${kind === "prefix" ? "字首" : "字根"}：${aff.zh}`,
+    gloss: aff?.zh ? `${kindZh}：${aff.zh}` : kindZh,
     phonetic: "",
     example: "",
     familyKind: kind,
-    familyForm: aff.form,
+    familyForm: form,
     members,
   };
   glossStack.push(entry);
@@ -1484,7 +1491,8 @@ async function markArticleMorph(roots) {
       pending.push(w);
     });
   }
-  const jobs = pending.slice(0, 16);
+  pending.sort((a, b) => b.length - a.length);
+  const jobs = pending.slice(0, 40);
   let i = 0;
   const worker = async () => {
     while (i < jobs.length) {
@@ -1495,7 +1503,7 @@ async function markArticleMorph(roots) {
       if (morph?.combo) paintMorphClass(list, w);
     }
   };
-  await Promise.all(Array.from({ length: Math.min(4, jobs.length) }, () => worker()));
+  await Promise.all(Array.from({ length: Math.min(6, jobs.length) }, () => worker()));
 }
 
 function bindSentencePlay(root) {

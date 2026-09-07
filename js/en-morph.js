@@ -1,9 +1,9 @@
 /**
- * 英文字首／字根：Wiktionary 詞源拆法 + 國小常見字族。
- * 只處理較長、能穩拆的字；冷門或容易拆錯的不顯示。
+ * 英文字首／字根／字尾：Wiktionary 詞源拆法 + 字族表。
+ * 時事給大人看，能拆就盡量拆；明顯會教錯的才略過。
  */
 
-const MIN_LEN = 6;
+const MIN_LEN = 5;
 
 /** 表面像字首、拆了會教錯 */
 const NEVER_SPLIT = new Set([
@@ -22,6 +22,10 @@ const NEVER_SPLIT = new Set([
   "into",
   "info",
   "income",
+  "interest",
+  "interesting",
+  "interior",
+  "instrument",
   "another",
   "around",
   "always",
@@ -33,9 +37,79 @@ const NEVER_SPLIT = new Set([
   "along",
   "among",
   "again",
+  "ready",
+  "really",
+  "reason",
+  "result",
+  "remember",
+  "religion",
+  "relative",
+  "remain",
+  "realize",
+  "reality",
+  "regard",
+  "region",
+  "regular",
+  "require",
+  "related",
+  "relation",
+  "recently",
+  "receive",
+  "refer",
+  "pretty",
+  "present",
+  "president",
+  "enough",
+  "enter",
+  "entire",
+  "engine",
+  "english",
+  "company",
+  "common",
+  "complete",
+  "computer",
+  "country",
+  "count",
+  "course",
+  "court",
+  "color",
+  "colour",
+  "coffee",
+  "copy",
+  "could",
+  "come",
+  "even",
+  "ever",
+  "event",
+  "detail",
+  "dead",
+  "deal",
+  "dear",
+  "death",
+  "idea",
+  "image",
+  "each",
+  "early",
+  "easy",
+  "open",
+  "over",
+  "only",
+  "also",
+  "almost",
+  "already",
+  "family",
+  "people",
+  "school",
+  "teacher",
+  "children",
+  "because",
+  "before",
+  "between",
+  "without",
+  "together",
 ]);
 
-/** @type {{ form: string, kind: 'prefix'|'root', zh: string, examples: string[] }[]} */
+/** @type {{ form: string, kind: 'prefix'|'root'|'suffix', zh: string, examples: string[] }[]} */
 const AFFIXES = [
   { form: "un", kind: "prefix", zh: "不、相反", examples: ["unhappy", "unfair", "unkind", "unlock", "unable", "unknown", "unusual", "unpack"] },
   { form: "re", kind: "prefix", zh: "再、重新", examples: ["replay", "rewrite", "rebuild", "return", "review", "restart", "reread", "reuse", "replace"] },
@@ -43,34 +117,64 @@ const AFFIXES = [
   { form: "pre", kind: "prefix", zh: "在前、預先", examples: ["preview", "preheat", "prepay", "preschool", "prepare", "prevent"] },
   { form: "mis", kind: "prefix", zh: "錯、誤", examples: ["mistake", "misspell", "misplace", "mismatch", "mislead"] },
   { form: "over", kind: "prefix", zh: "過度、在上", examples: ["oversleep", "overheat", "overeat", "overcook", "overcome"] },
+  { form: "under", kind: "prefix", zh: "不足、在下", examples: ["underpay", "underage", "underline", "underwater"] },
   { form: "non", kind: "prefix", zh: "非、不", examples: ["nonsense", "nonstop", "nonfiction"] },
-  { form: "in", kind: "prefix", zh: "不／向內", examples: ["incomplete", "invisible", "incorrect", "independent", "inspect", "include"] },
+  { form: "in", kind: "prefix", zh: "不／向內", examples: ["incomplete", "invisible", "incorrect", "independent", "inspect", "include", "inside"] },
   { form: "im", kind: "prefix", zh: "不", examples: ["impossible", "impolite", "impatient", "immature"] },
   { form: "il", kind: "prefix", zh: "不", examples: ["illegal", "illogical"] },
   { form: "ir", kind: "prefix", zh: "不", examples: ["irregular", "irresponsible"] },
   { form: "inter", kind: "prefix", zh: "之間", examples: ["internet", "international", "interview", "interrupt"] },
+  { form: "intra", kind: "prefix", zh: "之內", examples: ["intranet", "intrastate"] },
   { form: "trans", kind: "prefix", zh: "穿過、轉移", examples: ["transport", "translate", "transfer", "transform"] },
   { form: "sub", kind: "prefix", zh: "下面、次", examples: ["subway", "subtract", "submarine", "subtitle"] },
   { form: "super", kind: "prefix", zh: "超、極", examples: ["supermarket", "superhero", "superstar"] },
   { form: "auto", kind: "prefix", zh: "自己、自動", examples: ["autograph", "autopilot"] },
   { form: "co", kind: "prefix", zh: "一起", examples: ["coworker", "coauthor", "cooperate"] },
+  { form: "com", kind: "prefix", zh: "一起", examples: ["combine", "compose", "compute"] },
+  { form: "con", kind: "prefix", zh: "一起", examples: ["connect", "construct", "contain"] },
   { form: "de", kind: "prefix", zh: "去掉、向下", examples: ["defrost", "decode", "decrease", "depart"] },
-  { form: "ex", kind: "prefix", zh: "出、前", examples: ["export", "exit", "exhale"] },
+  { form: "ex", kind: "prefix", zh: "出、前", examples: ["export", "exit", "exhale", "exclude"] },
+  { form: "pro", kind: "prefix", zh: "向前、贊成", examples: ["progress", "protect", "provide", "protest"] },
   { form: "tele", kind: "prefix", zh: "遠", examples: ["telephone", "television", "telescope"] },
   { form: "bi", kind: "prefix", zh: "兩個", examples: ["bicycle", "bilingual", "bimonthly"] },
   { form: "tri", kind: "prefix", zh: "三", examples: ["triangle", "tricycle", "triple"] },
   { form: "multi", kind: "prefix", zh: "多", examples: ["multiplex", "multicolor", "multimedia"] },
+  { form: "mono", kind: "prefix", zh: "單一", examples: ["monotone", "monologue"] },
+  { form: "mini", kind: "prefix", zh: "小", examples: ["minibus", "miniskirt"] },
+  { form: "micro", kind: "prefix", zh: "微、小", examples: ["microscope", "microphone"] },
+  { form: "mega", kind: "prefix", zh: "巨大", examples: ["megaphone", "megacity"] },
+  { form: "hyper", kind: "prefix", zh: "過度", examples: ["hyperactive", "hyperlink"] },
+  { form: "hypo", kind: "prefix", zh: "不足、在下", examples: ["hypodermic"] },
+  { form: "extra", kind: "prefix", zh: "以外、額外", examples: ["extraordinary", "extraterrestrial"] },
+  { form: "ultra", kind: "prefix", zh: "極、超", examples: ["ultrasound", "ultraviolet"] },
+  { form: "counter", kind: "prefix", zh: "反、對", examples: ["counterattack", "counterfeit"] },
+  { form: "contra", kind: "prefix", zh: "反對", examples: ["contradict", "contrary"] },
+  { form: "anti", kind: "prefix", zh: "反、抗", examples: ["antivirus", "antifreeze"] },
+  { form: "semi", kind: "prefix", zh: "半", examples: ["semicircle", "semifinal"] },
   { form: "mid", kind: "prefix", zh: "中間", examples: ["midnight", "midday", "midweek"] },
   { form: "post", kind: "prefix", zh: "之後", examples: ["postpone", "postwar", "postgame"] },
-  { form: "semi", kind: "prefix", zh: "半", examples: ["semicircle", "semifinal"] },
-  { form: "anti", kind: "prefix", zh: "反、抗", examples: ["antivirus", "antifreeze"] },
   { form: "out", kind: "prefix", zh: "出、超過", examples: ["outside", "outdoor", "outline", "outplay"] },
   { form: "fore", kind: "prefix", zh: "前面、預先", examples: ["forecast", "forehead", "foresee"] },
   { form: "en", kind: "prefix", zh: "使、放入", examples: ["enjoy", "enlarge", "enable", "encourage"] },
+  { form: "em", kind: "prefix", zh: "使、放入", examples: ["empower", "embark"] },
+  { form: "be", kind: "prefix", zh: "使成為", examples: ["become", "befriend"] },
+  { form: "peri", kind: "prefix", zh: "周圍", examples: ["perimeter", "periscope"] },
+  { form: "para", kind: "prefix", zh: "旁、輔助", examples: ["parallel", "paramedic"] },
+  { form: "poly", kind: "prefix", zh: "多", examples: ["polygon", "polyglot"] },
+  { form: "neo", kind: "prefix", zh: "新", examples: ["neonatal"] },
+  { form: "omni", kind: "prefix", zh: "全部", examples: ["omnivore", "omnipresent"] },
+  { form: "pan", kind: "prefix", zh: "全", examples: ["panorama", "pandemic"] },
+  { form: "pseudo", kind: "prefix", zh: "假", examples: ["pseudonym"] },
+  { form: "retro", kind: "prefix", zh: "向後", examples: ["retroactive", "retrospect"] },
+  { form: "self", kind: "prefix", zh: "自己", examples: ["selfish", "selfless"] },
+  { form: "vice", kind: "prefix", zh: "副", examples: ["vicepresident"] },
+  { form: "with", kind: "prefix", zh: "一起、反對", examples: ["withdraw", "withhold"] },
   { form: "spect", kind: "root", zh: "看", examples: ["inspect", "respect", "expect", "spectator", "suspect"] },
+  { form: "spec", kind: "root", zh: "看", examples: ["inspect", "respect", "spectacle"] },
   { form: "port", kind: "root", zh: "帶、運", examples: ["transport", "export", "import", "report", "portable"] },
   { form: "dict", kind: "root", zh: "說", examples: ["dictionary", "predict", "dictate", "dictator"] },
   { form: "vis", kind: "root", zh: "看", examples: ["visible", "visit", "vision", "visual", "revise"] },
+  { form: "vid", kind: "root", zh: "看", examples: ["video", "evidence"] },
   { form: "scrib", kind: "root", zh: "寫", examples: ["describe", "scribble"] },
   { form: "script", kind: "root", zh: "寫", examples: ["script", "subscribe", "transcript"] },
   { form: "ject", kind: "root", zh: "投、拋", examples: ["project", "reject", "subject", "inject"] },
@@ -78,6 +182,7 @@ const AFFIXES = [
   { form: "tract", kind: "root", zh: "拉", examples: ["attract", "subtract", "tractor", "extract"] },
   { form: "form", kind: "root", zh: "形狀", examples: ["transform", "reform", "inform", "format"] },
   { form: "graph", kind: "root", zh: "寫、畫", examples: ["photograph", "paragraph", "autograph"] },
+  { form: "gram", kind: "root", zh: "寫、畫", examples: ["grammar", "telegram", "diagram"] },
   { form: "phon", kind: "root", zh: "聲音", examples: ["telephone", "microphone", "headphones"] },
   { form: "bio", kind: "root", zh: "生命", examples: ["biology", "biography"] },
   { form: "geo", kind: "root", zh: "土地", examples: ["geography", "geology"] },
@@ -85,13 +190,102 @@ const AFFIXES = [
   { form: "scope", kind: "root", zh: "看", examples: ["telescope", "microscope"] },
   { form: "press", kind: "root", zh: "壓", examples: ["express", "impress", "pressure", "compress"] },
   { form: "duc", kind: "root", zh: "引導", examples: ["produce", "educate", "reduce", "conduct"] },
+  { form: "duct", kind: "root", zh: "引導", examples: ["conduct", "product", "aqueduct"] },
   { form: "mit", kind: "root", zh: "送", examples: ["transmit", "permit", "admit", "submit"] },
+  { form: "miss", kind: "root", zh: "送", examples: ["mission", "dismiss", "promise"] },
+  { form: "log", kind: "root", zh: "說、學", examples: ["logic", "dialogue", "biology"] },
+  { form: "meter", kind: "root", zh: "測量", examples: ["thermometer", "diameter", "perimeter"] },
+  { form: "therm", kind: "root", zh: "熱", examples: ["thermometer", "thermal"] },
+  { form: "hydr", kind: "root", zh: "水", examples: ["hydrate", "hydrant", "hydrogen"] },
+  { form: "aqua", kind: "root", zh: "水", examples: ["aquarium", "aquatic"] },
+  { form: "mar", kind: "root", zh: "海", examples: ["marine", "submarine", "maritime"] },
+  { form: "terr", kind: "root", zh: "土地", examples: ["territory", "terrain"] },
+  { form: "ped", kind: "root", zh: "腳", examples: ["pedal", "pedestrian", "centipede"] },
+  { form: "pod", kind: "root", zh: "腳", examples: ["tripod", "podium"] },
+  { form: "man", kind: "root", zh: "手", examples: ["manual", "manage", "manuscript"] },
+  { form: "capt", kind: "root", zh: "抓、拿", examples: ["capture", "captain"] },
+  { form: "ceive", kind: "root", zh: "拿", examples: ["receive", "deceive", "perceive"] },
+  { form: "cred", kind: "root", zh: "相信", examples: ["credit", "incredible", "credential"] },
+  { form: "fac", kind: "root", zh: "做", examples: ["factory", "facile"] },
+  { form: "fect", kind: "root", zh: "做", examples: ["effect", "perfect", "affect"] },
+  { form: "fer", kind: "root", zh: "帶", examples: ["transfer", "offer", "prefer"] },
+  { form: "flect", kind: "root", zh: "彎", examples: ["reflect", "deflect"] },
+  { form: "flex", kind: "root", zh: "彎", examples: ["flexible", "reflex"] },
+  { form: "flu", kind: "root", zh: "流", examples: ["fluid", "fluent", "influence"] },
+  { form: "fract", kind: "root", zh: "破", examples: ["fracture", "fraction"] },
+  { form: "rupt", kind: "root", zh: "破", examples: ["interrupt", "erupt", "bankrupt"] },
+  { form: "grad", kind: "root", zh: "步、級", examples: ["grade", "gradual", "graduate"] },
+  { form: "gress", kind: "root", zh: "走", examples: ["progress", "congress", "aggressive"] },
+  { form: "jud", kind: "root", zh: "判斷", examples: ["judge", "judicial"] },
+  { form: "jur", kind: "root", zh: "法、誓", examples: ["jury", "injury"] },
+  { form: "lect", kind: "root", zh: "選、讀", examples: ["select", "collect", "lecture"] },
+  { form: "loc", kind: "root", zh: "地方", examples: ["local", "location", "allocate"] },
+  { form: "mand", kind: "root", zh: "命令", examples: ["command", "demand", "mandate"] },
+  { form: "migr", kind: "root", zh: "遷移", examples: ["migrate", "immigrant"] },
+  { form: "mot", kind: "root", zh: "動", examples: ["motion", "motor", "promote"] },
+  { form: "mov", kind: "root", zh: "動", examples: ["move", "remove", "movement"] },
+  { form: "nym", kind: "root", zh: "名", examples: ["synonym", "anonymous"] },
+  { form: "pel", kind: "root", zh: "推", examples: ["propel", "expel", "compel"] },
+  { form: "pend", kind: "root", zh: "掛、花費", examples: ["depend", "pending", "suspend"] },
+  { form: "phil", kind: "root", zh: "愛", examples: ["philosophy", "philanthropy"] },
+  { form: "phob", kind: "root", zh: "怕", examples: ["phobia"] },
+  { form: "phot", kind: "root", zh: "光", examples: ["photograph", "photosynthesis"] },
+  { form: "psych", kind: "root", zh: "心", examples: ["psychology", "psychic"] },
+  { form: "sci", kind: "root", zh: "知", examples: ["science", "conscious"] },
+  { form: "sect", kind: "root", zh: "切", examples: ["section", "insect", "intersect"] },
+  { form: "sens", kind: "root", zh: "感覺", examples: ["sense", "sensitive", "sensation"] },
+  { form: "sent", kind: "root", zh: "感覺", examples: ["consent", "sentence"] },
+  { form: "serv", kind: "root", zh: "服務、保持", examples: ["serve", "service", "preserve"] },
+  { form: "sign", kind: "root", zh: "記號", examples: ["sign", "signal", "design"] },
+  { form: "sist", kind: "root", zh: "站", examples: ["assist", "resist", "consist"] },
+  { form: "spir", kind: "root", zh: "呼吸", examples: ["inspire", "spirit", "respiration"] },
+  { form: "strict", kind: "root", zh: "綁緊", examples: ["strict", "restrict", "district"] },
+  { form: "tain", kind: "root", zh: "拿住", examples: ["contain", "maintain", "retain"] },
+  { form: "tend", kind: "root", zh: "伸", examples: ["extend", "intend", "attend"] },
+  { form: "tens", kind: "root", zh: "伸", examples: ["tension", "intense"] },
+  { form: "ven", kind: "root", zh: "來", examples: ["invent", "prevent", "event", "venue"] },
+  { form: "vent", kind: "root", zh: "來", examples: ["invent", "prevent", "adventure"] },
+  { form: "vert", kind: "root", zh: "轉", examples: ["convert", "invert", "vertical"] },
+  { form: "vers", kind: "root", zh: "轉", examples: ["reverse", "universe", "conversation"] },
+  { form: "voc", kind: "root", zh: "聲、叫", examples: ["vocal", "vocabulary", "advocate"] },
+  { form: "vok", kind: "root", zh: "叫", examples: ["invoke", "evoke"] },
+  { form: "volv", kind: "root", zh: "捲", examples: ["revolve", "evolve", "involve"] },
+  { form: "morph", kind: "root", zh: "形", examples: ["morphology", "metamorphosis"] },
+  { form: "mort", kind: "root", zh: "死", examples: ["mortal", "immortal"] },
+  { form: "path", kind: "root", zh: "感覺、病", examples: ["sympathy", "pathology"] },
+  { form: "chron", kind: "root", zh: "時間", examples: ["chronic", "synchronize"] },
+  { form: "dem", kind: "root", zh: "人民", examples: ["democracy", "epidemic"] },
+  { form: "crat", kind: "root", zh: "統治", examples: ["democrat", "autocrat"] },
+  { form: "ation", kind: "suffix", zh: "動作、狀態", examples: ["information", "education", "creation"] },
+  { form: "ition", kind: "suffix", zh: "動作、狀態", examples: ["addition", "competition"] },
+  { form: "tion", kind: "suffix", zh: "動作、狀態", examples: ["action", "nation", "invention"] },
+  { form: "sion", kind: "suffix", zh: "動作、狀態", examples: ["decision", "television"] },
+  { form: "ment", kind: "suffix", zh: "結果、動作", examples: ["movement", "government", "agreement"] },
+  { form: "ness", kind: "suffix", zh: "性質", examples: ["happiness", "kindness", "darkness"] },
+  { form: "able", kind: "suffix", zh: "能被…的", examples: ["readable", "washable", "portable"] },
+  { form: "ible", kind: "suffix", zh: "能被…的", examples: ["visible", "flexible", "possible"] },
+  { form: "ful", kind: "suffix", zh: "充滿", examples: ["helpful", "careful", "beautiful"] },
+  { form: "less", kind: "suffix", zh: "沒有", examples: ["homeless", "careless", "endless"] },
+  { form: "ize", kind: "suffix", zh: "使成為", examples: ["realize", "organize"] },
+  { form: "ise", kind: "suffix", zh: "使成為", examples: ["organise", "recognise"] },
+  { form: "ity", kind: "suffix", zh: "性質", examples: ["activity", "possibility"] },
+  { form: "ous", kind: "suffix", zh: "充滿…的", examples: ["famous", "dangerous"] },
+  { form: "ive", kind: "suffix", zh: "有…性質", examples: ["active", "creative"] },
+  { form: "ance", kind: "suffix", zh: "狀態", examples: ["importance", "performance"] },
+  { form: "ence", kind: "suffix", zh: "狀態", examples: ["difference", "science"] },
+  { form: "ship", kind: "suffix", zh: "身分、狀態", examples: ["friendship", "leadership"] },
+  { form: "hood", kind: "suffix", zh: "身分、時期", examples: ["childhood", "neighborhood"] },
+  { form: "ward", kind: "suffix", zh: "向", examples: ["forward", "backward"] },
+  { form: "ology", kind: "suffix", zh: "學問", examples: ["biology", "geology"] },
 ];
 
 const PREFIXES = AFFIXES.filter((a) => a.kind === "prefix").sort(
   (a, b) => b.form.length - a.form.length
 );
 const ROOTS = AFFIXES.filter((a) => a.kind === "root").sort(
+  (a, b) => b.form.length - a.form.length
+);
+const SUFFIXES = AFFIXES.filter((a) => a.kind === "suffix").sort(
   (a, b) => b.form.length - a.form.length
 );
 
@@ -119,7 +313,7 @@ function cleanPart(raw) {
   s = s.replace(/\[\[([^\]]+)\]\]/g, "$1");
   s = s.replace(/^[']+|[']+$/g, "");
   s = s.replace(/-/g, "").toLowerCase();
-  if (!/^[a-z]{2,14}$/.test(s)) return "";
+  if (!/^[a-z]{2,16}$/.test(s)) return "";
   return s;
 }
 
@@ -184,14 +378,14 @@ function partsFromTemplate(inner) {
       .filter(Boolean);
     return parts.length >= 2 ? { name: "af", parts } : null;
   }
-  if (!/^(prefix|pre|suffix|confix|affix|af)$/.test(name)) return null;
+  if (!/^(prefix|pre|suffix|confix|affix|af|compound|com)$/.test(name)) return null;
   const parts = args.map(cleanPart).filter(Boolean);
   return parts.length >= 2 ? { name, parts } : null;
 }
 
 /**
  * @param {string} wikitext
- * @returns {{ prefix?: string, stem?: string, root?: string, suffix?: string } | null}
+ * @returns {{ prefix?: string, stem?: string, root?: string, suffix?: string, compound?: string } | null}
  */
 export function parseEtymology(wikitext) {
   const ety = englishEtymology(wikitext);
@@ -203,6 +397,9 @@ export function parseEtymology(wikitext) {
     if (hit.name === "suffix") {
       return { stem: a, suffix: b };
     }
+    if (hit.name === "compound" || hit.name === "com") {
+      return { stem: a, compound: b };
+    }
     const prefix = a;
     const second = b;
     const rootHit = findAffix("root", second);
@@ -213,7 +410,9 @@ export function parseEtymology(wikitext) {
     };
     if (c) {
       const asRoot = findAffix("root", c);
+      const asSuf = findAffix("suffix", c);
       if (asRoot) out.root = asRoot.form;
+      else if (asSuf) out.suffix = asSuf.form;
       else out.suffix = c;
     }
     if (out.prefix || out.root) return out;
@@ -258,23 +457,56 @@ export function mayHaveMorph(word) {
 function localGuess(word) {
   const w = normWord(word);
   if (!worthTrying(w)) return null;
+
   for (const pre of PREFIXES) {
-    if (!w.startsWith(pre.form) || w.length - pre.form.length < 3) continue;
+    if (!w.startsWith(pre.form) || w === pre.form) continue;
     const rest = w.slice(pre.form.length);
+    const minRest = pre.form.length <= 2 ? 4 : 3;
+    if (rest.length < minRest) continue;
     const known = pre.examples.some((ex) => normWord(ex) === w);
-    const restRoot = ROOTS.find((r) => rest === r.form || rest.startsWith(r.form));
-    if (!known && !restRoot) continue;
+    const restRoot = ROOTS.find((r) => {
+      if (rest === r.form) return true;
+      if (!rest.startsWith(r.form)) return false;
+      const tail = rest.slice(r.form.length);
+      return !tail || Boolean(findAffix("suffix", tail));
+    });
+    const shortPrefix = pre.form.length <= 2;
+    if (shortPrefix && !known && !restRoot) continue;
+    const suf = restRoot
+      ? findAffix("suffix", rest.slice(restRoot.form.length))
+      : null;
     return {
       prefix: pre.form,
       stem: restRoot ? "" : rest,
       root: restRoot ? restRoot.form : "",
+      suffix: suf ? suf.form : "",
     };
   }
+
+  for (const suf of SUFFIXES) {
+    if (!w.endsWith(suf.form) || w === suf.form) continue;
+    const stem = w.slice(0, -suf.form.length);
+    if (stem.length < 4) continue;
+    return { stem, suffix: suf.form };
+  }
+
   for (const root of ROOTS) {
-    if (!w.includes(root.form) || w.length < root.form.length + 2) continue;
-    if (root.examples.some((ex) => normWord(ex) === w)) {
-      return { root: root.form };
-    }
+    const idx = w.indexOf(root.form);
+    if (idx < 0 || w.length < root.form.length + 2) continue;
+    const before = w.slice(0, idx);
+    const after = w.slice(idx + root.form.length);
+    const pre = before ? findAffix("prefix", before) : null;
+    const suf = after ? findAffix("suffix", after) : null;
+    if (before && !pre && before.length < 3) continue;
+    if (after && !suf) continue;
+    if (!pre && !suf && !before && !after) continue;
+    if (!pre && !suf) continue;
+    return {
+      prefix: pre ? pre.form : before.length >= 3 ? before : "",
+      stem: "",
+      root: root.form,
+      suffix: suf ? suf.form : "",
+    };
   }
   return null;
 }
@@ -299,29 +531,49 @@ async function fetchWikiEtymology(word) {
   }
 }
 
+function affixView(kind, form) {
+  const key = String(form || "")
+    .replace(/-/g, "")
+    .toLowerCase();
+  if (!key || key.length < 2) return null;
+  const known = findAffix(kind, key);
+  if (kind === "prefix") {
+    return { form: key, label: `${key}-`, zh: known?.zh || "" };
+  }
+  if (kind === "suffix") {
+    return { form: key, label: `-${key}`, zh: known?.zh || "" };
+  }
+  return { form: key, label: key, zh: known?.zh || "" };
+}
+
+function bitText(info) {
+  if (!info) return "";
+  return info.zh ? `${info.label}（${info.zh}）` : info.label;
+}
+
 function decorate(parsed, word) {
   if (!parsed) return null;
   const w = normWord(word);
-  const prefix = parsed.prefix ? findAffix("prefix", parsed.prefix) : null;
-  const root = parsed.root ? findAffix("root", parsed.root) : null;
+  const prefix = parsed.prefix ? affixView("prefix", parsed.prefix) : null;
+  const root = parsed.root ? affixView("root", parsed.root) : null;
+  const suffix = parsed.suffix ? affixView("suffix", parsed.suffix) : null;
   const stem = String(parsed.stem || "").toLowerCase();
-  if (!prefix && !root) return null;
-  if (prefix && !root && stem && stem.length < 3) return null;
+  const compound = String(parsed.compound || "").toLowerCase();
 
   const bits = [];
-  if (prefix) bits.push(`${prefix.form}-（${prefix.zh}）`);
-  if (root) bits.push(`${root.form}（${root.zh}）`);
+  if (prefix) bits.push(bitText(prefix));
+  if (root) bits.push(bitText(root));
   else if (stem) bits.push(stem);
-  if (parsed.suffix) bits.push(`-${parsed.suffix}`);
+  if (compound) bits.push(compound);
+  if (suffix) bits.push(bitText(suffix));
   if (bits.length < 2) return null;
 
   return {
     word: w,
     combo: `${bits.join(" + ")} → ${w}`,
-    prefix: prefix
-      ? { form: prefix.form, label: `${prefix.form}-`, zh: prefix.zh }
-      : null,
-    root: root ? { form: root.form, label: root.form, zh: root.zh } : null,
+    prefix,
+    root,
+    suffix: suffix || null,
     stem: stem || "",
   };
 }
@@ -329,34 +581,41 @@ function decorate(parsed, word) {
 /** 不打網路：字族表能立刻拆出來的才算（含 -s/-ed/-ing） */
 export function peekLocalMorph(word) {
   const surface = normWord(word);
-  for (const v of stemVariants(surface)) {
+  if (NEVER_SPLIT.has(surface)) return null;
+  const vars = stemVariants(surface).sort((a, b) => a.length - b.length);
+  for (const v of vars) {
+    if (NEVER_SPLIT.has(v)) continue;
     const hit = decorate(localGuess(v), surface);
     if (hit) return hit;
   }
   return null;
 }
 
-/** 文章裡值得查 Wiktionary 的候選（已有底色的不必再排） */
+/** 文章裡值得查 Wiktionary 的候選 */
 export function couldBeAffixWord(word) {
   const w = normWord(word);
   if (!worthTrying(w)) return false;
   if (peekLocalMorph(w)) return true;
-  for (const pre of PREFIXES) {
-    if (w.startsWith(pre.form) && w.length - pre.form.length >= 3) return true;
+  for (const v of stemVariants(w)) {
+    for (const pre of PREFIXES) {
+      if (v.startsWith(pre.form) && v.length - pre.form.length >= 3) return true;
+    }
+    for (const root of ROOTS) {
+      if (v.includes(root.form) && v.length >= root.form.length + 2) return true;
+    }
+    for (const suf of SUFFIXES) {
+      if (v.endsWith(suf.form) && v.length - suf.form.length >= 4) return true;
+    }
   }
-  for (const root of ROOTS) {
-    if (w.includes(root.form) && w.length >= root.form.length + 2) return true;
-  }
-  return false;
+  return w.length >= 7;
 }
 
 export function getAffixFamily(kind, form) {
-  return findAffix(kind, form);
+  return findAffix(kind, form) || null;
 }
 
 export function familyMembers(kind, form, extraWords = [], currentWord = "") {
   const aff = findAffix(kind, form);
-  if (!aff) return [];
   const seen = new Set();
   const out = [];
   const add = (raw) => {
@@ -366,7 +625,9 @@ export function familyMembers(kind, form, extraWords = [], currentWord = "") {
     out.push(w);
   };
   add(currentWord);
-  for (const ex of aff.examples) add(ex);
+  if (aff) {
+    for (const ex of aff.examples) add(ex);
+  }
   for (const extra of extraWords || []) add(extra);
   return out.slice(0, 8);
 }
@@ -379,6 +640,7 @@ export function wordMatchesAffix(word, kind, form) {
   if (!w || !key) return false;
   if (kind === "prefix") return w.startsWith(key) && w.length > key.length + 2;
   if (kind === "root") return w.includes(key);
+  if (kind === "suffix") return w.endsWith(key) && w.length > key.length + 2;
   return false;
 }
 
@@ -390,19 +652,16 @@ export async function analyzeEnglishMorph(word) {
   if (!mayHaveMorph(w)) return null;
   if (morphCache.has(w)) return morphCache.get(w);
 
-  const local = peekLocalMorph(w);
-  if (local) {
-    morphCache.set(w, local);
-    return local;
-  }
-
   let result = null;
-  for (const v of stemVariants(w)) {
+  const vars = stemVariants(w).sort((a, b) => a.length - b.length);
+  for (const v of vars) {
+    if (NEVER_SPLIT.has(v)) continue;
     const wiki = await fetchWikiEtymology(v);
     const parsed = wiki ? parseEtymology(wiki) : null;
-    result = decorate(parsed, w) || decorate(localGuess(v), w);
+    result = decorate(parsed, w);
     if (result) break;
   }
+  if (!result) result = peekLocalMorph(w);
   morphCache.set(w, result);
   return result;
 }
