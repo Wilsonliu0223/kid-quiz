@@ -1,13 +1,13 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.17";
+import { CONFIG } from "./config.site.js?v=config-v45.18";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
   GIFTED_CAT_LABEL,
   GIFTED_GRADE_LABEL,
-} from "./gifted-bank.js?v=gifted-bank-v4";
+} from "./gifted-bank.js?v=gifted-bank-v5";
 
 const CATS = ["fig", "lang", "math", "mem"];
 const QUOTAS = {
