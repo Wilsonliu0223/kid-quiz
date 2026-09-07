@@ -616,6 +616,55 @@ body {
 .gifted-title {
   margin: 8px 0 12px;
 }
+.gifted-fig {
+  margin: 4px 0 14px;
+}
+.gifted-fig[hidden] {
+  display: none !important;
+}
+.gifted-fig-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gifted-fig-arr {
+  font-weight: 800;
+  color: #5b3fa8;
+  font-size: 1.2rem;
+}
+.gifted-fig-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: min(168px, 100%);
+  margin: 0 auto;
+}
+.gifted-fig-cell {
+  width: 76px;
+  height: 76px;
+  border: 2px solid #c8b6ef;
+  border-radius: 12px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+.gifted-fig-miss {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #5b3fa8;
+}
+.gifted-choice.is-fig {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+.gifted-choice-letter {
+  font-weight: 800;
+  min-width: 1.4em;
+}
 .gifted-mode-box {
   margin: 0 0 16px;
 }

@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.34" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.35" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -2315,6 +2315,7 @@
         </header>
         <div class="gifted-quiz-body">
           <p class="gifted-q" id="gifted-q"></p>
+          <div class="gifted-fig" id="gifted-fig" hidden></div>
           <div class="gifted-choices" id="gifted-choices"></div>
           <div class="gifted-nav">
             <button type="button" class="btn btn-secondary" id="btn-gifted-prev">上一題</button>
@@ -2548,7 +2549,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.48").catch((e) => {
+      import("./js/app.js?v=app-v45.49").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

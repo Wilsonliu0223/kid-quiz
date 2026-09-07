@@ -1,13 +1,14 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.19";
+import { CONFIG } from "./config.site.js?v=config-v45.24";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
   GIFTED_CAT_LABEL,
   GIFTED_GRADE_LABEL,
-} from "./gifted-bank.js?v=gifted-bank-v6";
+} from "./gifted-bank.js?v=gifted-bank-v7";
+import { visPromptHtml, visChoiceHtml } from "./gifted-fig.js?v=gifted-fig-v1";
 
 const CATS = ["fig", "lang", "math", "mem"];
 const QUOTAS = {
@@ -33,7 +34,7 @@ function key() {
   return `kid-quiz-gifted-blind-${getSelectedChild()}`;
 }
 
-const PAPER_VER = 6;
+const PAPER_VER = 7;
 
 function loadState() {
   try {
@@ -151,7 +152,11 @@ function takeCat(pool, n, rnd, famCap) {
   const picked = [];
   const used = new Set();
   const famCount = {};
-  const consider = [...fresh, ...rest];
+  const visFirst = (arr) => [
+    ...arr.filter((q) => q.vis),
+    ...arr.filter((q) => !q.vis),
+  ];
+  const consider = [...visFirst(fresh), ...visFirst(rest)];
   const push = (q, ignoreFam) => {
     if (used.has(q.id)) return false;
     const fam = familyOf(q.id);
@@ -198,6 +203,15 @@ function buildPaper(n) {
       options,
       answer,
       explain: q.explain,
+      vis: q.vis
+        ? {
+            kind: q.vis.kind,
+            cells: q.vis.cells,
+            choices: Array.isArray(q.vis.choices)
+              ? order.map((i) => q.vis.choices[i])
+              : undefined,
+          }
+        : null,
     };
   });
 }
@@ -230,7 +244,7 @@ function bandOf(pct) {
   return { title: "再練練", hint: "可改選較低年級，或先寫 10 題。" };
 }
 
-const PAPER_DIFF = { 12: 0.88, 23: 1, 34: 1.12, 56: 1.28 };
+const PAPER_DIFF = { 12: 0.72, 23: 0.95, 34: 1.22, 56: 1.55 };
 const TYPICAL_AGE = { 12: 7, 23: 8, 34: 9.5, 56: 11.5 };
 
 function clamp(n, lo, hi) {
@@ -410,15 +424,27 @@ function renderQ() {
   $("#gifted-progress").textContent = `${GIFTED_CAT_LABEL[q.cat]} · ${st.idx + 1} / ${n}`;
   paintTimer(st);
   $("#gifted-q").textContent = q.q;
+  const fig = $("#gifted-fig");
+  if (fig) {
+    const html = q.vis ? visPromptHtml(q.vis) : "";
+    fig.innerHTML = html;
+    fig.hidden = !html;
+  }
   const box = $("#gifted-choices");
   box.innerHTML = "";
+  const letters = ["Ａ", "Ｂ", "Ｃ", "Ｄ"];
   q.options.forEach((label, i) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className =
       "btn btn-secondary btn-block gifted-choice" +
+      (q.vis?.choices ? " is-fig" : "") +
       (st.picks[st.idx] === i ? " is-picked" : "");
-    btn.textContent = `${["Ａ", "Ｂ", "Ｃ", "Ｄ"][i]}  ${label}`;
+    if (q.vis?.choices?.[i]) {
+      btn.innerHTML = visChoiceHtml(q.vis.choices[i], letters[i]);
+    } else {
+      btn.textContent = `${letters[i]}  ${label}`;
+    }
     btn.addEventListener("click", () => {
       st.picks[st.idx] = i;
       saveState(st);
@@ -486,12 +512,20 @@ function renderParent() {
   st.items.forEach((q, i) => {
     const pick = st.picks[i];
     const good = pick === q.answer;
-    const got = pick >= 0 ? q.options[pick] : "（空白）";
+    const letters = ["Ａ", "Ｂ", "Ｃ", "Ｄ"];
+    const got =
+      pick < 0
+        ? "（空白）"
+        : q.vis
+          ? `圖案${letters[pick]}`
+          : q.options[pick];
+    const ans = q.vis ? `圖案${letters[q.answer]}` : q.options[q.answer];
     const gtag = GIFTED_GRADE_LABEL[q.grade] || "";
+    const stem = q.vis ? `${q.q}（圖案）` : q.q;
     lines.push(
-      `${good ? "○" : "×"} ${i + 1}.【${GIFTED_CAT_LABEL[q.cat] || q.cat}·${gtag}】${q.q}`
+      `${good ? "○" : "×"} ${i + 1}.【${GIFTED_CAT_LABEL[q.cat] || q.cat}·${gtag}】${stem}`
     );
-    lines.push(`　　選：${got}　答：${q.options[q.answer]}`);
+    lines.push(`　　選：${got}　答：${ans}`);
     if (!good && q.explain) lines.push(`　　${q.explain}`);
   });
   $("#gifted-parent-body").textContent = lines.join("\n");
