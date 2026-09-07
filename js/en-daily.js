@@ -487,6 +487,55 @@ function playLangLabel() {
   return "英文播放中";
 }
 
+/** 查字卡／複習字：單字對應的短中文（給播放列中文模式唸） */
+function glossWordZhNow(word) {
+  const key = String(word || "")
+    .trim()
+    .toLowerCase();
+  if (!key) return "";
+  const top = glossStack[glossStack.length - 1];
+  if (top && String(top.word || "").toLowerCase() === key && top.kind !== "family") {
+    const own = shortZh(top.zh);
+    if (own) return own;
+    const senseZh = Array.isArray(top.senses)
+      ? shortZh(top.senses.find((x) => shortZh(x.zh))?.zh)
+      : "";
+    if (senseZh && senseZh.length <= 18) return senseZh;
+  }
+  const fromReview = loadReview().find(
+    (r) => String(r.word || "").toLowerCase() === key
+  );
+  if (fromReview) {
+    const s = shortZh(fromReview.zh);
+    if (s) return s;
+  }
+  return "";
+}
+
+async function zhForGlossWord(word) {
+  const now = glossWordZhNow(word);
+  if (now) return now;
+  const w = String(word || "").trim();
+  if (!w || /[^a-zA-Z'-]/.test(w.replace(/\s/g, ""))) return "";
+  const raw =
+    (await translateEnToZh(w, "TW")) || (await translateEnToZh(w, "CN")) || "";
+  return shortZh(raw);
+}
+
+/** 單字 🔊：跟隨播放列英文／中文／英→中／中→英 */
+async function playGlossWord(word) {
+  const w = String(word || "").trim();
+  if (!w) return;
+  const needZh = playLangSides().includes("zh");
+  if (needZh) showPlayBar("載入中文…");
+  const zh = await zhForGlossWord(w);
+  await playWithBar(w, {
+    label: "單字播放中",
+    chunks: [w],
+    zhChunks: [zh || ""],
+  });
+}
+
 /**
  * 帶播放條的朗讀（英文／中文／逐句英中對照）
  * @param {string} text
@@ -1078,7 +1127,7 @@ function bindUi() {
   $("#btn-en-gloss-back")?.addEventListener("click", () => popGloss());
   $("#btn-en-gloss-speak")?.addEventListener("click", async () => {
     const w = $("#en-gloss-word")?.textContent;
-    if (w) await playWithBar(w, { label: "單字播放中" });
+    if (w) await playGlossWord(w);
   });
   $("#btn-en-gloss-example-speak")?.addEventListener("click", async () => {
     const ex = $("#en-gloss-example")?.textContent;
@@ -2165,7 +2214,7 @@ function showGloss(entry, opts = {}) {
   requestAnimationFrame(() => syncDockVisibility());
 
   if (willSpeak) {
-    void playWithBar(entry.word, { label: "單字播放中" });
+    void playGlossWord(entry.word);
   }
 }
 
@@ -2345,7 +2394,7 @@ function renderReviewList() {
       void openGloss(item.word, true);
     });
     row.querySelector(".en-review-speak")?.addEventListener("click", async () => {
-      await playWithBar(item.word, { label: "單字播放中" });
+      await playGlossWord(item.word);
     });
     row.querySelector(".en-review-remove")?.addEventListener("click", () => {
       saveReview(loadReview().filter((x) => x.word.toLowerCase() !== item.word.toLowerCase()));
