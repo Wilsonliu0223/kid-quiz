@@ -22,21 +22,48 @@ function scaleOf(size) {
   return 0.33;
 }
 
+/** 1～5 顆的座標，4 顆用田字、5 顆用梅花，避免擠成一排看起來一樣多。 */
+function layoutPts(n, w, h) {
+  if (n <= 1) return [{ x: w / 2, y: h / 2 }];
+  if (n === 2) return [{ x: w * 0.32, y: h / 2 }, { x: w * 0.68, y: h / 2 }];
+  if (n === 3) {
+    return [
+      { x: w * 0.5, y: h * 0.32 },
+      { x: w * 0.3, y: h * 0.68 },
+      { x: w * 0.7, y: h * 0.68 },
+    ];
+  }
+  if (n === 4) {
+    return [
+      { x: w * 0.32, y: h * 0.32 },
+      { x: w * 0.68, y: h * 0.32 },
+      { x: w * 0.32, y: h * 0.68 },
+      { x: w * 0.68, y: h * 0.68 },
+    ];
+  }
+  return [
+    { x: w * 0.5, y: h * 0.28 },
+    { x: w * 0.28, y: h * 0.52 },
+    { x: w * 0.72, y: h * 0.52 },
+    { x: w * 0.32, y: h * 0.76 },
+    { x: w * 0.68, y: h * 0.76 },
+  ];
+}
+
 export function cellSvg(spec, px = 72) {
   if (!spec) return "";
   const w = px;
   const h = px;
-  const n = Math.max(1, Math.min(4, spec.n || 1));
+  const n = Math.max(1, Math.min(5, spec.n || 1));
   const r0 = px * scaleOf(spec.size);
-  const r = n > 2 ? r0 * 0.72 : r0;
+  const r = n >= 4 ? r0 * 0.52 : n === 3 ? r0 * 0.62 : r0;
   const fill = spec.fill ? "#5b3fa8" : "none";
   const stroke = "#3b2d7a";
   const rot = spec.rot || 0;
+  const pts = layoutPts(n, w, h);
   let inner = "";
-  for (let i = 0; i < n; i += 1) {
-    const cx = n === 1 ? w / 2 : (w * (i + 1)) / (n + 1);
-    const cy = h / 2;
-    inner += oneShape(spec.s, cx, cy, r, rot, fill, stroke);
+  for (const p of pts) {
+    inner += oneShape(spec.s, p.x, p.y, r, rot, fill, stroke);
   }
   if (spec.inner) {
     const ir = r * 0.48;
