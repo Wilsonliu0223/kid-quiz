@@ -29,7 +29,7 @@ import {
   familyMembers,
   getAffixFamily,
   wordMatchesAffix,
-} from "./en-morph.js?v=en-morph-v4";
+} from "./en-morph.js?v=en-morph-v5";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -1484,12 +1484,18 @@ async function markArticleMorph(roots) {
       pending.push(w);
     });
   }
-  for (const w of pending.slice(0, 16)) {
-    if (seq !== morphMarkSeq) return;
-    const morph = await analyzeEnglishMorph(w);
-    if (seq !== morphMarkSeq) return;
-    if (morph?.combo) paintMorphClass(list, w);
-  }
+  const jobs = pending.slice(0, 16);
+  let i = 0;
+  const worker = async () => {
+    while (i < jobs.length) {
+      if (seq !== morphMarkSeq) return;
+      const w = jobs[i++];
+      const morph = await analyzeEnglishMorph(w);
+      if (seq !== morphMarkSeq) return;
+      if (morph?.combo) paintMorphClass(list, w);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(4, jobs.length) }, () => worker()));
 }
 
 function bindSentencePlay(root) {

@@ -38,7 +38,7 @@ const NEVER_SPLIT = new Set([
 /** @type {{ form: string, kind: 'prefix'|'root', zh: string, examples: string[] }[]} */
 const AFFIXES = [
   { form: "un", kind: "prefix", zh: "不、相反", examples: ["unhappy", "unfair", "unkind", "unlock", "unable", "unknown", "unusual", "unpack"] },
-  { form: "re", kind: "prefix", zh: "再、重新", examples: ["replay", "rewrite", "rebuild", "return", "review", "restart", "reread", "reuse"] },
+  { form: "re", kind: "prefix", zh: "再、重新", examples: ["replay", "rewrite", "rebuild", "return", "review", "restart", "reread", "reuse", "replace"] },
   { form: "dis", kind: "prefix", zh: "不、分開", examples: ["dislike", "disappear", "disagree", "discover", "disconnect", "dishonest"] },
   { form: "pre", kind: "prefix", zh: "在前、預先", examples: ["preview", "preheat", "prepay", "preschool", "prepare", "prevent"] },
   { form: "mis", kind: "prefix", zh: "錯、誤", examples: ["mistake", "misspell", "misplace", "mismatch", "mislead"] },
@@ -228,9 +228,31 @@ function worthTrying(word) {
   return true;
 }
 
+function stemVariants(word) {
+  const w = normWord(word);
+  const out = [];
+  const add = (x) => {
+    if (x && /^[a-z]{4,}$/.test(x)) out.push(x);
+  };
+  add(w);
+  if (w.endsWith("ies") && w.length >= 6) add(w.slice(0, -3) + "y");
+  if (w.endsWith("es") && w.length >= 5) add(w.slice(0, -2));
+  if (w.endsWith("s") && !w.endsWith("ss") && w.length >= 5) add(w.slice(0, -1));
+  if (w.endsWith("ing") && w.length >= 7) {
+    add(w.slice(0, -3));
+    add(w.slice(0, -3) + "e");
+  }
+  if (w.endsWith("ed") && w.length >= 6) {
+    add(w.slice(0, -2));
+    add(w.slice(0, -1));
+    add(w.slice(0, -2) + "e");
+  }
+  return [...new Set(out)];
+}
+
 /** 夠長、值得查字首／字根（不保證拆得出來） */
 export function mayHaveMorph(word) {
-  return worthTrying(word);
+  return stemVariants(word).some((v) => worthTrying(v));
 }
 
 function localGuess(word) {
@@ -304,9 +326,14 @@ function decorate(parsed, word) {
   };
 }
 
-/** 不打網路：字族表能立刻拆出來的才算 */
+/** 不打網路：字族表能立刻拆出來的才算（含 -s/-ed/-ing） */
 export function peekLocalMorph(word) {
-  return decorate(localGuess(word), word);
+  const surface = normWord(word);
+  for (const v of stemVariants(surface)) {
+    const hit = decorate(localGuess(v), surface);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 /** 文章裡值得查 Wiktionary 的候選（已有底色的不必再排） */
@@ -360,12 +387,22 @@ export function wordMatchesAffix(word, kind, form) {
  */
 export async function analyzeEnglishMorph(word) {
   const w = normWord(word);
-  if (!worthTrying(w)) return null;
+  if (!mayHaveMorph(w)) return null;
   if (morphCache.has(w)) return morphCache.get(w);
 
-  const wiki = await fetchWikiEtymology(w);
-  const parsed = wiki ? parseEtymology(wiki) : null;
-  const result = decorate(parsed, w) || decorate(localGuess(w), w);
+  const local = peekLocalMorph(w);
+  if (local) {
+    morphCache.set(w, local);
+    return local;
+  }
+
+  let result = null;
+  for (const v of stemVariants(w)) {
+    const wiki = await fetchWikiEtymology(v);
+    const parsed = wiki ? parseEtymology(wiki) : null;
+    result = decorate(parsed, w) || decorate(localGuess(v), w);
+    if (result) break;
+  }
   morphCache.set(w, result);
   return result;
 }
