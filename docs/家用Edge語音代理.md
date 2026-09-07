@@ -12,7 +12,8 @@ powershell -ExecutionPolicy Bypass -File tools\install-edge-tts-home-task.ps1
 Start-ScheduledTask -TaskName kid-quiz-edge-tts-home
 ```
 
-之後每次登入 Windows 會自動開。日誌：`.local/edge-tts-home.log`。
+之後每次登入 Windows 會在背景自動開（沒有 CMD 視窗）。關掉黑色命令視窗不會停語音。日誌：`.local/edge-tts-home.log`。
+若要手動再開：工作排程啟動 `kid-quiz-edge-tts-home`，或雙擊 `tools\run-edge-tts-home.bat`（視窗會立刻關掉，代理留在背景）。
 
 3. 平板／手機開 https://wilsonliu0223.github.io/kid-quiz/ ，Ctrl+Shift+R 後點朗讀。
 

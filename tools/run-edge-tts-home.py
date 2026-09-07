@@ -30,6 +30,13 @@ _current_url = ""
 def log(msg: str) -> None:
     line = time.strftime("%Y-%m-%d %H:%M:%S") + " " + msg
     print(line, flush=True)
+    try:
+        log_path = ROOT / ".local" / "edge-tts-home.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+    except OSError:
+        pass
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -150,6 +157,9 @@ def pump_stdout(proc: subprocess.Popen) -> None:
 
 def start_tunnel(cloudflared: str) -> subprocess.Popen:
     local = f"http://{HOST}:{PORT}"
+    flags = 0
+    if os.name == "nt":
+        flags = subprocess.CREATE_NO_WINDOW
     return subprocess.Popen(
         [cloudflared, "tunnel", "--url", local, "--no-autoupdate"],
         stdout=subprocess.PIPE,
@@ -157,6 +167,7 @@ def start_tunnel(cloudflared: str) -> subprocess.Popen:
         text=True,
         encoding="utf-8",
         errors="replace",
+        creationflags=flags,
     )
 
 
