@@ -624,6 +624,64 @@ export function patchEnReviewZh(word, zh) {
   saveReview(next);
 }
 
+function hasCjkText(s) {
+  return /[\u3400-\u9fff]/.test(String(s || ""));
+}
+
+/** 翻牌用短中文：有漢字才算，長句取第一段 */
+function shortZh(s) {
+  const t = String(s || "")
+    .trim()
+    .replace(/^翻譯中…$/, "");
+  if (!hasCjkText(t)) return "";
+  if (t.length <= 20) return t;
+  const first = t.split(/[。；;\n]/)[0].trim();
+  if (first.length <= 24) return first;
+  return first.slice(0, 24);
+}
+
+async function zhForReviewEntry(entry) {
+  const hints = [
+    entry?.zh,
+    entry?.zhGloss,
+    entry?.contextGloss,
+    entry?.gloss,
+  ];
+  for (const h of hints) {
+    const s = shortZh(h);
+    if (s) return s;
+  }
+  const w = String(entry?.word || "").trim();
+  if (!w) return "";
+  const raw =
+    (await translateEnToZh(w, "TW")) || (await translateEnToZh(w, "CN")) || "";
+  return shortZh(raw) || (hasCjkText(raw) ? raw.trim() : "");
+}
+
+/** 幫還沒中文的複習字補上翻譯（加入翻牌、複習字區都會用） */
+export async function ensureReviewChinese() {
+  const list = loadReview();
+  if (!Array.isArray(list) || !list.length) return list;
+  let changed = false;
+  for (const item of list) {
+    const have = shortZh(item.zh) || shortZh(item.gloss);
+    if (have) {
+      if (!shortZh(item.zh)) {
+        item.zh = have;
+        changed = true;
+      }
+      continue;
+    }
+    const zh = await zhForReviewEntry(item);
+    if (zh) {
+      item.zh = zh;
+      changed = true;
+    }
+  }
+  if (changed) saveReview(list);
+  return list;
+}
+
 function bodyForLevel(art) {
   if (level === "l2") return art.bodyL2 || art.bodyL1;
   if (level === "l3") return art.bodyL3 || art.bodyL2 || art.bodyL1;
@@ -791,7 +849,9 @@ function bindUi() {
   $("#btn-en-gloss-zh-toggle")?.addEventListener("click", () => {
     toggleGlossZhExpanded();
   });
-  $("#btn-en-gloss-add")?.addEventListener("click", () => addCurrentGlossToReview());
+  $("#btn-en-gloss-add")?.addEventListener("click", () => {
+    void addCurrentGlossToReview();
+  });
   window.addEventListener("resize", () => syncDockVisibility());
 
   $("#btn-en-play-stop")?.addEventListener("click", () => stopPlayBar());
@@ -1772,25 +1832,56 @@ function hideGloss() {
   }
 }
 
-function addCurrentGlossToReview() {
+async function addCurrentGlossToReview() {
   if (!glossStack.length) return;
   const entry = glossStack[glossStack.length - 1];
-  const list = loadReview();
-  const key = entry.word.toLowerCase();
-  if (!list.some((x) => x.word.toLowerCase() === key)) {
-    list.unshift({
-      word: entry.word,
-      gloss: entry.gloss,
-      example: entry.example || "",
-      phonetic: entry.phonetic || "",
-      articleId: current?.id || "",
-      date: current?.date || todayIso(),
-      addedAt: new Date().toISOString(),
-      source: "manual",
-    });
-    saveReview(list);
+  const key = String(entry.word || "")
+    .trim()
+    .toLowerCase();
+  if (!key) return;
+  const addBtn = $("#btn-en-gloss-add");
+  const prevLabel = addBtn?.textContent;
+  if (addBtn) {
+    addBtn.disabled = true;
+    addBtn.textContent = "翻譯中…";
   }
-  deps?.showOk?.("已加入複習字", entry.word);
+  let zh = "";
+  try {
+    zh = await zhForReviewEntry(entry);
+  } finally {
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.textContent = prevLabel || "☆ 加入複習字";
+    }
+  }
+  const list = loadReview();
+  const existing = list.find((x) => String(x.word || "").toLowerCase() === key);
+  if (existing) {
+    if (zh && !shortZh(existing.zh)) {
+      existing.zh = zh;
+      saveReview(list);
+    }
+    deps?.showOk?.("已在複習字區", zh ? `${entry.word}　${zh}` : entry.word);
+    renderReviewStrip();
+    syncHubMeta();
+    return;
+  }
+  list.unshift({
+    word: entry.word,
+    gloss: entry.gloss,
+    zh,
+    example: entry.example || "",
+    phonetic: entry.phonetic || "",
+    articleId: current?.id || "",
+    date: current?.date || todayIso(),
+    addedAt: new Date().toISOString(),
+    source: "manual",
+  });
+  saveReview(list);
+  deps?.showOk?.(
+    "已加入複習字",
+    zh ? `${entry.word}　${zh}` : `${entry.word}（中文稍後再補）`
+  );
   renderReviewStrip();
   syncHubMeta();
 }
@@ -1811,6 +1902,7 @@ function renderReviewStrip() {
 async function openReview() {
   await ensureArticles();
   seedTodayPinIntoReview();
+  await ensureReviewChinese();
   renderReviewList();
   syncHubMeta();
   deps?.showView("enReview");
@@ -1832,13 +1924,15 @@ function renderReviewList() {
     row.className = "en-review-item";
     const ex = String(item.example || "").trim();
     const gloss = String(item.gloss || "").trim();
+    const zh = String(item.zh || "").trim();
     row.innerHTML = `<div class="en-review-head">
       <strong>${escapeHtml(item.word)}</strong>
       <button type="button" class="btn-text en-review-speak" aria-label="朗讀 ${escapeHtml(item.word)}">🔊</button>
       ${item.source === "today" ? '<span class="en-review-tag">今日</span>' : ""}
       <button type="button" class="btn-text en-review-remove">移除</button>
     </div>
-      ${gloss ? `<p>${escapeHtml(gloss)}</p>` : ""}
+      ${zh ? `<p>${escapeHtml(zh)}</p>` : ""}
+      ${gloss && gloss !== zh ? `<p>${escapeHtml(gloss)}</p>` : ""}
       ${ex ? `<p class="en-review-ex">${escapeHtml(ex)}</p>` : ""}`;
     row.querySelector(".en-review-speak")?.addEventListener("click", async () => {
       await playWithBar(item.word, { label: "單字播放中" });
@@ -2044,6 +2138,7 @@ function ensureTodayPin() {
 
 function seedTodayPinIntoReview() {
   mergePlayedIntoReview(ensureTodayPin());
+  void ensureReviewChinese();
 }
 
 function clearManualReview() {

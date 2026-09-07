@@ -13,7 +13,8 @@ import { enLessonFilterAliases, groupLessonsForEnExams } from "./exam-books.js";
 import {
   listEnReviewItems,
   patchEnReviewZh,
-} from "./en-daily.js?v=en-daily-v57";
+  ensureReviewChinese,
+} from "./en-daily.js?v=en-daily-v58";
 import { speakEnglish, unlockSpeechFromGesture } from "./english.js?v=en-speak-v27";
 
 const PAIR_OPTIONS = [10, 20];
@@ -375,10 +376,11 @@ function renderReviewPanel() {
   }
 }
 
-export function openEnFlipSetup() {
+export async function openEnFlipSetup() {
   syncPairChips();
   syncDeckChips();
   renderJoyLessons();
+  await ensureReviewChinese();
   renderReviewPanel();
   refreshDuoBattleUI();
   deps.showView("enFlipSetup");
@@ -613,7 +615,9 @@ function addExtraPair() {
 }
 
 function bindEvents() {
-  $("#btn-en-hub-flip")?.addEventListener("click", () => openEnFlipSetup());
+  $("#btn-en-hub-flip")?.addEventListener("click", () => {
+    void openEnFlipSetup();
+  });
   $("#btn-en-flip-setup-back")?.addEventListener("click", () => deps.showView("enHub"));
   document.querySelectorAll("[data-en-flip-pairs]").forEach((btn) => {
     btn.addEventListener("click", () => {
