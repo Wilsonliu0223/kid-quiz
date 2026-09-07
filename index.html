@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.19";
+        var V = "39.20";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.39" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.40" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -574,6 +574,7 @@
             <p class="en-gloss-example" id="en-gloss-example"></p>
             <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
             <div class="en-gloss-related" id="en-gloss-related" hidden></div>
+            <div class="en-gloss-morph" id="en-gloss-morph" hidden></div>
             <p class="en-gloss-source" id="en-gloss-source" hidden></p>
             <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-gloss-add">
               ☆ 加入複習字
@@ -2551,7 +2552,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.57").catch((e) => {
+      import("./js/app.js?v=app-v45.58").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

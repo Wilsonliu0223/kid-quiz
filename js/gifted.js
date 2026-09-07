@@ -6,7 +6,7 @@ import {
   GIFTED_BANK,
   GIFTED_CAT_LABEL,
   GIFTED_GRADE_LABEL,
-} from "./gifted-bank.js?v=gifted-bank-v9";
+} from "./gifted-bank.js?v=gifted-bank-v10";
 import { visPromptHtml, visChoiceHtml } from "./gifted-fig.js?v=gifted-fig-v2";
 
 const CATS = ["fig", "lang", "math", "mem"];
@@ -34,7 +34,7 @@ function key() {
   return `kid-quiz-gifted-blind-${getSelectedChild()}`;
 }
 
-const PAPER_VER = 10;
+const PAPER_VER = 11;
 
 function loadState() {
   try {
