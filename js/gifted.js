@@ -1,32 +1,33 @@
 /**
- * 資優練習：10／20／60 題，程度可選，交卷評分
+ * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.14";
+import { CONFIG } from "./config.site.js?v=config-v45.15";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
   GIFTED_CAT_LABEL,
-  GIFTED_LV_LABEL,
-} from "./gifted-bank.js?v=gifted-bank-v2";
+  GIFTED_GRADE_LABEL,
+} from "./gifted-bank.js?v=gifted-bank-v3";
 
+const CATS = ["fig", "lang", "math", "mem"];
 const QUOTAS = {
-  10: [4, 3, 3],
-  20: [7, 7, 6],
-  60: [20, 20, 20],
+  10: [3, 3, 2, 2],
+  20: [5, 5, 5, 5],
+  60: [15, 15, 15, 15],
 };
 const LIMIT_MS = {
   10: 8 * 60 * 1000,
-  20: 16 * 60 * 1000,
-  60: 40 * 60 * 1000,
+  20: 18 * 60 * 1000,
+  60: 45 * 60 * 1000,
 };
-const CATS = ["fig", "lang", "math"];
+const LOWER = { 56: 34, 34: 23, 23: 12 };
 const $ = (sel) => document.querySelector(sel);
 
-/** @type {{ showView: Function, showWarn?: Function } | null} */
+/** @type {{ showView: Function, showWarn?: Function, confirm?: Function } | null} */
 let deps = null;
 let tick = null;
 let pickN = 10;
-let pickLv = 1;
+let pickGrade = 12;
 
 function key() {
   return `kid-quiz-gifted-blind-${getSelectedChild()}`;
@@ -92,29 +93,66 @@ function stopTick() {
   }
 }
 
+function seenKey() {
+  return `kid-quiz-gifted-seen-${getSelectedChild()}`;
+}
+
+function loadSeen() {
+  try {
+    const a = JSON.parse(localStorage.getItem(seenKey()) || "[]");
+    return Array.isArray(a) ? a : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberSeen(ids) {
+  const prev = loadSeen();
+  const next = [...ids, ...prev.filter((x) => !ids.includes(x))].slice(0, 160);
+  localStorage.setItem(seenKey(), JSON.stringify(next));
+}
+
+function poolFor(cat, grade, need) {
+  const same = GIFTED_BANK.filter((q) => q.cat === cat && q.grade === grade);
+  if (same.length >= need) return same;
+  const extra = [];
+  let g = LOWER[grade];
+  while (g && same.length + extra.length < need) {
+    extra.push(...GIFTED_BANK.filter((q) => q.cat === cat && q.grade === g));
+    g = LOWER[g];
+  }
+  return [...same, ...extra];
+}
+
 function takeCat(pool, n, rnd) {
-  const easy = shuffle(
-    pool.filter((q) => q.lv !== 2),
+  const seen = new Set(loadSeen());
+  const fresh = shuffle(
+    pool.filter((q) => !seen.has(q.id)),
     rnd
   );
-  const hard = shuffle(
-    pool.filter((q) => q.lv === 2),
+  const rest = shuffle(
+    pool.filter((q) => seen.has(q.id)),
     rnd
   );
-  if (pickLv === 1) return [...easy, ...hard].slice(0, n);
-  return shuffle([...easy, ...hard], rnd).slice(0, n);
+  const picked = [];
+  const used = new Set();
+  for (const q of [...fresh, ...rest]) {
+    if (used.has(q.id)) continue;
+    used.add(q.id);
+    picked.push(q);
+    if (picked.length >= n) break;
+  }
+  return picked;
 }
 
 function buildPaper(n) {
-  const rnd = seedRng(`${getSelectedChild()}|gifted-v3|${n}|${pickLv}|${Date.now()}`);
-  const by = { fig: [], lang: [], math: [] };
-  for (const q of GIFTED_BANK) {
-    if (by[q.cat]) by[q.cat].push(q);
-  }
+  const rnd = seedRng(
+    `${getSelectedChild()}|gifted-v4|${n}|${pickGrade}|${Date.now()}`
+  );
   const quota = QUOTAS[n] || QUOTAS[10];
   const picked = [];
   CATS.forEach((cat, i) => {
-    picked.push(...takeCat(by[cat], quota[i], rnd));
+    picked.push(...takeCat(poolFor(cat, pickGrade, quota[i]), quota[i], rnd));
   });
   return shuffle(picked, rnd).map((q) => {
     const order = shuffle(q.options.map((_, i) => i), rnd);
@@ -123,7 +161,7 @@ function buildPaper(n) {
     return {
       id: q.id,
       cat: q.cat,
-      lv: q.lv,
+      grade: q.grade,
       q: q.q,
       options,
       answer,
@@ -134,8 +172,14 @@ function buildPaper(n) {
 
 function scoreOf(st) {
   let ok = 0;
-  const by = { fig: { ok: 0, n: 0 }, lang: { ok: 0, n: 0 }, math: { ok: 0, n: 0 } };
+  const by = {
+    fig: { ok: 0, n: 0 },
+    lang: { ok: 0, n: 0 },
+    math: { ok: 0, n: 0 },
+    mem: { ok: 0, n: 0 },
+  };
   st.items.forEach((q, i) => {
+    if (!by[q.cat]) return;
     by[q.cat].n += 1;
     if (st.picks[i] === q.answer) {
       ok += 1;
@@ -148,18 +192,24 @@ function scoreOf(st) {
 }
 
 function bandOf(pct) {
-  if (pct >= 90) return { title: "表現很好", hint: "答對很多，再挑戰更長或較難也可以。" };
-  if (pct >= 75) return { title: "不錯", hint: "大部分都對，錯的可以跟爸爸媽媽一起看。" };
-  if (pct >= 60) return { title: "還可以", hint: "有基礎了，再練幾回會更熟。" };
-  return { title: "再練練", hint: "先選 10 題、小一升小二可做，慢慢加長。" };
+  if (pct >= 90) return { title: "表現很好", hint: "這一檔大多都對。可以加長題數，或試下一個年級。" };
+  if (pct >= 75) return { title: "不錯", hint: "四個向度裡，較低的那一塊可以再練。" };
+  if (pct >= 60) return { title: "還可以", hint: "先把這一檔的 10 題練熟，再加長。" };
+  return { title: "再練練", hint: "可改選較低年級，或先寫 10 題。" };
+}
+
+function catLine(sc) {
+  return CATS.map(
+    (c) => `${GIFTED_CAT_LABEL[c]} ${sc.by[c].ok}/${sc.by[c].n}`
+  ).join("　");
 }
 
 function paintModeButtons() {
   document.querySelectorAll("[data-gifted-n]").forEach((btn) => {
     btn.classList.toggle("is-on", Number(btn.dataset.giftedN) === pickN);
   });
-  document.querySelectorAll("[data-gifted-lv]").forEach((btn) => {
-    btn.classList.toggle("is-on", Number(btn.dataset.giftedLv) === pickLv);
+  document.querySelectorAll("[data-gifted-grade]").forEach((btn) => {
+    btn.classList.toggle("is-on", Number(btn.dataset.giftedGrade) === pickGrade);
   });
 }
 
@@ -185,7 +235,7 @@ function startNew() {
   saveState({
     startedAt: Date.now(),
     n,
-    lv: pickLv,
+    grade: pickGrade,
     limitMs: LIMIT_MS[n],
     items,
     picks: items.map(() => -1),
@@ -199,19 +249,19 @@ function renderDone(st) {
   const sc = scoreOf(st);
   const band = bandOf(sc.pct);
   const mins = Math.max(1, Math.round((st.finishedAt - st.startedAt) / 60000));
-  const lvName = GIFTED_LV_LABEL[st.lv] || GIFTED_LV_LABEL[1];
+  const gName = GIFTED_GRADE_LABEL[st.grade] || GIFTED_GRADE_LABEL[12];
   $("#gifted-done-band").textContent = band.title;
   $("#gifted-done-score").textContent = `${sc.ok} / ${sc.total}　（${sc.pct} 分）`;
-  $("#gifted-done-break").textContent =
-    `圖形 ${sc.by.fig.ok}/${sc.by.fig.n}　語文 ${sc.by.lang.ok}/${sc.by.lang.n}　數學 ${sc.by.math.ok}/${sc.by.math.n}`;
+  $("#gifted-done-break").textContent = catLine(sc);
   $("#gifted-done-msg").textContent =
-    `${st.n} 題 · ${lvName} · 約 ${mins} 分鐘（限時 ${formatMmSs(limitMsOf(st))}）。${band.hint}`;
+    `${st.n} 題 · ${gName} · 約 ${mins} 分鐘（限時 ${formatMmSs(limitMsOf(st))}）。${band.hint}　這不是魏氏正式測驗。`;
   deps.showView("giftedDone");
 }
 
 function finish(st) {
   st.finishedAt = Date.now();
   saveState(st);
+  rememberSeen(st.items.map((q) => q.id));
   stopTick();
   renderDone(st);
 }
@@ -286,21 +336,21 @@ function renderParent() {
   }
   const sc = scoreOf(st);
   const mins = Math.round((st.finishedAt - st.startedAt) / 60000);
-  const lvName = GIFTED_LV_LABEL[st.lv] || "";
+  const gName = GIFTED_GRADE_LABEL[st.grade] || "";
   const lines = [
     `總分 ${sc.ok} / ${sc.total}（${sc.pct} 分）　用時約 ${mins} 分鐘，限時 ${formatMmSs(limitMsOf(st))}`,
-    `${st.n} 題 · ${lvName}`,
-    `圖形 ${sc.by.fig.ok}/${sc.by.fig.n}　語文 ${sc.by.lang.ok}/${sc.by.lang.n}　數學 ${sc.by.math.ok}/${sc.by.math.n}`,
-    "這不是市府鑑定、也沒有 PR。只給家裡觀察。",
+    `${st.n} 題 · ${gName}`,
+    catLine(sc),
+    "這不是官方魏氏／WISC、沒有 IQ、也沒有 PR。只給家裡觀察四個向度。",
     "",
   ];
   st.items.forEach((q, i) => {
     const pick = st.picks[i];
     const good = pick === q.answer;
     const got = pick >= 0 ? q.options[pick] : "（空白）";
-    const tag = q.lv === 2 ? "較難" : "小一升小二";
+    const gtag = GIFTED_GRADE_LABEL[q.grade] || "";
     lines.push(
-      `${good ? "○" : "×"} ${i + 1}.【${GIFTED_CAT_LABEL[q.cat]}·${tag}】${q.q}`
+      `${good ? "○" : "×"} ${i + 1}.【${GIFTED_CAT_LABEL[q.cat] || q.cat}·${gtag}】${q.q}`
     );
     lines.push(`　　選：${got}　答：${q.options[q.answer]}`);
     if (!good && q.explain) lines.push(`　　${q.explain}`);
@@ -333,9 +383,9 @@ export function initGifted(d) {
       paintModeButtons();
     });
   });
-  document.querySelectorAll("[data-gifted-lv]").forEach((btn) => {
+  document.querySelectorAll("[data-gifted-grade]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      pickLv = Number(btn.dataset.giftedLv);
+      pickGrade = Number(btn.dataset.giftedGrade);
       paintModeButtons();
     });
   });
