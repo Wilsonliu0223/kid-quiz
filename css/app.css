@@ -650,6 +650,36 @@ body {
   max-height: 70vh;
 }
 
+#view-gifted-quiz .quiz-header {
+  gap: 6px;
+}
+
+#gifted-progress {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.gifted-timer {
+  flex-shrink: 0;
+  font-size: 1.28rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: #fff;
+  background: #e85d2a;
+  padding: 6px 12px;
+  border-radius: 999px;
+  min-width: 4.8em;
+  text-align: center;
+}
+
+.gifted-timer.is-low {
+  background: #c41e3a;
+}
+
 .card-disabled {
   opacity: 0.55;
   cursor: not-allowed;

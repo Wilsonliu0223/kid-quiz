@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.28" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.29" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -112,7 +112,7 @@
             </button>
             <button type="button" class="card card-gifted" id="btn-start-gifted">
               <span class="card-title">思考挑戰</span>
-              <span class="card-desc">二升三資優類似 · 盲測</span>
+              <span class="card-desc">資優練習</span>
             </button>
             <button type="button" class="card card-sudoku" id="btn-start-sudoku">
               <span class="card-title">數獨</span>
@@ -2163,7 +2163,7 @@
         <header class="quiz-header">
           <button type="button" class="btn-text" id="btn-gifted-quiz-back">← 暫停</button>
           <span class="quiz-subject" id="gifted-progress">1 / 60</span>
-          <span class="quiz-progress" id="gifted-timer">40:00</span>
+          <span class="gifted-timer" id="gifted-timer" aria-label="剩餘時間">40:00</span>
         </header>
         <div class="gifted-quiz-body">
           <p class="gifted-q" id="gifted-q"></p>
@@ -2393,7 +2393,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.36").catch((e) => {
+      import("./js/app.js?v=app-v45.37").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

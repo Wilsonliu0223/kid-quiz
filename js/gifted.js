@@ -1,7 +1,7 @@
 /**
  * 小二升小三資優初選類似盲測（自編題，非正式鑑定）
  */
-import { CONFIG } from "./config.site.js?v=config-v45.11";
+import { CONFIG } from "./config.site.js?v=config-v45.12";
 import { getSelectedChild } from "./store.js";
 import { GIFTED_BANK, GIFTED_CAT_LABEL } from "./gifted-bank.js?v=gifted-bank-v1";
 
@@ -77,6 +77,14 @@ function formatMmSs(ms) {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
+function paintTimer(st) {
+  const t = $("#gifted-timer");
+  if (!t) return;
+  const left = remainingMs(st);
+  t.textContent = formatMmSs(left);
+  t.classList.toggle("is-low", left <= 5 * 60 * 1000);
+}
+
 function stopTick() {
   if (tick) {
     clearInterval(tick);
@@ -140,7 +148,7 @@ function renderQ() {
   const q = st.items[st.idx];
   const n = st.items.length;
   $("#gifted-progress").textContent = `${GIFTED_CAT_LABEL[q.cat]} · ${st.idx + 1} / ${n}`;
-  $("#gifted-timer").textContent = formatMmSs(remainingMs(st));
+  paintTimer(st);
   $("#gifted-q").textContent = q.q;
   const box = $("#gifted-choices");
   box.innerHTML = "";
@@ -187,8 +195,7 @@ function openQuiz() {
       finish(cur);
       return;
     }
-    const t = $("#gifted-timer");
-    if (t) t.textContent = formatMmSs(remainingMs(cur));
+    paintTimer(cur);
   }, 500);
 }
 
