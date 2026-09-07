@@ -34,6 +34,8 @@ let level = /** @type {'l1'|'l2'|'l3'} */ (
 );
 /** @type {typeof articles[0] | null} */
 let current = null;
+/** 從複習字點進原文時，返回要回到複習字區 */
+let readerFromReview = false;
 /** @type {{ word: string, gloss: string, example: string, phonetic?: string }[]} */
 let glossStack = [];
 /** 避免連點時舊的字典查詢覆蓋新面板 */
@@ -124,6 +126,53 @@ const CAT_LABEL = {
 
 function titleZhOf(art) {
   return String(art?.titleZh || art?.dialogue?.title_zh || "").trim();
+}
+
+function escapeRegExp(s) {
+  return String(s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function articleHasWord(art, word) {
+  const w = String(word || "").trim().toLowerCase();
+  if (!w || !art) return false;
+  for (const v of art.vocab || []) {
+    if (String(v.word || "").trim().toLowerCase() === w) return true;
+  }
+  const hay = [art.title, art.bodyL1, art.bodyL2, art.bodyL3, art.titleZh]
+    .map((x) => String(x || "").toLowerCase())
+    .join("\n");
+  try {
+    return new RegExp(`(?:^|[^a-z])${escapeRegExp(w)}(?:[^a-z]|$)`, "i").test(hay);
+  } catch {
+    return hay.includes(w);
+  }
+}
+
+function findArticleForWord(word, hintId, hintDate) {
+  const id = String(hintId || "").trim();
+  if (id) {
+    const hit = articles.find((a) => a.id === id);
+    if (hit) return hit;
+  }
+  const w = String(word || "").trim();
+  if (!w) return null;
+  const date = String(hintDate || "").trim();
+  const ranked = articles.filter((a) => articleHasWord(a, w));
+  if (!ranked.length) return null;
+  ranked.sort((a, b) => {
+    const da = a.date === date ? 0 : 1;
+    const db = b.date === date ? 0 : 1;
+    if (da !== db) return da - db;
+    return String(b.date).localeCompare(String(a.date));
+  });
+  return ranked[0];
+}
+
+function articleLinkLabel(art) {
+  if (!art) return "";
+  const zh = titleZhOf(art);
+  const en = String(art.title || "").trim();
+  return zh || en || "原文";
 }
 
 const $ = (sel) => document.querySelector(sel);
@@ -799,6 +848,11 @@ function bindUi() {
   $("#btn-en-daily-read-back")?.addEventListener("click", () => {
     stopPlayBar({ dismiss: true });
     hideGloss();
+    if (readerFromReview) {
+      readerFromReview = false;
+      void openReview();
+      return;
+    }
     openDailyList();
   });
   $("#btn-en-daily-speak-all")?.addEventListener("click", async () => {
@@ -985,6 +1039,7 @@ function bindUi() {
 }
 
 export async function openDailyList() {
+  readerFromReview = false;
   syncLevelChips();
   const list = $("#en-daily-list");
   if (list) list.innerHTML = "<p class=\"en-daily-loading\">載入中…</p>";
@@ -1915,9 +1970,23 @@ async function openReview() {
   await ensureArticles();
   seedTodayPinIntoReview();
   await ensureReviewChinese();
+  attachArticleIdsToReview();
   renderReviewList();
   syncHubMeta();
   deps?.showView("enReview");
+}
+
+function attachArticleIdsToReview() {
+  const list = loadReview();
+  let changed = false;
+  for (const item of list) {
+    if (String(item.articleId || "").trim()) continue;
+    const art = findArticleForWord(item.word, "", item.date);
+    if (!art) continue;
+    item.articleId = art.id;
+    changed = true;
+  }
+  if (changed) saveReview(list);
 }
 
 function renderReviewList() {
@@ -1937,6 +2006,8 @@ function renderReviewList() {
     const ex = String(item.example || "").trim();
     const gloss = String(item.gloss || "").trim();
     const zh = String(item.zh || "").trim();
+    const art = findArticleForWord(item.word, item.articleId, item.date);
+    const artLabel = articleLinkLabel(art);
     row.innerHTML = `<div class="en-review-head">
       <strong>${escapeHtml(item.word)}</strong>
       <button type="button" class="btn-text en-review-speak" aria-label="朗讀 ${escapeHtml(item.word)}">🔊</button>
@@ -1945,7 +2016,12 @@ function renderReviewList() {
     </div>
       ${zh ? `<p>${escapeHtml(zh)}</p>` : ""}
       ${gloss && gloss !== zh ? `<p>${escapeHtml(gloss)}</p>` : ""}
-      ${ex ? `<p class="en-review-ex">${escapeHtml(ex)}</p>` : ""}`;
+      ${ex ? `<p class="en-review-ex">${escapeHtml(ex)}</p>` : ""}
+      ${
+        art
+          ? `<button type="button" class="btn-text en-review-article">原文：${escapeHtml(artLabel)}</button>`
+          : ""
+      }`;
     row.querySelector(".en-review-speak")?.addEventListener("click", async () => {
       await playWithBar(item.word, { label: "單字播放中" });
     });
@@ -1953,6 +2029,10 @@ function renderReviewList() {
       saveReview(loadReview().filter((x) => x.word.toLowerCase() !== item.word.toLowerCase()));
       renderReviewList();
       syncHubMeta();
+    });
+    row.querySelector(".en-review-article")?.addEventListener("click", () => {
+      readerFromReview = true;
+      openReader(art.id);
     });
     box.appendChild(row);
   }
@@ -2021,6 +2101,7 @@ function uniqWordEntries(items, source) {
       word: w,
       gloss: String(item.gloss || "").trim(),
       source,
+      articleId: String(item.articleId || "").trim(),
     });
   }
   return out;
@@ -2030,7 +2111,9 @@ function collectTodayVocab() {
   const today = todayIso();
   const items = [];
   for (const art of articles.filter((a) => a.date === today)) {
-    for (const v of art.vocab || []) items.push(v);
+    for (const v of art.vocab || []) {
+      items.push({ ...v, articleId: art.id });
+    }
   }
   return uniqWordEntries(items, "today");
 }
@@ -2063,7 +2146,7 @@ function mergePlayedIntoReview(entries) {
       gloss: entry.gloss || "",
       example: "",
       phonetic: "",
-      articleId: "",
+      articleId: String(entry.articleId || "").trim(),
       date: todayIso(),
       addedAt: new Date().toISOString(),
       source: entry.source === "today" ? "today" : "manual",
@@ -2104,6 +2187,7 @@ function loadTodayPin() {
       .map((w) => ({
         word: String(w?.word || "").trim(),
         gloss: String(w?.gloss || "").trim(),
+        articleId: String(w?.articleId || "").trim(),
         source: "today",
       }))
       .filter((w) => w.word.length >= 2);
@@ -2120,6 +2204,7 @@ function saveTodayPin(words) {
       words: (words || []).map((w) => ({
         word: w.word,
         gloss: w.gloss || "",
+        articleId: w.articleId || "",
       })),
     })
   );

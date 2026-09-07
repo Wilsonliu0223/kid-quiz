@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.22";
+import { CONFIG } from "./config.site.js?v=config-v45.23";
 import {
   loadZhItems,
   loadEnItems,
@@ -96,7 +96,7 @@ import {
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v9";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v59";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v60";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v3";
 import {
   addMistake,
