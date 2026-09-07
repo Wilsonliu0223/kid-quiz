@@ -1,7 +1,6 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.29";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
@@ -596,16 +595,6 @@ function renderParent() {
   deps.showView("giftedParent");
 }
 
-function askParentThen(fn) {
-  const pin = prompt("家長密碼");
-  if (pin == null) return;
-  if (pin !== String(CONFIG.PARENT_PIN || "")) {
-    deps.showWarn?.("密碼不對", "");
-    return;
-  }
-  fn();
-}
-
 export function initGifted(d) {
   deps = d;
 
@@ -683,14 +672,14 @@ export function initGifted(d) {
     deps.showView("home");
   });
   $("#btn-gifted-done-parent")?.addEventListener("click", () => {
-    askParentThen(() => renderParent());
+    renderParent();
   });
   $("#btn-gifted-done-again")?.addEventListener("click", () => {
     localStorage.removeItem(key());
     showIntro();
   });
   $("#btn-gifted-parent")?.addEventListener("click", () => {
-    askParentThen(() => renderParent());
+    renderParent();
   });
   $("#btn-gifted-parent-back")?.addEventListener("click", () => {
     const st = loadState();
@@ -698,9 +687,7 @@ export function initGifted(d) {
     else showIntro();
   });
   $("#btn-gifted-reset")?.addEventListener("click", () => {
-    askParentThen(() => {
-      localStorage.removeItem(key());
-      showIntro();
-    });
+    localStorage.removeItem(key());
+    showIntro();
   });
 }
