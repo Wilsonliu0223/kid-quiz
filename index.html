@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.29" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.30" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -2148,14 +2148,27 @@
         <div class="gifted-intro-body">
           <h2 class="gifted-title">思考挑戰</h2>
           <p id="gifted-intro-fresh">
-            類似台中市<strong>小二升小三資優初選</strong>：圖形、語文、數學推理。不是市府考卷，也沒有 PR。
-            共 60 題（每類 20 題）、限時 40 分鐘。這次是盲測，沒有練習關。
+            圖形、語文、數學推理練習。不是市府考卷，也沒有 PR。交卷後會看到分數。
           </p>
+          <div id="gifted-mode-box" class="gifted-mode-box">
+            <p class="gifted-mode-label">題數</p>
+            <div class="gifted-seg">
+              <button type="button" class="gifted-seg-btn is-on" data-gifted-n="10">10 題</button>
+              <button type="button" class="gifted-seg-btn" data-gifted-n="20">20 題</button>
+              <button type="button" class="gifted-seg-btn" data-gifted-n="60">60 題</button>
+            </div>
+            <p class="gifted-mode-label">程度</p>
+            <div class="gifted-seg">
+              <button type="button" class="gifted-seg-btn is-on" data-gifted-lv="1">小一升小二可做</button>
+              <button type="button" class="gifted-seg-btn" data-gifted-lv="2">含較難</button>
+            </div>
+            <p class="gifted-mode-hint">10 題約 8 分鐘、20 題約 16 分鐘、60 題 40 分鐘。</p>
+          </div>
           <p id="gifted-intro-mid" hidden>上次還沒寫完，可以接著寫。時間會繼續算。</p>
-          <p id="gifted-intro-done" hidden>這位小朋友這次已經寫過了。</p>
-          <button type="button" class="btn btn-primary btn-block" id="btn-gifted-start">開始盲測</button>
+          <p id="gifted-intro-done" hidden>上次已交卷，成績在結果頁。再開始會蓋掉上次紀錄。</p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-gifted-start">開始</button>
           <button type="button" class="btn btn-primary btn-block" id="btn-gifted-resume" hidden>繼續寫</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-parent" hidden>家長看結果</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-parent" hidden>家長看詳解</button>
         </div>
       </section>
 
@@ -2178,10 +2191,14 @@
 
       <section id="view-gifted-done" class="view view-hidden" aria-label="思考挑戰完成">
         <header class="app-header">
-          <h2 class="result-title">寫完了</h2>
-          <p id="gifted-done-msg">這次寫完了，謝謝。</p>
+          <h2 class="result-title" id="gifted-done-band">寫完了</h2>
+          <p class="gifted-done-score" id="gifted-done-score">0 / 10</p>
+          <p id="gifted-done-break"></p>
+          <p id="gifted-done-msg"></p>
         </header>
         <footer class="result-footer">
+          <button type="button" class="btn btn-primary btn-block" id="btn-gifted-done-parent">家長看詳解</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-done-again">再寫一次</button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-done-home">回首頁</button>
         </footer>
       </section>
@@ -2393,7 +2410,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.37").catch((e) => {
+      import("./js/app.js?v=app-v45.38").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

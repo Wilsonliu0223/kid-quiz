@@ -615,6 +615,44 @@ body {
 .gifted-title {
   margin: 8px 0 12px;
 }
+.gifted-mode-box {
+  margin: 0 0 16px;
+}
+.gifted-mode-label {
+  margin: 10px 0 6px;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.gifted-mode-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.gifted-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gifted-seg-btn {
+  border: 2px solid #c8b6ef;
+  background: #fff;
+  color: #4a2f8c;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.gifted-seg-btn.is-on {
+  background: #5b3fa8;
+  border-color: #5b3fa8;
+  color: #fff;
+}
+.gifted-done-score {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #4a2f8c;
+  margin: 4px 0 8px;
+}
 .gifted-q {
   font-size: 1.15rem;
   font-weight: 700;

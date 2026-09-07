@@ -1,17 +1,32 @@
 /**
- * 小二升小三資優初選類似盲測（自編題，非正式鑑定）
+ * 資優練習：10／20／60 題，程度可選，交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.12";
+import { CONFIG } from "./config.site.js?v=config-v45.13";
 import { getSelectedChild } from "./store.js";
-import { GIFTED_BANK, GIFTED_CAT_LABEL } from "./gifted-bank.js?v=gifted-bank-v1";
+import {
+  GIFTED_BANK,
+  GIFTED_CAT_LABEL,
+  GIFTED_LV_LABEL,
+} from "./gifted-bank.js?v=gifted-bank-v2";
 
-const PER_CAT = 20;
-const LIMIT_MS = 40 * 60 * 1000;
+const QUOTAS = {
+  10: [4, 3, 3],
+  20: [7, 7, 6],
+  60: [20, 20, 20],
+};
+const LIMIT_MS = {
+  10: 8 * 60 * 1000,
+  20: 16 * 60 * 1000,
+  60: 40 * 60 * 1000,
+};
+const CATS = ["fig", "lang", "math"];
 const $ = (sel) => document.querySelector(sel);
 
 /** @type {{ showView: Function, showWarn?: Function } | null} */
 let deps = null;
 let tick = null;
+let pickN = 10;
+let pickLv = 1;
 
 function key() {
   return `kid-quiz-gifted-blind-${getSelectedChild()}`;
@@ -47,27 +62,12 @@ function shuffle(list, rnd) {
   return a;
 }
 
-function buildPaper() {
-  const rnd = seedRng(`${getSelectedChild()}|gifted-v1`);
-  const by = { fig: [], lang: [], math: [] };
-  for (const q of GIFTED_BANK) {
-    if (by[q.cat]) by[q.cat].push(q);
-  }
-  const picked = [];
-  for (const cat of ["fig", "lang", "math"]) {
-    picked.push(...shuffle(by[cat], rnd).slice(0, PER_CAT));
-  }
-  return picked.map((q) => {
-    const order = shuffle(q.options.map((_, i) => i), rnd);
-    const options = order.map((i) => q.options[i]);
-    const answer = order.indexOf(q.answer);
-    return { id: q.id, cat: q.cat, q: q.q, options, answer, explain: q.explain };
-  });
+function limitMsOf(st) {
+  return st.limitMs || LIMIT_MS[st.n] || LIMIT_MS[60];
 }
 
 function remainingMs(st) {
-  const end = st.startedAt + LIMIT_MS;
-  return Math.max(0, end - Date.now());
+  return Math.max(0, st.startedAt + limitMsOf(st) - Date.now());
 }
 
 function formatMmSs(ms) {
@@ -92,6 +92,46 @@ function stopTick() {
   }
 }
 
+function takeCat(pool, n, rnd) {
+  const easy = shuffle(
+    pool.filter((q) => q.lv !== 2),
+    rnd
+  );
+  const hard = shuffle(
+    pool.filter((q) => q.lv === 2),
+    rnd
+  );
+  if (pickLv === 1) return [...easy, ...hard].slice(0, n);
+  return shuffle([...easy, ...hard], rnd).slice(0, n);
+}
+
+function buildPaper(n) {
+  const rnd = seedRng(`${getSelectedChild()}|gifted-v3|${n}|${pickLv}|${Date.now()}`);
+  const by = { fig: [], lang: [], math: [] };
+  for (const q of GIFTED_BANK) {
+    if (by[q.cat]) by[q.cat].push(q);
+  }
+  const quota = QUOTAS[n] || QUOTAS[10];
+  const picked = [];
+  CATS.forEach((cat, i) => {
+    picked.push(...takeCat(by[cat], quota[i], rnd));
+  });
+  return shuffle(picked, rnd).map((q) => {
+    const order = shuffle(q.options.map((_, i) => i), rnd);
+    const options = order.map((i) => q.options[i]);
+    const answer = order.indexOf(q.answer);
+    return {
+      id: q.id,
+      cat: q.cat,
+      lv: q.lv,
+      q: q.q,
+      options,
+      answer,
+      explain: q.explain,
+    };
+  });
+}
+
 function scoreOf(st) {
   let ok = 0;
   const by = { fig: { ok: 0, n: 0 }, lang: { ok: 0, n: 0 }, math: { ok: 0, n: 0 } };
@@ -102,7 +142,25 @@ function scoreOf(st) {
       by[q.cat].ok += 1;
     }
   });
-  return { ok, total: st.items.length, by };
+  const total = st.items.length;
+  const pct = total ? Math.round((ok / total) * 100) : 0;
+  return { ok, total, pct, by };
+}
+
+function bandOf(pct) {
+  if (pct >= 90) return { title: "表現很好", hint: "答對很多，再挑戰更長或較難也可以。" };
+  if (pct >= 75) return { title: "不錯", hint: "大部分都對，錯的可以跟爸爸媽媽一起看。" };
+  if (pct >= 60) return { title: "還可以", hint: "有基礎了，再練幾回會更熟。" };
+  return { title: "再練練", hint: "先選 10 題、小一升小二可做，慢慢加長。" };
+}
+
+function paintModeButtons() {
+  document.querySelectorAll("[data-gifted-n]").forEach((btn) => {
+    btn.classList.toggle("is-on", Number(btn.dataset.giftedN) === pickN);
+  });
+  document.querySelectorAll("[data-gifted-lv]").forEach((btn) => {
+    btn.classList.toggle("is-on", Number(btn.dataset.giftedLv) === pickLv);
+  });
 }
 
 function showIntro() {
@@ -111,17 +169,23 @@ function showIntro() {
   const mid = Boolean(st?.startedAt && !st.finishedAt);
   $("#gifted-intro-done")?.toggleAttribute("hidden", !done);
   $("#gifted-intro-mid")?.toggleAttribute("hidden", !mid);
-  $("#gifted-intro-fresh")?.toggleAttribute("hidden", done || mid);
-  $("#btn-gifted-start")?.toggleAttribute("hidden", done || mid);
+  $("#gifted-intro-fresh")?.toggleAttribute("hidden", mid);
+  $("#gifted-mode-box")?.toggleAttribute("hidden", mid);
+  $("#btn-gifted-start")?.toggleAttribute("hidden", mid);
   $("#btn-gifted-resume")?.toggleAttribute("hidden", !mid);
   $("#btn-gifted-parent")?.toggleAttribute("hidden", !done);
+  paintModeButtons();
   deps.showView("giftedIntro");
 }
 
 function startNew() {
-  const items = buildPaper();
+  const n = QUOTAS[pickN] ? pickN : 10;
+  const items = buildPaper(n);
   saveState({
     startedAt: Date.now(),
+    n,
+    lv: pickLv,
+    limitMs: LIMIT_MS[n],
     items,
     picks: items.map(() => -1),
     idx: 0,
@@ -130,12 +194,25 @@ function startNew() {
   openQuiz();
 }
 
+function renderDone(st) {
+  const sc = scoreOf(st);
+  const band = bandOf(sc.pct);
+  const mins = Math.max(1, Math.round((st.finishedAt - st.startedAt) / 60000));
+  const lvName = GIFTED_LV_LABEL[st.lv] || GIFTED_LV_LABEL[1];
+  $("#gifted-done-band").textContent = band.title;
+  $("#gifted-done-score").textContent = `${sc.ok} / ${sc.total}　（${sc.pct} 分）`;
+  $("#gifted-done-break").textContent =
+    `圖形 ${sc.by.fig.ok}/${sc.by.fig.n}　語文 ${sc.by.lang.ok}/${sc.by.lang.n}　數學 ${sc.by.math.ok}/${sc.by.math.n}`;
+  $("#gifted-done-msg").textContent =
+    `${st.n} 題 · ${lvName} · 約 ${mins} 分鐘（限時 ${formatMmSs(limitMsOf(st))}）。${band.hint}`;
+  deps.showView("giftedDone");
+}
+
 function finish(st) {
   st.finishedAt = Date.now();
   saveState(st);
   stopTick();
-  $("#gifted-done-msg").textContent = "這次寫完了，謝謝。分數給爸爸媽媽看。";
-  deps.showView("giftedDone");
+  renderDone(st);
 }
 
 function renderQ() {
@@ -179,7 +256,7 @@ function openQuiz() {
     return;
   }
   if (st.finishedAt) {
-    deps.showView("giftedDone");
+    renderDone(st);
     return;
   }
   deps.showView("giftedQuiz");
@@ -208,8 +285,10 @@ function renderParent() {
   }
   const sc = scoreOf(st);
   const mins = Math.round((st.finishedAt - st.startedAt) / 60000);
+  const lvName = GIFTED_LV_LABEL[st.lv] || "";
   const lines = [
-    `總分 ${sc.ok} / ${sc.total}（用時約 ${mins} 分鐘，限時 40 分鐘）`,
+    `總分 ${sc.ok} / ${sc.total}（${sc.pct} 分）　用時約 ${mins} 分鐘，限時 ${formatMmSs(limitMsOf(st))}`,
+    `${st.n} 題 · ${lvName}`,
     `圖形 ${sc.by.fig.ok}/${sc.by.fig.n}　語文 ${sc.by.lang.ok}/${sc.by.lang.n}　數學 ${sc.by.math.ok}/${sc.by.math.n}`,
     "這不是市府鑑定、也沒有 PR。只給家裡觀察。",
     "",
@@ -218,14 +297,25 @@ function renderParent() {
     const pick = st.picks[i];
     const good = pick === q.answer;
     const got = pick >= 0 ? q.options[pick] : "（空白）";
+    const tag = q.lv === 2 ? "較難" : "小一升小二";
     lines.push(
-      `${good ? "○" : "×"} ${i + 1}.【${GIFTED_CAT_LABEL[q.cat]}】${q.q}`
+      `${good ? "○" : "×"} ${i + 1}.【${GIFTED_CAT_LABEL[q.cat]}·${tag}】${q.q}`
     );
     lines.push(`　　選：${got}　答：${q.options[q.answer]}`);
     if (!good && q.explain) lines.push(`　　${q.explain}`);
   });
   $("#gifted-parent-body").textContent = lines.join("\n");
   deps.showView("giftedParent");
+}
+
+function askParentThen(fn) {
+  const pin = prompt("家長密碼");
+  if (pin == null) return;
+  if (pin !== String(CONFIG.PARENT_PIN || "")) {
+    deps.showWarn?.("密碼不對", "");
+    return;
+  }
+  fn();
 }
 
 export function initGifted(d) {
@@ -236,7 +326,26 @@ export function initGifted(d) {
     stopTick();
     deps.showView("home");
   });
-  $("#btn-gifted-start")?.addEventListener("click", () => startNew());
+  document.querySelectorAll("[data-gifted-n]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pickN = Number(btn.dataset.giftedN);
+      paintModeButtons();
+    });
+  });
+  document.querySelectorAll("[data-gifted-lv]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pickLv = Number(btn.dataset.giftedLv);
+      paintModeButtons();
+    });
+  });
+  $("#btn-gifted-start")?.addEventListener("click", () => {
+    const st = loadState();
+    if (st?.finishedAt && deps.showWarn) {
+      deps.showWarn("再寫一次", "會蓋掉上次成績。", startNew);
+      return;
+    }
+    startNew();
+  });
   $("#btn-gifted-resume")?.addEventListener("click", () => openQuiz());
   $("#btn-gifted-quiz-back")?.addEventListener("click", () => {
     stopTick();
@@ -262,7 +371,7 @@ export function initGifted(d) {
     const blank = st.picks.filter((p) => p < 0).length;
     const go = () => finish(st);
     if (blank && deps.showWarn) {
-      deps.showWarn("還有空白", `有 ${blank} 題沒選。時間到或按確定仍會交卷。`, go);
+      deps.showWarn("還有空白", `有 ${blank} 題沒選。按確定仍會交卷並計分。`, go);
       return;
     }
     go();
@@ -271,21 +380,25 @@ export function initGifted(d) {
     stopTick();
     deps.showView("home");
   });
-  $("#btn-gifted-parent")?.addEventListener("click", () => {
-    const pin = prompt("家長密碼");
-    if (pin == null) return;
-    if (pin !== String(CONFIG.PARENT_PIN || "")) {
-      deps.showWarn?.("密碼不對", "");
-      return;
-    }
-    renderParent();
+  $("#btn-gifted-done-parent")?.addEventListener("click", () => {
+    askParentThen(() => renderParent());
   });
-  $("#btn-gifted-parent-back")?.addEventListener("click", () => showIntro());
-  $("#btn-gifted-reset")?.addEventListener("click", () => {
-    const pin = prompt("重測會清掉這次紀錄。再輸入家長密碼");
-    if (pin == null) return;
-    if (pin !== String(CONFIG.PARENT_PIN || "")) return;
+  $("#btn-gifted-done-again")?.addEventListener("click", () => {
     localStorage.removeItem(key());
     showIntro();
+  });
+  $("#btn-gifted-parent")?.addEventListener("click", () => {
+    askParentThen(() => renderParent());
+  });
+  $("#btn-gifted-parent-back")?.addEventListener("click", () => {
+    const st = loadState();
+    if (st?.finishedAt) renderDone(st);
+    else showIntro();
+  });
+  $("#btn-gifted-reset")?.addEventListener("click", () => {
+    askParentThen(() => {
+      localStorage.removeItem(key());
+      showIntro();
+    });
   });
 }
