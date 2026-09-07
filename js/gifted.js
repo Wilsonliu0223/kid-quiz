@@ -1,7 +1,7 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.28";
+import { CONFIG } from "./config.site.js?v=config-v45.29";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
@@ -27,6 +27,7 @@ const $ = (sel) => document.querySelector(sel);
 /** @type {{ showView: Function, showWarn?: Function, confirm?: Function } | null} */
 let deps = null;
 let tick = null;
+let memTick = null;
 let pickN = 10;
 let pickGrade = 12;
 
@@ -34,7 +35,7 @@ function key() {
   return `kid-quiz-gifted-blind-${getSelectedChild()}`;
 }
 
-const PAPER_VER = 9;
+const PAPER_VER = 10;
 
 function loadState() {
   try {
@@ -95,11 +96,38 @@ function paintTimer(st) {
   t.classList.toggle("is-low", left <= 5 * 60 * 1000);
 }
 
+function stopMem() {
+  if (memTick) {
+    clearTimeout(memTick);
+    memTick = null;
+  }
+}
+
 function stopTick() {
   if (tick) {
     clearInterval(tick);
     tick = null;
   }
+}
+
+/** 工作記憶：先記一串再收起來。數字還印在題目上就不算記憶。 */
+function splitMem(q) {
+  if (q.cat !== "mem") return null;
+  const t = String(q.q || "");
+  let m = t.match(/往回唸，順序是？\s*(.+)$/);
+  if (m) {
+    return { seq: m[1].trim(), ask: "剛才那串已經收起來了。從最後一個往回唸，順序是？" };
+  }
+  m = t.match(/^記住[\s\S]*?[：:]\s*(.+?)[。．]\s*(.+)$/);
+  if (m) {
+    return { seq: m[1].trim(), ask: `剛才那串已經收起來了。${m[2].trim()}` };
+  }
+  return null;
+}
+
+function memHoldMs(seq) {
+  const n = String(seq).split(/[、，,\s]+/).filter(Boolean).length;
+  return Math.max(2800, Math.min(7000, 1200 + n * 800));
 }
 
 function seenKey() {
@@ -380,6 +408,7 @@ function startNew() {
     limitMs: LIMIT_MS[n],
     items,
     picks: items.map(() => -1),
+    memOk: items.map(() => 0),
     idx: 0,
     finishedAt: 0,
     paperVer: PAPER_VER,
@@ -423,7 +452,42 @@ function renderQ() {
   const n = st.items.length;
   $("#gifted-progress").textContent = `${GIFTED_CAT_LABEL[q.cat]} · ${st.idx + 1} / ${n}`;
   paintTimer(st);
-  $("#gifted-q").textContent = q.q;
+  stopMem();
+  const mem = splitMem(q);
+  const seqEl = $("#gifted-mem-seq");
+  const studied = Boolean(st.memOk?.[st.idx]);
+  if (mem && !studied) {
+    $("#gifted-q").textContent = "先記住這一串。看完會收起來，再問你。";
+    if (seqEl) {
+      seqEl.hidden = false;
+      seqEl.textContent = mem.seq;
+    }
+    const figHide = $("#gifted-fig");
+    if (figHide) {
+      figHide.innerHTML = "";
+      figHide.hidden = true;
+    }
+    const box = $("#gifted-choices");
+    box.innerHTML = "";
+    $("#btn-gifted-prev").disabled = true;
+    $("#btn-gifted-next").hidden = true;
+    $("#btn-gifted-submit").hidden = true;
+    const idx = st.idx;
+    memTick = setTimeout(() => {
+      const cur = loadState();
+      if (!cur || cur.finishedAt || cur.idx !== idx) return;
+      cur.memOk = cur.memOk || [];
+      cur.memOk[idx] = 1;
+      saveState(cur);
+      renderQ();
+    }, memHoldMs(mem.seq));
+    return;
+  }
+  if (seqEl) {
+    seqEl.hidden = true;
+    seqEl.textContent = "";
+  }
+  $("#gifted-q").textContent = mem ? mem.ask : q.q;
   const fig = $("#gifted-fig");
   if (fig) {
     const html = q.vis ? visPromptHtml(q.vis) : "";
@@ -573,6 +637,7 @@ export function initGifted(d) {
   $("#btn-gifted-resume")?.addEventListener("click", () => openQuiz());
   $("#btn-gifted-restart")?.addEventListener("click", () => {
     const go = () => {
+      stopMem();
       stopTick();
       localStorage.removeItem(key());
       showIntro();
@@ -584,6 +649,7 @@ export function initGifted(d) {
     go();
   });
   $("#btn-gifted-quiz-back")?.addEventListener("click", () => {
+    stopMem();
     stopTick();
     showIntro();
   });

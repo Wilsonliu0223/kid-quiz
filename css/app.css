@@ -736,6 +736,21 @@ body {
   margin: 0 0 16px;
   white-space: pre-wrap;
 }
+.gifted-mem-seq {
+  margin: 0 0 20px;
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  color: #4a2f8c;
+  background: #f4efff;
+  border-radius: 16px;
+}
+.gifted-mem-seq[hidden] {
+  display: none !important;
+}
 .gifted-choices {
   display: flex;
   flex-direction: column;
