@@ -24,10 +24,12 @@ import {
 import {
   analyzeEnglishMorph,
   mayHaveMorph,
+  peekLocalMorph,
+  couldBeAffixWord,
   familyMembers,
   getAffixFamily,
   wordMatchesAffix,
-} from "./en-morph.js?v=en-morph-v3";
+} from "./en-morph.js?v=en-morph-v4";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -1390,7 +1392,7 @@ function renderReader() {
   const titleEl = $("#en-daily-title");
   const titleZhEl = $("#en-daily-title-zh");
   const bodyEl = $("#en-daily-body");
-  if (titleEl) titleEl.innerHTML = renderClickableText(current.title, current);
+  if (titleEl) titleEl.innerHTML = renderClickableText(current.title, current, null, true);
   if (titleZhEl) {
     const zh = titleZhOf(current);
     titleZhEl.textContent = zh;
@@ -1402,6 +1404,7 @@ function renderReader() {
   bindWordClicks(titleEl);
   bindWordClicks(bodyEl);
   bindSentencePlay(bodyEl);
+  void markArticleMorph([titleEl, bodyEl]);
   renderReviewStrip();
   const body = bodyForLevel(current);
   renderClozeCard("en-daily-cloze", body, current);
@@ -1429,23 +1432,64 @@ function escapeHtml(s) {
 
 function renderClickableBody(text, art, extraWords) {
   const sentences = splitEnglishSentences(text);
-  if (!sentences.length) return renderClickableText(text, art, extraWords);
+  if (!sentences.length) return renderClickableText(text, art, extraWords, true);
   return sentences
     .map(
       (sent, i) =>
-        `<span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(sent, art, extraWords)}</span></span>`
+        `<span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(sent, art, extraWords, true)}</span></span>`
     )
     .join("");
 }
 
-function renderClickableText(text, art, extraWords) {
+function renderClickableText(text, art, extraWords, markMorph) {
   const map = vocabMap(art, extraWords);
   return String(text || "").replace(/([A-Za-z][A-Za-z'-]*)/g, (word) => {
     const key = word.toLowerCase();
     const isKey = map.has(key);
-    const cls = isKey ? "en-word en-word-key" : "en-word";
-    return `<button type="button" class="${cls}" data-en-word="${escapeHtml(word)}">${escapeHtml(word)}</button>`;
+    const parts = ["en-word"];
+    if (isKey) parts.push("en-word-key");
+    if (markMorph && peekLocalMorph(word)) parts.push("en-word-morph");
+    return `<button type="button" class="${parts.join(" ")}" data-en-word="${escapeHtml(word)}">${escapeHtml(word)}</button>`;
   });
+}
+
+let morphMarkSeq = 0;
+
+function paintMorphClass(roots, word) {
+  const key = String(word || "").toLowerCase();
+  if (!key) return;
+  for (const root of roots || []) {
+    root?.querySelectorAll("[data-en-word]").forEach((btn) => {
+      if (String(btn.getAttribute("data-en-word") || "").toLowerCase() === key) {
+        btn.classList.add("en-word-morph");
+      }
+    });
+  }
+}
+
+async function markArticleMorph(roots) {
+  const seq = ++morphMarkSeq;
+  const list = (roots || []).filter(Boolean);
+  if (!list.length) return;
+  const pending = [];
+  const seen = new Set();
+  for (const root of list) {
+    root.querySelectorAll("[data-en-word]").forEach((btn) => {
+      const w = btn.getAttribute("data-en-word") || "";
+      const key = w.toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      if (btn.classList.contains("en-word-morph")) return;
+      if (!couldBeAffixWord(w)) return;
+      pending.push(w);
+    });
+  }
+  for (const w of pending.slice(0, 16)) {
+    if (seq !== morphMarkSeq) return;
+    const morph = await analyzeEnglishMorph(w);
+    if (seq !== morphMarkSeq) return;
+    if (morph?.combo) paintMorphClass(list, w);
+  }
 }
 
 function bindSentencePlay(root) {
@@ -1644,12 +1688,13 @@ function renderDialogue() {
       .map((t, i) => {
         const text = turnText(t);
         const name = escapeHtml(String(t.speaker || `A${i + 1}`));
-        return `<div class="en-dlg-turn"><span class="en-dlg-speaker">${name}</span><span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" data-en-speaker="${name}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(text, current, extra)}</span></span><button type="button" class="en-dlg-zh-toggle" data-en-dlg-zh="${i}">中文 ▼</button><p class="en-dlg-zh" data-en-dlg-zh-text="${i}" hidden></p></div>`;
+        return `<div class="en-dlg-turn"><span class="en-dlg-speaker">${name}</span><span class="en-sent-row"><button type="button" class="en-sent-play" data-en-sent-play="${i}" data-en-speaker="${name}" aria-label="播放這句">▶</button><span class="en-sent" data-en-sent="${i}">${renderClickableText(text, current, extra, true)}</span></span><button type="button" class="en-dlg-zh-toggle" data-en-dlg-zh="${i}">中文 ▼</button><p class="en-dlg-zh" data-en-dlg-zh-text="${i}" hidden></p></div>`;
       })
       .join("");
     bindWordClicks(bodyEl);
     bindSentencePlay(bodyEl);
     bindDialogueZhToggles(bodyEl, d);
+    void markArticleMorph([bodyEl]);
   }
   const playList = dialogueTurnPlayList(d);
   prefetchEnglishAudio(playList.chunks.join(" "));

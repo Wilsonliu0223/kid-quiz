@@ -6314,6 +6314,21 @@ body.sudoku-dragging .sudoku-cell-movable {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+.en-word-morph {
+  background: #c8f3e4;
+  border-bottom-color: #2a9d6a;
+  border-bottom-style: solid;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.en-word.en-word-morph:hover,
+.en-word.en-word-morph:focus-visible {
+  background: #a8e8d0;
+}
+.en-word-key.en-word-morph {
+  background: #c8f3e4;
+  box-shadow: inset 3px 0 0 #e09a3e;
+}
 .en-daily-review-strip {
   margin: 0;
   font-size: 0.88rem;

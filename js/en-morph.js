@@ -304,6 +304,25 @@ function decorate(parsed, word) {
   };
 }
 
+/** 不打網路：字族表能立刻拆出來的才算 */
+export function peekLocalMorph(word) {
+  return decorate(localGuess(word), word);
+}
+
+/** 文章裡值得查 Wiktionary 的候選（已有底色的不必再排） */
+export function couldBeAffixWord(word) {
+  const w = normWord(word);
+  if (!worthTrying(w)) return false;
+  if (peekLocalMorph(w)) return true;
+  for (const pre of PREFIXES) {
+    if (w.startsWith(pre.form) && w.length - pre.form.length >= 3) return true;
+  }
+  for (const root of ROOTS) {
+    if (w.includes(root.form) && w.length >= root.form.length + 2) return true;
+  }
+  return false;
+}
+
 export function getAffixFamily(kind, form) {
   return findAffix(kind, form);
 }
