@@ -647,8 +647,34 @@ body {
   border-color: #5b3fa8;
   color: #fff;
 }
+.gifted-age-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid #c8b6ef;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.gifted-iq-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.gifted-iq {
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #4a2f8c;
+  margin: 0 0 4px;
+  line-height: 1.1;
+}
+.gifted-iq-band {
+  margin: 0 0 10px;
+  font-weight: 700;
+  color: #4a2f8c;
+}
 .gifted-done-score {
-  font-size: 2rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #4a2f8c;
   margin: 4px 0 8px;

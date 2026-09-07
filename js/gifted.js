@@ -1,7 +1,7 @@
 /**
  * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
  */
-import { CONFIG } from "./config.site.js?v=config-v45.15";
+import { CONFIG } from "./config.site.js?v=config-v45.16";
 import { getSelectedChild } from "./store.js";
 import {
   GIFTED_BANK,
@@ -198,6 +198,93 @@ function bandOf(pct) {
   return { title: "再練練", hint: "可改選較低年級，或先寫 10 題。" };
 }
 
+const PAPER_DIFF = { 12: 0.88, 23: 1, 34: 1.12, 56: 1.28 };
+const TYPICAL_AGE = { 12: 7, 23: 8, 34: 9.5, 56: 11.5 };
+
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function ageKey() {
+  return `kid-quiz-gifted-age-${getSelectedChild()}`;
+}
+
+function parseAge(raw) {
+  const v = Number(raw);
+  if (!Number.isFinite(v) || v < 5 || v > 13) return 0;
+  return Math.round(v * 2) / 2;
+}
+
+function readAgeInput() {
+  return parseAge($("#gifted-age")?.value);
+}
+
+function savedAge() {
+  return parseAge(localStorage.getItem(ageKey()) || "");
+}
+
+function persistAge(age) {
+  if (age) localStorage.setItem(ageKey(), String(age));
+}
+
+function fillAgeInput() {
+  const el = $("#gifted-age");
+  if (!el) return;
+  const a = savedAge();
+  if (a && !el.value) el.value = String(a);
+}
+
+function itemWeight(grade) {
+  return PAPER_DIFF[grade] || 1;
+}
+
+function estimateIndex(st, sc) {
+  const age = st.ageYears || savedAge() || 7;
+  const typical = TYPICAL_AGE[st.grade] || 8;
+  const ageGap = typical - age;
+  const expectedP = clamp(0.62 + -ageGap * 0.04, 0.42, 0.78);
+  let wOk = 0;
+  let wN = 0;
+  st.items.forEach((q, i) => {
+    const w = itemWeight(q.grade);
+    wN += w;
+    if (st.picks[i] === q.answer) wOk += w;
+  });
+  const wp = wN ? wOk / wN : 0;
+  const p = sc.total ? sc.ok / sc.total : 0;
+  const zAcc = (wp - expectedP) / 0.16;
+  const used = Math.max(1, (st.finishedAt || Date.now()) - st.startedAt);
+  const ratio = used / limitMsOf(st);
+  let zTime = 0;
+  if (p >= 0.7 && ratio <= 0.35) zTime = 0.35;
+  else if (p >= 0.6 && ratio <= 0.5) zTime = 0.15;
+  else if (ratio >= 0.97 && p < 0.85) zTime = -0.12;
+  const shrink = { 10: 0.55, 20: 0.78, 60: 0.92 }[st.n] || 0.7;
+  const z = clamp((zAcc + zTime * 0.5) * shrink, -2.2, 3);
+  const index = clamp(Math.round(100 + 15 * z), 70, 145);
+  const subscales = {};
+  CATS.forEach((c) => {
+    const b = sc.by[c];
+    const pp = b.n ? b.ok / b.n : 0;
+    const zs = clamp(((pp - expectedP) / 0.2) * shrink, -2.2, 3);
+    subscales[c] = clamp(Math.round(100 + 15 * zs), 70, 145);
+  });
+  let band = "中等附近";
+  if (index >= 130) band = "很高（僅供參考）";
+  else if (index >= 120) band = "偏高";
+  else if (index >= 110) band = "中上";
+  else if (index >= 90) band = "中等附近";
+  else if (index >= 80) band = "中下";
+  else band = "偏低（題可能太難，或還不熟）";
+  const conf =
+    st.n >= 60
+      ? "60 題較穩，仍非正式智力測驗"
+      : st.n >= 20
+        ? "20 題誤差可能有 10 分上下"
+        : "10 題誤差很大，當參考即可";
+  return { index, subscales, band, conf, wp, expectedP, ratio, age };
+}
+
 function catLine(sc) {
   return CATS.map(
     (c) => `${GIFTED_CAT_LABEL[c]} ${sc.by[c].ok}/${sc.by[c].n}`
@@ -226,16 +313,24 @@ function showIntro() {
   $("#btn-gifted-restart")?.toggleAttribute("hidden", !mid);
   $("#btn-gifted-parent")?.toggleAttribute("hidden", !done);
   paintModeButtons();
+  fillAgeInput();
   deps.showView("giftedIntro");
 }
 
 function startNew() {
+  const age = readAgeInput() || savedAge();
+  if (!age) {
+    deps.showWarn?.("先填年齡", "填小朋友幾歲（5～13），才算得出參考指數。");
+    return;
+  }
+  persistAge(age);
   const n = QUOTAS[pickN] ? pickN : 10;
   const items = buildPaper(n);
   saveState({
     startedAt: Date.now(),
     n,
     grade: pickGrade,
+    ageYears: age,
     limitMs: LIMIT_MS[n],
     items,
     picks: items.map(() => -1),
@@ -247,14 +342,18 @@ function startNew() {
 
 function renderDone(st) {
   const sc = scoreOf(st);
+  const est = estimateIndex(st, sc);
   const band = bandOf(sc.pct);
   const mins = Math.max(1, Math.round((st.finishedAt - st.startedAt) / 60000));
   const gName = GIFTED_GRADE_LABEL[st.grade] || GIFTED_GRADE_LABEL[12];
+  const used = formatMmSs(Math.max(0, st.finishedAt - st.startedAt));
   $("#gifted-done-band").textContent = band.title;
-  $("#gifted-done-score").textContent = `${sc.ok} / ${sc.total}　（${sc.pct} 分）`;
+  $("#gifted-done-iq").textContent = String(est.index);
+  $("#gifted-done-iq-band").textContent = `${est.band} · ${est.age} 歲`;
+  $("#gifted-done-score").textContent = `答對 ${sc.ok} / ${sc.total}　（${sc.pct}%）`;
   $("#gifted-done-break").textContent = catLine(sc);
   $("#gifted-done-msg").textContent =
-    `${st.n} 題 · ${gName} · 約 ${mins} 分鐘（限時 ${formatMmSs(limitMsOf(st))}）。${band.hint}　這不是魏氏正式測驗。`;
+    `${st.n} 題 · ${gName} · 用時 ${used}（限時 ${formatMmSs(limitMsOf(st))}）。${est.conf}。${band.hint} 不是正式智力測驗。`;
   deps.showView("giftedDone");
 }
 
@@ -335,13 +434,20 @@ function renderParent() {
     return;
   }
   const sc = scoreOf(st);
-  const mins = Math.round((st.finishedAt - st.startedAt) / 60000);
+  const est = estimateIndex(st, sc);
+  const used = formatMmSs(Math.max(0, st.finishedAt - st.startedAt));
   const gName = GIFTED_GRADE_LABEL[st.grade] || "";
+  const sub = CATS.map(
+    (c) => `${GIFTED_CAT_LABEL[c]} ${est.subscales[c]}`
+  ).join("　");
   const lines = [
-    `總分 ${sc.ok} / ${sc.total}（${sc.pct} 分）　用時約 ${mins} 分鐘，限時 ${formatMmSs(limitMsOf(st))}`,
+    `參考指數 ${est.index}（${est.band}）　${est.age} 歲`,
+    est.conf,
+    `答對 ${sc.ok} / ${sc.total}（${sc.pct}%）　用時 ${used}／限時 ${formatMmSs(limitMsOf(st))}`,
     `${st.n} 題 · ${gName}`,
     catLine(sc),
-    "這不是官方魏氏／WISC、沒有 IQ、也沒有 PR。只給家裡觀察四個向度。",
+    `向度指數：${sub}`,
+    "算法：對錯依題庫年級加權，再對照年齡該檔的預期答對率，快且準會微調；短測驗會往 100 收縮。不是官方魏氏／WISC，不能當鑑定或 PR。",
     "",
   ];
   st.items.forEach((q, i) => {
