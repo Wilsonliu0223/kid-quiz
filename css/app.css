@@ -6657,45 +6657,68 @@ body.en-gloss-open .en-play-accent-btn {
     display: none;
   }
   .en-play-bar {
-    gap: 5px;
-    padding: 6px 8px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .en-play-tools {
+    gap: 8px;
   }
   .en-play-status {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
+  }
+  .en-play-row-voices {
+    gap: 10px;
+  }
+  .en-play-voice select {
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  .en-play-row-modes {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .en-play-modes-tune {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .en-play-repeat,
+  .en-play-speed {
+    gap: 6px;
+  }
+  .en-play-lang {
+    flex: 1 1 100%;
+    margin-left: 0;
+    justify-content: stretch;
+    gap: 6px;
   }
   .en-play-speed-btn,
   .en-play-lang-btn,
   .en-play-repeat-btn,
   .en-play-accent-btn {
-    padding: 5px 6px;
-    font-size: 0.7rem;
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
   }
   .en-play-repeat-btn {
-    padding: 5px 6px;
-    font-size: 0.64rem;
-  }
-  .en-play-voice select {
-    padding: 5px 6px;
+    min-width: 2.6em;
+    padding: 6px 8px;
     font-size: 0.72rem;
   }
+  .en-play-lang-btn {
+    flex: 1 1 0;
+    padding: 6px 4px;
+  }
   .en-play-speak-all {
-    min-width: 34px;
-    min-height: 34px;
-    padding: 4px 8px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 4px 10px;
   }
   .en-play-stop {
-    width: 34px;
-    height: 34px;
-  }
-}
-@media (max-width: 380px) {
-  .en-play-row-modes,
-  .en-play-modes-tune {
-    gap: 4px;
-  }
-  .en-play-speed-btn,
-  .en-play-lang-btn {
-    padding: 5px 5px;
+    width: 40px;
+    height: 40px;
   }
 }
 @media (min-width: 800px) {
@@ -6718,6 +6741,7 @@ body.en-gloss-open .en-play-accent-btn {
   .en-play-row-modes {
     flex: 1 1 auto;
     width: auto;
+    flex-wrap: nowrap;
   }
 }
 .en-sent-row {
