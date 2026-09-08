@@ -11,7 +11,8 @@ import {
   visPromptHtml,
   visChoiceHtml,
   cellSvg,
-} from "./gifted-fig.js?v=gifted-fig-v2";
+} from "./gifted-fig.js?v=gifted-fig-v3";
+import { makeSpecials } from "./gifted-special.js?v=gifted-sp-v1";
 
 const CATS = ["fig", "lang", "math", "mem"];
 const GAMES = {
@@ -152,6 +153,12 @@ function stopTick() {
 /** 工作記憶：先記一串再收起來。數字還印在題目上就不算記憶。 */
 function splitMem(q) {
   if (q.cat !== "mem") return null;
+  if (q.visMem) {
+    return { seq: "圖", vis: q.visMem, ask: q.memAsk || "剛才看到哪一個？" };
+  }
+  if (q.memSeq) {
+    return { seq: q.memSeq, ask: q.memAsk || "剛才那串是什麼？" };
+  }
   const t = String(q.q || "");
   let m = t.match(/往回唸，順序是？\s*(.+)$/);
   if (m) {
@@ -165,6 +172,7 @@ function splitMem(q) {
 }
 
 function memHoldMs(seq) {
+  if (String(seq) === "圖") return 3800;
   const n = String(seq).split(/[、，,\s]+/).filter(Boolean).length;
   return Math.max(2800, Math.min(7000, 1200 + n * 800));
 }
@@ -188,16 +196,18 @@ function rememberSeen(ids) {
   localStorage.setItem(seenKey(), JSON.stringify(next));
 }
 
-function poolFor(cat, grade, need) {
+function poolFor(cat, grade, need, rnd) {
   const same = GIFTED_BANK.filter((q) => q.cat === cat && q.grade === grade);
-  if (same.length >= need) return same;
   const extra = [];
-  let g = LOWER[grade];
-  while (g && same.length + extra.length < need) {
-    extra.push(...GIFTED_BANK.filter((q) => q.cat === cat && q.grade === g));
-    g = LOWER[g];
+  if (same.length < need) {
+    let g = LOWER[grade];
+    while (g && same.length + extra.length < need) {
+      extra.push(...GIFTED_BANK.filter((q) => q.cat === cat && q.grade === g));
+      g = LOWER[g];
+    }
   }
-  return [...same, ...extra];
+  const specials = rnd ? makeSpecials(cat, grade, rnd, Math.max(8, need)) : [];
+  return [...specials, ...same, ...extra];
 }
 
 /** 產生題（fr34-0）同一模板只算一種，手寫題（f001）各算各的。 */
@@ -206,7 +216,7 @@ function familyOf(id) {
   return m ? m[1].toLowerCase() : id;
 }
 
-function takeCat(pool, n, rnd, famCap) {
+function takeCatBank(pool, n, rnd, famCap) {
   const seen = new Set(loadSeen());
   const fresh = shuffle(
     pool.filter((q) => !seen.has(q.id)),
@@ -246,6 +256,18 @@ function takeCat(pool, n, rnd, famCap) {
   return picked;
 }
 
+function takeCat(pool, n, rnd, famCap) {
+  const specials = shuffle(
+    pool.filter((q) => q.special),
+    rnd
+  );
+  const bank = pool.filter((q) => !q.special);
+  const nSp = Math.min(specials.length, Math.max(1, Math.round(n * 0.45)));
+  const fromSp = specials.slice(0, nSp);
+  const fromBank = takeCatBank(bank, n - fromSp.length, rnd, famCap);
+  return shuffle([...fromSp, ...fromBank], rnd);
+}
+
 function buildPaper(n, mode) {
   const rnd = seedRng(
     `${getSelectedChild()}|gifted-v6|${mode}|${n}|${pickGrade}|${Date.now()}`
@@ -259,7 +281,7 @@ function buildPaper(n, mode) {
   const picked = [];
   cats.forEach((cat, i) => {
     picked.push(
-      ...takeCat(poolFor(cat, pickGrade, quota[i]), quota[i], rnd, famCap)
+      ...takeCat(poolFor(cat, pickGrade, quota[i], rnd), quota[i], rnd, famCap)
     );
   });
   return shuffle(picked, rnd).map((q) => {
@@ -274,6 +296,12 @@ function buildPaper(n, mode) {
       options,
       answer,
       explain: q.explain,
+      special: Boolean(q.special),
+      memSeq: q.memSeq || null,
+      memAsk: q.memAsk || null,
+      visMem: q.visMem
+        ? { kind: q.visMem.kind, cells: q.visMem.cells }
+        : null,
       vis: q.vis
         ? {
             kind: q.vis.kind,
@@ -552,7 +580,9 @@ function renderDone(st) {
 function finish(st) {
   st.finishedAt = Date.now();
   saveState(st);
-  if (st.items) rememberSeen(st.items.map((q) => q.id));
+  if (st.items) {
+    rememberSeen(st.items.filter((q) => !q.special).map((q) => q.id));
+  }
   stopTick();
   renderDone(st);
 }
@@ -573,15 +603,18 @@ function renderQ() {
   const seqEl = $("#gifted-mem-seq");
   const studied = Boolean(st.memOk?.[st.idx]);
   if (mem && !studied) {
-    $("#gifted-q").textContent = "先記住這一串。看完會收起來，再問你。";
+    $("#gifted-q").textContent = mem.vis
+      ? "先記住這些圖。看完會收起來，再問你。"
+      : "先記住這一串。看完會收起來，再問你。";
     if (seqEl) {
-      seqEl.hidden = false;
-      seqEl.textContent = mem.seq;
+      seqEl.hidden = Boolean(mem.vis);
+      seqEl.textContent = mem.vis ? "" : mem.seq;
     }
     const figHide = $("#gifted-fig");
     if (figHide) {
-      figHide.innerHTML = "";
-      figHide.hidden = true;
+      const html = mem.vis ? visPromptHtml(mem.vis) : "";
+      figHide.innerHTML = html;
+      figHide.hidden = !html;
     }
     const box = $("#gifted-choices");
     box.innerHTML = "";
@@ -735,10 +768,17 @@ const SPD_SHAPES = [
   { s: "q", fill: 0 },
   { s: "t", fill: 1 },
   { s: "t", fill: 0 },
+  { s: "d", fill: 1 },
+  { s: "d", fill: 0 },
 ];
 
 function shapeKey(spec) {
   return `${spec.s}|${Number(spec.fill)}|${spec.rot || 0}`;
+}
+
+function spdMatch(cell, st) {
+  const same = shapeKey(cell.spec) === shapeKey(st.target);
+  return st.rule === "diff" ? !same : same;
 }
 
 function spdPalette(grade) {
@@ -757,15 +797,19 @@ function nextSpdRound() {
   const cols = st.grade >= 23 ? 5 : 4;
   const total = cols * 4;
   const target = pal[Math.floor(rnd() * pal.length)];
-  const need = Math.max(3, Math.min(7, 3 + Math.floor(rnd() * 4)));
+  const rule = rnd() < 0.38 ? "diff" : "same";
+  const nSame = Math.max(3, Math.min(7, 3 + Math.floor(rnd() * 4)));
   const others = pal.filter((p) => shapeKey(p) !== shapeKey(target));
   const cells = [];
-  for (let i = 0; i < need; i++) cells.push({ spec: { ...target }, hit: 0 });
+  for (let i = 0; i < nSame; i++) cells.push({ spec: { ...target }, hit: 0 });
   while (cells.length < total) {
     const spec = others[Math.floor(rnd() * others.length)] || pal[0];
     cells.push({ spec: { ...spec }, hit: 0 });
   }
   const shuffled = shuffle(cells, rnd);
+  const need =
+    rule === "diff" ? shuffled.filter((c) => shapeKey(c.spec) !== shapeKey(target)).length : nSame;
+  st.rule = rule;
   st.target = { ...target };
   st.cells = shuffled;
   st.cols = cols;
@@ -812,6 +856,11 @@ function paintSpd() {
     t.textContent = formatMmSs(remainingMs(st));
     t.classList.toggle("is-low", remainingMs(st) <= 10 * 1000);
   }
+  const ask = document.querySelector(".gifted-spd-ask");
+  if (ask) {
+    ask.textContent =
+      st.rule === "diff" ? "點所有跟這個不一樣的" : "點所有跟這個一樣的";
+  }
   const scoreEl = $("#gifted-spd-score");
   if (scoreEl) {
     scoreEl.textContent = `${Math.max(0, st.hits - st.miss)} 分 · 對 ${st.hits}　錯 ${st.miss}`;
@@ -842,7 +891,7 @@ function tapSpd(i) {
   }
   const cell = st.cells[i];
   if (!cell || cell.hit) return;
-  if (shapeKey(cell.spec) === shapeKey(st.target)) {
+  if (spdMatch(cell, st)) {
     cell.hit = 1;
     st.hits += 1;
     st.roundHits += 1;

@@ -95,7 +95,7 @@ import {
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
-import { initGifted } from "./gifted.js?v=gifted-v19";
+import { initGifted } from "./gifted.js?v=gifted-v20";
 import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v75";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v3";
 import {

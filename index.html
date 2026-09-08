@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.36";
+        var V = "39.37";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -2281,6 +2281,7 @@
           <h2 class="gifted-title">思考練習</h2>
           <p id="gifted-intro-fresh">
             五個小遊戲對齊常見智力測驗會碰到的作業：語文、圖形規律、數量、記一串、快快找。學校若有團體推理或個別測驗，題型會比較眼熟。
+            每次會混進新抽的特別題：語文找共同點、圖形轉一轉、數列每次不一樣、記圖再選、快快找有時找不一樣。
             <strong>全是自編遊戲，不是魏氏／WISC、不是市府真題，不能當鑑定或 PR。</strong>
           </p>
           <div id="gifted-mode-box" class="gifted-mode-box">
@@ -2333,7 +2334,7 @@
             </button>
             <button type="button" class="gifted-game-card" data-gifted-game="spd">
               <span class="gifted-game-name">快快找</span>
-              <span class="gifted-game-desc">限時點一樣的圖，練手眼速度</span>
+              <span class="gifted-game-desc">限時點一樣或不一樣的圖</span>
               <span class="gifted-game-tag" data-gifted-tag="spd"></span>
             </button>
             <button type="button" class="gifted-game-card" data-gifted-game="mix">
@@ -2602,7 +2603,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.75").catch((e) => {
+      import("./js/app.js?v=app-v45.76").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

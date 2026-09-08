@@ -11,6 +11,10 @@ function oneShape(s, cx, cy, r, rot, fill, stroke) {
   if (s === "q") {
     return `<rect ${t} x="${cx - r}" y="${cy - r}" width="${2 * r}" height="${2 * r}" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="3"/>`;
   }
+  if (s === "d") {
+    const p = `${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}`;
+    return `<polygon ${t} points="${p}" fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linejoin="round"/>`;
+  }
   const p = `${cx},${cy - r} ${cx - r},${cy + r * 0.72} ${cx + r},${cy + r * 0.72}`;
   return `<polygon ${t} points="${p}" fill="${fill}" stroke="${stroke}" stroke-width="3" stroke-linejoin="round"/>`;
 }
