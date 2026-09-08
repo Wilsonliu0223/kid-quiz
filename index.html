@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.34";
+        var V = "39.35";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.46" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.47" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -518,7 +518,7 @@
             </div>
             <div class="en-play-tools">
               <div class="en-play-row en-play-row-voices">
-                <label class="en-play-voice">
+                <label class="en-play-voice en-play-voice-en">
                   <span class="en-play-accent-label">英</span>
                   <select id="en-play-en-voice" aria-label="英文聲音">
                     <option value="en-US-JennyNeural">美女 Jenny</option>
@@ -529,7 +529,7 @@
                     <option value="en-GB-RyanNeural">英男 Ryan</option>
                   </select>
                 </label>
-                <label class="en-play-voice">
+                <label class="en-play-voice en-play-voice-zh">
                   <span class="en-play-accent-label">中</span>
                   <select id="en-play-zh-voice" aria-label="中文聲音">
                     <option value="zh-TW-HsiaoChenNeural">台女 曉臻</option>
@@ -2563,7 +2563,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.73").catch((e) => {
+      import("./js/app.js?v=app-v45.74").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -6661,35 +6661,47 @@ body.en-gloss-open .en-play-accent-btn {
     padding: 8px 10px;
   }
   .en-play-tools {
-    gap: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "en-voice repeat"
+      "zh-voice speed"
+      "lang lang";
+    gap: 8px 10px;
+    align-items: center;
+  }
+  .en-play-row-voices,
+  .en-play-row-modes,
+  .en-play-modes-tune {
+    display: contents;
+  }
+  .en-play-voice-en {
+    grid-area: en-voice;
+  }
+  .en-play-voice-zh {
+    grid-area: zh-voice;
+  }
+  .en-play-repeat {
+    grid-area: repeat;
+    justify-self: end;
+    gap: 6px;
+  }
+  .en-play-speed {
+    grid-area: speed;
+    justify-self: end;
+    gap: 6px;
   }
   .en-play-status {
     font-size: 0.82rem;
-  }
-  .en-play-row-voices {
-    gap: 10px;
   }
   .en-play-voice select {
     min-height: 38px;
     padding: 6px 10px;
     font-size: 0.8rem;
   }
-  .en-play-row-modes {
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .en-play-modes-tune {
-    flex: 1 1 100%;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .en-play-repeat,
-  .en-play-speed {
-    gap: 6px;
-  }
   .en-play-lang {
-    flex: 1 1 100%;
+    grid-area: lang;
+    flex: 1 1 auto;
     margin-left: 0;
     justify-content: stretch;
     gap: 6px;
