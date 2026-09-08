@@ -1,7 +1,7 @@
 /**
  * 每日時事英文閱讀：列表、點字英英（可遞迴）、朗讀、複習字、讀後小測
  */
-import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v4";
+import { loadEnArticles } from "./sheets.js?v=sheets-en-quiz-v5";
 import {
   speakEnglish,
   unlockSpeechFromGesture,
@@ -1203,8 +1203,8 @@ export function initEnDaily(d) {
 export function openEnHub() {
   stopPlayBar({ dismiss: true });
   hideGloss();
-  syncHubMeta();
   deps?.showView("enHub");
+  void ensureArticles().then(() => syncHubMeta());
 }
 
 /** 離開閱讀／對話頁時收掉播放列，避免擋住英語翻牌等畫面 */
@@ -1214,9 +1214,14 @@ export function onEnViewChange(name) {
   hideGloss();
 }
 
-async function ensureArticles() {
-  if (articles.length) return articles;
-  articles = await loadEnArticles({ includeDraft: true });
+async function ensureArticles(force = false) {
+  const today = todayIso();
+  const hasToday = articles.some((a) => a.date === today);
+  if (!force && articles.length && hasToday) return articles;
+  articles = await loadEnArticles({
+    includeDraft: true,
+    cacheBust: `${today}-${Date.now()}`,
+  });
   return articles;
 }
 
@@ -1244,7 +1249,7 @@ function bindUi() {
 
   $("#btn-en-daily-list-back")?.addEventListener("click", () => openEnHub());
   $("#btn-en-daily-reload")?.addEventListener("click", async () => {
-    articles = [];
+    await ensureArticles(true);
     await openDailyList();
   });
 
@@ -1477,9 +1482,13 @@ function availableDates() {
 function ensureSelectedDate() {
   const dates = availableDates();
   const today = todayIso();
+  if (dates.includes(today)) {
+    selectedDate = today;
+    localStorage.setItem("kid-quiz-en-daily-date", selectedDate);
+    return;
+  }
   if (selectedDate && dates.includes(selectedDate)) return;
-  if (dates.includes(today)) selectedDate = today;
-  else selectedDate = dates[0] || today;
+  selectedDate = dates[0] || today;
   localStorage.setItem("kid-quiz-en-daily-date", selectedDate);
 }
 

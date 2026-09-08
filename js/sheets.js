@@ -237,11 +237,12 @@ function filterByTypes(items, types) {
   });
 }
 
-async function fetchSheetRows(sheetName) {
+async function fetchSheetRows(sheetName, opts = {}) {
   const id = (CONFIG.SPREADSHEET_ID || "").trim();
   if (!id) return null;
   const sheet = encodeURIComponent(sheetName);
-  const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheet}`;
+  let url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${sheet}`;
+  if (opts.bust) url += `&_=${encodeURIComponent(String(opts.bust))}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`無法讀取工作表「${sheetName}」(${res.status})`);
   const json = parseGvizRaw(await res.text());
@@ -446,7 +447,9 @@ function pickDialogueRaw(row, idxDialogue, colCount) {
 export async function loadEnArticles(opts = {}) {
   const includeDraft = opts.includeDraft !== false;
   try {
-    const table = await fetchSheetRows(CONFIG.SHEET_EN_ARTICLE || "英文文章");
+    const table = await fetchSheetRows(CONFIG.SHEET_EN_ARTICLE || "英文文章", {
+      bust: opts.cacheBust || "",
+    });
     if (!table?.rows?.length) return [];
 
     const labels = (table.cols || []).map((c) => String(c.label || "").trim());
