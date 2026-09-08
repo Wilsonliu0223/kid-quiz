@@ -31,7 +31,8 @@ import {
   familyMembers,
   getAffixFamily,
   wordMatchesAffix,
-} from "./en-morph.js?v=en-morph-v6";
+  refreshMorphCombo,
+} from "./en-morph.js?v=en-morph-v7";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -980,25 +981,30 @@ function bindRelatedClicks(root, reset) {
   bindMorphClicks(root);
 }
 
+function morphChipLabel(part) {
+  if (!part) return "";
+  return part.zh ? `${part.label}（${part.zh}）` : part.label;
+}
+
 function morphHtml(morph) {
   if (!morph?.combo) return "";
   const rows = [`<p class="en-morph-combo">${escapeHtml(morph.combo)}</p>`];
   if (morph.prefix) {
     rows.push(
       `<p class="en-related-row"><span class="en-related-label">字首</span>` +
-        `<button type="button" class="en-related-chip" data-en-morph="prefix:${escapeHtml(morph.prefix.form)}">${escapeHtml(morph.prefix.label)}${morph.prefix.zh ? "　" + escapeHtml(morph.prefix.zh) : ""}</button></p>`
+        `<button type="button" class="en-related-chip" data-en-morph="prefix:${escapeHtml(morph.prefix.form)}">${escapeHtml(morphChipLabel(morph.prefix))}</button></p>`
     );
   }
   if (morph.root) {
     rows.push(
       `<p class="en-related-row"><span class="en-related-label">字根</span>` +
-        `<button type="button" class="en-related-chip" data-en-morph="root:${escapeHtml(morph.root.form)}">${escapeHtml(morph.root.label)}${morph.root.zh ? "　" + escapeHtml(morph.root.zh) : ""}</button></p>`
+        `<button type="button" class="en-related-chip" data-en-morph="root:${escapeHtml(morph.root.form)}">${escapeHtml(morphChipLabel(morph.root))}</button></p>`
     );
   }
   if (morph.suffix) {
     rows.push(
       `<p class="en-related-row"><span class="en-related-label">字尾</span>` +
-        `<button type="button" class="en-related-chip" data-en-morph="suffix:${escapeHtml(morph.suffix.form)}">${escapeHtml(morph.suffix.label)}${morph.suffix.zh ? "　" + escapeHtml(morph.suffix.zh) : ""}</button></p>`
+        `<button type="button" class="en-related-chip" data-en-morph="suffix:${escapeHtml(morph.suffix.form)}">${escapeHtml(morphChipLabel(morph.suffix))}</button></p>`
     );
   }
   return rows.join("");
@@ -1051,24 +1057,54 @@ function renderMorphBox(morph) {
   bindMorphClicks(el);
 }
 
+async function fillMissingMorphZh(morph) {
+  if (!morph) return;
+  const jobs = [];
+  for (const key of ["prefix", "root", "suffix"]) {
+    const part = morph[key];
+    if (!part) continue;
+    if (!part.zh) {
+      const known = getAffixFamily(key, part.form);
+      if (known?.zh) {
+        part.zh = known.zh;
+        continue;
+      }
+    }
+    if (part.zh) continue;
+    if (key !== "root" && part.form.length <= 4) continue;
+    jobs.push(
+      (async () => {
+        const raw =
+          (await translateEnToZh(part.form, "TW")) ||
+          (await translateEnToZh(part.form, "CN")) ||
+          "";
+        const zh = shortZh(raw);
+        if (zh) part.zh = zh;
+      })()
+    );
+  }
+  if (jobs.length) await Promise.all(jobs);
+  refreshMorphCombo(morph);
+}
+
 async function fillMorphology(entry, seq) {
   if (!entry?.word || entry.kind === "family") return;
-  if (entry.morph?.combo) {
-    renderMorphBox(entry.morph);
-    requestAnimationFrame(() => syncDockVisibility());
-    return;
+  let morph = entry.morph?.combo ? entry.morph : null;
+  if (!morph) {
+    if (!mayHaveMorph(entry.word)) {
+      renderMorphBox(null);
+      return;
+    }
+    renderMorphBox({ combo: "查字首／字根…" });
+    morph = await analyzeEnglishMorph(entry.word);
+    if (seq !== glossSeq) return;
   }
-  if (!mayHaveMorph(entry.word)) {
-    renderMorphBox(null);
-    return;
-  }
-  renderMorphBox({ combo: "查字首／字根…" });
-  const morph = await analyzeEnglishMorph(entry.word);
-  if (seq !== glossSeq) return;
   if (!morph) {
     renderMorphBox(null);
     return;
   }
+  await fillMissingMorphZh(morph);
+  if (seq !== glossSeq) return;
   entry.morph = morph;
   if (glossStack.length) {
     const top = glossStack[glossStack.length - 1];
@@ -1083,7 +1119,7 @@ async function fillMorphology(entry, seq) {
   let changed = false;
   const next = list.map((item) => {
     if (String(item.word || "").toLowerCase() !== key) return item;
-    if (item.morph?.combo) return item;
+    if (item.morph?.combo && item.morph?.root?.zh) return item;
     changed = true;
     return { ...item, morph };
   });

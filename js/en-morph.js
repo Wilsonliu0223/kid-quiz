@@ -277,6 +277,28 @@ const AFFIXES = [
   { form: "hood", kind: "suffix", zh: "身分、時期", examples: ["childhood", "neighborhood"] },
   { form: "ward", kind: "suffix", zh: "向", examples: ["forward", "backward"] },
   { form: "ology", kind: "suffix", zh: "學問", examples: ["biology", "geology"] },
+  { form: "ical", kind: "suffix", zh: "…的", examples: ["historical", "musical", "political"] },
+  { form: "ial", kind: "suffix", zh: "…的", examples: ["official", "social", "editorial"] },
+  { form: "ian", kind: "suffix", zh: "人、…的", examples: ["musician", "Canadian"] },
+  { form: "ary", kind: "suffix", zh: "…的、地方", examples: ["dictionary", "military", "primary"] },
+  { form: "ory", kind: "suffix", zh: "…的、地方", examples: ["history", "factory", "memory"] },
+  { form: "ism", kind: "suffix", zh: "主義、做法", examples: ["tourism", "criticism"] },
+  { form: "ist", kind: "suffix", zh: "人", examples: ["artist", "scientist"] },
+  { form: "ify", kind: "suffix", zh: "使成為", examples: ["simplify", "beautify"] },
+  { form: "ure", kind: "suffix", zh: "動作、狀態", examples: ["pressure", "failure"] },
+  { form: "age", kind: "suffix", zh: "狀態、集合", examples: ["package", "voltage", "passage"] },
+  { form: "dom", kind: "suffix", zh: "領域、狀態", examples: ["kingdom", "freedom"] },
+  { form: "ant", kind: "suffix", zh: "人、…的", examples: ["assistant", "important"] },
+  { form: "ent", kind: "suffix", zh: "人、…的", examples: ["student", "different"] },
+  { form: "ish", kind: "suffix", zh: "有點、…的", examples: ["childish", "selfish"] },
+  { form: "ess", kind: "suffix", zh: "女性", examples: ["actress", "hostess"] },
+  { form: "eer", kind: "suffix", zh: "人", examples: ["engineer", "volunteer"] },
+  { form: "ee", kind: "suffix", zh: "被…的人", examples: ["employee", "trainee"] },
+  { form: "or", kind: "suffix", zh: "人、物", examples: ["actor", "visitor", "inventor"] },
+  { form: "er", kind: "suffix", zh: "人、比較", examples: ["teacher", "player"] },
+  { form: "ly", kind: "suffix", zh: "地、…的", examples: ["quickly", "slowly", "friendly"] },
+  { form: "ic", kind: "suffix", zh: "…的", examples: ["historic", "public"] },
+  { form: "al", kind: "suffix", zh: "…的、屬於", examples: ["national", "personal", "natural", "musical"] },
 ];
 
 const PREFIXES = AFFIXES.filter((a) => a.kind === "prefix").sort(
@@ -555,16 +577,18 @@ function decorate(parsed, word) {
   if (!parsed) return null;
   const w = normWord(word);
   const prefix = parsed.prefix ? affixView("prefix", parsed.prefix) : null;
-  const root = parsed.root ? affixView("root", parsed.root) : null;
   const suffix = parsed.suffix ? affixView("suffix", parsed.suffix) : null;
   const stem = String(parsed.stem || "").toLowerCase();
   const compound = String(parsed.compound || "").toLowerCase();
+  let root = parsed.root ? affixView("root", parsed.root) : null;
+  if (!root && stem && stem !== prefix?.form && stem !== suffix?.form) {
+    root = affixView("root", stem);
+  }
 
   const bits = [];
   if (prefix) bits.push(bitText(prefix));
   if (root) bits.push(bitText(root));
-  else if (stem) bits.push(stem);
-  if (compound) bits.push(compound);
+  if (compound && compound !== root?.form) bits.push(compound);
   if (suffix) bits.push(bitText(suffix));
   if (bits.length < 2) return null;
 
@@ -576,6 +600,17 @@ function decorate(parsed, word) {
     suffix: suffix || null,
     stem: stem || "",
   };
+}
+
+export function refreshMorphCombo(morph) {
+  if (!morph) return morph;
+  const bits = [];
+  if (morph.prefix) bits.push(bitText(morph.prefix));
+  if (morph.root) bits.push(bitText(morph.root));
+  else if (morph.stem) bits.push(morph.stem);
+  if (morph.suffix) bits.push(bitText(morph.suffix));
+  if (bits.length >= 2) morph.combo = `${bits.join(" + ")} → ${morph.word}`;
+  return morph;
 }
 
 /** 不打網路：字族表能立刻拆出來的才算（含 -s/-ed/-ing） */
