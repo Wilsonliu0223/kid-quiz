@@ -256,6 +256,10 @@ const AFFIXES = [
   { form: "chron", kind: "root", zh: "時間", examples: ["chronic", "synchronize"] },
   { form: "dem", kind: "root", zh: "人民", examples: ["democracy", "epidemic"] },
   { form: "crat", kind: "root", zh: "統治", examples: ["democrat", "autocrat"] },
+  { form: "clud", kind: "root", zh: "關、閉", examples: ["include", "exclude", "conclude"] },
+  { form: "clus", kind: "root", zh: "關、閉", examples: ["conclusion", "exclusive"] },
+  { form: "clos", kind: "root", zh: "關、閉", examples: ["close", "disclose"] },
+  { form: "nect", kind: "root", zh: "連結", examples: ["connect", "disconnect"] },
   { form: "ation", kind: "suffix", zh: "動作、狀態", examples: ["information", "education", "creation"] },
   { form: "ition", kind: "suffix", zh: "動作、狀態", examples: ["addition", "competition"] },
   { form: "tion", kind: "suffix", zh: "動作、狀態", examples: ["action", "nation", "invention"] },
@@ -325,7 +329,17 @@ function findAffix(kind, form) {
     .replace(/-/g, "")
     .toLowerCase();
   if (!key) return null;
-  return AFFIXES.find((a) => a.kind === kind && a.form === key) || null;
+  const exact = AFFIXES.find((a) => a.kind === kind && a.form === key);
+  if (exact) return exact;
+  if (kind !== "root" || key.length < 3) return null;
+  return (
+    ROOTS.find((r) => {
+      if (r.form.length < 3) return false;
+      if (key.startsWith(r.form) && key.length - r.form.length <= 2) return true;
+      if (r.form.startsWith(key) && r.form.length - key.length <= 2) return true;
+      return false;
+    }) || null
+  );
 }
 
 function cleanPart(raw) {

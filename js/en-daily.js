@@ -22,7 +22,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v29";
+} from "./english.js?v=en-speak-v30";
 import {
   analyzeEnglishMorph,
   mayHaveMorph,
@@ -32,7 +32,7 @@ import {
   getAffixFamily,
   wordMatchesAffix,
   refreshMorphCombo,
-} from "./en-morph.js?v=en-morph-v7";
+} from "./en-morph.js?v=en-morph-v8";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -524,6 +524,22 @@ function playEngineTip(side, eng) {
 }
 
 /** 查字卡／複習字：單字對應的短中文（給播放列中文模式唸） */
+function lemmaFromGloss(def) {
+  const s = String(def || "");
+  const m = s.match(
+    /(?:simple past|past tense|past participle|present participle|gerund|plural)(?: and past participle)? of ([a-z]+)/i
+  );
+  return m ? m[1] : "";
+}
+
+function firstZhClause(s) {
+  const t = String(s || "").trim();
+  if (!hasCjkText(t)) return "";
+  const short = shortZh(t);
+  if (short) return short;
+  return t.split(/[。；;\n]/)[0].trim().slice(0, 24);
+}
+
 function glossWordZhNow(word) {
   const key = String(word || "")
     .trim()
@@ -531,18 +547,18 @@ function glossWordZhNow(word) {
   if (!key) return "";
   const top = glossStack[glossStack.length - 1];
   if (top && String(top.word || "").toLowerCase() === key && top.kind !== "family") {
-    const own = shortZh(top.zh);
+    const own = firstZhClause(top.zh) || firstZhClause(top.zhGloss);
     if (own) return own;
     const senseZh = Array.isArray(top.senses)
-      ? shortZh(top.senses.find((x) => shortZh(x.zh))?.zh)
+      ? firstZhClause(top.senses.find((x) => hasCjkText(x.zh))?.zh)
       : "";
-    if (senseZh && senseZh.length <= 18) return senseZh;
+    if (senseZh) return senseZh;
   }
   const fromReview = loadReview().find(
     (r) => String(r.word || "").toLowerCase() === key
   );
   if (fromReview) {
-    const s = shortZh(fromReview.zh);
+    const s = firstZhClause(fromReview.zh) || firstZhClause(fromReview.zhGloss);
     if (s) return s;
   }
   return "";
@@ -552,22 +568,53 @@ async function zhForGlossWord(word) {
   const now = glossWordZhNow(word);
   if (now) return now;
   const w = String(word || "").trim();
-  if (!w || /[^a-zA-Z'-]/.test(w.replace(/\s/g, ""))) return "";
+  if (!w) return "";
+  const top = glossStack[glossStack.length - 1];
+  const same =
+    top &&
+    String(top.word || "").toLowerCase() === w.toLowerCase() &&
+    top.kind !== "family";
+  const def = same
+    ? String(top.senses?.[0]?.definition || top.gloss || "").trim()
+    : "";
+  const lemma = lemmaFromGloss(def);
+  let src = lemma;
+  if (!src && def && !/^Looking up/i.test(def) && !/^Sorry,/i.test(def)) src = def;
+  if (!src && /^[a-zA-Z][a-zA-Z'-]*$/.test(w)) src = w;
+  if (!src) return "";
   const raw =
-    (await translateEnToZh(w, "TW")) || (await translateEnToZh(w, "CN")) || "";
-  return shortZh(raw);
+    (await translateEnToZh(src, "TW")) || (await translateEnToZh(src, "CN")) || "";
+  const zh = firstZhClause(raw);
+  if (same && zh) {
+    if (!top.zh) top.zh = zh;
+    if (!hasCjkText(top.zhGloss)) top.zhGloss = hasCjkText(raw) ? raw : zh;
+  }
+  return zh;
 }
 
-/** 單字 🔊：跟隨播放列英文／中文／英→中／中→英 */
+/** 單字 🔊：跟隨播放列英文／中文／英→中／中→英；中文模式要唸意思，不要用中文聲音唸英文 */
 async function playGlossWord(word) {
   const w = String(word || "").trim();
   if (!w) return;
   const needZh = playLangSides().includes("zh");
-  if (needZh) showPlayBar("載入中文…");
-  const zh = await zhForGlossWord(w);
+  let zh = "";
+  if (needZh) {
+    showPlayBar("載入中文意思…");
+    zh = await zhForGlossWord(w);
+    if (!hasCjkText(zh)) {
+      if (playLang === "zh") {
+        showPlayBar("找不到中文意思");
+        setTimeout(() => {
+          if (isEnSpeakViewActive() || isReviewViewActive()) showPlayBarIdle();
+        }, 1600);
+        return;
+      }
+      zh = "";
+    }
+  }
   await playWithBar(w, {
     label: "單字播放中",
-    zhChunks: zh ? [zh] : undefined,
+    zhChunks: hasCjkText(zh) ? [zh] : undefined,
   });
 }
 
@@ -719,12 +766,23 @@ async function playWithBar(text, opts = {}) {
         side === "zh" ? `${status} · 載入${selectedVoiceLabel("zh")}…` : status
       );
       const t0 = Date.now();
-      const lineZh = side === "zh" ? alignedZh : "";
-      const spoken = lineZh || lineEn;
+      let zhLine = side === "zh" ? alignedZh : "";
+      if (side === "zh" && !hasCjkText(zhLine)) {
+        const raw =
+          (await translateEnToZh(lineEn, "TW")) ||
+          (await translateEnToZh(lineEn, "CN")) ||
+          "";
+        zhLine = hasCjkText(raw) ? raw : "";
+      }
+      if (side === "zh" && !hasCjkText(zhLine)) {
+        showPlayBar(`${status} · 沒有中文`);
+        continue;
+      }
+      const spoken = side === "zh" ? zhLine : lineEn;
       const ok = await speakEnglish(spoken, {
         fast: true,
         lang: side,
-        alreadyZh: Boolean(lineZh),
+        alreadyZh: side === "zh",
         speed: playSpeed,
         voice: speaker
           ? voiceForDialogueSpeaker(speaker, side)
@@ -732,7 +790,7 @@ async function playWithBar(text, opts = {}) {
       });
       if (seq !== playSeq) return;
       if (playFollowSentences && ok) {
-        const holdSrc = lineZh || lineEn;
+        const holdSrc = spoken;
         const hold = minSpeakHoldMs(holdSrc, playSpeed);
         const elapsed = Date.now() - t0;
         if (elapsed < hold * 0.4) {
@@ -2171,33 +2229,65 @@ function setGlossZhUi(zhText) {
   if (zhEl) zhEl.textContent = has ? raw : "";
   if (row) row.hidden = !has;
   if (speakBtn) speakBtn.disabled = !has || loading;
-  // 換字時一律收合；翻譯中也不展開
-  setGlossZhExpanded(false);
+  setGlossZhExpanded(Boolean(raw) && !loading);
 }
 
-/** 英英解釋 → 繁中說明（顯示用）；失敗則隱藏中文區 */
-async function fillGlossZh(entry, seq) {
-  const gloss = String(entry?.gloss || "").trim();
-  if (!gloss || /^Looking up/i.test(gloss) || /^Sorry,/i.test(gloss)) {
-    setGlossZhUi("");
-    return;
+/** 英英解釋／義項都補上中文，給畫面顯示也給中文朗讀用 */
+async function fillGlossChinese(entry, seq) {
+  if (!entry || entry.kind === "family") return;
+  const senses = Array.isArray(entry.senses) ? entry.senses : [];
+  await Promise.all(
+    senses.map(async (sense) => {
+      if (hasCjkText(sense.zh)) return;
+      const lemma = lemmaFromGloss(sense.definition);
+      const src = lemma || String(sense.definition || "").trim();
+      if (!src) return;
+      const raw =
+        (await translateEnToZh(src, "TW")) ||
+        (await translateEnToZh(src, "CN")) ||
+        "";
+      if (hasCjkText(raw)) {
+        sense.zh = raw;
+        sense.zhSource = "machine";
+      }
+    })
+  );
+  if (!hasCjkText(entry.zhGloss)) {
+    const fromSense = senses.find((s) => hasCjkText(s.zh))?.zh || "";
+    if (hasCjkText(fromSense)) {
+      entry.zhGloss = fromSense;
+    } else {
+      const gloss = String(entry.gloss || "").trim();
+      const lemma = lemmaFromGloss(gloss);
+      const src = lemma || gloss;
+      if (src && !/^Looking up/i.test(src) && !/^Sorry,/i.test(src)) {
+        const raw =
+          (await translateEnToZh(src, "TW")) ||
+          (await translateEnToZh(src, "CN")) ||
+          "";
+        if (hasCjkText(raw)) entry.zhGloss = raw;
+      }
+    }
   }
-  if (entry.zhGloss) {
-    setGlossZhUi(entry.zhGloss);
-    return;
+  if (!firstZhClause(entry.zh) && hasCjkText(entry.zhGloss)) {
+    entry.zh = firstZhClause(entry.zhGloss);
   }
-  setGlossZhUi("翻譯中…");
-  const zh =
-    (await translateEnToZh(gloss, "TW")) ||
-    (await translateEnToZh(gloss, "CN")) ||
-    "";
   if (seq !== glossSeq) return;
-  entry.zhGloss = zh;
-  // 同步寫回 stack 目前這層
   if (glossStack.length) {
-    glossStack[glossStack.length - 1] = { ...glossStack[glossStack.length - 1], zhGloss: zh };
+    const top = glossStack[glossStack.length - 1];
+    if (String(top.word || "").toLowerCase() === String(entry.word || "").toLowerCase()) {
+      glossStack[glossStack.length - 1] = { ...top, ...entry };
+    }
   }
-  setGlossZhUi(zh);
+  const sensesEl = $("#en-gloss-senses");
+  if (sensesEl && senses.length) {
+    sensesEl.innerHTML = renderGlossSenses(senses, entry.word);
+    sensesEl.hidden = false;
+    bindWordClicks(sensesEl);
+  }
+  const sensesHaveZh = senses.some((s) => hasCjkText(s.zh));
+  if (sensesHaveZh) setGlossZhUi("");
+  else setGlossZhUi(entry.zhGloss || "");
   requestAnimationFrame(() => syncDockVisibility());
 }
 
@@ -2297,11 +2387,11 @@ function showGloss(entry, opts = {}) {
     bindWordClicks(g);
   }
   if (hasSenses) {
-    setGlossZhUi("");
+    setGlossZhUi(entry.senses.some((s) => hasCjkText(s.zh)) ? "" : "翻譯中…");
   } else {
-    setGlossZhUi(entry.zhGloss || "");
-    void fillGlossZh(entry, seq);
+    setGlossZhUi(entry.zhGloss || "翻譯中…");
   }
+  void fillGlossChinese(entry, seq);
 
   const hasEx = Boolean(entry.example) && !hasSenses;
   if (ex) {

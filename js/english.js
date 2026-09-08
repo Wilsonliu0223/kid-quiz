@@ -1592,8 +1592,9 @@ export async function speakEnglish(text, opts = {}) {
     speakText =
       (await translateEnToZh(w, variant)) ||
       (await translateEnToZh(w, variant === "TW" ? "CN" : "TW")) ||
-      w;
+      "";
   }
+  if (lang === "zh" && !/[\u3400-\u9fff]/.test(speakText)) return false;
 
   const wantFast = opts.fast || opts.instant;
   if (wantFast) {
