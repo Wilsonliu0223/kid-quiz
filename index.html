@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.37";
+        var V = "39.38";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.48" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.49" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -2319,7 +2319,7 @@
             </button>
             <button type="button" class="gifted-game-card" data-gifted-game="fig">
               <span class="gifted-game-name">圖形規律</span>
-              <span class="gifted-game-desc">找下一個、轉一轉、缺哪塊</span>
+              <span class="gifted-game-desc">刪異、旋轉、鏡射、裡外對調、上下位置</span>
               <span class="gifted-game-tag" data-gifted-tag="fig"></span>
             </button>
             <button type="button" class="gifted-game-card" data-gifted-game="math">
@@ -2603,7 +2603,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.76").catch((e) => {
+      import("./js/app.js?v=app-v45.77").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

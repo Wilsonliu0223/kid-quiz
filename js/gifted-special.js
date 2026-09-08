@@ -127,135 +127,368 @@ function langItems(grade, rnd, n) {
 }
 
 function figItems(grade, rnd, n) {
+  const other = (s) => SHAPES.filter((x) => x !== s)[0];
+  const makers = [
+    () => {
+      const s = pick(rnd, SHAPES);
+      return {
+        q: "哪一個跟其他三個不一樣？",
+        explain: "三個塗滿，一個空心。",
+        vis: {
+          kind: "pick",
+          choices: [{ s, fill: 1 }, { s, fill: 1 }, { s, fill: 1 }, { s, fill: 0 }],
+        },
+        packed: { options: ["", "", "", ""], answer: 3 },
+      };
+    },
+    () => {
+      const s = pick(rnd, ["t", "d"]);
+      return {
+        q: "哪一個跟其他三個不一樣？",
+        explain: "三個尖朝同一個方向，一個轉過了。",
+        vis: {
+          kind: "pick",
+          choices: [
+            { s, fill: 1, rot: 0 },
+            { s, fill: 1, rot: 0 },
+            { s, fill: 1, rot: 180 },
+            { s, fill: 1, rot: 0 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 2 },
+      };
+    },
+    () => {
+      const s = pick(rnd, SHAPES);
+      const o = other(s);
+      return {
+        q: "哪一個跟其他三個不同類？",
+        explain: "三個形狀相同，一個不是。",
+        vis: {
+          kind: "pick",
+          choices: [{ s, fill: 1 }, { s, fill: 0 }, { s, fill: 1, size: "s" }, { s: o, fill: 1 }],
+        },
+        packed: { options: ["", "", "", ""], answer: 3 },
+      };
+    },
+    () => {
+      const start = 1 + Math.floor(rnd() * 2);
+      return {
+        q: "點的數量每次多 1。問號該選哪一個？",
+        explain: "每次多一顆。",
+        vis: {
+          kind: "row",
+          cells: [
+            { s: "dot", n: start },
+            { s: "dot", n: start + 1 },
+            { s: "dot", n: start + 2 },
+            null,
+          ],
+          choices: [
+            { s: "dot", n: start + 3 },
+            { s: "dot", n: start },
+            { s: "dot", n: start + 4 },
+            { s: pick(rnd, SHAPES), fill: 1 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => ({
+      q: "點的數量每次少 1。問號該選哪一個？",
+      explain: "4、3、2 之後是 1。",
+      vis: {
+        kind: "row",
+        cells: [{ s: "dot", n: 4 }, { s: "dot", n: 3 }, { s: "dot", n: 2 }, null],
+        choices: [
+          { s: "dot", n: 1 },
+          { s: "dot", n: 3 },
+          { s: "dot", n: 5 },
+          { s: "c", fill: 1 },
+        ],
+      },
+      packed: { options: ["", "", "", ""], answer: 0 },
+    }),
+    () => {
+      const s = pick(rnd, SHAPES);
+      const o = other(s);
+      return {
+        q: "兩種圖形輪流出現。問號該選哪一個？",
+        explain: "兩種輪流。",
+        vis: {
+          kind: "row",
+          cells: [{ s, fill: 1 }, { s: o, fill: 1 }, { s, fill: 1 }, null],
+          choices: [{ s, fill: 1 }, { s: o, fill: 1 }, { s, fill: 0 }, { s: "d", fill: 1 }],
+        },
+        packed: { options: ["", "", "", ""], answer: 1 },
+      };
+    },
+    () => {
+      const trio = shuffle(["c", "q", "t"], rnd);
+      return {
+        q: "三種圖形照順序循環。問號該選哪一個？",
+        explain: "三個一輪，回到第一種。",
+        vis: {
+          kind: "row",
+          cells: [
+            { s: trio[0], fill: 1 },
+            { s: trio[1], fill: 1 },
+            { s: trio[2], fill: 1 },
+            null,
+          ],
+          choices: [
+            { s: trio[0], fill: 1 },
+            { s: trio[1], fill: 1 },
+            { s: trio[2], fill: 0 },
+            { s: "d", fill: 1 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => ({
+      q: "每次順時針轉 90 度。問號該選哪一個？",
+      explain: "再轉一次，尖朝左。",
+      vis: {
+        kind: "row",
+        cells: [
+          { s: "t", fill: 1, rot: 0 },
+          { s: "t", fill: 1, rot: 90 },
+          { s: "t", fill: 1, rot: 180 },
+          null,
+        ],
+        choices: [
+          { s: "t", fill: 1, rot: 270 },
+          { s: "t", fill: 1, rot: 0 },
+          { s: "t", fill: 0, rot: 180 },
+          { s: "q", fill: 1 },
+        ],
+      },
+      packed: { options: ["", "", "", ""], answer: 0 },
+    }),
+    () => ({
+      q: "每次轉 180 度。問號該選哪一個？",
+      explain: "上下顛倒一次再顛倒，回到朝上。",
+      vis: {
+        kind: "row",
+        cells: [
+          { s: "t", fill: 1, rot: 0 },
+          { s: "t", fill: 1, rot: 180 },
+          { s: "t", fill: 1, rot: 0 },
+          null,
+        ],
+        choices: [
+          { s: "t", fill: 1, rot: 180 },
+          { s: "t", fill: 1, rot: 90 },
+          { s: "t", fill: 1, rot: 0 },
+          { s: "c", fill: 1 },
+        ],
+      },
+      packed: { options: ["", "", "", ""], answer: 0 },
+    }),
+    () => ({
+      q: "左右翻轉。問號該選哪一個？",
+      explain: "像照鏡子，尖從朝右變成朝左。",
+      vis: {
+        kind: "row",
+        cells: [{ s: "t", fill: 1, rot: 90 }, null],
+        choices: [
+          { s: "t", fill: 1, rot: 270 },
+          { s: "t", fill: 1, rot: 90 },
+          { s: "t", fill: 1, rot: 0 },
+          { s: "t", fill: 0, rot: 90 },
+        ],
+      },
+      packed: { options: ["", "", "", ""], answer: 0 },
+    }),
+    () => {
+      const s = pick(rnd, SHAPES);
+      const o = other(s);
+      return {
+        q: "左上對右上的變化，套到左下，右下該選哪一個？",
+        explain: "實心變空心，形狀不變。",
+        vis: {
+          kind: "grid2",
+          cells: [{ s, fill: 1 }, { s, fill: 0 }, { s: o, fill: 1 }, null],
+          choices: [
+            { s: o, fill: 0 },
+            { s: o, fill: 1 },
+            { s, fill: 0 },
+            { s: "t", fill: 0 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => {
+      const s = pick(rnd, SHAPES);
+      const o = other(s);
+      return {
+        q: "左上變右上只變大小。右下該選哪一個？",
+        explain: "變大，形狀不變。",
+        vis: {
+          kind: "grid2",
+          cells: [
+            { s, fill: 1, size: "s" },
+            { s, fill: 1, size: "l" },
+            { s: o, fill: 1, size: "s" },
+            null,
+          ],
+          choices: [
+            { s: o, fill: 1, size: "l" },
+            { s: o, fill: 1, size: "s" },
+            { s, fill: 1, size: "l" },
+            { s: "d", fill: 1, size: "l" },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => {
+      const s = pick(rnd, SHAPES);
+      const o = other(s);
+      return {
+        q: "外框和裡面的圖形對調。右下該選哪一個？",
+        explain: "外面跟裡面互換。",
+        vis: {
+          kind: "grid2",
+          cells: [
+            { s: "q", fill: 0, inner: { s, fill: 1 } },
+            { s, fill: 0, inner: { s: "q", fill: 1 } },
+            { s: "q", fill: 0, inner: { s: o, fill: 1 } },
+            null,
+          ],
+          choices: [
+            { s: o, fill: 0, inner: { s: "q", fill: 1 } },
+            { s: "q", fill: 0, inner: { s: o, fill: 1 } },
+            { s, fill: 0, inner: { s: o, fill: 1 } },
+            { s: o, fill: 1 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => {
+      const s = pick(rnd, SHAPES);
+      return {
+        q: "同一列多 1 顆，同一行改成空心。右下該選哪一個？",
+        explain: "往右多一顆，往下變空心。",
+        vis: {
+          kind: "grid2",
+          cells: [
+            { s, fill: 1, n: 1 },
+            { s, fill: 1, n: 2 },
+            { s, fill: 0, n: 1 },
+            null,
+          ],
+          choices: [
+            { s, fill: 0, n: 2 },
+            { s, fill: 1, n: 2 },
+            { s, fill: 0, n: 1 },
+            { s: other(s), fill: 0, n: 2 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => {
+      const s = pick(rnd, SHAPES);
+      return {
+        q: "個數每次多 1，而且實心、空心輪流。問號該選哪一個？",
+        explain: "顆數加 1，塗滿和空心輪流。",
+        vis: {
+          kind: "row",
+          cells: [
+            { s, fill: 1, n: 1 },
+            { s, fill: 0, n: 2 },
+            { s, fill: 1, n: 3 },
+            null,
+          ],
+          choices: [
+            { s, fill: 0, n: 4 },
+            { s, fill: 1, n: 4 },
+            { s, fill: 0, n: 3 },
+            { s: other(s), fill: 0, n: 4 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => ({
+      q: "上面是三角、下面是方。整組右轉 90 度後，三角在方的？",
+      explain: "順時針後，上面的跑到右邊。",
+      vis: {
+        kind: "stack",
+        cells: [{ s: "t", fill: 1 }, { s: "q", fill: 1 }],
+      },
+      packed: pack("右邊", ["左邊", "上面", "下面"], rnd),
+    }),
+    () => {
+      const s = pick(rnd, ["t", "d"]);
+      return {
+        q: "哪一個不能由左邊這個圖旋轉得到？",
+        explain: "旋轉不會變成別的形狀。",
+        vis: {
+          kind: "one",
+          cell: { s, fill: 1, rot: 0 },
+          choices: [
+            { s: "q", fill: 1 },
+            { s, fill: 1, rot: 90 },
+            { s, fill: 1, rot: 180 },
+            { s, fill: 1, rot: 270 },
+          ],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+    () => {
+      const a = { s: pick(rnd, SHAPES), fill: 1 };
+      const b = { s: other(a.s), fill: 1 };
+      return {
+        q: "左右對調以後，右邊會變成哪一個？",
+        explain: "左邊跑到右邊。",
+        vis: {
+          kind: "pair",
+          cells: [a, b],
+          choices: [a, b, { s: "d", fill: 1 }, { s: a.s, fill: 0 }],
+        },
+        packed: { options: ["", "", "", ""], answer: 0 },
+      };
+    },
+  ];
+
+  if (grade >= 34) {
+    makers.push(() => ({
+      q: "同一列轉 90 度，同一行多一顆。右下該選哪一個？",
+      explain: "往右轉，往下多一顆。",
+      vis: {
+        kind: "grid2",
+        cells: [
+          { s: "t", fill: 1, n: 1, rot: 0 },
+          { s: "t", fill: 1, n: 1, rot: 90 },
+          { s: "t", fill: 1, n: 2, rot: 0 },
+          null,
+        ],
+        choices: [
+          { s: "t", fill: 1, n: 2, rot: 90 },
+          { s: "t", fill: 1, n: 2, rot: 0 },
+          { s: "t", fill: 1, n: 1, rot: 90 },
+          { s: "t", fill: 1, n: 3, rot: 90 },
+        ],
+      },
+      packed: { options: ["", "", "", ""], answer: 0 },
+    }));
+  }
+
   const out = [];
-  let i = 0;
-  const add = (q, packed, explain, extra) => {
-    out.push(item("fig", grade, `u-fig-${i}`, q, packed, explain, extra));
-    i += 1;
-  };
-  while (out.length < n) {
-    const kind = out.length % 6;
-    const s = pick(rnd, SHAPES);
-    const o = SHAPES.filter((x) => x !== s)[0];
-    if (kind === 0) {
-      const choices = [
-        { s, fill: 1 },
-        { s, fill: 1 },
-        { s, fill: 1 },
-        { s, fill: 0 },
-      ];
-      add(
-        "哪一個跟其他三個不一樣？",
-        { options: ["", "", "", ""], answer: 3 },
-        "三個塗滿，一個空心。",
-        { vis: { kind: "pick", choices } }
-      );
-    } else if (kind === 1) {
-      add(
-        "點的數量每次多 1。問號該選哪一個？",
-        { options: ["", "", "", ""], answer: 0 },
-        "1、2、3 之後是 4。",
-        {
-          vis: {
-            kind: "row",
-            cells: [{ s: "dot", n: 1 }, { s: "dot", n: 2 }, { s: "dot", n: 3 }, null],
-            choices: [
-              { s: "dot", n: 4 },
-              { s: "dot", n: 2 },
-              { s: "dot", n: 5 },
-              { s, fill: 1 },
-            ],
-          },
-        }
-      );
-    } else if (kind === 2) {
-      add(
-        "兩種圖形輪流出現。問號該選哪一個？",
-        { options: ["", "", "", ""], answer: 1 },
-        "兩種輪流。",
-        {
-          vis: {
-            kind: "row",
-            cells: [{ s, fill: 1 }, { s: o, fill: 1 }, { s, fill: 1 }, null],
-            choices: [
-              { s, fill: 1 },
-              { s: o, fill: 1 },
-              { s, fill: 0 },
-              { s: "d", fill: 1 },
-            ],
-          },
-        }
-      );
-    } else if (kind === 3) {
-      add(
-        "三角形每次順時針轉 90 度。問號該選哪一個？",
-        { options: ["", "", "", ""], answer: 0 },
-        "再轉一次，尖朝左。",
-        {
-          vis: {
-            kind: "row",
-            cells: [
-              { s: "t", fill: 1, rot: 0 },
-              { s: "t", fill: 1, rot: 90 },
-              { s: "t", fill: 1, rot: 180 },
-              null,
-            ],
-            choices: [
-              { s: "t", fill: 1, rot: 270 },
-              { s: "t", fill: 1, rot: 0 },
-              { s: "t", fill: 0, rot: 180 },
-              { s: "q", fill: 1 },
-            ],
-          },
-        }
-      );
-    } else if (kind === 4) {
-      add(
-        "左上對右上的變化，套到左下，右下該選哪一個？",
-        { options: ["", "", "", ""], answer: 0 },
-        "實心變空心，形狀不變。",
-        {
-          vis: {
-            kind: "grid2",
-            cells: [
-              { s, fill: 1 },
-              { s, fill: 0 },
-              { s: o, fill: 1 },
-              null,
-            ],
-            choices: [
-              { s: o, fill: 0 },
-              { s: o, fill: 1 },
-              { s, fill: 0 },
-              { s: "t", fill: 0 },
-            ],
-          },
-        }
-      );
-    } else {
-      add(
-        "正方形一次比一次大。問號該選哪一個？",
-        { options: ["", "", "", ""], answer: 2 },
-        "小、中、大，下一個最大。",
-        {
-          vis: {
-            kind: "row",
-            cells: [
-              { s: "q", fill: 1, size: "s" },
-              { s: "q", fill: 1, size: "m" },
-              { s: "q", fill: 1, size: "l" },
-              null,
-            ],
-            choices: [
-              { s: "q", fill: 1, size: "s" },
-              { s: "q", fill: 1, size: "m" },
-              { s: "q", fill: 1, size: "xl" },
-              { s: "c", fill: 1, size: "xl" },
-            ],
-          },
-        }
-      );
-    }
+  const order = shuffle(makers, rnd);
+  for (let i = 0; i < n; i++) {
+    const made = order[i % order.length]();
+    out.push(
+      item("fig", grade, `u-fig-${i}`, made.q, made.packed, made.explain, {
+        vis: made.vis,
+      })
+    );
   }
   return out;
 }

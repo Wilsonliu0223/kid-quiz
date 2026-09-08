@@ -725,6 +725,17 @@ body {
   color: #5b3fa8;
   font-size: 1.2rem;
 }
+.gifted-fig-pair,
+.gifted-fig-stack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 auto 8px;
+}
+.gifted-fig-stack {
+  flex-direction: column;
+}
 .gifted-fig-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

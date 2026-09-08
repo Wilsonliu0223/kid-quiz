@@ -82,6 +82,9 @@ export function cellSvg(spec, px = 72) {
       stroke
     );
   }
+  if (spec.flipX) {
+    inner = `<g transform="translate(${w},0) scale(-1,1)">${inner}</g>`;
+  }
   return `<svg class="gifted-fig-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">${inner}</svg>`;
 }
 
@@ -98,6 +101,15 @@ export function visPromptHtml(vis) {
     return `<div class="gifted-fig-row">${vis.cells
       .map((c) => wrapCell(c))
       .join('<span class="gifted-fig-arr" aria-hidden="true">→</span>')}</div>`;
+  }
+  if (vis.kind === "pair") {
+    return `<div class="gifted-fig-pair">${vis.cells.map((c) => wrapCell(c)).join("")}</div>`;
+  }
+  if (vis.kind === "stack") {
+    return `<div class="gifted-fig-stack">${vis.cells.map((c) => wrapCell(c)).join("")}</div>`;
+  }
+  if (vis.kind === "one") {
+    return `<div class="gifted-fig-row">${wrapCell(vis.cell)}</div>`;
   }
   if (vis.kind === "grid2") {
     return `<div class="gifted-fig-grid">${vis.cells.map((c) => wrapCell(c)).join("")}</div>`;

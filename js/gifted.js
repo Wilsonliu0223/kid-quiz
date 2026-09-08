@@ -11,8 +11,8 @@ import {
   visPromptHtml,
   visChoiceHtml,
   cellSvg,
-} from "./gifted-fig.js?v=gifted-fig-v3";
-import { makeSpecials } from "./gifted-special.js?v=gifted-sp-v1";
+} from "./gifted-fig.js?v=gifted-fig-v4";
+import { makeSpecials } from "./gifted-special.js?v=gifted-sp-v2";
 
 const CATS = ["fig", "lang", "math", "mem"];
 const GAMES = {
@@ -262,7 +262,9 @@ function takeCat(pool, n, rnd, famCap) {
     rnd
   );
   const bank = pool.filter((q) => !q.special);
-  const nSp = Math.min(specials.length, Math.max(1, Math.round(n * 0.45)));
+  const figHeavy = specials[0]?.cat === "fig" || bank[0]?.cat === "fig";
+  const ratio = figHeavy ? 0.7 : 0.45;
+  const nSp = Math.min(specials.length, Math.max(1, Math.round(n * ratio)));
   const fromSp = specials.slice(0, nSp);
   const fromBank = takeCatBank(bank, n - fromSp.length, rnd, famCap);
   return shuffle([...fromSp, ...fromBank], rnd);
@@ -306,6 +308,7 @@ function buildPaper(n, mode) {
         ? {
             kind: q.vis.kind,
             cells: q.vis.cells,
+            cell: q.vis.cell,
             choices: Array.isArray(q.vis.choices)
               ? order.map((i) => q.vis.choices[i])
               : undefined,
