@@ -22,7 +22,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v30";
+} from "./english.js?v=en-speak-v31";
 import {
   analyzeEnglishMorph,
   mayHaveMorph,
@@ -2157,7 +2157,7 @@ async function openGloss(word, reset) {
       ...online,
       contextGloss: local.gloss,
       contextZh: hasCjkText(local.contextZh) ? local.contextZh : local.zh,
-      zh: local.zh,
+      zh: local.zh || online.zh,
     };
     glossStack[glossStack.length - 1] = upgraded;
     showGloss(upgraded);
@@ -2317,14 +2317,18 @@ async function fillGlossChinese(entry, seq) {
     ...senses.map(async (sense) => {
       if (hasCjkText(sense.zh)) return;
       const lemma = lemmaFromGloss(sense.definition);
-      const src = lemma || String(sense.definition || "").trim();
+      const def = String(sense.definition || "").trim();
+      const src =
+        lemma ||
+        (def.length <= 80 ? def : "") ||
+        String(entry.word || "").trim();
       if (!src) return;
       const raw =
         (await translateEnToZh(src, "TW")) ||
         (await translateEnToZh(src, "CN")) ||
         "";
       if (hasCjkText(raw)) {
-        sense.zh = raw;
+        sense.zh = firstZhClause(raw) || raw;
         sense.zhSource = "machine";
       }
     }),
