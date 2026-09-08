@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.32";
+        var V = "39.33";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.44" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.45" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -505,51 +505,61 @@
 
       <div id="en-bottom-dock" class="en-bottom-dock" hidden>
           <div id="en-play-bar" class="en-play-bar" hidden>
-            <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
-            <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-            <span class="en-play-status" id="en-play-status">播放中</span>
-            <button type="button" class="en-play-gloss-close" id="btn-en-gloss-close" hidden>關閉查字</button>
-            <button type="button" class="en-play-speak-all" id="btn-en-daily-speak-all" aria-label="播放全文">
-              🔊
-            </button>
+            <div class="en-play-row en-play-row-now">
+              <span class="en-play-status" id="en-play-status">播放中</span>
+              <button type="button" class="en-play-gloss-close" id="btn-en-gloss-close" hidden>關閉查字</button>
+              <div class="en-play-now-actions">
+                <div class="en-play-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                <button type="button" class="en-play-stop" id="btn-en-play-stop" aria-label="停止">■</button>
+                <button type="button" class="en-play-speak-all" id="btn-en-daily-speak-all" aria-label="播放全文">
+                  🔊
+                </button>
+              </div>
+            </div>
             <div class="en-play-tools">
-              <div class="en-play-repeat" role="group" aria-label="Repeat">
-                <button type="button" class="en-play-repeat-btn is-active" data-en-play-repeat="off" title="不反覆" aria-label="不反覆">OFF</button>
-                <button type="button" class="en-play-repeat-btn" data-en-play-repeat="sentence" title="單句反覆播放" aria-label="單句反覆播放">LINE</button>
-                <button type="button" class="en-play-repeat-btn" data-en-play-repeat="all" title="整篇反覆播放" aria-label="整篇反覆播放">ALL</button>
+              <div class="en-play-row en-play-row-voices">
+                <label class="en-play-voice">
+                  <span class="en-play-accent-label">英</span>
+                  <select id="en-play-en-voice" aria-label="英文聲音">
+                    <option value="en-US-JennyNeural">美女 Jenny</option>
+                    <option value="en-US-AriaNeural">美女 Aria</option>
+                    <option value="en-US-GuyNeural">美男 Guy</option>
+                    <option value="en-GB-SoniaNeural">英女 Sonia</option>
+                    <option value="en-GB-LibbyNeural">英女 Libby</option>
+                    <option value="en-GB-RyanNeural">英男 Ryan</option>
+                  </select>
+                </label>
+                <label class="en-play-voice">
+                  <span class="en-play-accent-label">中</span>
+                  <select id="en-play-zh-voice" aria-label="中文聲音">
+                    <option value="zh-TW-HsiaoChenNeural">台女 曉臻</option>
+                    <option value="zh-TW-HsiaoYuNeural">台女 曉雨</option>
+                    <option value="zh-TW-YunJheNeural">台男 雲哲</option>
+                    <option value="zh-CN-XiaoxiaoNeural">陸女 曉曉</option>
+                    <option value="zh-CN-YunxiNeural" selected>陸男 雲希</option>
+                    <option value="zh-CN-YunyangNeural">陸男 雲揚</option>
+                  </select>
+                </label>
               </div>
-              <div class="en-play-speed" role="group" aria-label="語速">
-                <button type="button" class="en-play-speed-btn" data-en-play-speed="0.7">慢</button>
-                <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
-                <button type="button" class="en-play-speed-btn" data-en-play-speed="1.45">快</button>
-              </div>
-              <label class="en-play-voice">
-                <span class="en-play-accent-label">英</span>
-                <select id="en-play-en-voice" aria-label="英文聲音">
-                  <option value="en-US-JennyNeural">美女 Jenny</option>
-                  <option value="en-US-AriaNeural">美女 Aria</option>
-                  <option value="en-US-GuyNeural">美男 Guy</option>
-                  <option value="en-GB-SoniaNeural">英女 Sonia</option>
-                  <option value="en-GB-LibbyNeural">英女 Libby</option>
-                  <option value="en-GB-RyanNeural">英男 Ryan</option>
-                </select>
-              </label>
-              <label class="en-play-voice">
-                <span class="en-play-accent-label">中</span>
-                <select id="en-play-zh-voice" aria-label="中文聲音">
-                  <option value="zh-TW-HsiaoChenNeural">台女 曉臻</option>
-                  <option value="zh-TW-HsiaoYuNeural">台女 曉雨</option>
-                  <option value="zh-TW-YunJheNeural">台男 雲哲</option>
-                  <option value="zh-CN-XiaoxiaoNeural">陸女 曉曉</option>
-                  <option value="zh-CN-YunxiNeural" selected>陸男 雲希</option>
-                  <option value="zh-CN-YunyangNeural">陸男 雲揚</option>
-                </select>
-              </label>
-              <div class="en-play-lang" role="group" aria-label="朗讀語言">
-                <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
-                <button type="button" class="en-play-lang-btn" data-en-play-lang="zh">中文</button>
-                <button type="button" class="en-play-lang-btn" data-en-play-lang="en-zh" title="每句先英文再中文" aria-label="每句先英文再中文">英→中</button>
-                <button type="button" class="en-play-lang-btn" data-en-play-lang="zh-en" title="每句先中文再英文" aria-label="每句先中文再英文">中→英</button>
+              <div class="en-play-row en-play-row-modes">
+                <div class="en-play-modes-tune">
+                  <div class="en-play-repeat" role="group" aria-label="Repeat">
+                    <button type="button" class="en-play-repeat-btn is-active" data-en-play-repeat="off" title="不反覆" aria-label="不反覆">OFF</button>
+                    <button type="button" class="en-play-repeat-btn" data-en-play-repeat="sentence" title="單句反覆播放" aria-label="單句反覆播放">LINE</button>
+                    <button type="button" class="en-play-repeat-btn" data-en-play-repeat="all" title="整篇反覆播放" aria-label="整篇反覆播放">ALL</button>
+                  </div>
+                  <div class="en-play-speed" role="group" aria-label="語速">
+                    <button type="button" class="en-play-speed-btn" data-en-play-speed="0.7">慢</button>
+                    <button type="button" class="en-play-speed-btn is-active" data-en-play-speed="1">中</button>
+                    <button type="button" class="en-play-speed-btn" data-en-play-speed="1.45">快</button>
+                  </div>
+                </div>
+                <div class="en-play-lang" role="group" aria-label="朗讀語言">
+                  <button type="button" class="en-play-lang-btn is-active" data-en-play-lang="en">英文</button>
+                  <button type="button" class="en-play-lang-btn" data-en-play-lang="zh">中文</button>
+                  <button type="button" class="en-play-lang-btn" data-en-play-lang="en-zh" title="每句先英文再中文" aria-label="每句先英文再中文">英→中</button>
+                  <button type="button" class="en-play-lang-btn" data-en-play-lang="zh-en" title="每句先中文再英文" aria-label="每句先中文再英文">中→英</button>
+                </div>
               </div>
             </div>
           </div>
@@ -2553,7 +2563,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.71").catch((e) => {
+      import("./js/app.js?v=app-v45.72").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
