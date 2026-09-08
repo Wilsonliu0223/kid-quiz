@@ -547,7 +547,10 @@ function glossWordZhNow(word) {
   if (!key) return "";
   const top = glossStack[glossStack.length - 1];
   if (top && String(top.word || "").toLowerCase() === key && top.kind !== "family") {
-    const own = firstZhClause(top.zh) || firstZhClause(top.zhGloss);
+    const own =
+      firstZhClause(top.contextZh) ||
+      firstZhClause(top.zh) ||
+      firstZhClause(top.zhGloss);
     if (own) return own;
     const senseZh = Array.isArray(top.senses)
       ? firstZhClause(top.senses.find((x) => hasCjkText(x.zh))?.zh)
@@ -980,6 +983,7 @@ function vocabMap(art, extraWords = []) {
       gloss: String(v.gloss || "").trim(),
       example: String(v.example || "").trim(),
       phonetic: String(v.phonetic || "").trim(),
+      zh: String(v.zh || v.zhGloss || v.gloss_zh || "").trim(),
     });
   }
   for (const raw of extraWords || []) {
@@ -2109,7 +2113,13 @@ function bindWordClicks(root) {
 function lookupLocalGloss(word) {
   const key = word.toLowerCase();
   const fromArt = current ? vocabMap(current).get(key) : null;
-  if (fromArt?.gloss) return fromArt;
+  if (fromArt?.gloss) {
+    return {
+      ...fromArt,
+      contextGloss: fromArt.gloss,
+      contextZh: fromArt.zh,
+    };
+  }
   const fromReview = loadReview().find((r) => r.word.toLowerCase() === key);
   if (fromReview?.gloss) {
     return {
@@ -2137,6 +2147,8 @@ async function openGloss(word, reset) {
     const upgraded = {
       ...online,
       contextGloss: local.gloss,
+      contextZh: hasCjkText(local.contextZh) ? local.contextZh : local.zh,
+      zh: local.zh,
     };
     glossStack[glossStack.length - 1] = upgraded;
     showGloss(upgraded);
@@ -2196,6 +2208,23 @@ function toggleGlossZhExpanded() {
   requestAnimationFrame(() => syncDockVisibility());
 }
 
+function renderGlossHead(entry) {
+  const contextGloss = String(entry.contextGloss || "").trim();
+  const en = contextGloss || String(entry.gloss || "").trim();
+  const zh = String(
+    entry.contextZh || (!contextGloss ? entry.zhGloss : "") || ""
+  ).trim();
+  const label = contextGloss
+    ? `<span class="en-gloss-context-label">本篇詞義：</span>`
+    : "";
+  const zhHtml = hasCjkText(zh)
+    ? `<p class="en-gloss-context-zh">${escapeHtml(zh)}</p>`
+    : contextGloss
+      ? `<p class="en-gloss-context-zh">翻譯中…</p>`
+      : "";
+  return `${label}${renderClickableText(en, current)}${zhHtml}`;
+}
+
 function renderGlossSenses(senses, word) {
   if (!Array.isArray(senses) || !senses.length) return "";
   return senses
@@ -2252,9 +2281,20 @@ async function fillGlossChinese(entry, seq) {
       }
     })
   );
+  const contextEn = String(entry.contextGloss || "").trim();
+  if (contextEn && !hasCjkText(entry.contextZh)) {
+    const raw =
+      (await translateEnToZh(contextEn, "TW")) ||
+      (await translateEnToZh(contextEn, "CN")) ||
+      "";
+    if (hasCjkText(raw)) entry.contextZh = raw;
+  }
   if (!hasCjkText(entry.zhGloss)) {
+    const fromContext = hasCjkText(entry.contextZh) ? entry.contextZh : "";
     const fromSense = senses.find((s) => hasCjkText(s.zh))?.zh || "";
-    if (hasCjkText(fromSense)) {
+    if (fromContext) {
+      entry.zhGloss = fromContext;
+    } else if (hasCjkText(fromSense)) {
       entry.zhGloss = fromSense;
     } else {
       const gloss = String(entry.gloss || "").trim();
@@ -2269,8 +2309,9 @@ async function fillGlossChinese(entry, seq) {
       }
     }
   }
-  if (!firstZhClause(entry.zh) && hasCjkText(entry.zhGloss)) {
-    entry.zh = firstZhClause(entry.zhGloss);
+  if (!firstZhClause(entry.zh)) {
+    entry.zh =
+      firstZhClause(entry.contextZh) || firstZhClause(entry.zhGloss);
   }
   if (seq !== glossSeq) return;
   if (glossStack.length) {
@@ -2279,14 +2320,21 @@ async function fillGlossChinese(entry, seq) {
       glossStack[glossStack.length - 1] = { ...top, ...entry };
     }
   }
+  const g = $("#en-gloss-text");
+  if (g) {
+    g.innerHTML = renderGlossHead(entry);
+    g.hidden = !String(entry.contextGloss || "").trim() && senses.length > 0;
+    if (!g.hidden) bindWordClicks(g);
+  }
   const sensesEl = $("#en-gloss-senses");
   if (sensesEl && senses.length) {
     sensesEl.innerHTML = renderGlossSenses(senses, entry.word);
     sensesEl.hidden = false;
     bindWordClicks(sensesEl);
   }
+  const headHasZh = hasCjkText(entry.contextZh) || hasCjkText(entry.zhGloss);
   const sensesHaveZh = senses.some((s) => hasCjkText(s.zh));
-  if (sensesHaveZh) setGlossZhUi("");
+  if (headHasZh || sensesHaveZh) setGlossZhUi("");
   else setGlossZhUi(entry.zhGloss || "");
   requestAnimationFrame(() => syncDockVisibility());
 }
@@ -2379,11 +2427,9 @@ function showGloss(entry, opts = {}) {
     if (hasSenses) bindWordClicks(sensesEl);
   }
   if (g) {
-    const contextGloss = String(entry.contextGloss || "").trim();
-    g.innerHTML = contextGloss
-      ? `<span class="en-gloss-context-label">本篇詞義：</span>${renderClickableText(contextGloss, current)}`
-      : renderClickableText(entry.gloss, current);
-    g.hidden = hasSenses && !contextGloss;
+    g.innerHTML = renderGlossHead(entry);
+    g.hidden =
+      hasSenses && !String(entry.contextGloss || "").trim();
     bindWordClicks(g);
   }
   if (hasSenses) {

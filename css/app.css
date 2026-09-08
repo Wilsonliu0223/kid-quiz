@@ -6786,6 +6786,12 @@ body.en-gloss-open .en-play-accent-btn {
   font-weight: 700;
   margin-right: 4px;
 }
+.en-gloss-context-zh {
+  margin: 4px 0 0;
+  color: #3d4f73;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
 .en-gloss-senses {
   margin: 10px 0 4px;
 }
