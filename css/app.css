@@ -616,6 +616,97 @@ body {
 .gifted-title {
   margin: 8px 0 12px;
 }
+.gifted-games {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 8px 0 20px;
+}
+.gifted-game-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  padding: 12px 12px 10px;
+  border: 2px solid #c8b6ef;
+  border-radius: 16px;
+  background: #fff;
+  color: #3b2d7a;
+  cursor: pointer;
+}
+.gifted-game-card:nth-child(5),
+.gifted-game-card:nth-child(6) {
+  grid-column: 1 / -1;
+}
+.gifted-game-name {
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+.gifted-game-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.gifted-game-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5b3fa8;
+  min-height: 1.1em;
+}
+.gifted-game-card.is-mid {
+  border-color: #5b3fa8;
+  background: #f4efff;
+}
+.gifted-spd-body {
+  padding: 8px 16px 20px;
+}
+.gifted-spd-ask {
+  margin: 4px 0 8px;
+  font-weight: 800;
+  text-align: center;
+}
+.gifted-spd-target {
+  display: grid;
+  place-items: center;
+  margin: 0 auto 8px;
+  width: 84px;
+  height: 84px;
+  border: 3px solid #5b3fa8;
+  border-radius: 16px;
+  background: #fff;
+}
+.gifted-spd-score {
+  text-align: center;
+  font-weight: 800;
+  color: #4a2f8c;
+  margin: 0 0 12px;
+}
+.gifted-spd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.gifted-spd-grid.is-wide {
+  grid-template-columns: repeat(5, 1fr);
+}
+.gifted-spd-cell {
+  aspect-ratio: 1;
+  border: 2px solid #c8b6ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.gifted-spd-cell.is-hit {
+  background: #e8f7ee;
+  border-color: #3d9a5f;
+}
+.gifted-spd-cell.is-miss {
+  background: #ffe8e4;
+  border-color: #e07060;
+}
 .gifted-fig {
   margin: 4px 0 14px;
 }

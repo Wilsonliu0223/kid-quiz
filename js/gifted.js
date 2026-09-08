@@ -1,5 +1,5 @@
 /**
- * 魏氏風格推理練習（非正式鑑定）：年級分層、分域抽題、交卷評分
+ * 思考練習：對齊智力測驗常見作業的自編小遊戲（非正式鑑定）
  */
 import { getSelectedChild } from "./store.js";
 import {
@@ -7,9 +7,21 @@ import {
   GIFTED_CAT_LABEL,
   GIFTED_GRADE_LABEL,
 } from "./gifted-bank.js?v=gifted-bank-v11";
-import { visPromptHtml, visChoiceHtml } from "./gifted-fig.js?v=gifted-fig-v2";
+import {
+  visPromptHtml,
+  visChoiceHtml,
+  cellSvg,
+} from "./gifted-fig.js?v=gifted-fig-v2";
 
 const CATS = ["fig", "lang", "math", "mem"];
+const GAMES = {
+  lang: { title: "語文理解" },
+  fig: { title: "圖形規律" },
+  math: { title: "數量推理" },
+  mem: { title: "記一串" },
+  spd: { title: "快快找" },
+  mix: { title: "綜合闖關" },
+};
 const QUOTAS = {
   10: [3, 3, 2, 2],
   20: [5, 5, 5, 5],
@@ -20,6 +32,7 @@ const LIMIT_MS = {
   20: 18 * 60 * 1000,
   60: 45 * 60 * 1000,
 };
+const SPD_MS = 50 * 1000;
 const LOWER = { 56: 34, 34: 23, 23: 12 };
 const $ = (sel) => document.querySelector(sel);
 
@@ -29,25 +42,49 @@ let tick = null;
 let memTick = null;
 let pickN = 10;
 let pickGrade = 12;
+let pickMode = "mix";
 
-function key() {
-  return `kid-quiz-gifted-blind-${getSelectedChild()}`;
+function keyFor(mode) {
+  return `kid-quiz-gifted-blind-${getSelectedChild()}-${mode}`;
 }
 
-const PAPER_VER = 11;
+function key() {
+  return keyFor(pickMode);
+}
 
-function loadState() {
+const PAPER_VER = 12;
+
+function readStored(k) {
   try {
-    const st = JSON.parse(localStorage.getItem(key()) || "null");
+    const st = JSON.parse(localStorage.getItem(k) || "null");
     if (!st) return null;
     if (st.paperVer !== PAPER_VER && !st.finishedAt) {
-      localStorage.removeItem(key());
+      localStorage.removeItem(k);
       return null;
     }
     return st;
   } catch {
     return null;
   }
+}
+
+function migrateOldMix() {
+  const oldK = `kid-quiz-gifted-blind-${getSelectedChild()}`;
+  const mixK = keyFor("mix");
+  if (localStorage.getItem(mixK) || !localStorage.getItem(oldK)) return;
+  localStorage.setItem(mixK, localStorage.getItem(oldK));
+  localStorage.removeItem(oldK);
+}
+
+function loadStateFor(mode) {
+  migrateOldMix();
+  const st = readStored(keyFor(mode));
+  if (st && !st.mode) st.mode = mode;
+  return st;
+}
+
+function loadState() {
+  return loadStateFor(pickMode);
 }
 
 function saveState(st) {
@@ -77,6 +114,9 @@ function limitMsOf(st) {
 }
 
 function remainingMs(st) {
+  if (st?.mode === "spd") {
+    return Math.max(0, st.startedAt + (st.limitMs || SPD_MS) - Date.now());
+  }
   return Math.max(0, st.startedAt + limitMsOf(st) - Date.now());
 }
 
@@ -206,14 +246,18 @@ function takeCat(pool, n, rnd, famCap) {
   return picked;
 }
 
-function buildPaper(n) {
+function buildPaper(n, mode) {
   const rnd = seedRng(
-    `${getSelectedChild()}|gifted-v5|${n}|${pickGrade}|${Date.now()}`
+    `${getSelectedChild()}|gifted-v6|${mode}|${n}|${pickGrade}|${Date.now()}`
   );
-  const quota = QUOTAS[n] || QUOTAS[10];
+  const cats = mode === "mix" ? CATS : [mode];
+  const quota =
+    mode === "mix"
+      ? QUOTAS[n] || QUOTAS[10]
+      : cats.map(() => n);
   const famCap = n >= 60 ? 2 : 1;
   const picked = [];
-  CATS.forEach((cat, i) => {
+  cats.forEach((cat, i) => {
     picked.push(
       ...takeCat(poolFor(cat, pickGrade, quota[i]), quota[i], rnd, famCap)
     );
@@ -359,9 +403,27 @@ function estimateIndex(st, sc) {
 }
 
 function catLine(sc) {
-  return CATS.map(
-    (c) => `${GIFTED_CAT_LABEL[c]} ${sc.by[c].ok}/${sc.by[c].n}`
-  ).join("　");
+  return CATS.filter((c) => sc.by[c]?.n)
+    .map((c) => `${GIFTED_CAT_LABEL[c]} ${sc.by[c].ok}/${sc.by[c].n}`)
+    .join("　");
+}
+
+function gameTitle(st) {
+  return GAMES[st?.mode]?.title || "思考練習";
+}
+
+function paintHubTags() {
+  Object.keys(GAMES).forEach((mode) => {
+    const tag = document.querySelector(`[data-gifted-tag="${mode}"]`);
+    const card = document.querySelector(`[data-gifted-game="${mode}"]`);
+    const st = loadStateFor(mode);
+    if (tag) {
+      if (st && !st.finishedAt) tag.textContent = "還沒玩完，點這裡繼續";
+      else if (st?.finishedAt) tag.textContent = "上次玩完了，點了會重來";
+      else tag.textContent = "";
+    }
+    card?.classList.toggle("is-mid", Boolean(st && !st.finishedAt));
+  });
 }
 
 function paintModeButtons() {
@@ -374,32 +436,41 @@ function paintModeButtons() {
 }
 
 function showIntro() {
-  const st = loadState();
-  const done = Boolean(st?.finishedAt);
-  const mid = Boolean(st?.startedAt && !st.finishedAt);
-  $("#gifted-intro-done")?.toggleAttribute("hidden", !done);
-  $("#gifted-intro-mid")?.toggleAttribute("hidden", !mid);
-  $("#gifted-intro-fresh")?.toggleAttribute("hidden", mid);
-  $("#gifted-mode-box")?.toggleAttribute("hidden", mid);
-  $("#btn-gifted-start")?.toggleAttribute("hidden", mid);
-  $("#btn-gifted-resume")?.toggleAttribute("hidden", !mid);
-  $("#btn-gifted-restart")?.toggleAttribute("hidden", !mid);
-  $("#btn-gifted-parent")?.toggleAttribute("hidden", !done);
+  stopTick();
+  stopMem();
   paintModeButtons();
   fillAgeInput();
+  paintHubTags();
   deps.showView("giftedIntro");
 }
 
-function startNew() {
+function needAge() {
   const age = readAgeInput() || savedAge();
   if (!age) {
-    deps.showWarn?.("先填年齡", "填小朋友幾歲（5～13），才算得出參考指數。");
-    return;
+    deps.showWarn?.("先填年齡", "填小朋友幾歲（5～13）。");
+    return 0;
   }
   persistAge(age);
-  const n = QUOTAS[pickN] ? pickN : 10;
-  const items = buildPaper(n);
+  return age;
+}
+
+function paperN(mode) {
+  if (mode === "mix") return QUOTAS[pickN] ? pickN : 10;
+  if (pickN >= 20) return 20;
+  return 10;
+}
+
+function startNew() {
+  const age = needAge();
+  if (!age) return;
+  if (pickMode === "spd") {
+    startSpd(age);
+    return;
+  }
+  const n = paperN(pickMode);
+  const items = buildPaper(n, pickMode);
   saveState({
+    mode: pickMode,
     startedAt: Date.now(),
     n,
     grade: pickGrade,
@@ -415,27 +486,73 @@ function startNew() {
   openQuiz();
 }
 
+function launchGame(mode) {
+  pickMode = mode;
+  const st = loadState();
+  if (st && !st.finishedAt) {
+    if (mode === "spd") openSpd();
+    else openQuiz();
+    return;
+  }
+  if (st?.finishedAt) {
+    const go = () => {
+      localStorage.removeItem(key());
+      startNew();
+    };
+    if (deps.showWarn) {
+      deps.showWarn("再玩一次", "會蓋掉這關上次成績。", go);
+      return;
+    }
+    go();
+    return;
+  }
+  startNew();
+}
+
+function hideIq(hide) {
+  $("#gifted-done-iq-label")?.toggleAttribute("hidden", hide);
+  $("#gifted-done-iq")?.toggleAttribute("hidden", hide);
+  $("#gifted-done-iq-band")?.toggleAttribute("hidden", hide);
+}
+
 function renderDone(st) {
-  const sc = scoreOf(st);
-  const est = estimateIndex(st, sc);
-  const band = bandOf(sc.pct);
-  const mins = Math.max(1, Math.round((st.finishedAt - st.startedAt) / 60000));
+  pickMode = st.mode || pickMode;
   const gName = GIFTED_GRADE_LABEL[st.grade] || GIFTED_GRADE_LABEL[12];
   const used = formatMmSs(Math.max(0, st.finishedAt - st.startedAt));
-  $("#gifted-done-band").textContent = band.title;
-  $("#gifted-done-iq").textContent = String(est.index);
-  $("#gifted-done-iq-band").textContent = `${est.band} · ${est.age} 歲`;
+  if (st.mode === "spd") {
+    const score = Math.max(0, (st.hits || 0) - (st.miss || 0));
+    hideIq(true);
+    $("#gifted-done-band").textContent = "快快找";
+    $("#gifted-done-score").textContent = `${score} 分`;
+    $("#gifted-done-break").textContent = `對 ${st.hits || 0}　錯 ${st.miss || 0}　過 ${st.rounds || 0} 關`;
+    $("#gifted-done-msg").textContent = `${gName} · 限時 ${formatMmSs(st.limitMs || SPD_MS)} · 用時 ${used}。練找一樣、動作快。不是正式處理速度測驗。`;
+    deps.showView("giftedDone");
+    return;
+  }
+  const sc = scoreOf(st);
+  const band = bandOf(sc.pct);
+  const showIq = st.mode === "mix";
+  hideIq(!showIq);
+  $("#gifted-done-band").textContent = `${gameTitle(st)} · ${band.title}`;
+  if (showIq) {
+    const est = estimateIndex(st, sc);
+    $("#gifted-done-iq").textContent = String(est.index);
+    $("#gifted-done-iq-band").textContent = `${est.band} · ${est.age} 歲`;
+    $("#gifted-done-msg").textContent =
+      `${st.n} 題 · ${gName} · 用時 ${used}（限時 ${formatMmSs(limitMsOf(st))}）。${est.conf}。${band.hint} 不是正式智力測驗。`;
+  } else {
+    $("#gifted-done-msg").textContent =
+      `${st.n} 題 · ${gName} · 用時 ${used}（限時 ${formatMmSs(limitMsOf(st))}）。${band.hint} 不是正式智力測驗。`;
+  }
   $("#gifted-done-score").textContent = `答對 ${sc.ok} / ${sc.total}　（${sc.pct}%）`;
   $("#gifted-done-break").textContent = catLine(sc);
-  $("#gifted-done-msg").textContent =
-    `${st.n} 題 · ${gName} · 用時 ${used}（限時 ${formatMmSs(limitMsOf(st))}）。${est.conf}。${band.hint} 不是正式智力測驗。`;
   deps.showView("giftedDone");
 }
 
 function finish(st) {
   st.finishedAt = Date.now();
   saveState(st);
-  rememberSeen(st.items.map((q) => q.id));
+  if (st.items) rememberSeen(st.items.map((q) => q.id));
   stopTick();
   renderDone(st);
 }
@@ -555,23 +672,39 @@ function renderParent() {
     deps.showView("giftedParent");
     return;
   }
+  if (st.mode === "spd") {
+    const score = Math.max(0, (st.hits || 0) - (st.miss || 0));
+    $("#gifted-parent-body").textContent = [
+      `${gameTitle(st)}　${GIFTED_GRADE_LABEL[st.grade] || ""}　${st.ageYears || ""} 歲`,
+      `分數 ${score}　對 ${st.hits || 0}　錯 ${st.miss || 0}　過 ${st.rounds || 0} 關`,
+      `限時 ${formatMmSs(st.limitMs || SPD_MS)}`,
+      "自編找相同圖形，對齊處理速度那種「又快又準」，不是正式測驗。",
+    ].join("\n");
+    deps.showView("giftedParent");
+    return;
+  }
   const sc = scoreOf(st);
-  const est = estimateIndex(st, sc);
   const used = formatMmSs(Math.max(0, st.finishedAt - st.startedAt));
   const gName = GIFTED_GRADE_LABEL[st.grade] || "";
-  const sub = CATS.map(
-    (c) => `${GIFTED_CAT_LABEL[c]} ${est.subscales[c]}`
-  ).join("　");
   const lines = [
-    `參考指數 ${est.index}（${est.band}）　${est.age} 歲`,
-    est.conf,
-    `答對 ${sc.ok} / ${sc.total}（${sc.pct}%）　用時 ${used}／限時 ${formatMmSs(limitMsOf(st))}`,
-    `${st.n} 題 · ${gName}`,
+    `${gameTitle(st)}　答對 ${sc.ok} / ${sc.total}（${sc.pct}%）　用時 ${used}／限時 ${formatMmSs(limitMsOf(st))}`,
+    `${st.n} 題 · ${gName}　${st.ageYears || ""} 歲`,
     catLine(sc),
-    `向度指數：${sub}`,
-    "算法：對錯依題庫年級加權，再對照年齡該檔的預期答對率，快且準會微調；短測驗會往 100 收縮。不是官方魏氏／WISC，不能當鑑定或 PR。",
-    "",
   ];
+  if (st.mode === "mix") {
+    const est = estimateIndex(st, sc);
+    const sub = CATS.filter((c) => sc.by[c]?.n)
+      .map((c) => `${GIFTED_CAT_LABEL[c]} ${est.subscales[c]}`)
+      .join("　");
+    lines.unshift(`參考指數 ${est.index}（${est.band}）　${est.age} 歲`, est.conf);
+    lines.push(`向度指數：${sub}`);
+    lines.push(
+      "算法：對錯依題庫年級加權，再對照年齡該檔的預期答對率，快且準會微調；短測驗會往 100 收縮。不是官方魏氏／WISC，不能當鑑定或 PR。"
+    );
+  } else {
+    lines.push("單一關卡只看對錯，不給參考指數。不是官方測驗。");
+  }
+  lines.push("");
   st.items.forEach((q, i) => {
     const pick = st.picks[i];
     const good = pick === q.answer;
@@ -595,6 +728,166 @@ function renderParent() {
   deps.showView("giftedParent");
 }
 
+const SPD_SHAPES = [
+  { s: "c", fill: 1 },
+  { s: "c", fill: 0 },
+  { s: "q", fill: 1 },
+  { s: "q", fill: 0 },
+  { s: "t", fill: 1 },
+  { s: "t", fill: 0 },
+];
+
+function shapeKey(spec) {
+  return `${spec.s}|${Number(spec.fill)}|${spec.rot || 0}`;
+}
+
+function spdPalette(grade) {
+  const base = SPD_SHAPES.map((s) => ({ ...s }));
+  if (grade >= 34) {
+    base.push({ s: "t", fill: 1, rot: 90 }, { s: "t", fill: 1, rot: 180 });
+  }
+  return base;
+}
+
+function nextSpdRound() {
+  const st = loadState();
+  if (!st || st.mode !== "spd") return;
+  const pal = spdPalette(st.grade);
+  const rnd = seedRng(`${st.startedAt}|r${st.rounds}|${st.hits}`);
+  const cols = st.grade >= 23 ? 5 : 4;
+  const total = cols * 4;
+  const target = pal[Math.floor(rnd() * pal.length)];
+  const need = Math.max(3, Math.min(7, 3 + Math.floor(rnd() * 4)));
+  const others = pal.filter((p) => shapeKey(p) !== shapeKey(target));
+  const cells = [];
+  for (let i = 0; i < need; i++) cells.push({ spec: { ...target }, hit: 0 });
+  while (cells.length < total) {
+    const spec = others[Math.floor(rnd() * others.length)] || pal[0];
+    cells.push({ spec: { ...spec }, hit: 0 });
+  }
+  const shuffled = shuffle(cells, rnd);
+  st.target = { ...target };
+  st.cells = shuffled;
+  st.cols = cols;
+  st.roundHits = 0;
+  st.roundNeed = need;
+  st.rounds += 1;
+  saveState(st);
+}
+
+function startSpd(age) {
+  saveState({
+    mode: "spd",
+    startedAt: Date.now(),
+    n: 0,
+    grade: pickGrade,
+    ageYears: age,
+    limitMs: SPD_MS,
+    hits: 0,
+    miss: 0,
+    rounds: 0,
+    roundHits: 0,
+    roundNeed: 0,
+    target: null,
+    cells: [],
+    cols: 4,
+    finishedAt: 0,
+    paperVer: PAPER_VER,
+  });
+  nextSpdRound();
+  openSpd();
+}
+
+function paintSpd() {
+  const st = loadState();
+  if (!st || st.mode !== "spd") return;
+  if (!st.finishedAt && remainingMs(st) <= 0) {
+    finish(st);
+    return;
+  }
+  const prog = $("#gifted-spd-progress");
+  if (prog) prog.textContent = `第 ${st.rounds} 關`;
+  const t = $("#gifted-spd-timer");
+  if (t) {
+    t.textContent = formatMmSs(remainingMs(st));
+    t.classList.toggle("is-low", remainingMs(st) <= 10 * 1000);
+  }
+  const scoreEl = $("#gifted-spd-score");
+  if (scoreEl) {
+    scoreEl.textContent = `${Math.max(0, st.hits - st.miss)} 分 · 對 ${st.hits}　錯 ${st.miss}`;
+  }
+  const tgt = $("#gifted-spd-target");
+  if (tgt) tgt.innerHTML = cellSvg(st.target, 72);
+  const grid = $("#gifted-spd-grid");
+  if (!grid) return;
+  grid.classList.toggle("is-wide", st.cols >= 5);
+  grid.innerHTML = "";
+  st.cells.forEach((cell, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "gifted-spd-cell" + (cell.hit ? " is-hit" : "");
+    btn.innerHTML = cellSvg(cell.spec, 56);
+    btn.disabled = Boolean(cell.hit);
+    btn.addEventListener("click", () => tapSpd(i));
+    grid.appendChild(btn);
+  });
+}
+
+function tapSpd(i) {
+  const st = loadState();
+  if (!st || st.finishedAt || st.mode !== "spd") return;
+  if (remainingMs(st) <= 0) {
+    finish(st);
+    return;
+  }
+  const cell = st.cells[i];
+  if (!cell || cell.hit) return;
+  if (shapeKey(cell.spec) === shapeKey(st.target)) {
+    cell.hit = 1;
+    st.hits += 1;
+    st.roundHits += 1;
+    saveState(st);
+    if (st.roundHits >= st.roundNeed) nextSpdRound();
+    paintSpd();
+    return;
+  }
+  st.miss += 1;
+  saveState(st);
+  paintSpd();
+}
+
+function openSpd() {
+  const st = loadState();
+  if (!st || st.mode !== "spd") {
+    showIntro();
+    return;
+  }
+  if (st.finishedAt) {
+    renderDone(st);
+    return;
+  }
+  if (!st.target) nextSpdRound();
+  deps.showView("giftedSpd");
+  paintSpd();
+  stopTick();
+  tick = setInterval(() => {
+    const cur = loadState();
+    if (!cur || cur.finishedAt || cur.mode !== "spd") {
+      stopTick();
+      return;
+    }
+    if (remainingMs(cur) <= 0) {
+      finish(cur);
+      return;
+    }
+    const t = $("#gifted-spd-timer");
+    if (t) {
+      t.textContent = formatMmSs(remainingMs(cur));
+      t.classList.toggle("is-low", remainingMs(cur) <= 10000);
+    }
+  }, 250);
+}
+
 export function initGifted(d) {
   deps = d;
 
@@ -615,30 +908,15 @@ export function initGifted(d) {
       paintModeButtons();
     });
   });
-  $("#btn-gifted-start")?.addEventListener("click", () => {
-    const st = loadState();
-    if (st?.finishedAt && deps.showWarn) {
-      deps.showWarn("再寫一次", "會蓋掉上次成績。", startNew);
-      return;
-    }
-    startNew();
-  });
-  $("#btn-gifted-resume")?.addEventListener("click", () => openQuiz());
-  $("#btn-gifted-restart")?.addEventListener("click", () => {
-    const go = () => {
-      stopMem();
-      stopTick();
-      localStorage.removeItem(key());
-      showIntro();
-    };
-    if (deps.confirm) {
-      deps.confirm("重來", "這次寫到一半的會清掉，從頭選題數。", go);
-      return;
-    }
-    go();
+  document.querySelectorAll("[data-gifted-game]").forEach((btn) => {
+    btn.addEventListener("click", () => launchGame(btn.dataset.giftedGame));
   });
   $("#btn-gifted-quiz-back")?.addEventListener("click", () => {
     stopMem();
+    stopTick();
+    showIntro();
+  });
+  $("#btn-gifted-spd-back")?.addEventListener("click", () => {
     stopTick();
     showIntro();
   });
@@ -675,11 +953,7 @@ export function initGifted(d) {
     renderParent();
   });
   $("#btn-gifted-done-again")?.addEventListener("click", () => {
-    localStorage.removeItem(key());
     showIntro();
-  });
-  $("#btn-gifted-parent")?.addEventListener("click", () => {
-    renderParent();
   });
   $("#btn-gifted-parent-back")?.addEventListener("click", () => {
     const st = loadState();

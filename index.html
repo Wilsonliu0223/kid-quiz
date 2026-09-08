@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.35";
+        var V = "39.36";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.47" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.48" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -111,8 +111,8 @@
               <span class="card-desc">背誦 · 測驗 · 進階挑戰</span>
             </button>
             <button type="button" class="card card-gifted" id="btn-start-gifted">
-              <span class="card-title">思考挑戰</span>
-              <span class="card-desc">資優練習</span>
+              <span class="card-title">思考練習</span>
+              <span class="card-desc">語文 · 圖形 · 記憶 · 快快找</span>
             </button>
             <button type="button" class="card card-sudoku" id="btn-start-sudoku">
               <span class="card-title">數獨</span>
@@ -2272,19 +2272,19 @@
         </footer>
       </section>
 
-      <section id="view-gifted-intro" class="view view-hidden" aria-label="思考挑戰說明">
+      <section id="view-gifted-intro" class="view view-hidden" aria-label="思考練習">
         <header class="quiz-header">
           <button type="button" class="btn-text" id="btn-gifted-intro-back">← 返回</button>
-          <span class="quiz-subject">思考挑戰</span>
+          <span class="quiz-subject">思考練習</span>
         </header>
         <div class="gifted-intro-body">
-          <h2 class="gifted-title">思考挑戰</h2>
+          <h2 class="gifted-title">思考練習</h2>
           <p id="gifted-intro-fresh">
-            練習向度對齊國小一般智能資優初選常見架構：圖形推理、國語文、數學；並加工作記憶。低年級偏易、高年級加深。
-            <strong>全是自編，不是市府真題，不是魏氏／WISC，不能當鑑定或 PR。</strong>
+            五個小遊戲對齊常見智力測驗會碰到的作業：語文、圖形規律、數量、記一串、快快找。學校若有團體推理或個別測驗，題型會比較眼熟。
+            <strong>全是自編遊戲，不是魏氏／WISC、不是市府真題，不能當鑑定或 PR。</strong>
           </p>
           <div id="gifted-mode-box" class="gifted-mode-box">
-            <p class="gifted-mode-label">題數</p>
+            <p class="gifted-mode-label">題數（快快找不看這個）</p>
             <div class="gifted-seg">
               <button type="button" class="gifted-seg-btn is-on" data-gifted-n="10">10 題</button>
               <button type="button" class="gifted-seg-btn" data-gifted-n="20">20 題</button>
@@ -2308,19 +2308,58 @@
               inputmode="decimal"
               placeholder="例如 7"
             />
-            <p class="gifted-mode-hint" id="gifted-age-hint">填年齡後，會依對錯、題庫難度與作答時間給「參考指數」（不是正式 IQ）。</p>
-            <p class="gifted-mode-hint">工作記憶會先出現一串再收起來，數字不會留在題目上。10 題約 8 分鐘、20 題約 18 分鐘、60 題約 45 分鐘。同一年級會避開最近做過的題。</p>
+            <p class="gifted-mode-hint">綜合闖關才會給參考指數。其他關卡只看對錯與速度。</p>
           </div>
-          <p id="gifted-intro-mid" hidden>上次還沒寫完，可以接著寫。時間會繼續算。不想寫也可以重來。</p>
-          <p id="gifted-intro-done" hidden>上次已交卷，成績在結果頁。再開始會蓋掉上次紀錄。</p>
-          <button type="button" class="btn btn-primary btn-block" id="btn-gifted-start">開始</button>
-          <button type="button" class="btn btn-primary btn-block" id="btn-gifted-resume" hidden>繼續寫</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-restart" hidden>重來</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-parent" hidden>家長看詳解</button>
+          <div class="gifted-games" id="gifted-games">
+            <button type="button" class="gifted-game-card" data-gifted-game="lang">
+              <span class="gifted-game-name">語文理解</span>
+              <span class="gifted-game-desc">反義、類比、哪一個不同類</span>
+              <span class="gifted-game-tag" data-gifted-tag="lang"></span>
+            </button>
+            <button type="button" class="gifted-game-card" data-gifted-game="fig">
+              <span class="gifted-game-name">圖形規律</span>
+              <span class="gifted-game-desc">找下一個、轉一轉、缺哪塊</span>
+              <span class="gifted-game-tag" data-gifted-tag="fig"></span>
+            </button>
+            <button type="button" class="gifted-game-card" data-gifted-game="math">
+              <span class="gifted-game-name">數量推理</span>
+              <span class="gifted-game-desc">數列、比多少、想一想</span>
+              <span class="gifted-game-tag" data-gifted-tag="math"></span>
+            </button>
+            <button type="button" class="gifted-game-card" data-gifted-game="mem">
+              <span class="gifted-game-name">記一串</span>
+              <span class="gifted-game-desc">看完收起來再答，不能偷看</span>
+              <span class="gifted-game-tag" data-gifted-tag="mem"></span>
+            </button>
+            <button type="button" class="gifted-game-card" data-gifted-game="spd">
+              <span class="gifted-game-name">快快找</span>
+              <span class="gifted-game-desc">限時點一樣的圖，練手眼速度</span>
+              <span class="gifted-game-tag" data-gifted-tag="spd"></span>
+            </button>
+            <button type="button" class="gifted-game-card" data-gifted-game="mix">
+              <span class="gifted-game-name">綜合闖關</span>
+              <span class="gifted-game-desc">四種混在一起，比較像一場測驗</span>
+              <span class="gifted-game-tag" data-gifted-tag="mix"></span>
+            </button>
+          </div>
         </div>
       </section>
 
-      <section id="view-gifted-quiz" class="view view-hidden" aria-label="思考挑戰作答">
+      <section id="view-gifted-spd" class="view view-hidden" aria-label="快快找">
+        <header class="quiz-header">
+          <button type="button" class="btn-text" id="btn-gifted-spd-back">← 暫停</button>
+          <span class="quiz-subject" id="gifted-spd-progress">快快找</span>
+          <span class="gifted-timer" id="gifted-spd-timer" aria-label="剩餘時間">0:50</span>
+        </header>
+        <div class="gifted-spd-body">
+          <p class="gifted-spd-ask">點所有跟這個一樣的</p>
+          <div class="gifted-spd-target" id="gifted-spd-target"></div>
+          <p class="gifted-spd-score" id="gifted-spd-score">0 分</p>
+          <div class="gifted-spd-grid" id="gifted-spd-grid"></div>
+        </div>
+      </section>
+
+      <section id="view-gifted-quiz" class="view view-hidden" aria-label="思考練習作答">
         <header class="quiz-header">
           <button type="button" class="btn-text" id="btn-gifted-quiz-back">← 暫停</button>
           <span class="quiz-subject" id="gifted-progress">1 / 60</span>
@@ -2342,7 +2381,7 @@
       <section id="view-gifted-done" class="view view-hidden" aria-label="思考挑戰完成">
         <header class="app-header">
           <h2 class="result-title" id="gifted-done-band">寫完了</h2>
-          <p class="gifted-iq-label">參考指數</p>
+          <p class="gifted-iq-label" id="gifted-done-iq-label">參考指數</p>
           <p class="gifted-iq" id="gifted-done-iq">—</p>
           <p class="gifted-iq-band" id="gifted-done-iq-band"></p>
           <p class="gifted-done-score" id="gifted-done-score">0 / 10</p>
@@ -2351,7 +2390,7 @@
         </header>
         <footer class="result-footer">
           <button type="button" class="btn btn-primary btn-block" id="btn-gifted-done-parent">家長看詳解</button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-done-again">再寫一次</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-done-again">再玩一次</button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-gifted-done-home">回首頁</button>
         </footer>
       </section>
@@ -2563,7 +2602,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.74").catch((e) => {
+      import("./js/app.js?v=app-v45.75").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
