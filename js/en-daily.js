@@ -17,6 +17,8 @@ import {
   setEnVoice,
   getZhVoice,
   setZhVoice,
+  EN_TTS_VOICES,
+  ZH_TTS_VOICES,
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
@@ -95,8 +97,10 @@ let playZhChunks = null;
 /** @type {number | null} */
 let playHighlightIndex = null;
 let playHighlightOffset = 0;
-/** @type {'none'|'sentence'|'all'} 這次播放能不能被反覆（單字卡不算） */
+/** @type {'none'|'sentence'|'all'} 這次播放能不能被反覆 */
 let playLoopKind = "none";
+/** 反覆時沿用原本標籤（單字／例句／單句） */
+let playClipLabel = "";
 /** 播放條正在朗讀（用來判斷切語言要不要重播） */
 let playActive = false;
 /** @type {'off'|'sentence'|'all'} */
@@ -339,6 +343,7 @@ function stopPlayBar(opts = {}) {
   playHighlightIndex = null;
   playHighlightOffset = 0;
   playLoopKind = "none";
+  playClipLabel = "";
   stopSpeaking();
   playSourceText = "";
   if (opts.dismiss) {
@@ -490,6 +495,33 @@ function playLangLabel() {
   return "英文播放中";
 }
 
+function ttsVoiceLabel(side, voiceId) {
+  const list = side === "zh" ? ZH_TTS_VOICES : EN_TTS_VOICES;
+  return list.find((v) => v.id === voiceId)?.label || "";
+}
+
+function selectedVoiceLabel(side) {
+  return ttsVoiceLabel(side, preferredTtsVoice(side)) || (side === "zh" ? "中文神經音" : "英文神經音");
+}
+
+function playEngineTip(side, eng) {
+  if (side === "zh") {
+    if (eng.startsWith("edge:")) {
+      return `✓${ttsVoiceLabel("zh", eng.slice(5)) || "中文神經音"}`;
+    }
+    if (eng.startsWith("edge")) return `✓${selectedVoiceLabel("zh")}`;
+    if (eng.startsWith("script")) return "伺服器語音";
+    if (eng === "zhiyu") return "舊女聲(備援)";
+    return "⚠備援機械音";
+  }
+  if (eng.startsWith("edge:")) {
+    return `✓${ttsVoiceLabel("en", eng.slice(5)) || "英文神經音"}`;
+  }
+  if (eng.startsWith("edge")) return `✓${selectedVoiceLabel("en")}`;
+  if (eng === "en-synth" || eng === "synth") return "⚠備援機械音";
+  return "";
+}
+
 /** 查字卡／複習字：單字對應的短中文（給播放列中文模式唸） */
 function glossWordZhNow(word) {
   const key = String(word || "")
@@ -614,8 +646,13 @@ async function playWithBar(text, opts = {}) {
   playHighlightIndex =
     opts.highlightIndex != null ? Number(opts.highlightIndex) : null;
   playHighlightOffset = Number(opts.highlightOffset) || 0;
-  if (opts.label === "單句播放中") playLoopKind = "sentence";
-  else if (opts.label === "全文播放中") playLoopKind = "all";
+  if (
+    opts.label === "單句播放中" ||
+    opts.label === "單字播放中" ||
+    opts.label === "例句播放中"
+  ) {
+    playLoopKind = "sentence";
+  } else if (opts.label === "全文播放中") playLoopKind = "all";
   else if (playFollowSentences || (playChunks && playChunks.length > 1)) {
     playLoopKind = "all";
   } else if (
@@ -628,6 +665,7 @@ async function playWithBar(text, opts = {}) {
   } else {
     playLoopKind = "none";
   }
+  if (opts.label) playClipLabel = opts.label;
   playActive = true;
   const seq = ++playSeq;
   stopSpeaking();
@@ -646,7 +684,9 @@ async function playWithBar(text, opts = {}) {
   const labelBase = opts.label || playLangLabel();
   const firstSide = sides[0];
 
-  showPlayBar(firstSide === "zh" ? "載入雲希神經音…" : "準備播放…");
+  showPlayBar(
+    firstSide === "zh" ? `載入${selectedVoiceLabel("zh")}…` : "準備播放…"
+  );
 
   let anyOk = false;
   for (let i = 0; i < sentences.length; i++) {
@@ -672,13 +712,11 @@ async function playWithBar(text, opts = {}) {
       const sideTag = side === "zh" ? "中" : "英";
       const status =
         sentences.length > 1
-          ? `${labelBase} ${i + 1}/${sentences.length}${
-              sides.length > 1 ? ` · ${sideTag}` : ""
-            }`
-          : sides.length > 1
-            ? `${labelBase} · ${sideTag}`
-            : labelBase;
-      showPlayBar(side === "zh" ? `${status} · 載入雲希…` : status);
+          ? `${labelBase} ${i + 1}/${sentences.length} · ${sideTag}`
+          : `${labelBase} · ${sideTag}`;
+      showPlayBar(
+        side === "zh" ? `${status} · 載入${selectedVoiceLabel("zh")}…` : status
+      );
       const t0 = Date.now();
       const lineZh = side === "zh" ? alignedZh : "";
       const spoken = lineZh || lineEn;
@@ -687,7 +725,9 @@ async function playWithBar(text, opts = {}) {
         lang: side,
         alreadyZh: Boolean(lineZh),
         speed: playSpeed,
-        voice: speaker ? voiceForDialogueSpeaker(speaker, side) : undefined,
+        voice: speaker
+          ? voiceForDialogueSpeaker(speaker, side)
+          : preferredTtsVoice(side),
       });
       if (seq !== playSeq) return;
       if (playFollowSentences && ok) {
@@ -702,27 +742,8 @@ async function playWithBar(text, opts = {}) {
       }
       if (ok) {
         anyOk = true;
-        const eng = getLastSpeakEngine() || "";
-        let tip = "";
-        if (side === "zh") {
-          if (eng.startsWith("edge")) tip = "✓雲希神經音";
-          else if (eng.startsWith("script")) tip = "伺服器語音";
-          else if (eng === "zhiyu") tip = "舊女聲(備援)";
-          else tip = "⚠備援機械音";
-        } else if (eng.startsWith("edge")) {
-          tip = "✓英文神經音";
-        } else if (eng === "en-synth" || eng === "synth") {
-          tip = "⚠備援機械音";
-        }
-        showPlayBar(
-          tip
-            ? sentences.length > 1
-              ? `${labelBase} ${i + 1}/${sentences.length}${
-                  sides.length > 1 ? ` · ${sideTag}` : ""
-                } · ${tip}`
-              : `${labelBase}${sides.length > 1 ? ` · ${sideTag}` : ""} · ${tip}`
-            : status
-        );
+        const tip = playEngineTip(side, getLastSpeakEngine() || "");
+        showPlayBar(tip ? `${status} · ${tip}` : status);
       }
       if (sides.length > 1 && s === 0) await sleepMs(220);
     }
@@ -739,14 +760,19 @@ async function playWithBar(text, opts = {}) {
     return;
   }
   const shouldLoop =
-    isEnSpeakViewActive() &&
+    (isEnSpeakViewActive() || isReviewViewActive()) &&
     ((playRepeat === "sentence" && playLoopKind === "sentence") ||
       (playRepeat === "all" && playLoopKind === "all"));
   if (shouldLoop) {
     await sleepMs(450);
     if (seq !== playSeq) return;
     await playWithBar(playSourceText, {
-      label: playLoopKind === "all" ? "全文播放中" : "單句播放中",
+      label:
+        playLoopKind === "all"
+          ? "全文播放中"
+          : playClipLabel === "單字播放中" || playClipLabel === "例句播放中"
+            ? playClipLabel
+            : "單句播放中",
       followSentences: playFollowSentences,
       chunks: playChunks || undefined,
       speakers: playSpeakers || undefined,
@@ -1254,10 +1280,14 @@ function bindUi() {
   $("#en-play-en-voice")?.addEventListener("change", (e) => {
     setEnVoice(e.target.value);
     syncPlayVoiceSelects();
+    unlockSpeechFromGesture();
+    void replayAfterPlayLangChange();
   });
   $("#en-play-zh-voice")?.addEventListener("change", (e) => {
     setZhVoice(e.target.value);
     syncPlayVoiceSelects();
+    unlockSpeechFromGesture();
+    void replayAfterPlayLangChange();
   });
 
   $("#btn-en-review-back")?.addEventListener("click", () => openEnHub());
