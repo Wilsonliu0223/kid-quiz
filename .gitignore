@@ -8,7 +8,7 @@ node_modules/
 js/vendor/
 **/__pycache__/
 
-# 本機機密（英文文章寫入 token 等）
-.local/*
+# 家用重開一鍵（路徑在這台電腦，不上 GitHub）
+start-home.bat
 !.local/*.example
 !.local/.gitkeep
