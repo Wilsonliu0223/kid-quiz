@@ -2248,6 +2248,29 @@ function renderGlossSenses(senses, word) {
     .join("");
 }
 
+function glossHeadZhText(entry) {
+  if (!entry || entry.kind === "family") return "";
+  const senseZh = Array.isArray(entry.senses)
+    ? entry.senses.find((s) => hasCjkText(s.zh))?.zh
+    : "";
+  return (
+    shortZh(entry.zh) ||
+    firstZhClause(entry.zh) ||
+    firstZhClause(senseZh) ||
+    firstZhClause(entry.zhGloss) ||
+    ""
+  );
+}
+
+function setGlossWordZh(text, loading = false) {
+  const el = $("#en-gloss-word-zh");
+  if (!el) return;
+  const t = String(text || "").trim();
+  el.textContent = t;
+  el.hidden = !t;
+  el.classList.toggle("is-loading", Boolean(loading));
+}
+
 function setGlossZhUi(zhText) {
   const row = $("#en-gloss-zh-row");
   const zhEl = $("#en-gloss-zh");
@@ -2264,9 +2287,25 @@ function setGlossZhUi(zhText) {
 /** 英英解釋／義項都補上中文，給畫面顯示也給中文朗讀用 */
 async function fillGlossChinese(entry, seq) {
   if (!entry || entry.kind === "family") return;
+  if (/^Looking up/i.test(String(entry.gloss || ""))) return;
   const senses = Array.isArray(entry.senses) ? entry.senses : [];
-  await Promise.all(
-    senses.map(async (sense) => {
+  const wordZhJob = (async () => {
+    if (shortZh(entry.zh)) return;
+    const lemma =
+      lemmaFromGloss(senses[0]?.definition || "") ||
+      lemmaFromGloss(entry.gloss || "");
+    const src = lemma || String(entry.word || "").trim();
+    if (!src || !/^[a-zA-Z]/.test(src)) return;
+    const raw =
+      (await translateEnToZh(src, "TW")) ||
+      (await translateEnToZh(src, "CN")) ||
+      "";
+    const zh = firstZhClause(raw);
+    if (zh) entry.zh = zh;
+  })();
+  await Promise.all([
+    wordZhJob,
+    ...senses.map(async (sense) => {
       if (hasCjkText(sense.zh)) return;
       const lemma = lemmaFromGloss(sense.definition);
       const src = lemma || String(sense.definition || "").trim();
@@ -2279,8 +2318,8 @@ async function fillGlossChinese(entry, seq) {
         sense.zh = raw;
         sense.zhSource = "machine";
       }
-    })
-  );
+    }),
+  ]);
   const contextEn = String(entry.contextGloss || "").trim();
   if (contextEn && !hasCjkText(entry.contextZh)) {
     const raw =
@@ -2336,6 +2375,7 @@ async function fillGlossChinese(entry, seq) {
   const sensesHaveZh = senses.some((s) => hasCjkText(s.zh));
   if (headHasZh || sensesHaveZh) setGlossZhUi("");
   else setGlossZhUi(entry.zhGloss || "");
+  setGlossWordZh(glossHeadZhText(entry));
   requestAnimationFrame(() => syncDockVisibility());
 }
 
@@ -2399,6 +2439,7 @@ function showGloss(entry, opts = {}) {
       bindRelatedClicks(g, false);
     }
     setGlossZhUi("");
+    setGlossWordZh("");
     if (ex) {
       ex.innerHTML = "";
       ex.hidden = true;
@@ -2437,6 +2478,8 @@ function showGloss(entry, opts = {}) {
   } else {
     setGlossZhUi(entry.zhGloss || "翻譯中…");
   }
+  const readyZh = glossHeadZhText(entry);
+  setGlossWordZh(readyZh || "翻譯中…", !readyZh);
   void fillGlossChinese(entry, seq);
 
   const hasEx = Boolean(entry.example) && !hasSenses;

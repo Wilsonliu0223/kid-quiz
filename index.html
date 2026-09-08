@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.31";
+        var V = "39.32";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.43" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.44" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -560,6 +560,7 @@
             <div class="en-gloss-head">
               <strong id="en-gloss-word"></strong>
               <button type="button" class="btn-text" id="btn-en-gloss-speak">🔊</button>
+              <span id="en-gloss-word-zh" class="en-gloss-word-zh" hidden></span>
             </div>
             <p class="en-gloss-phonetic" id="en-gloss-phonetic" hidden></p>
             <div class="en-gloss-morph" id="en-gloss-morph" hidden></div>
@@ -2552,7 +2553,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.70").catch((e) => {
+      import("./js/app.js?v=app-v45.71").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
