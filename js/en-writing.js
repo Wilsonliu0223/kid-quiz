@@ -1,14 +1,23 @@
 /**
- * 英語基本寫作：20 招定式＋示範短文。
+ * 英語寫作：初級／中級／中高級定式與短文。
  */
 import { speakEnglish } from "./english.js?v=en-speak-v32";
-import { ESSAYS, JOSEKI, josekiByN } from "./en-writing-bank.js";
+import {
+  ESSAYS,
+  LEVELS,
+  essaysForLevel,
+  josekiById,
+  josekiForLevel,
+  levelById,
+} from "./en-writing-bank.js?v=en-writing-bank-v2";
 
 const KEY_TAB = "kid-quiz-en-writing-tab";
+const KEY_LEVEL = "kid-quiz-en-writing-level";
 
 /** @type {{ showView: (name: string) => void } | null} */
 let deps = null;
 let tab = "joseki";
+let levelId = "elem";
 let currentKind = "";
 let currentId = "";
 
@@ -32,25 +41,57 @@ function setTab(t) {
   localStorage.setItem(KEY_TAB, tab);
 }
 
+function loadLevel() {
+  const id = localStorage.getItem(KEY_LEVEL);
+  return LEVELS.some((x) => x.id === id) ? id : "elem";
+}
+
+function setLevel(id) {
+  levelId = LEVELS.some((x) => x.id === id) ? id : "elem";
+  localStorage.setItem(KEY_LEVEL, levelId);
+}
+
 function syncTabs() {
   document.querySelectorAll("[data-en-writing-tab]").forEach((btn) => {
     btn.classList.toggle("chip-active", btn.dataset.enWritingTab === tab);
   });
 }
 
+function syncLevels() {
+  document.querySelectorAll("[data-en-writing-level]").forEach((btn) => {
+    btn.classList.toggle("chip-active", btn.dataset.enWritingLevel === levelId);
+  });
+}
+
+function renderSources(lv) {
+  const box = $("#en-writing-sources");
+  if (!box) return;
+  box.innerHTML =
+    `<p class="en-writing-source-lead">這一級不是自訂的。級名用全民英檢；程度對齊 CEFR ${escapeHtml(lv.cefr)}。</p>` +
+    `<ul class="writing-teach-list">` +
+    lv.sources
+      .map(
+        (s) =>
+          `<li><a class="en-writing-source-link" href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.title)}</a>：${escapeHtml(s.quote)}</li>`,
+      )
+      .join("") +
+    `</ul>`;
+}
+
 function renderList() {
   const box = $("#en-writing-list");
   const hint = $("#en-writing-hub-hint");
+  const lv = levelById(levelId);
   if (!box) return;
   if (hint) {
     hint.textContent =
-      tab === "joseki"
-        ? "像圍棋定式：先背 20 招句型，再組合成分段。起是開門，承是往下寫，轉是轉折，合是收尾。"
-        : "六篇短文展示怎麼把定式串起來。先看用了哪幾招，再自己套一次。";
+      `${lv.gept}（CEFR ${lv.cefr}）。${lv.canDo} 寫作量：${lv.wordHint}。` +
+      (tab === "joseki" ? " 下面是這一級要練的定式。" : " 下面短文的詞數對齊該級題面。");
   }
+  renderSources(lv);
   box.innerHTML = "";
   if (tab === "joseki") {
-    JOSEKI.forEach((j) => {
+    josekiForLevel(levelId).forEach((j) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "writing-list-item";
@@ -62,14 +103,13 @@ function renderList() {
     });
     return;
   }
-  ESSAYS.forEach((e) => {
+  essaysForLevel(levelId).forEach((e) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "writing-list-item";
-    const used = e.used.map((n) => `${n}`).join("、");
     btn.innerHTML =
       `<span class="writing-list-title">${escapeHtml(e.title)}</span>` +
-      `<span class="writing-list-meta">${escapeHtml(e.zhTitle)} · ${escapeHtml(e.kind)} · ${e.words} 詞 · 定式 ${escapeHtml(used)}</span>`;
+      `<span class="writing-list-meta">${escapeHtml(e.zhTitle)} · ${escapeHtml(e.kind)} · ${e.words} 詞（${escapeHtml(lv.wordHint)}）</span>`;
     btn.addEventListener("click", () => openEssay(e.id));
     box.appendChild(btn);
   });
@@ -77,9 +117,9 @@ function renderList() {
 
 function usedLabel(used) {
   return used
-    .map((n) => {
-      const j = josekiByN(n);
-      return j ? `第 ${j.n} 招 ${j.name}` : `第 ${n} 招`;
+    .map((id) => {
+      const j = josekiById(id);
+      return j ? `第 ${j.n} 招 ${j.name}` : id;
     })
     .join(" · ");
 }
@@ -92,28 +132,26 @@ function renderParas(text) {
     .join("");
 }
 
-function openJoseki(id) {
-  const j = JOSEKI.find((x) => x.id === id);
-  if (!j) return;
-  currentKind = "joseki";
-  currentId = j.id;
-  $("#en-writing-read-title").textContent = `${String(j.n).padStart(2, "0")}　${j.name}`;
-  $("#en-writing-read-meta").textContent = `${j.role} · 句型定式`;
-  const used = $("#en-writing-read-used");
-  if (used) {
-    used.hidden = true;
-    used.textContent = "";
+function setBasis(text, url) {
+  const el = $("#en-writing-read-basis");
+  if (!el) return;
+  if (!text) {
+    el.hidden = true;
+    el.innerHTML = "";
+    return;
   }
-  $("#en-writing-read-body").innerHTML =
-    `<p class="en-writing-frame">${escapeHtml(j.frame).replace(/\n/g, "<br>")}</p>` +
-    renderParas(j.samples.join("\n\n"));
-  $("#en-writing-read-steps").innerHTML =
-    `<li>${escapeHtml(j.why)}</li>` + `<li>小心：${escapeHtml(j.trap)}</li>`;
-  $("#en-writing-read-tips").innerHTML = `<li>${escapeHtml(j.tryHint)}</li>`;
+  el.hidden = false;
+  const link = url
+    ? ` <a class="en-writing-source-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">出處</a>`
+    : "";
+  el.innerHTML = `<strong>依據</strong> ${escapeHtml(text)}${link}`;
+}
+
+function resetTry(placeholder, showLabel) {
   const input = $("#en-writing-try-input");
   if (input) {
     input.value = "";
-    input.placeholder = j.tryHint;
+    input.placeholder = placeholder;
   }
   const model = $("#en-writing-try-model");
   if (model) {
@@ -121,7 +159,30 @@ function openJoseki(id) {
     model.textContent = "";
   }
   const show = $("#btn-en-writing-try-show");
-  if (show) show.textContent = "看例句";
+  if (show) show.textContent = showLabel;
+}
+
+function openJoseki(id) {
+  const j = josekiById(id);
+  if (!j) return;
+  currentKind = "joseki";
+  currentId = j.id;
+  const lv = levelById(j.level);
+  $("#en-writing-read-title").textContent = `${lv.label} ${String(j.n).padStart(2, "0")}　${j.name}`;
+  $("#en-writing-read-meta").textContent = `${lv.gept} · CEFR ${lv.cefr} · ${j.role}`;
+  const used = $("#en-writing-read-used");
+  if (used) {
+    used.hidden = true;
+    used.textContent = "";
+  }
+  setBasis(j.basis, j.basisUrl);
+  $("#en-writing-read-body").innerHTML =
+    `<p class="en-writing-frame">${escapeHtml(j.frame).replace(/\n/g, "<br>")}</p>` +
+    renderParas(j.samples.join("\n\n"));
+  $("#en-writing-read-steps").innerHTML =
+    `<li>${escapeHtml(j.why)}</li>` + `<li>小心：${escapeHtml(j.trap)}</li>`;
+  $("#en-writing-read-tips").innerHTML = `<li>${escapeHtml(j.tryHint)}</li>`;
+  resetTry(j.tryHint, "看例句");
   deps.showView("enWritingRead");
 }
 
@@ -130,35 +191,27 @@ function openEssay(id) {
   if (!e) return;
   currentKind = "essay";
   currentId = e.id;
+  const lv = levelById(e.level);
   $("#en-writing-read-title").textContent = e.title;
-  $("#en-writing-read-meta").textContent = `${e.zhTitle} · ${e.kind} · ${e.words} 詞`;
+  $("#en-writing-read-meta").textContent =
+    `${e.zhTitle} · ${lv.label} · ${e.kind} · ${e.words} 詞（目標 ${lv.wordHint}）`;
   const used = $("#en-writing-read-used");
   if (used) {
     used.hidden = false;
     used.textContent = usedLabel(e.used);
   }
+  setBasis(lv.task, lv.sources[0]?.url);
   $("#en-writing-read-body").innerHTML = renderParas(e.body);
   $("#en-writing-read-steps").innerHTML = e.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
   $("#en-writing-read-tips").innerHTML = e.tips.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
-  const input = $("#en-writing-try-input");
-  if (input) {
-    input.value = "";
-    input.placeholder = "照上面的定式，自己換主題寫一段…";
-  }
-  const model = $("#en-writing-try-model");
-  if (model) {
-    model.hidden = true;
-    model.textContent = "";
-  }
-  const show = $("#btn-en-writing-try-show");
-  if (show) show.textContent = "看這篇英文";
+  resetTry("照這一級的定式，換主題寫一段…", "看這篇英文");
   deps.showView("enWritingRead");
 }
 
 function speakCurrent() {
   let text = "";
   if (currentKind === "joseki") {
-    const j = JOSEKI.find((x) => x.id === currentId);
+    const j = josekiById(currentId);
     if (j) text = j.samples.join(" ");
   } else {
     const e = ESSAYS.find((x) => x.id === currentId);
@@ -178,7 +231,7 @@ function toggleModel() {
     return;
   }
   if (currentKind === "joseki") {
-    const j = JOSEKI.find((x) => x.id === currentId);
+    const j = josekiById(currentId);
     model.textContent = j ? j.samples.join("\n") : "";
   } else {
     const e = ESSAYS.find((x) => x.id === currentId);
@@ -190,7 +243,9 @@ function toggleModel() {
 
 export function openEnWritingHub() {
   tab = loadTab();
+  levelId = loadLevel();
   syncTabs();
+  syncLevels();
   renderList();
   deps.showView("enWritingHub");
 }
@@ -210,6 +265,13 @@ function bindEvents() {
       renderList();
     });
   });
+  document.querySelectorAll("[data-en-writing-level]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setLevel(btn.dataset.enWritingLevel);
+      syncLevels();
+      renderList();
+    });
+  });
   $("#btn-en-writing-speak")?.addEventListener("click", () => speakCurrent());
   $("#btn-en-writing-try-show")?.addEventListener("click", () => toggleModel());
 }
@@ -220,5 +282,6 @@ function bindEvents() {
 export function initEnWriting(d) {
   deps = d;
   tab = loadTab();
+  levelId = loadLevel();
   bindEvents();
 }

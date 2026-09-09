@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.54";
+        var V = "39.55";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.59" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.60" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -486,7 +486,7 @@
             複習字區
           </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-writing">
-            基本寫作 · 20 招定式
+            基本寫作 · 初級／中級／中高級
           </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-flip">
             英語翻牌
@@ -501,12 +501,22 @@
         </header>
         <div class="writing-hub-body">
           <p class="writing-hub-hint" id="en-writing-hub-hint"></p>
+          <span class="label">程度</span>
+          <div class="lesson-chips" role="group" aria-label="寫作程度">
+            <button type="button" class="chip chip-active" data-en-writing-level="elem">初級 A2</button>
+            <button type="button" class="chip" data-en-writing-level="mid">中級 B1</button>
+            <button type="button" class="chip" data-en-writing-level="high">中高級 B2</button>
+          </div>
           <span class="label">看什麼</span>
           <div class="lesson-chips" role="group" aria-label="定式或短文">
-            <button type="button" class="chip chip-active" data-en-writing-tab="joseki">20 招定式</button>
+            <button type="button" class="chip chip-active" data-en-writing-tab="joseki">定式</button>
             <button type="button" class="chip" data-en-writing-tab="essay">短文展示</button>
           </div>
           <div id="en-writing-list" class="writing-list"></div>
+          <section class="writing-teach en-writing-sources" aria-label="分級依據">
+            <h3>這一級依據</h3>
+            <div id="en-writing-sources"></div>
+          </section>
         </div>
       </section>
 
@@ -519,6 +529,7 @@
         <div class="writing-read-body">
           <h2 class="writing-read-title" id="en-writing-read-title"></h2>
           <p class="writing-read-meta" id="en-writing-read-meta"></p>
+          <p class="writing-read-grow en-writing-basis" id="en-writing-read-basis" hidden></p>
           <p class="writing-read-grow" id="en-writing-read-used" hidden></p>
           <div class="writing-essay" id="en-writing-read-body"></div>
           <section class="writing-teach">
@@ -3046,7 +3057,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.94").catch((e) => {
+      import("./js/app.js?v=app-v45.95").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
