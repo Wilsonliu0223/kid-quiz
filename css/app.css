@@ -1802,6 +1802,41 @@ body {
   line-height: 1.5;
 }
 
+.en-writing-para {
+  margin: 0 0 12px;
+}
+
+.en-writing-para-note {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f3f7ff;
+  color: #345;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.en-writing-vocab {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.en-writing-vocab-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border-bottom-style: none;
+}
+
+.en-writing-vocab-zh {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6a4a1a;
+}
+
 .writing-try-input {
   width: 100%;
   box-sizing: border-box;

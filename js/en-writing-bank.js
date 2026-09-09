@@ -519,13 +519,26 @@ const ESSAY_RAW = [
     zhTitle: "我最愛吃的食物",
     kind: "生活敘述",
     used: ["je02", "je03", "je05", "je08"],
+    vocab: [
+      { word: "dumplings", zh: "水餃" },
+      { word: "salty", zh: "鹹的" },
+      { word: "rainy", zh: "下雨的" },
+      { word: "hungry", zh: "肚子餓" },
+    ],
+    notes: [
+      "這篇只有一段，剛好是初級約 50 詞。第一句 I like dumplings 先把題目講完。接著寫味道（warm / salty），再用 and 接廚房的畫面，because 說為什麼吃，so 收成感覺。最後一句回到 I like，不要開新主題。",
+    ],
     body: `I like dumplings. They are warm and a little salty. Mom makes them on rainy days, and the kitchen smells good. I eat them after school because I am hungry, so I feel happy. I like dumplings a lot at home.`,
     steps: [
-      "起：I like 點出日常事物（GEPT 初級：日常生活敘述）",
-      "承：and 接畫面，because 補原因（CEFR A2 連接詞）",
-      "合：回到 I like，不另開新主題",
+      "先寫完整句：主詞 I / They / Mom，後面一定有動詞。不要只寫 Dumplings. 或 Good.",
+      "開門用 I like + 具體食物。這是初級「日常生活敘述」，不是空讚美。",
+      "中間用 and 接畫面（kitchen smells good），用 because 說原因（hungry），用 so 收結果（feel happy）。這三個是 CEFR A2／劍橋 A2 規定要會的連接詞。",
+      "結尾再點一次 I like dumplings，讓讀者知道主題沒跑掉。整篇對齊約 50 詞即可。",
     ],
-    tips: ["對齊約 50 詞，不要硬加長", "每句都有主詞和動詞"],
+    tips: [
+      "橘色底的是本篇生字，點一下可查意思和聽發音。其他英文也可以點。",
+      "自己寫時，把 dumplings 換成你真的愛吃的東西，味道和原因也一起換。",
+    ],
   },
   {
     id: "ee02",
@@ -534,13 +547,26 @@ const ESSAY_RAW = [
     zhTitle: "在公園",
     kind: "看圖／場景",
     used: ["je02", "je04", "je07", "je08"],
+    vocab: [
+      { word: "path", zh: "小徑、步道" },
+      { word: "swing", zh: "盪鞦韆" },
+      { word: "slide", zh: "溜滑梯" },
+      { word: "Finally", zh: "最後" },
+    ],
+    notes: [
+      "像在描一張圖。There is 先擺公園，First / Then / Finally 排你做的事。and 加看到小狗，but 比較鞦韆和溜滑梯。最後一句寫感覺，不要再加新地點。",
+    ],
     body: `There is a park near my home. First, I go there with Dad. Then we ride bikes on the path, and I see a small dog. I like the swing, but the slide is fun too. Finally, I am happy at the park.`,
     steps: [
-      "起：There is 擺場景（初級看圖先寫看到什麼）",
-      "承：First / Then / Finally 排順序（劍橋 A2 範卷用法）",
-      "轉：but 比較兩樣東西",
+      "看圖／寫景先寫「有什麼」：There is a park。一個用 is，兩個以上才用 There are。",
+      "再用 First, Then, Finally 把動作排成順序。劍橋 A2 範卷就是看有沒有排好。",
+      "中間用 and 加一件看到的事，用 but 比較兩樣東西（swing / slide）。初級轉折用 but 就夠。",
+      "結尾回到公園這個地點，寫 I am happy。整篇仍約 50 詞。",
     ],
-    tips: ["像在描一張圖：誰、在哪、做什麼", "連接詞用 and / but / First / then 就夠"],
+    tips: [
+      "橘色底是本篇生字，點一下可查。其他英文也可以點。",
+      "寫自己的公園時，換成你真的玩的設施；每步只寫一件事。",
+    ],
   },
   {
     id: "em01",
@@ -549,17 +575,33 @@ const ESSAY_RAW = [
     zhTitle: "好玩的星期六",
     kind: "故事／經歷",
     used: ["jm01", "jm02", "jm03", "jm05", "jm07", "jm08"],
+    vocab: [
+      { word: "chasing", zh: "追趕" },
+      { word: "Although", zh: "雖然" },
+      { word: "together", zh: "在一起" },
+      { word: "loudly", zh: "大聲地" },
+    ],
+    notes: [
+      "開頭用 Last Saturday 打開真實經歷，再用 and 補當天的畫面。這是中級「故事」，不是 I like 開門。",
+      "中段用 First / Then / After that 往下走。I felt tired because 是心得。Although 比 but 高一階：先承認想坐下，再說還是想玩。",
+      "When we were leaving 是時間從句。I felt happy because 再收一次心得，I hope 寫打算。數一下句子應在 8～12 句。",
+    ],
     body: `Last Saturday, Dad took me to the park near our home. The sky was blue, and many families were there.
 
 First, we rode bikes on the path. Then we saw a small dog chasing a ball, and I laughed so loudly that Dad laughed too. After that, I felt tired because we had walked for a long time. Although I wanted to sit down, I still asked Dad to stay a little longer.
 
 When we were leaving, we bought ice cream by the gate. I felt happy because we were together, and the ice cream was cold and sweet. I hope we can go again next week.`,
     steps: [
-      "起：Last Saturday 打開經歷（GEPT 中級：故事）",
-      "承：時間線＋When / After 從句（B1 部分複雜句）",
-      "轉：Although 讓步；合：I felt because、I hope（B1 心得與打算）",
+      "中級要寫經歷：用 Last Saturday / One day 開場，不要再用 I like 當第一句。",
+      "把一天排成線：First → Then → After that。中間夾 I felt … because，才叫「心得」不是流水帳。",
+      "Although … I still … 是讓步複雜句。不要寫 Although ... but ...。",
+      "When 從句把「離開時」黏在買冰的動作上。結尾 I hope 寫下次打算（CEFR B1 的 hopes / plans）。",
+      "寫完數句子：8 到 12 句、約 120 詞。可分成三段，像這篇一樣。",
     ],
-    tips: ["數句子：應在 8～12 句、約 120 詞", "感覺句一定帶 because"],
+    tips: [
+      "橘色生字可點查。把公園換成你真的去過的地方，感覺和 because 也要換真的。",
+      "感覺句若沒有 because，讀起來會空。",
+    ],
   },
   {
     id: "em02",
@@ -568,17 +610,32 @@ When we were leaving, we bought ice cream by the gate. I felt happy because we w
     zhTitle: "我為什麼喜歡閱讀",
     kind: "心得／看法",
     used: ["jm04", "jm02", "jm06", "jm07", "jm08"],
+    vocab: [
+      { word: "whales", zh: "鯨魚" },
+      { word: "calm", zh: "平靜的" },
+      { word: "Therefore", zh: "所以、因此" },
+      { word: "notebook", zh: "筆記本" },
+    ],
+    notes: [
+      "這篇是看法文，不是日記。第一句 I think we should … 先亮主張，even if 承認「就算很忙」。",
+      "中段兩個理由：學單字、讓自己平靜。每個理由後面都有 For example 或 When 的真事，才叫「簡短說明理由」。",
+      "That is why 扣回喜歡閱讀。Therefore 接計畫 I hope。開頭 I think 和結尾 That is why 要同一邊。",
+    ],
     body: `I think we should read a little every day, even if we are busy with school.
 
 One reason is that books help us learn new words. For example, after I read a story about the sea, I could tell Mom about whales and how they swim. Another reason is that reading makes me calm. When I read before bed, I stop thinking about homework and I feel ready to sleep. I also like to write down one new word in a small notebook.
 
 That is why I like reading at night. Therefore, I hope I can finish one short book this month and tell Dad the whole story.`,
     steps: [
-      "起：I think 看法（CEFR B1：opinions）",
-      "承：理由＋For example＋After / When",
-      "合：That is why、Therefore、I hope（理由與計畫）",
+      "看法文第一句用 I think / I believe，不要用 Last Saturday。這是 CEFR B1「簡短說明看法」。",
+      "每個理由只打一件事：One reason … For example …；Another reason … When …。例子要有人、有時候。",
+      "after I read / When I read 是時間從句，比一直 and 更像中級。",
+      "結尾 That is why 點題，Therefore + I hope 寫計畫。不要在結論突然改口說閱讀沒有用。",
     ],
-    tips: ["這篇是看法，不是日記", "兩個理由就夠，不要列十點"],
+    tips: [
+      "橘色生字可點查。兩個理由就夠，不要列十點。",
+      "把 whales 換成你真的讀過的故事，句子才站得住。",
+    ],
   },
   {
     id: "eh01",
@@ -587,6 +644,19 @@ That is why I like reading at night. Therefore, I hope I can finish one short bo
     zhTitle: "孩子該不該每天寫功課？",
     kind: "引導寫作／論說",
     used: ["jh01", "jh02", "jh03", "jh05", "jh06", "jh07", "jh08"],
+    vocab: [
+      { word: "argue", zh: "主張、認為" },
+      { word: "However", zh: "然而" },
+      { word: "worksheets", zh: "學習單、練習卷" },
+      { word: "Despite", zh: "儘管如此" },
+      { word: "conclusion", zh: "結論" },
+    ],
+    notes: [
+      "引言先亮立場 In my view，再一句解釋為什麼。中高級開頭不是 I like，是主張。",
+      "第二段先寫別人的看法 Some people argue，再用 However 守住自己。Even though 承認短複習有用，但作業太多會搶睡眠。",
+      "第三段 In addition 加第二個論點，As a result 寫結果。Despite this 讓步後仍看到反面事實。",
+      "In conclusion 重申立場，不要加新論點，也不可以換邊。字數對齊 150～180 詞。",
+    ],
     body: `In my view, children should not have homework every night. School already takes many hours, and home time should include rest, play, and reading.
 
 Some people argue that daily homework helps children remember the day's lesson. However, I believe too much work after dinner makes them too tired to think clearly the next morning. Even though a short review can be useful, piles of worksheets steal sleep and make family time disappear.
@@ -595,11 +665,16 @@ In addition, children need time to play outside and talk with their family about
 
 In conclusion, a little practice is enough for most children. For these reasons, I would argue that rest and a short reading habit help children more than homework every night.`,
     steps: [
-      "起：In my view 亮立場（GEPT 中高級 appropriate style）",
-      "轉：Some people / However、Even though（CEFR B2 支持或反對）",
-      "承：In addition / As a result；合：In conclusion 扣題（150～180 詞）",
+      "題目是「應不應該」，屬中高級抽象題。第一段用 In my view 亮邊，第二句才解釋。",
+      "正反論點要完整：Some people argue … However, I believe … because …。兩邊都要有原因。",
+      "Even though / Despite 是讓步。Despite this 後面接完整句；Despite 不能直接接 I think。",
+      "In addition 加論點，As a result 寫後果。同一段不要堆三個 In addition。",
+      "結論只收回立場。開頭 not every night 和結尾 rest and reading 必須同一邊。",
     ],
-    tips: ["題目是抽象的「應不應該」，例子仍可用家庭生活", "結論不可換邊"],
+    tips: [
+      "橘色生字可點查。例子可用自己家的晚上，但主題句必須是主張。",
+      "寫完數詞數：少於 150 再加一個說明，超過 180 就刪重複句。",
+    ],
   },
   {
     id: "eh02",
@@ -608,6 +683,19 @@ In conclusion, a little practice is enough for most children. For these reasons,
     zhTitle: "螢幕還是書？",
     kind: "優缺點／時事",
     used: ["jh01", "jh04", "jh03", "jh06", "jh08"],
+    vocab: [
+      { word: "advantage", zh: "優點" },
+      { word: "disadvantage", zh: "缺點" },
+      { word: "replace", zh: "取代" },
+      { word: "characters", zh: "故事角色" },
+      { word: "habit", zh: "習慣" },
+    ],
+    notes: [
+      "開頭就選邊：書比螢幕更適合學習。even though 先承認手機也有用，這是讓步，不是改口。",
+      "這段先秤優缺點：advantage / On the other hand, a disadvantage。再接 Some people … However … 守住「紙本書記得比較住」。",
+      "In addition 把場景拉到家人一起讀。As a result 寫結果。Even though 再用自己的真實習慣當例子。",
+      "結論給可執行的做法：先讀書，需要時才用螢幕。不要停在「兩邊都好」。",
+    ],
     body: `In my view, books are still better than screens for learning, even though phones are useful in daily life.
 
 One advantage of screens is that children can find facts quickly and call home when they need help. On the other hand, a disadvantage is that games and videos take away quiet time and make it hard to sleep. Some people argue that a tablet can replace a book because it holds many stories. However, I believe a paper book helps us slow down, look at the words, and remember more.
@@ -616,11 +704,15 @@ In addition, reading a story together is easier than sharing a small phone. As a
 
 In conclusion, screens are tools, but books build the habit of thinking. For these reasons, I would argue that children should read a book first, then use a screen if they still need it.`,
     steps: [
-      "起：立場先選邊（中高級：時事／抽象概念）",
-      "轉：advantage / On the other hand（CEFR B2 優缺點）",
-      "合：In conclusion 給可執行的結論",
+      "CEFR B2 要能寫優缺點。先公平寫 screens 的好處，再用 On the other hand 寫壞處。",
+      "寫完優缺點一定要選邊。這篇選 books，所以 However 後面不能說螢幕比較好。",
+      "抽象題仍可用自己的床邊書當例子，但主題句是主張，不是日記。",
+      "In conclusion 給下一步：先讀書再看螢幕。讀者要知道你要他做什麼。",
     ],
-    tips: ["優缺點都要寫，最後仍須選邊", "目標 150～180 詞，不要寫成日記"],
+    tips: [
+      "橘色生字可點查。advantage / disadvantage 成對出現，不要只寫一邊。",
+      "目標 150～180 詞。結論不要突然說「其實手機就好」。",
+    ],
   },
 ];
 

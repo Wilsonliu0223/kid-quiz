@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.47";
+import { CONFIG } from "./config.site.js?v=config-v45.48";
 import {
   loadZhItems,
   loadEnItems,
@@ -67,7 +67,7 @@ import {
 } from "./flip-zh.js";
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
 import { initWriting } from "./writing.js?v=writing-v3";
-import { initEnWriting } from "./en-writing.js?v=en-writing-v2";
+import { initEnWriting } from "./en-writing.js?v=en-writing-v3";
 import {
   initZhPractice,
   openZhHub,
@@ -108,7 +108,7 @@ import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v11";
 import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v3";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v77";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v78";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v3";
 import {
   addMistake,

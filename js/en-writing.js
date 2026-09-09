@@ -2,6 +2,7 @@
  * 英語寫作：初級／中級／中高級定式與短文。
  */
 import { speakEnglish } from "./english.js?v=en-speak-v32";
+import { openEnWordGloss } from "./en-daily.js?v=en-daily-v78";
 import {
   ESSAYS,
   LEVELS,
@@ -9,7 +10,7 @@ import {
   josekiById,
   josekiForLevel,
   levelById,
-} from "./en-writing-bank.js?v=en-writing-bank-v2";
+} from "./en-writing-bank.js?v=en-writing-bank-v3";
 
 const KEY_TAB = "kid-quiz-en-writing-tab";
 const KEY_LEVEL = "kid-quiz-en-writing-level";
@@ -124,12 +125,62 @@ function usedLabel(used) {
     .join(" · ");
 }
 
-function renderParas(text) {
+function keySet(vocab) {
+  return new Set((vocab || []).map((v) => String(v.word || "").toLowerCase()));
+}
+
+function renderClickable(text, vocab) {
+  const keys = keySet(vocab);
+  return String(text || "")
+    .replace(/\n/g, " ")
+    .replace(/([A-Za-z][A-Za-z'-]*)/g, (word) => {
+      const cls = keys.has(word.toLowerCase()) ? "en-word en-word-key" : "en-word";
+      return `<button type="button" class="${cls}" data-en-word="${escapeHtml(word)}">${escapeHtml(word)}</button>`;
+    });
+}
+
+function renderParas(text, vocab) {
   return String(text || "")
     .split(/\n\n+/)
     .filter(Boolean)
-    .map((p) => `<p class="writing-essay-p en-writing-essay-p">${escapeHtml(p).replace(/\n/g, "<br>")}</p>`)
+    .map((p) => `<p class="writing-essay-p en-writing-essay-p">${renderClickable(p, vocab)}</p>`)
     .join("");
+}
+
+function renderEssayBody(e) {
+  const paras = String(e.body || "").split(/\n\n+/).filter(Boolean);
+  const notes = e.notes || [];
+  return paras
+    .map((p, i) => {
+      const note = notes[i]
+        ? `<p class="en-writing-para-note">${escapeHtml(notes[i])}</p>`
+        : "";
+      return `<div class="en-writing-para"><p class="writing-essay-p en-writing-essay-p">${renderClickable(p, e.vocab)}</p>${note}</div>`;
+    })
+    .join("");
+}
+
+function renderVocab(vocab) {
+  const wrap = $("#en-writing-vocab-wrap");
+  const box = $("#en-writing-vocab");
+  if (!wrap || !box) return;
+  if (!vocab?.length) {
+    wrap.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+  wrap.hidden = false;
+  box.innerHTML = vocab
+    .map((v) => {
+      const w = escapeHtml(v.word);
+      return `<button type="button" class="en-word en-word-key en-writing-vocab-chip" data-en-word="${w}">${w}<span class="en-writing-vocab-zh">${escapeHtml(v.zh || "")}</span></button>`;
+    })
+    .join("");
+}
+
+function setTapHint(show) {
+  const el = $("#en-writing-tap-hint");
+  if (el) el.hidden = !show;
 }
 
 function setBasis(text, url) {
@@ -156,7 +207,7 @@ function resetTry(placeholder, showLabel) {
   const model = $("#en-writing-try-model");
   if (model) {
     model.hidden = true;
-    model.textContent = "";
+    model.innerHTML = "";
   }
   const show = $("#btn-en-writing-try-show");
   if (show) show.textContent = showLabel;
@@ -176,6 +227,8 @@ function openJoseki(id) {
     used.textContent = "";
   }
   setBasis(j.basis, j.basisUrl);
+  setTapHint(true);
+  renderVocab(null);
   $("#en-writing-read-body").innerHTML =
     `<p class="en-writing-frame">${escapeHtml(j.frame).replace(/\n/g, "<br>")}</p>` +
     renderParas(j.samples.join("\n\n"));
@@ -201,7 +254,9 @@ function openEssay(id) {
     used.textContent = usedLabel(e.used);
   }
   setBasis(lv.task, lv.sources[0]?.url);
-  $("#en-writing-read-body").innerHTML = renderParas(e.body);
+  setTapHint(true);
+  renderVocab(e.vocab);
+  $("#en-writing-read-body").innerHTML = renderEssayBody(e);
   $("#en-writing-read-steps").innerHTML = e.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
   $("#en-writing-read-tips").innerHTML = e.tips.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
   resetTry("照這一級的定式，換主題寫一段…", "看這篇英文");
@@ -232,10 +287,10 @@ function toggleModel() {
   }
   if (currentKind === "joseki") {
     const j = josekiById(currentId);
-    model.textContent = j ? j.samples.join("\n") : "";
+    model.innerHTML = j ? renderParas(j.samples.join("\n\n")) : "";
   } else {
     const e = ESSAYS.find((x) => x.id === currentId);
-    model.textContent = e ? e.body : "";
+    model.innerHTML = e ? renderParas(e.body, e.vocab) : "";
   }
   model.hidden = false;
   if (show) show.textContent = "收起";
@@ -274,6 +329,12 @@ function bindEvents() {
   });
   $("#btn-en-writing-speak")?.addEventListener("click", () => speakCurrent());
   $("#btn-en-writing-try-show")?.addEventListener("click", () => toggleModel());
+  $("#view-en-writing-read")?.addEventListener("click", (e) => {
+    const btn = e.target instanceof Element ? e.target.closest("[data-en-word]") : null;
+    if (!btn) return;
+    e.preventDefault();
+    openEnWordGloss(btn.getAttribute("data-en-word") || "");
+  });
 }
 
 /**

@@ -242,9 +242,13 @@ function isReviewViewActive() {
   return Boolean($("#view-en-review")?.classList.contains("view-active"));
 }
 
+function isEnWritingReadActive() {
+  return Boolean($("#view-en-writing-read")?.classList.contains("view-active"));
+}
+
 function shouldShowEnDock() {
   if (isEnSpeakViewActive()) return true;
-  if (!isReviewViewActive()) return false;
+  if (!isReviewViewActive() && !isEnWritingReadActive()) return false;
   const panel = $("#en-gloss-panel");
   return (
     document.body.classList.contains("en-gloss-open") ||
@@ -311,7 +315,7 @@ function showPlayBarIdle() {
   // 若正在播全文／單字，不要蓋掉狀態文字
   if (/播放中|載入/.test(st) && !/點 🔊/.test(st)) {
     showPlayBar(st);
-  } else if (isReviewViewActive()) {
+  } else if (isReviewViewActive() || isEnWritingReadActive()) {
     showPlayBar("點 🔊 聽發音");
   } else {
     showPlayBar("點 🔊 播全文");
@@ -1204,8 +1208,20 @@ export function openEnHub() {
 /** 離開閱讀／對話頁時收掉播放列，避免擋住英語翻牌等畫面 */
 export function onEnViewChange(name) {
   if (name === "enDailyRead" || name === "enDailyDialogue") return;
+  if (name === "enWritingRead") {
+    stopPlayBar({ dismiss: true });
+    return;
+  }
   stopPlayBar({ dismiss: true });
   hideGloss();
+}
+
+/** 寫作短文等頁面：點英文單字，用同一套英英／中文查詢卡。 */
+export function openEnWordGloss(word) {
+  const w = String(word || "").trim();
+  if (!w) return;
+  unlockSpeechFromGesture();
+  void openGloss(w, true);
 }
 
 async function ensureArticles(force = false) {

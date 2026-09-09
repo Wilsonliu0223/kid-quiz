@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.55";
+        var V = "39.56";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.60" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.61" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -531,9 +531,16 @@
           <p class="writing-read-meta" id="en-writing-read-meta"></p>
           <p class="writing-read-grow en-writing-basis" id="en-writing-read-basis" hidden></p>
           <p class="writing-read-grow" id="en-writing-read-used" hidden></p>
+          <p class="writing-read-tap-hint" id="en-writing-tap-hint" hidden>
+            看不懂的英文，點一下查意思（和時事閱讀同一套）。橘色是本篇生字。
+          </p>
           <div class="writing-essay" id="en-writing-read-body"></div>
+          <section class="writing-teach" id="en-writing-vocab-wrap" hidden>
+            <h3>本篇生字（點了可查）</h3>
+            <div id="en-writing-vocab" class="en-writing-vocab"></div>
+          </section>
           <section class="writing-teach">
-            <h3>這招／這篇怎麼用</h3>
+            <h3>示範教學：這篇怎麼寫</h3>
             <ol class="writing-teach-list" id="en-writing-read-steps"></ol>
             <h3>你可以這樣練</h3>
             <ul class="writing-teach-list" id="en-writing-read-tips"></ul>
@@ -3057,7 +3064,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.95").catch((e) => {
+      import("./js/app.js?v=app-v45.96").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
