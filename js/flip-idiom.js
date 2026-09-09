@@ -113,21 +113,81 @@ function playerName(id) {
 }
 
 /** 抽 N 條互不共用字的四字成語，避免牌面上出現兩個相同字。 */
-export function pickIdioms(count) {
-  const pool = shuffle(IDIOM_BANK);
-  const picked = [];
-  const used = new Set();
-  for (const item of pool) {
-    const chars = [...item.idiom];
-    if (chars.some((ch) => used.has(ch))) continue;
-    picked.push(item);
-    chars.forEach((ch) => used.add(ch));
-    if (picked.length >= count) break;
-  }
+export function pickIdioms(count, opts = {}) {
+  const avoidIds = new Set(opts.avoidIds || []);
+  const tryPick = (skipAvoid) => {
+    const pool = shuffle(
+      skipAvoid ? IDIOM_BANK : IDIOM_BANK.filter((item) => !avoidIds.has(item.id))
+    );
+    const picked = [];
+    const used = new Set();
+    for (const item of pool) {
+      const chars = [...item.idiom];
+      if (chars.some((ch) => used.has(ch))) continue;
+      picked.push(item);
+      chars.forEach((ch) => used.add(ch));
+      if (picked.length >= count) break;
+    }
+    return picked;
+  };
+
+  let picked = tryPick(false);
+  if (picked.length < count && avoidIds.size) picked = tryPick(true);
   if (picked.length < count) {
     return { ok: false, available: picked.length, idioms: picked };
   }
   return { ok: true, available: picked.length, idioms: picked };
+}
+
+function usedCharsExcept(skipId) {
+  const used = new Set();
+  for (const item of game?.idioms || []) {
+    if (item.id === skipId) continue;
+    for (const ch of item.idiom) used.add(ch);
+  }
+  return used;
+}
+
+function pickReplacement(skipId) {
+  const keepIds = new Set((game?.idioms || []).map((item) => item.id));
+  const used = usedCharsExcept(skipId);
+  const pool = shuffle(
+    IDIOM_BANK.filter((item) => {
+      if (keepIds.has(item.id)) return false;
+      return ![...item.idiom].some((ch) => used.has(ch));
+    })
+  );
+  return pool[0] || null;
+}
+
+function canEditTeachList() {
+  return teachReturn !== "idiomFlipPlay";
+}
+
+function swapOneIdiom(idiomId) {
+  if (!game || !canEditTeachList()) return;
+  const idx = game.idioms.findIndex((item) => item.id === idiomId);
+  if (idx < 0) return;
+  const next = pickReplacement(idiomId);
+  if (!next) {
+    deps.showWarn("暫時換不到", "題庫裡沒有不重複、又不跟其他條撞字的成語");
+    return;
+  }
+  game.idioms[idx] = next;
+  fillIdiomList("#idiom-flip-teach-list", false);
+}
+
+function swapAllIdioms() {
+  if (!game || !canEditTeachList()) return;
+  const result = pickIdioms(game.idiomCount, {
+    avoidIds: game.idioms.map((item) => item.id),
+  });
+  if (!result.ok) {
+    deps.showWarn("暫時換不到", "題庫不夠抽出全新的一組");
+    return;
+  }
+  game.idioms = result.idioms;
+  fillIdiomList("#idiom-flip-teach-list", false);
 }
 
 function buildCards(idioms) {
@@ -167,13 +227,20 @@ function fillIdiomList(sel, markFound) {
   const found = new Set(
     markFound ? game.cards.filter((c) => c.matched).map((c) => c.idiomId) : []
   );
+  const showSwap = canEditTeachList();
   el.innerHTML = game.idioms
     .map((item) => {
       const cls = found.has(item.id) ? " is-found" : "";
+      const swap = showSwap
+        ? `<button type="button" class="btn btn-secondary idiom-flip-swap-one" data-idiom-swap="${escapeHtml(item.id)}">更換</button>`
+        : "";
       return (
         `<li class="${cls}">` +
+        `<div class="idiom-flip-teach-main">` +
         `<span class="idiom-flip-teach-word">${escapeHtml(item.idiom)}</span>` +
         `<span class="idiom-flip-teach-meaning">${escapeHtml(item.meaning)}</span>` +
+        `</div>` +
+        swap +
         `</li>`
       );
     })
@@ -193,6 +260,8 @@ function openTeach(nextView) {
   if (nextBtn) {
     nextBtn.textContent = fromPlay ? "回到翻牌" : "看完了，選誰先";
   }
+  const swapAll = $("#btn-idiom-flip-swap-all");
+  if (swapAll) swapAll.hidden = fromPlay;
   fillIdiomList("#idiom-flip-teach-list", fromPlay);
   deps.showView("idiomFlipTeach");
 }
@@ -438,6 +507,12 @@ function bindEvents() {
     renderFirstPicker();
     deps.showView("idiomFlipFirst");
   });
+  $("#idiom-flip-teach-list")?.addEventListener("click", (e) => {
+    const btn = e.target instanceof Element ? e.target.closest("[data-idiom-swap]") : null;
+    if (!btn) return;
+    swapOneIdiom(btn.getAttribute("data-idiom-swap") || "");
+  });
+  $("#btn-idiom-flip-swap-all")?.addEventListener("click", () => swapAllIdioms());
   $("#btn-idiom-flip-first-back")?.addEventListener("click", () => openTeach("idiomFlipFirst"));
   $("#btn-idiom-flip-peek")?.addEventListener("click", () => openTeach("idiomFlipPlay"));
   $("#btn-idiom-flip-play-back")?.addEventListener("click", () => {
