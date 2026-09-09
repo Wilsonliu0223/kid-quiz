@@ -193,6 +193,89 @@ export function bindLookupClicks(root, getParaText) {
   });
 }
 
+const CUE_SKIP = new Set(["有喜", "害喜"]);
+const CUE_BLOCK = /[死屍骨罪押捕妖兵稅瘡傷棺葬賭毒殺血妓娼淫孕]/;
+const CUE_AFTER = ["歡", "愛", "子", "天", "人", "心", "事", "頭", "兒"];
+const cueCache = new Map();
+
+function cueFromQuotes(text) {
+  const out = [];
+  for (const m of String(text || "").matchAll(/「([^」]{2,6})」/g)) {
+    out.push(m[1]);
+  }
+  return out;
+}
+
+function cleanCueWord(raw, char) {
+  const word = [...String(raw || "")].filter(isHan).join("");
+  if ([...word].length !== 2) return "";
+  if (!word.includes(char)) return "";
+  if (CUE_SKIP.has(word) || CUE_BLOCK.test(word)) return "";
+  return word;
+}
+
+function pickCue(cands, char) {
+  const uniq = [...new Set(cands.filter(Boolean))];
+  return uniq.find((w) => w.startsWith(char)) || uniq[0] || "";
+}
+
+function cueFromBank(char, items) {
+  const hits = (items || [])
+    .map((it) => String(it.word || "").trim())
+    .map((word) => cleanCueWord(word, char) || ([...word].length === 3 && word.includes(char) && !CUE_BLOCK.test(word) ? word : ""))
+    .filter(Boolean);
+  return pickCue(hits, char);
+}
+
+async function findCueWord(char, items) {
+  const fromBank = cueFromBank(char, items);
+  if (fromBank) return fromBank;
+  if (cueCache.has(char)) return cueCache.get(char);
+  const cands = [];
+  for (const aff of ["歡", "愛"]) {
+    const hit = await lookupMoe(char + aff);
+    const word = hit?.word ? cleanCueWord(hit.word, char) : "";
+    if (word) cands.push(word);
+  }
+  const data = await fetchMoeRaw(char);
+  const defs = (data?.heteronyms || []).flatMap((h) => h.definitions || []);
+  for (const d of defs) {
+    for (const raw of cueFromQuotes(d.example || "")) {
+      const word = cleanCueWord(raw, char);
+      if (word) cands.push(word);
+    }
+  }
+  if (!cands.length) {
+    for (const d of defs) {
+      for (const raw of cueFromQuotes(d.def || "")) {
+        const word = cleanCueWord(raw, char);
+        if (word) cands.push(word);
+      }
+    }
+  }
+  let picked = pickCue(cands, char);
+  if (!picked) {
+    for (const aff of CUE_AFTER) {
+      const hit = await lookupMoe(char + aff);
+      if (hit?.word) {
+        picked = hit.word;
+        break;
+      }
+    }
+  }
+  cueCache.set(char, picked);
+  return picked;
+}
+
+/** 單字聽寫念「喜歡的喜」；已經是詞就直接念該詞。 */
+export async function dictationSpeakText(word, bankItems = []) {
+  const n = [...String(word || "")].filter(isHan).join("");
+  if (!n) return "";
+  if ([...n].length >= 2) return n;
+  const cue = await findCueWord(n, bankItems);
+  return cue ? `${cue}的${n}` : n;
+}
+
 export function initZhLookup() {
   $("#btn-zh-lookup-close")?.addEventListener("click", () => hideLookupCard());
 }

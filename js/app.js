@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.39";
+import { CONFIG } from "./config.site.js?v=config-v45.40";
 import {
   loadZhItems,
   loadEnItems,
@@ -73,8 +73,8 @@ import {
   applyZhSetupKind,
   getZhSetupKind,
   startZhChoice,
-} from "./zh-practice.js?v=zh-practice-v3";
-import { bindLookupClicks, hideLookupCard } from "./zh-lookup.js?v=zh-lookup-v3";
+} from "./zh-practice.js?v=zh-practice-v4";
+import { bindLookupClicks, hideLookupCard, dictationSpeakText } from "./zh-lookup.js?v=zh-lookup-v4";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,
@@ -1097,15 +1097,23 @@ async function playZhAudio() {
     btn.disabled = true;
     btn.textContent = "播放中…";
   }
-  const ok = await speakEnglish(q.word, {
-    lang: "zh",
-    alreadyZh: true,
-    fast: true,
-    speed: 0.9,
-  });
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = "🔊 再聽一次";
+  let ok = false;
+  try {
+    if (!q.dictationCue) {
+      const bank = (zhBank || []).filter((it) => !q.lesson || it.lesson === q.lesson);
+      q.dictationCue = await dictationSpeakText(q.word, bank);
+    }
+    ok = await speakEnglish(q.dictationCue, {
+      lang: "zh",
+      alreadyZh: true,
+      fast: true,
+      speed: 0.8,
+    });
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "🔊 再聽一次";
+    }
   }
   if (!ok) {
     const hint = $("#quiz-hint");
@@ -1140,7 +1148,7 @@ function renderQuestion() {
   if (listen) {
     zhuyinEl.hidden = true;
     sentenceEl.hidden = true;
-    $("#quiz-hint").textContent = "聽一聽，寫出國字。沒聽到就再按一次。";
+    $("#quiz-hint").textContent = "聽「喜歡的喜」這種提示，寫出那個國字。沒聽到就再按一次。";
     void playZhAudio();
   } else if (hasSentence) {
     zhuyinEl.hidden = false;

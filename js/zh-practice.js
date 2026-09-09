@@ -45,7 +45,7 @@ const SETUP_COPY = {
   listen: {
     title: "本週聽寫",
     start: "開始聽寫",
-    hint: "聽語音，寫出國字。不會先看到注音。",
+    hint: "聽「喜歡的喜」這種提示，寫出那個國字。不會先看到注音。",
   },
   pick: {
     title: "看字選注音",
