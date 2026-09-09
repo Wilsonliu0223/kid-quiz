@@ -73,6 +73,7 @@ body {
 #view-setup-en.view-active,
 #view-en-flip-setup.view-active,
 #view-zh-hub.view-active,
+#view-math-hub.view-active,
 #view-zh-choice.view-active,
 #view-zh-cards.view-active,
 #view-writing-hub.view-active,
@@ -96,6 +97,10 @@ body {
 
 .setup-header-zh .setup-subject {
   color: var(--zh-dark);
+}
+
+.setup-header-math .setup-subject {
+  color: #2d6b4a;
 }
 
 .setup-header-en .setup-subject {
@@ -1628,6 +1633,35 @@ body {
 
 .zh-hub-idiom {
   margin: 0;
+}
+
+.math-hub-group-title {
+  color: #2d6b4a;
+}
+
+.math-hub-lead {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.math-frac-bar {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin: 0 0 12px;
+}
+
+.math-frac-cell {
+  width: 28px;
+  height: 36px;
+  border: 2px solid #2d6b4a;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.math-frac-cell.is-on {
+  background: #3d9a6a;
 }
 
 #setup-zh-drill {

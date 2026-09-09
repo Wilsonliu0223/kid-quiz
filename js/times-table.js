@@ -1250,7 +1250,7 @@ export function bindMulEvents() {
     session = null;
     learnDigit = null;
     resetMulPanels();
-    deps.showView("home");
+    deps.showView("mathHub");
   });
   $("#btn-mul-learn-back")?.addEventListener("click", () => {
     stopRecite();
@@ -1308,7 +1308,7 @@ export function bindMulEvents() {
     session = null;
     learnDigit = null;
     resetMulPanels();
-    deps.showView("home");
+    deps.showView("mathHub");
   });
 }
 

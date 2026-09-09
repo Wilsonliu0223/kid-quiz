@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.42";
+import { CONFIG } from "./config.site.js?v=config-v45.43";
 import {
   loadZhItems,
   loadEnItems,
@@ -103,7 +103,8 @@ import {
   openEnRaceDuoMode,
   openMulRaceDuoMode,
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
-import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v10";
+import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v11";
+import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v1";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
 import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v77";
@@ -185,6 +186,9 @@ function updateQuizCountHints() {
 const views = {
   home: $("#view-home"),
   zhHub: $("#view-zh-hub"),
+  mathHub: $("#view-math-hub"),
+  mathGradeQuiz: $("#view-math-grade-quiz"),
+  mathGradeResult: $("#view-math-grade-result"),
   zhChoice: $("#view-zh-choice"),
   zhCards: $("#view-zh-cards"),
   setupZh: $("#view-setup-zh"),
@@ -2522,9 +2526,13 @@ async function init() {
       });
     },
   });
-  $("#btn-start-mul")?.addEventListener("click", (e) => {
+  initMathPractice({
+    showView,
+    openMulHome,
+  });
+  $("#btn-start-math")?.addEventListener("click", (e) => {
     e.preventDefault();
-    openMulHome();
+    openMathHub();
   });
   $("#btn-start-sudoku")?.addEventListener("click", (e) => {
     e.preventDefault();
