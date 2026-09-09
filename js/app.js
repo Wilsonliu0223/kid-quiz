@@ -66,7 +66,7 @@ import {
   renderFlipHomePlayers,
 } from "./flip-zh.js";
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v3";
-import { initWriting } from "./writing.js?v=writing-v1";
+import { initWriting } from "./writing.js?v=writing-v2";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,

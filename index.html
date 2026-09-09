@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.44";
+        var V = "39.45";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.53" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.54" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1009,7 +1009,16 @@
           <h2 class="writing-read-title" id="writing-read-title"></h2>
           <p class="writing-read-meta" id="writing-read-meta"></p>
           <p class="writing-read-grow" id="writing-read-grow" hidden></p>
+          <p class="writing-read-tap-hint">看不懂的字，點一下看注音和意思（教育部萌典）</p>
           <div class="writing-essay" id="writing-read-body"></div>
+          <aside class="writing-char-card" id="writing-char-card" hidden>
+            <div class="writing-char-card-top">
+              <span class="writing-char-glyph" id="writing-char-glyph"></span>
+              <span class="writing-char-zhuyin" id="writing-char-zhuyin"></span>
+              <button type="button" class="btn-text" id="btn-writing-char-close">關閉</button>
+            </div>
+            <p class="writing-char-meaning" id="writing-char-meaning"></p>
+          </aside>
           <section class="writing-teach">
             <h3>這篇怎麼寫</h3>
             <ol class="writing-teach-list" id="writing-read-steps"></ol>
@@ -2764,7 +2773,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.84").catch((e) => {
+      import("./js/app.js?v=app-v45.85").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
