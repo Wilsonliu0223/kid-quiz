@@ -19,6 +19,8 @@ const MISMATCH_MS = 1100;
 let deps = null;
 /** @type {IdiomFlipGame | null} */
 let game = null;
+/** @type {'idiomFlipFirst' | 'idiomFlipPlay'} */
+let teachReturn = "idiomFlipFirst";
 
 /**
  * @typedef {object} IdiomFlipDeps
@@ -157,6 +159,42 @@ function escapeHtml(s) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function fillIdiomList(sel, markFound) {
+  const el = $(sel);
+  if (!el || !game) return;
+  const found = new Set(
+    markFound ? game.cards.filter((c) => c.matched).map((c) => c.idiomId) : []
+  );
+  el.innerHTML = game.idioms
+    .map((item) => {
+      const cls = found.has(item.id) ? " is-found" : "";
+      return (
+        `<li class="${cls}">` +
+        `<span class="idiom-flip-teach-word">${escapeHtml(item.idiom)}</span>` +
+        `<span class="idiom-flip-teach-meaning">${escapeHtml(item.meaning)}</span>` +
+        `</li>`
+      );
+    })
+    .join("");
+}
+
+function openTeach(nextView) {
+  teachReturn = nextView;
+  const fromPlay = nextView === "idiomFlipPlay";
+  const hint = $("#idiom-flip-teach-hint");
+  const nextBtn = $("#btn-idiom-flip-teach-next");
+  if (hint) {
+    hint.textContent = fromPlay
+      ? "忘記了可以再看一次。已找到的會標「已找到」。"
+      : "先念給小孩聽：這幾條會拆成字卡，翻到同一條的四個字就得分。";
+  }
+  if (nextBtn) {
+    nextBtn.textContent = fromPlay ? "回到翻牌" : "看完了，選誰先";
+  }
+  fillIdiomList("#idiom-flip-teach-list", fromPlay);
+  deps.showView("idiomFlipTeach");
 }
 
 function renderFirstPicker() {
@@ -371,8 +409,7 @@ function beginLocal() {
   }
   game = createLobby(result.idioms, idiomCount);
   if (!game) return;
-  renderFirstPicker();
-  deps.showView("idiomFlipFirst");
+  openTeach("idiomFlipFirst");
 }
 
 export function beginIdiomFlipFromHome() {
@@ -384,7 +421,25 @@ function bindEvents() {
     e.preventDefault();
     beginIdiomFlipFromHome();
   });
-  $("#btn-idiom-flip-first-back")?.addEventListener("click", () => deps.showView("setupZh"));
+  $("#btn-idiom-flip-teach-back")?.addEventListener("click", () => {
+    if (teachReturn === "idiomFlipPlay") {
+      deps.showView("idiomFlipPlay");
+      renderBoard();
+      return;
+    }
+    deps.showView("setupZh");
+  });
+  $("#btn-idiom-flip-teach-next")?.addEventListener("click", () => {
+    if (teachReturn === "idiomFlipPlay") {
+      deps.showView("idiomFlipPlay");
+      renderBoard();
+      return;
+    }
+    renderFirstPicker();
+    deps.showView("idiomFlipFirst");
+  });
+  $("#btn-idiom-flip-first-back")?.addEventListener("click", () => openTeach("idiomFlipFirst"));
+  $("#btn-idiom-flip-peek")?.addEventListener("click", () => openTeach("idiomFlipPlay"));
   $("#btn-idiom-flip-play-back")?.addEventListener("click", () => {
     if (confirm("離開對戰？目前進度不會儲存。")) deps.showView("setupZh");
   });

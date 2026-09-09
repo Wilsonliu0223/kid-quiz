@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.41";
+        var V = "39.42";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.50" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.51" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -881,6 +881,25 @@
         </footer>
       </section>
 
+      <!-- 成語翻牌：先教本局成語 -->
+      <section id="view-idiom-flip-teach" class="view view-hidden" aria-label="本局成語">
+        <header class="quiz-header quiz-header-flip">
+          <button type="button" class="btn-text" id="btn-idiom-flip-teach-back">← 返回</button>
+          <span class="quiz-subject">本局成語</span>
+        </header>
+        <div class="idiom-flip-teach-body">
+          <p class="idiom-flip-teach-hint" id="idiom-flip-teach-hint">
+            先念給小孩聽：這幾條會拆成字卡，翻到同一條的四個字就得分。
+          </p>
+          <ol class="idiom-flip-teach-list" id="idiom-flip-teach-list"></ol>
+        </div>
+        <footer class="result-footer">
+          <button type="button" class="btn btn-primary btn-block" id="btn-idiom-flip-teach-next">
+            看完了，選誰先
+          </button>
+        </footer>
+      </section>
+
       <!-- 成語翻牌：選先手 -->
       <section id="view-idiom-flip-first" class="view view-hidden" aria-label="成語翻牌誰先">
         <header class="quiz-header quiz-header-flip">
@@ -932,6 +951,9 @@
             </div>
           </div>
           <p class="idiom-flip-found" id="idiom-flip-found" hidden></p>
+          <button type="button" class="btn-text idiom-flip-peek" id="btn-idiom-flip-peek">
+            看本局成語
+          </button>
           <div class="flip-card-grid" id="idiom-flip-card-grid"></div>
         </div>
       </section>
@@ -2695,7 +2717,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.81").catch((e) => {
+      import("./js/app.js?v=app-v45.82").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -65,7 +65,7 @@ import {
   initFlipZh,
   renderFlipHomePlayers,
 } from "./flip-zh.js";
-import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v1";
+import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v2";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,
@@ -193,6 +193,7 @@ const views = {
   flipFirst: $("#view-flip-first"),
   flipPlay: $("#view-flip-play"),
   flipResult: $("#view-flip-result"),
+  idiomFlipTeach: $("#view-idiom-flip-teach"),
   idiomFlipFirst: $("#view-idiom-flip-first"),
   idiomFlipPlay: $("#view-idiom-flip-play"),
   idiomFlipResult: $("#view-idiom-flip-result"),
