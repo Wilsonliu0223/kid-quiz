@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.53";
+        var V = "39.54";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.58" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.59" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -485,9 +485,62 @@
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-review">
             複習字區
           </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-writing">
+            基本寫作 · 20 招定式
+          </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-flip">
             英語翻牌
           </button>
+        </div>
+      </section>
+
+      <section id="view-en-writing-hub" class="view view-hidden" aria-label="英語基本寫作">
+        <header class="setup-header setup-header-en">
+          <button type="button" class="btn-text" id="btn-en-writing-hub-back">← 返回</button>
+          <span class="setup-subject">基本寫作</span>
+        </header>
+        <div class="writing-hub-body">
+          <p class="writing-hub-hint" id="en-writing-hub-hint"></p>
+          <span class="label">看什麼</span>
+          <div class="lesson-chips" role="group" aria-label="定式或短文">
+            <button type="button" class="chip chip-active" data-en-writing-tab="joseki">20 招定式</button>
+            <button type="button" class="chip" data-en-writing-tab="essay">短文展示</button>
+          </div>
+          <div id="en-writing-list" class="writing-list"></div>
+        </div>
+      </section>
+
+      <section id="view-en-writing-read" class="view view-hidden" aria-label="英語寫作定式">
+        <header class="quiz-header quiz-header-en">
+          <button type="button" class="btn-text" id="btn-en-writing-read-back">← 返回</button>
+          <span class="quiz-subject">怎麼寫</span>
+          <button type="button" class="btn-text" id="btn-en-writing-speak">朗讀</button>
+        </header>
+        <div class="writing-read-body">
+          <h2 class="writing-read-title" id="en-writing-read-title"></h2>
+          <p class="writing-read-meta" id="en-writing-read-meta"></p>
+          <p class="writing-read-grow" id="en-writing-read-used" hidden></p>
+          <div class="writing-essay" id="en-writing-read-body"></div>
+          <section class="writing-teach">
+            <h3>這招／這篇怎麼用</h3>
+            <ol class="writing-teach-list" id="en-writing-read-steps"></ol>
+            <h3>你可以這樣練</h3>
+            <ul class="writing-teach-list" id="en-writing-read-tips"></ul>
+          </section>
+          <section class="writing-try">
+            <h3>你也寫一段</h3>
+            <p class="writing-try-hint">套定式換主題。沒有打分數。</p>
+            <textarea
+              id="en-writing-try-input"
+              class="writing-try-input"
+              rows="5"
+              placeholder="照上面的句型寫…"
+            ></textarea>
+            <button type="button" class="btn btn-secondary btn-block" id="btn-en-writing-try-show">
+              看例句
+            </button>
+            <p class="writing-try-model" id="en-writing-try-model" hidden></p>
+          </section>
         </div>
       </section>
 
@@ -2993,7 +3046,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.93").catch((e) => {
+      import("./js/app.js?v=app-v45.94").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
