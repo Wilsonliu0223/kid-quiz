@@ -1,5 +1,6 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
 import { CONFIG } from "./config.site.js?v=config-v45.10";
+import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 
 export function normalizeEnglish(s) {
   return String(s || "")
@@ -485,7 +486,7 @@ function pickChineseTranslation(translations) {
     scored.push({ word, score });
   }
   scored.sort((a, b) => b.score - a.score);
-  return scored[0]?.word || "";
+  return toTraditional(scored[0]?.word || "");
 }
 
 function harvestChinese(entries, preferPos) {
@@ -494,7 +495,7 @@ function harvestChinese(entries, preferPos) {
   for (const entry of Array.isArray(entries) ? entries : []) {
     const pos = dictionaryPosLabel(entry.partOfSpeech);
     for (const sense of Array.isArray(entry.senses) ? entry.senses : []) {
-      const zh = pickChineseTranslation(sense.translations);
+      const zh = toTraditional(pickChineseTranslation(sense.translations));
       if (!zh) continue;
       if (preferPos && pos === preferPos) same.push(zh);
       any.push(zh);
@@ -614,9 +615,10 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
       senses.push({
         pos,
         definition,
-        zh:
+        zh: toTraditional(
           pickChineseTranslation(sense?.translations) ||
-          harvestChinese(entries, pos),
+            harvestChinese(entries, pos)
+        ),
         example: String(sense?.examples?.[0] || "").trim(),
       });
       posCounts.set(pos, (posCounts.get(pos) || 0) + 1);
@@ -625,14 +627,10 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
   }
   if (!senses.length) return null;
 
-  const harvested = harvestChinese(entries, primaryPos);
+  const harvested = toTraditional(harvestChinese(entries, primaryPos));
   const missing = senses.filter((s) => !s.zh);
   if (missing.length) {
-    const wordZhTry =
-      harvested ||
-      (await translateEnToZh(q, "TW")) ||
-      (await translateEnToZh(q, "CN")) ||
-      "";
+    const wordZhTry = harvested || (await translateEnToZh(q)) || "";
     if (wordZhTry) {
       for (const sense of missing) {
         sense.zh = wordZhTry;
@@ -1090,70 +1088,97 @@ function chunkTextForTts(text, maxLen = 160) {
 
 const zhTranslateCache = new Map();
 
-async function translateGoogleGtx(piece, tl) {
+function isPlausibleZh(src, zh) {
+  const t = String(zh || "").trim();
+  if (!/[\u3400-\u9fff]/.test(t)) return false;
+  const enTokens = String(src || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const zhLen = t.replace(/\s/g, "").length;
+  if (
+    /可以在這|可以在这|特別的人都是|特别的人都是|關注我們|关注我们|點擊這|点击这/.test(
+      t
+    )
+  ) {
+    return false;
+  }
+  if (enTokens <= 2 && zhLen > 16) return false;
+  if (enTokens <= 2 && /[？?]/.test(t)) return false;
+  return true;
+}
+
+async function translateGoogleGtx(piece, tl = "zh-TW") {
   const data = await fetchJson(
     `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${tl}&dt=t&q=${encodeURIComponent(piece)}`,
+    6000
+  );
+  const part = (data?.[0] || []).map((row) => row?.[0] || "").join("");
+  return /[\u3400-\u9fff]/.test(part) ? part : "";
+}
+
+async function googleCnToTw(text) {
+  const s = String(text || "").trim();
+  if (!s) return "";
+  const data = await fetchJson(
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh-CN&tl=zh-TW&dt=t&q=${encodeURIComponent(s)}`,
     5000
   );
   const part = (data?.[0] || []).map((row) => row?.[0] || "").join("");
   return /[\u3400-\u9fff]/.test(part) ? part : "";
 }
 
-async function translateMyMemory(piece, tl) {
-  const lang = tl === "zh-TW" ? "zh-TW" : "zh-CN";
+async function translateLingva(piece) {
   const data = await fetchJson(
-    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(piece.slice(0, 450))}&langpair=en|${lang}`,
-    8000
-  );
-  const t = String(data?.responseData?.translatedText || "").trim();
-  if (!t || /MYMEMORY WARNING/i.test(t)) return "";
-  if (t.toLowerCase() === piece.toLowerCase()) return "";
-  return /[\u3400-\u9fff]/.test(t) ? t : "";
-}
-
-async function translateLingva(piece, tl) {
-  const lang = tl === "zh-TW" ? "zh_HANT" : "zh";
-  const data = await fetchJson(
-    `https://lingva.ml/api/v1/en/${lang}/${encodeURIComponent(piece.slice(0, 400))}`,
+    `https://lingva.ml/api/v1/en/zh_HANT/${encodeURIComponent(piece.slice(0, 400))}`,
     8000
   );
   const t = String(data?.translation || "").trim();
   return /[\u3400-\u9fff]/.test(t) ? t : "";
 }
 
-async function translatePiece(piece, tl) {
-  const s = String(piece || "").trim();
-  if (!s) return "";
-  return (
-    (await translateMyMemory(s, tl)) ||
-    (await translateLingva(s, tl)) ||
-    (await translateGoogleGtx(s, tl)) ||
-    ""
-  );
+function polishZh(src, raw) {
+  const zh = toTraditional(String(raw || "").trim());
+  if (!zh || !isPlausibleZh(src, zh)) return "";
+  return zh;
 }
 
-/** 英→中。Google gtx 常 429，失敗不寫空快取，改走 MyMemory／Lingva。
- * @param {string} text
- * @param {'TW'|'CN'} [variant]
- */
-export async function translateEnToZh(text, variant = "CN") {
+async function translatePiece(piece) {
+  const s = String(piece || "").trim();
+  if (!s) return "";
+  const googleTw = polishZh(s, await translateGoogleGtx(s, "zh-TW"));
+  if (googleTw) return googleTw;
+  const lingva = polishZh(s, await translateLingva(s));
+  if (lingva) return lingva;
+  const googleCn = await translateGoogleGtx(s, "zh-CN");
+  if (googleCn) {
+    const tw = toTraditional((await googleCnToTw(googleCn)) || googleCn);
+    if (isPlausibleZh(s, tw)) return tw;
+  }
+  return "";
+}
+
+/** 英→中：Google 繁體優先，結果一律繁體。失敗不寫空快取。 */
+export async function translateEnToZh(text) {
   const src = String(text || "").trim();
   if (!src) return "";
-  if (/[\u3400-\u9fff]/.test(src) && !/[a-zA-Z]{4,}/.test(src)) return src;
-  const cacheKey = `${variant}:${src}`;
+  if (/[\u3400-\u9fff]/.test(src) && !/[a-zA-Z]{4,}/.test(src)) {
+    return toTraditional(src);
+  }
+  const cacheKey = `TW:${src}`;
   if (zhTranslateCache.has(cacheKey)) return zhTranslateCache.get(cacheKey);
 
-  const tl = variant === "TW" ? "zh-TW" : "zh-CN";
   try {
     const pieces = chunkTextForTts(src, 400);
     const out = [];
     for (const piece of pieces) {
-      const part = await translatePiece(piece, tl);
+      const part = await translatePiece(piece);
       if (!part) return "";
       out.push(part);
     }
-    const joined = out.join("");
+    const joined = toTraditional(out.join(""));
     if (!/[\u3400-\u9fff]/.test(joined)) return "";
+    if (pieces.length === 1 && !isPlausibleZh(src, joined)) return "";
     zhTranslateCache.set(cacheKey, joined);
     return joined;
   } catch (e) {
@@ -1356,9 +1381,7 @@ export function prefetchChineseAudio(englishText, voice) {
     try {
       const zh = /[\u4e00-\u9fff]/.test(raw)
         ? raw
-        : (await translateEnToZh(raw, "CN")) ||
-          (await translateEnToZh(raw, "TW")) ||
-          "";
+        : (await translateEnToZh(raw)) || "";
       if (zh) await resolveEdgeZhBlobUrl(zh, voice);
     } catch (e) {
       console.warn("prefetchChineseAudio", e);
@@ -1666,11 +1689,7 @@ export async function speakEnglish(text, opts = {}) {
 
   let speakText = w;
   if (lang === "zh" && !opts.alreadyZh) {
-    const variant = getZhAccent() === "tw" ? "TW" : "CN";
-    speakText =
-      (await translateEnToZh(w, variant)) ||
-      (await translateEnToZh(w, variant === "TW" ? "CN" : "TW")) ||
-      "";
+    speakText = (await translateEnToZh(w)) || "";
   }
   if (lang === "zh" && !/[\u3400-\u9fff]/.test(speakText)) return false;
 

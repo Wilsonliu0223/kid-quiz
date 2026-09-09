@@ -22,7 +22,8 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v31";
+} from "./english.js?v=en-speak-v32";
+import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 import {
   analyzeEnglishMorph,
   mayHaveMorph,
@@ -581,12 +582,14 @@ async function zhForGlossWord(word) {
     ? String(top.senses?.[0]?.definition || top.gloss || "").trim()
     : "";
   const lemma = lemmaFromGloss(def);
-  let src = lemma;
-  if (!src && def && !/^Looking up/i.test(def) && !/^Sorry,/i.test(def)) src = def;
-  if (!src && /^[a-zA-Z][a-zA-Z'-]*$/.test(w)) src = w;
+  let src = "";
+  if (/^[a-zA-Z][a-zA-Z'-]*$/.test(w)) src = w;
+  else src = lemma;
+  if (!src && def && !/^Looking up/i.test(def) && !/^Sorry,/i.test(def) && def.length <= 40) {
+    src = def;
+  }
   if (!src) return "";
-  const raw =
-    (await translateEnToZh(src, "TW")) || (await translateEnToZh(src, "CN")) || "";
+  const raw = (await translateEnToZh(src)) || "";
   const zh = firstZhClause(raw);
   if (same && zh) {
     if (!top.zh) top.zh = zh;
@@ -628,10 +631,7 @@ async function playGlossExample(text) {
   let zh = "";
   if (needZh) {
     showPlayBar("載入中文…");
-    zh =
-      (await translateEnToZh(ex, "TW")) ||
-      (await translateEnToZh(ex, "CN")) ||
-      "";
+    zh = (await translateEnToZh(ex)) || "";
     if (zh && !hasCjkText(zh)) zh = "";
   }
   await playWithBar(ex, {
@@ -771,10 +771,7 @@ async function playWithBar(text, opts = {}) {
       const t0 = Date.now();
       let zhLine = side === "zh" ? alignedZh : "";
       if (side === "zh" && !hasCjkText(zhLine)) {
-        const raw =
-          (await translateEnToZh(lineEn, "TW")) ||
-          (await translateEnToZh(lineEn, "CN")) ||
-          "";
+        const raw = (await translateEnToZh(lineEn)) || "";
         zhLine = hasCjkText(raw) ? raw : "";
       }
       if (side === "zh" && !hasCjkText(zhLine)) {
@@ -916,8 +913,9 @@ function shortZh(s) {
     .trim()
     .replace(/^翻譯中…$/, "");
   if (!hasCjkText(t)) return "";
-  if (t.length <= 20) return t;
-  const first = t.split(/[。；;\n]/)[0].trim();
+  const trad = toTraditional(t);
+  if (trad.length <= 20) return trad;
+  const first = trad.split(/[。；;\n]/)[0].trim();
   if (first.length <= 24) return first;
   return first.slice(0, 24);
 }
@@ -935,8 +933,7 @@ async function zhForReviewEntry(entry) {
   }
   const w = String(entry?.word || "").trim();
   if (!w) return "";
-  const raw =
-    (await translateEnToZh(w, "TW")) || (await translateEnToZh(w, "CN")) || "";
+  const raw = (await translateEnToZh(w)) || "";
   return shortZh(raw) || (hasCjkText(raw) ? raw.trim() : "");
 }
 
@@ -1136,10 +1133,7 @@ async function fillMissingMorphZh(morph) {
     if (key !== "root" && part.form.length <= 4) continue;
     jobs.push(
       (async () => {
-        const raw =
-          (await translateEnToZh(part.form, "TW")) ||
-          (await translateEnToZh(part.form, "CN")) ||
-          "";
+        const raw = (await translateEnToZh(part.form)) || "";
         const zh = shortZh(raw);
         if (zh) part.zh = zh;
       })()
@@ -1983,8 +1977,7 @@ function bindDialogueZhToggles(root, d) {
           p.textContent = "翻譯中…";
           const src = turnText(turn);
           zh =
-            (await translateEnToZh(src, "TW")) ||
-            (await translateEnToZh(src, "CN")) ||
+            (await translateEnToZh(src)) ||
             "（暫無中文）";
         }
         dlgZhCache.set(cacheKey, zh);
@@ -2274,7 +2267,7 @@ function glossHeadZhText(entry) {
 function setGlossWordZh(text, loading = false) {
   const el = $("#en-gloss-word-zh");
   if (!el) return;
-  const t = String(text || "").trim();
+  const t = toTraditional(String(text || "").trim());
   el.textContent = t;
   el.hidden = !t;
   el.classList.toggle("is-loading", Boolean(loading));
@@ -2284,7 +2277,7 @@ function setGlossZhUi(zhText) {
   const row = $("#en-gloss-zh-row");
   const zhEl = $("#en-gloss-zh");
   const speakBtn = $("#btn-en-gloss-zh-speak");
-  const raw = String(zhText || "").trim();
+  const raw = toTraditional(String(zhText || "").trim());
   const loading = raw === "翻譯中…";
   const has = Boolean(raw);
   if (zhEl) zhEl.textContent = has ? raw : "";
@@ -2298,17 +2291,16 @@ async function fillGlossChinese(entry, seq) {
   if (!entry || entry.kind === "family") return;
   if (/^Looking up/i.test(String(entry.gloss || ""))) return;
   const senses = Array.isArray(entry.senses) ? entry.senses : [];
+  if (hasCjkText(entry.zh)) entry.zh = toTraditional(entry.zh);
+  if (hasCjkText(entry.zhGloss)) entry.zhGloss = toTraditional(entry.zhGloss);
+  for (const sense of senses) {
+    if (hasCjkText(sense.zh)) sense.zh = toTraditional(sense.zh);
+  }
   const wordZhJob = (async () => {
     if (shortZh(entry.zh)) return;
-    const lemma =
-      lemmaFromGloss(senses[0]?.definition || "") ||
-      lemmaFromGloss(entry.gloss || "");
-    const src = lemma || String(entry.word || "").trim();
+    const src = String(entry.word || "").trim();
     if (!src || !/^[a-zA-Z]/.test(src)) return;
-    const raw =
-      (await translateEnToZh(src, "TW")) ||
-      (await translateEnToZh(src, "CN")) ||
-      "";
+    const raw = (await translateEnToZh(src)) || "";
     const zh = firstZhClause(raw);
     if (zh) entry.zh = zh;
   })();
@@ -2323,10 +2315,7 @@ async function fillGlossChinese(entry, seq) {
         (def.length <= 80 ? def : "") ||
         String(entry.word || "").trim();
       if (!src) return;
-      const raw =
-        (await translateEnToZh(src, "TW")) ||
-        (await translateEnToZh(src, "CN")) ||
-        "";
+      const raw = (await translateEnToZh(src)) || "";
       if (hasCjkText(raw)) {
         sense.zh = firstZhClause(raw) || raw;
         sense.zhSource = "machine";
@@ -2335,10 +2324,7 @@ async function fillGlossChinese(entry, seq) {
   ]);
   const contextEn = String(entry.contextGloss || "").trim();
   if (contextEn && !hasCjkText(entry.contextZh)) {
-    const raw =
-      (await translateEnToZh(contextEn, "TW")) ||
-      (await translateEnToZh(contextEn, "CN")) ||
-      "";
+    const raw = (await translateEnToZh(contextEn)) || "";
     if (hasCjkText(raw)) entry.contextZh = raw;
   }
   if (!hasCjkText(entry.zhGloss)) {
@@ -2353,10 +2339,7 @@ async function fillGlossChinese(entry, seq) {
       const lemma = lemmaFromGloss(gloss);
       const src = lemma || gloss;
       if (src && !/^Looking up/i.test(src) && !/^Sorry,/i.test(src)) {
-        const raw =
-          (await translateEnToZh(src, "TW")) ||
-          (await translateEnToZh(src, "CN")) ||
-          "";
+        const raw = (await translateEnToZh(src)) || "";
         if (hasCjkText(raw)) entry.zhGloss = raw;
       }
     }
