@@ -2,6 +2,12 @@
  * 國語寫作教學：二～六年級常見題，點開看範文與寫法。
  */
 import { WRITING_BANK, WRITING_GRADES, writingByGrade } from "./writing-bank.js";
+import {
+  escapeHtml,
+  hideLookupCard,
+  onLookupTap,
+  renderTappable,
+} from "./zh-lookup.js";
 
 const KEY_GRADE = "kid-quiz-writing-grade";
 const WORD_GOAL = {
@@ -12,14 +18,17 @@ const WORD_GOAL = {
   6: [400, 600],
 };
 
+const PARTS = [
+  { id: 0, label: "開頭" },
+  { id: 1, label: "經過" },
+  { id: 2, label: "結尾" },
+];
+
 /** @type {{ showView: (name: string) => void } | null} */
 let deps = null;
 let grade = 2;
 let currentId = null;
-
-const HAN = /[\u3400-\u9fff]/;
-/** @type {Map<string, { word: string, zhuyin: string, meaning: string } | null>} */
-const dictCache = new Map();
+let tryPart = 1;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -34,132 +43,14 @@ function setGrade(n) {
   localStorage.setItem(KEY_GRADE, String(n));
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function isHan(ch) {
-  return HAN.test(ch);
-}
-
-function renderTappable(text) {
-  const chars = [...String(text || "")];
-  return chars
-    .map((ch, i) => {
-      if (ch === "\n") return "<br />";
-      if (!isHan(ch)) return escapeHtml(ch);
-      return `<button type="button" class="writing-char" data-i="${i}">${escapeHtml(ch)}</button>`;
-    })
-    .join("");
-}
-
-function hideCharCard() {
-  const card = $("#writing-char-card");
-  if (card) card.hidden = true;
-  document.querySelectorAll(".writing-char.is-on").forEach((el) => el.classList.remove("is-on"));
-}
-
-function showCharCard(state) {
-  const card = $("#writing-char-card");
-  if (!card) return;
-  card.hidden = false;
-  $("#writing-char-glyph").textContent = state.word || "";
-  $("#writing-char-zhuyin").textContent = state.zhuyin || "";
-  $("#writing-char-meaning").textContent = state.meaning || "";
-}
-
-function pickDefs(heteronyms) {
-  const readings = [];
-  for (const h of heteronyms || []) {
-    const zhuyin = String(h.bopomofo || "").trim();
-    const defs = [];
-    for (const d of h.definitions || []) {
-      let t = String(d.def || "").replace(/<[^>]+>/g, "").trim();
-      if (!t || t.includes("《")) continue;
-      if (t.length > 48) t = t.slice(0, 47) + "…";
-      defs.push(t);
-      if (defs.length >= 2) break;
-    }
-    if (!zhuyin && !defs.length) continue;
-    readings.push({ zhuyin, meaning: defs.join("；") || "這個用法請看例句。" });
-    if (readings.length >= 2) break;
-  }
-  return readings;
-}
-
-async function lookupMoe(word) {
-  if (dictCache.has(word)) return dictCache.get(word);
-  try {
-    const url = `https://www.moedict.tw/uni/${encodeURIComponent(word)}.json`;
-    const res = await fetch(url);
-    if (res.status === 404) {
-      dictCache.set(word, null);
-      return null;
-    }
-    if (!res.ok) return null;
-    const data = await res.json();
-    const readings = pickDefs(data.heteronyms);
-    if (!readings.length) {
-      dictCache.set(word, null);
-      return null;
-    }
-    const info = {
-      word,
-      zhuyin: readings.map((r) => r.zhuyin).filter(Boolean).join("　"),
-      meaning: readings
-        .map((r) => (readings.length > 1 && r.zhuyin ? `${r.zhuyin} ${r.meaning}` : r.meaning))
-        .join("／"),
-    };
-    dictCache.set(word, info);
-    return info;
-  } catch {
-    return null;
-  }
-}
-
-async function lookupWord(paraText, index) {
-  const chars = [...paraText];
-  const one = chars[index] || "";
-  if (!isHan(one)) return null;
-  const next = chars[index + 1];
-  const prev = chars[index - 1];
-  const two = next && isHan(next) ? one + next : "";
-  const back = prev && isHan(prev) ? prev + one : "";
-  if (two) {
-    const hit = await lookupMoe(two);
-    if (hit) return hit;
-  }
-  if (back) {
-    const hit = await lookupMoe(back);
-    if (hit) return hit;
-  }
-  return lookupMoe(one);
-}
-
-async function onCharTap(btn) {
-  const p = btn.closest(".writing-essay-p");
-  if (!p) return;
-  const item = WRITING_BANK.find((x) => x.id === currentId);
-  if (!item) return;
-  const paraIndex = [...$("#writing-read-body").querySelectorAll(".writing-essay-p")].indexOf(p);
-  const paraText = item.body.split(/\n\n+/)[paraIndex] || "";
-  const i = parseInt(btn.dataset.i, 10);
-  document.querySelectorAll(".writing-char.is-on").forEach((el) => el.classList.remove("is-on"));
-  btn.classList.add("is-on");
-  showCharCard({ word: btn.textContent || "", zhuyin: "查詢中…", meaning: "" });
-  const info = await lookupWord(paraText, i);
-  if (!info) {
-    showCharCard({
-      word: btn.textContent || "",
-      zhuyin: "",
-      meaning: "這個字暫時查不到，再點一次或問大人。",
-    });
-    return;
-  }
-  showCharCard(info);
+function splitEssayParts(body) {
+  const paras = String(body || "")
+    .split(/\n\n+/)
+    .filter(Boolean);
+  if (!paras.length) return ["", "", ""];
+  if (paras.length === 1) return [paras[0], "", ""];
+  if (paras.length === 2) return [paras[0], "", paras[1]];
+  return [paras[0], paras.slice(1, -1).join("\n\n"), paras[paras.length - 1]];
 }
 
 function syncGradeChips() {
@@ -190,6 +81,54 @@ function renderList() {
   });
 }
 
+function syncTryPartChips() {
+  document.querySelectorAll("[data-writing-part]").forEach((btn) => {
+    btn.classList.toggle("chip-active", Number(btn.dataset.writingPart) === tryPart);
+  });
+}
+
+function resetTryBox(item) {
+  tryPart = 1;
+  const input = $("#writing-try-input");
+  if (input) input.value = "";
+  const model = $("#writing-try-model");
+  if (model) {
+    model.hidden = true;
+    model.innerHTML = "";
+  }
+  const show = $("#btn-writing-try-show");
+  if (show) show.textContent = "看範文這一段";
+  const check = $("#writing-try-check");
+  if (check) {
+    const high = item.grade >= 5;
+    check.hidden = !high;
+    if (high) {
+      check.innerHTML =
+        "<li>有寫到看得到或聽得到的細節</li>" +
+        "<li>有一件具體的事，不是只寫「很好／很棒」</li>" +
+        "<li>這一段有清楚的開頭或收尾</li>";
+    }
+  }
+  syncTryPartChips();
+}
+
+function toggleTryModel() {
+  const item = WRITING_BANK.find((x) => x.id === currentId);
+  const model = $("#writing-try-model");
+  const show = $("#btn-writing-try-show");
+  if (!item || !model) return;
+  if (!model.hidden) {
+    model.hidden = true;
+    if (show) show.textContent = "看範文這一段";
+    return;
+  }
+  const parts = splitEssayParts(item.body);
+  const text = parts[tryPart] || "這一篇的這一段比較短，換寫其他段也可以。";
+  model.innerHTML = renderTappable(text);
+  model.hidden = false;
+  if (show) show.textContent = "收起範文";
+}
+
 function openRead(id) {
   const item = WRITING_BANK.find((x) => x.id === id);
   if (!item) return;
@@ -206,7 +145,7 @@ function openRead(id) {
     .split(/\n\n+/)
     .map((p) => `<p class="writing-essay-p">${renderTappable(p)}</p>`)
     .join("");
-  hideCharCard();
+  hideLookupCard();
 
   const steps = $("#writing-read-steps");
   steps.innerHTML = item.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
@@ -218,6 +157,7 @@ function openRead(id) {
     grow.hidden = item.words >= lo;
     grow.textContent = `本篇先把結構寫完整。寫作業時，請在「經過」再加兩個看得到、聽得到的細節，字數就會靠近 ${lo}～${hi}。`;
   }
+  resetTryBox(item);
 
   deps.showView("writingRead");
 }
@@ -226,14 +166,16 @@ export function openWritingHub() {
   grade = loadGrade();
   syncGradeChips();
   renderList();
+  hideLookupCard();
   deps.showView("writingHub");
 }
 
 function bindEvents() {
-  $("#btn-setup-zh-writing")?.addEventListener("click", () => openWritingHub());
-  $("#btn-writing-hub-back")?.addEventListener("click", () => deps.showView("setupZh"));
+  $("#btn-zh-hub-writing")?.addEventListener("click", () => openWritingHub());
+  $("#btn-writing-hub-back")?.addEventListener("click", () => deps.showView("zhHub"));
   $("#btn-writing-read-back")?.addEventListener("click", () => {
     currentId = null;
+    hideLookupCard();
     openWritingHub();
   });
   document.querySelectorAll("[data-writing-grade]").forEach((btn) => {
@@ -243,12 +185,36 @@ function bindEvents() {
       renderList();
     });
   });
-  $("#writing-read-body")?.addEventListener("click", (e) => {
-    const btn = e.target instanceof Element ? e.target.closest(".writing-char") : null;
-    if (!btn) return;
-    onCharTap(btn);
+  document.querySelectorAll("[data-writing-part]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tryPart = Number(btn.dataset.writingPart);
+      syncTryPartChips();
+      const model = $("#writing-try-model");
+      if (model && !model.hidden) {
+        model.hidden = true;
+        toggleTryModel();
+      }
+    });
   });
-  $("#btn-writing-char-close")?.addEventListener("click", () => hideCharCard());
+  $("#writing-read-body")?.addEventListener("click", (e) => {
+    const btn = e.target instanceof Element ? e.target.closest(".zh-char") : null;
+    if (!btn) return;
+    const p = btn.closest(".writing-essay-p");
+    const item = WRITING_BANK.find((x) => x.id === currentId);
+    if (!p || !item) return;
+    const paraIndex = [...$("#writing-read-body").querySelectorAll(".writing-essay-p")].indexOf(p);
+    const paraText = item.body.split(/\n\n+/)[paraIndex] || "";
+    void onLookupTap(btn, paraText);
+  });
+  $("#writing-try-model")?.addEventListener("click", (e) => {
+    const btn = e.target instanceof Element ? e.target.closest(".zh-char") : null;
+    if (!btn) return;
+    const item = WRITING_BANK.find((x) => x.id === currentId);
+    if (!item) return;
+    const parts = splitEssayParts(item.body);
+    void onLookupTap(btn, parts[tryPart] || "");
+  });
+  $("#btn-writing-try-show")?.addEventListener("click", () => toggleTryModel());
 }
 
 /**

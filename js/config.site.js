@@ -1,7 +1,7 @@
 /** GitHub Pages 用設定（會提交到倉庫） */
 export const CONFIG = {
   /** 首頁標題旁小字版本（每次推送更新請遞增，例：34.0 → 34.1） */
-  APP_VERSION: "45.37",
+  APP_VERSION: "45.38",
 
   /**
    * 涅槃 Rapfi 完整 NNUE 權重（約 40 MB）公開下載網址。
@@ -32,8 +32,8 @@ export const CONFIG = {
   /** 英文神經音：en-US-JennyNeural｜en-US-GuyNeural｜en-GB-SoniaNeural */
   EN_TTS_VOICE: "en-US-JennyNeural",
 
-  QUIZ_TYPES: ["生字"],
-  QUIZ_TYPES_ZH: ["生字"],
+  QUIZ_TYPES: ["生字", "詞語", "詞組", "詞組加強"],
+  QUIZ_TYPES_ZH: ["生字", "詞語", "詞組", "詞組加強"],
   QUIZ_TYPES_EN: ["單字"],
 
   /** 首頁預設「本次題數」（可被使用者改過的選擇覆蓋） */

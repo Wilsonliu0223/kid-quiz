@@ -9,6 +9,7 @@ import {
   renderDuoPickButtons,
 } from "./duo-pick.js";
 import { IDIOM_BANK } from "./idiom-bank.js";
+import { bindLookupClicks, renderTappable } from "./zh-lookup.js";
 
 const KEY_IDIOM_COUNT = "kid-quiz-idiom-flip-count";
 const IDIOM_COUNT_OPTIONS = [5, 10];
@@ -237,7 +238,7 @@ function fillIdiomList(sel, markFound) {
       return (
         `<li class="${cls}">` +
         `<div class="idiom-flip-teach-main">` +
-        `<span class="idiom-flip-teach-word">${escapeHtml(item.idiom)}</span>` +
+        `<span class="idiom-flip-teach-word">${renderTappable(item.idiom)}</span>` +
         `<span class="idiom-flip-teach-meaning">${escapeHtml(item.meaning)}</span>` +
         `</div>` +
         swap +
@@ -496,7 +497,7 @@ function bindEvents() {
       renderBoard();
       return;
     }
-    deps.showView("setupZh");
+    deps.showView("zhHub");
   });
   $("#btn-idiom-flip-teach-next")?.addEventListener("click", () => {
     if (teachReturn === "idiomFlipPlay") {
@@ -516,10 +517,14 @@ function bindEvents() {
   $("#btn-idiom-flip-first-back")?.addEventListener("click", () => openTeach("idiomFlipFirst"));
   $("#btn-idiom-flip-peek")?.addEventListener("click", () => openTeach("idiomFlipPlay"));
   $("#btn-idiom-flip-play-back")?.addEventListener("click", () => {
-    if (confirm("離開對戰？目前進度不會儲存。")) deps.showView("setupZh");
+    if (confirm("離開對戰？目前進度不會儲存。")) deps.showView("zhHub");
   });
   $("#btn-idiom-flip-replay")?.addEventListener("click", () => beginLocal());
-  $("#btn-idiom-flip-home")?.addEventListener("click", () => deps.showView("setupZh"));
+  $("#btn-idiom-flip-home")?.addEventListener("click", () => deps.showView("zhHub"));
+  bindLookupClicks($("#idiom-flip-teach-list"), (btn) => {
+    const word = btn.closest("li")?.querySelector(".idiom-flip-teach-word");
+    return word?.textContent || "";
+  });
 }
 
 /**

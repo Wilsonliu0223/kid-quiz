@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.45";
+        var V = "39.46";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.54" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.55" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -95,7 +95,7 @@
               data-action="start-zh"
             >
               <span class="card-title">國語</span>
-              <span class="card-desc">選課次 · 測驗 · 翻牌</span>
+              <span class="card-desc">聽寫 · 測驗 · 翻牌</span>
             </button>
             <button
               type="button"
@@ -218,45 +218,101 @@
         <p class="sheet-status" id="sheet-status">正在載入題庫…</p>
       </section>
 
+      <!-- 國語中心 -->
+      <section id="view-zh-hub" class="view view-hidden" aria-label="國語">
+        <header class="setup-header setup-header-zh">
+          <button type="button" class="btn-text" id="btn-zh-hub-back">← 返回</button>
+          <span class="setup-subject">國語</span>
+        </header>
+        <div class="zh-hub-body">
+          <h2 class="zh-hub-group-title">今天要練</h2>
+          <button type="button" class="btn btn-primary btn-block" id="btn-zh-hub-listen">
+            本週聽寫
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-write">
+            手寫測驗（看注音寫字）
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-pick">
+            看字選注音
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-phrase">
+            詞語練習
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-cards">
+            本週生字卡
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-mistakes" hidden>
+            複習國語錯題
+          </button>
+
+          <h2 class="zh-hub-group-title">想玩</h2>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-flip">
+            國字翻牌
+          </button>
+          <div class="setup-section setup-section-flip zh-hub-idiom">
+            <span class="label">常見成語翻牌</span>
+            <p class="setup-section-sub">雙人同機 · 四字拆成字卡 · 每人一回合翻 4 張</p>
+            <div class="flip-players-vs" id="idiom-flip-players-vs">
+              <span id="idiom-flip-player-a-name">思妘</span>
+              <span class="flip-vs">vs</span>
+              <span id="idiom-flip-player-b-name">思妤</span>
+            </div>
+            <div class="flip-pair-count-picker" role="group" aria-label="幾條成語">
+              <span class="label">幾條成語？</span>
+              <div class="lesson-chips" id="idiom-flip-count-chips">
+                <button type="button" class="chip" data-idiom-count="5">5 條 · 20 張</button>
+                <button type="button" class="chip chip-active" data-idiom-count="10">10 條 · 40 張</button>
+              </div>
+            </div>
+            <button type="button" class="card card-flip" id="btn-start-flip-idiom">
+              <span class="card-title">開始成語翻牌</span>
+              <span class="card-desc">翻到同一條四字成語算得分</span>
+            </button>
+          </div>
+
+          <h2 class="zh-hub-group-title">想看</h2>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-writing">
+            寫作範文（二～六年級）
+          </button>
+        </div>
+      </section>
+
       <!-- 國語：選課次 → 題數 → 開始 -->
       <section id="view-setup-zh" class="view view-hidden" aria-label="國語設定">
         <header class="setup-header setup-header-zh">
           <button type="button" class="btn-text" id="btn-setup-zh-back">← 返回</button>
-          <span class="setup-subject">國語</span>
+          <span class="setup-subject" id="setup-zh-subject">手寫測驗</span>
         </header>
+        <p class="zh-hub-meta" id="setup-zh-mode-hint">看注音，寫出國字。搶答在這一頁。</p>
 
         <div class="setup-section">
           <span class="label">本週課次</span>
           <div class="lesson-books" id="setup-zh-lesson-books"></div>
         </div>
 
-        <div class="setup-section">
-          <span class="label">本次題數</span>
-          <div class="lesson-chips quiz-count-chips" id="quiz-count-chips-zh">
-            <button type="button" class="chip" data-quiz-count="5">5</button>
-            <button type="button" class="chip chip-active" data-quiz-count="10">10</button>
-            <button type="button" class="chip" data-quiz-count="15">15</button>
-            <button type="button" class="chip" data-quiz-count="20">20</button>
-            <button type="button" class="chip" data-quiz-count="all">全部</button>
+        <div id="setup-zh-drill">
+          <div class="setup-section">
+            <span class="label">本次題數</span>
+            <div class="lesson-chips quiz-count-chips" id="quiz-count-chips-zh">
+              <button type="button" class="chip" data-quiz-count="5">5</button>
+              <button type="button" class="chip chip-active" data-quiz-count="10">10</button>
+              <button type="button" class="chip" data-quiz-count="15">15</button>
+              <button type="button" class="chip" data-quiz-count="20">20</button>
+              <button type="button" class="chip" data-quiz-count="all">全部</button>
+            </div>
+            <p class="quiz-count-hint" id="quiz-count-hint-zh"></p>
           </div>
-          <p class="quiz-count-hint" id="quiz-count-hint-zh"></p>
+
+          <button type="button" class="btn btn-primary btn-block" id="btn-setup-zh-start">
+            開始測驗
+          </button>
+
+          <button type="button" class="btn btn-secondary btn-block" id="btn-setup-zh-race">
+            搶答對戰（兩台手機）
+          </button>
         </div>
 
-        <button type="button" class="btn btn-primary btn-block" id="btn-setup-zh-start">
-          開始測驗
-        </button>
-
-        <button type="button" class="btn btn-secondary btn-block" id="btn-setup-zh-race">
-          搶答對戰（兩台手機）
-        </button>
-
-        <button type="button" class="btn btn-secondary btn-block" id="btn-setup-zh-writing">
-          寫作範文（二～六年級）
-        </button>
-
-        <div class="setup-divider" aria-hidden="true"></div>
-
-        <div class="setup-section setup-section-flip">
+        <div class="setup-section setup-section-flip" id="setup-zh-flip" hidden>
           <span class="label">國字翻牌</span>
           <p class="setup-section-sub">雙人同機 · 用上方課次抽字 · 開局再點誰先</p>
           <div class="flip-players-vs" id="flip-players-vs">
@@ -276,29 +332,6 @@
           <button type="button" class="card card-flip" id="btn-start-flip-zh">
             <span class="card-title">開始翻牌</span>
             <span class="card-desc">國字配注音</span>
-          </button>
-        </div>
-
-        <div class="setup-divider" aria-hidden="true"></div>
-
-        <div class="setup-section setup-section-flip">
-          <span class="label">常見成語翻牌</span>
-          <p class="setup-section-sub">雙人同機 · 四字拆成字卡 · 每人一回合翻 4 張，湊成一條得分</p>
-          <div class="flip-players-vs" id="idiom-flip-players-vs">
-            <span id="idiom-flip-player-a-name">思妘</span>
-            <span class="flip-vs">vs</span>
-            <span id="idiom-flip-player-b-name">思妤</span>
-          </div>
-          <div class="flip-pair-count-picker" role="group" aria-label="幾條成語">
-            <span class="label">幾條成語？</span>
-            <div class="lesson-chips" id="idiom-flip-count-chips">
-              <button type="button" class="chip" data-idiom-count="5">5 條 · 20 張</button>
-              <button type="button" class="chip chip-active" data-idiom-count="10">10 條 · 40 張</button>
-            </div>
-          </div>
-          <button type="button" class="card card-flip" id="btn-start-flip-idiom">
-            <span class="card-title">開始成語翻牌</span>
-            <span class="card-desc">翻到同一條四字成語算得分</span>
           </button>
         </div>
       </section>
@@ -732,6 +765,9 @@
         <div class="quiz-body">
           <p class="zhuyin-display" id="zhuyin-display">ㄓㄨˋ ㄧㄣ</p>
           <p class="sentence-context" id="sentence-context" hidden></p>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-speak-zh" hidden>
+            🔊 再聽一次
+          </button>
           <p class="quiz-hint" id="quiz-hint">請在下方寫出國字或詞</p>
 
           <div class="canvas-wrap" id="canvas-wrap">
@@ -760,6 +796,40 @@
           <button type="button" class="btn btn-secondary" id="btn-clear-canvas">清除</button>
           <button type="button" class="btn btn-primary" id="btn-submit-answer">送出</button>
         </footer>
+      </section>
+
+      <!-- 國語：看字選注音／詞語 -->
+      <section id="view-zh-choice" class="view view-hidden" aria-label="國語選擇題">
+        <header class="quiz-header quiz-header-zh">
+          <button type="button" class="btn-text" id="btn-zh-choice-back">← 返回</button>
+          <span class="quiz-subject">國語</span>
+          <span class="quiz-progress" id="zh-choice-progress">第 1 / 10 題</span>
+        </header>
+        <div class="quiz-body zh-choice-body">
+          <p class="zh-choice-prompt" id="zh-choice-prompt"></p>
+          <p class="quiz-hint" id="zh-choice-hint">選一個答案</p>
+          <div id="zh-choice-options" class="zh-choice-options"></div>
+          <p class="zh-choice-feedback" id="zh-choice-feedback" hidden></p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-zh-choice-next" hidden>
+            下一題
+          </button>
+        </div>
+      </section>
+
+      <!-- 國語：生字卡 -->
+      <section id="view-zh-cards" class="view view-hidden" aria-label="生字卡">
+        <header class="setup-header setup-header-zh">
+          <button type="button" class="btn-text" id="btn-zh-cards-back">← 返回</button>
+          <span class="setup-subject">生字卡</span>
+        </header>
+        <div class="zh-hub-body">
+          <p class="zh-hub-meta">看範文或例句時點過的字會留在這裡。</p>
+          <p class="zh-cards-empty" id="zh-cards-empty" hidden></p>
+          <div id="zh-cards-list" class="zh-cards-list"></div>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-zh-cards-clear">
+            清空生字卡
+          </button>
+        </div>
       </section>
 
       <!-- 英語測驗 -->
@@ -1011,19 +1081,31 @@
           <p class="writing-read-grow" id="writing-read-grow" hidden></p>
           <p class="writing-read-tap-hint">看不懂的字，點一下看注音和意思（教育部萌典）</p>
           <div class="writing-essay" id="writing-read-body"></div>
-          <aside class="writing-char-card" id="writing-char-card" hidden>
-            <div class="writing-char-card-top">
-              <span class="writing-char-glyph" id="writing-char-glyph"></span>
-              <span class="writing-char-zhuyin" id="writing-char-zhuyin"></span>
-              <button type="button" class="btn-text" id="btn-writing-char-close">關閉</button>
-            </div>
-            <p class="writing-char-meaning" id="writing-char-meaning"></p>
-          </aside>
           <section class="writing-teach">
             <h3>這篇怎麼寫</h3>
             <ol class="writing-teach-list" id="writing-read-steps"></ol>
             <h3>你可以學的寫法</h3>
             <ul class="writing-teach-list" id="writing-read-tips"></ul>
+          </section>
+          <section class="writing-try">
+            <h3>你也寫一段</h3>
+            <p class="writing-try-hint">先選開頭、經過或結尾，對照範文自己寫。沒有打分數。</p>
+            <div class="lesson-chips" role="group" aria-label="寫哪一段">
+              <button type="button" class="chip" data-writing-part="0">開頭</button>
+              <button type="button" class="chip chip-active" data-writing-part="1">經過</button>
+              <button type="button" class="chip" data-writing-part="2">結尾</button>
+            </div>
+            <textarea
+              id="writing-try-input"
+              class="writing-try-input"
+              rows="5"
+              placeholder="照上面的結構，寫這一段…"
+            ></textarea>
+            <button type="button" class="btn btn-secondary btn-block" id="btn-writing-try-show">
+              看範文這一段
+            </button>
+            <p class="writing-try-model" id="writing-try-model" hidden></p>
+            <ul class="writing-try-check" id="writing-try-check" hidden></ul>
           </section>
         </div>
       </section>
@@ -2742,6 +2824,15 @@
     </div>
 
     <!-- 遮罩放在 app 外，避免擋住首頁按鈕 -->
+    <aside class="zh-lookup-card" id="zh-lookup-card" hidden>
+      <div class="zh-lookup-card-top">
+        <span class="zh-lookup-glyph" id="zh-lookup-glyph"></span>
+        <span class="zh-lookup-zhuyin" id="zh-lookup-zhuyin"></span>
+        <button type="button" class="btn-text" id="btn-zh-lookup-close">關閉</button>
+      </div>
+      <p class="zh-lookup-meaning" id="zh-lookup-meaning"></p>
+    </aside>
+
     <div id="feedback-overlay" class="feedback-overlay" hidden aria-hidden="true">
       <div class="feedback-card" id="feedback-card">
         <p class="feedback-text" id="feedback-text"></p>
@@ -2773,7 +2864,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.85").catch((e) => {
+      import("./js/app.js?v=app-v45.86").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

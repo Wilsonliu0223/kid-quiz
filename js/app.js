@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.32";
+import { CONFIG } from "./config.site.js?v=config-v45.38";
 import {
   loadZhItems,
   loadEnItems,
@@ -65,8 +65,16 @@ import {
   initFlipZh,
   renderFlipHomePlayers,
 } from "./flip-zh.js";
-import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v3";
-import { initWriting } from "./writing.js?v=writing-v2";
+import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
+import { initWriting } from "./writing.js?v=writing-v3";
+import {
+  initZhPractice,
+  openZhHub,
+  applyZhSetupKind,
+  getZhSetupKind,
+  startZhChoice,
+} from "./zh-practice.js?v=zh-practice-v2";
+import { bindLookupClicks, hideLookupCard } from "./zh-lookup.js?v=zh-lookup-v2";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,
@@ -176,6 +184,9 @@ function updateQuizCountHints() {
 
 const views = {
   home: $("#view-home"),
+  zhHub: $("#view-zh-hub"),
+  zhChoice: $("#view-zh-choice"),
+  zhCards: $("#view-zh-cards"),
   setupZh: $("#view-setup-zh"),
   setupEn: $("#view-setup-en"),
   enHub: $("#view-en-hub"),
@@ -287,6 +298,9 @@ function showView(name) {
   }
   if (name === "setupZh") {
     renderFlipHomePlayers();
+  }
+  if (name === "zhHub") {
+    renderMistakeBookHome();
   }
   if (name === "mulPick") {
     renderMulFlipHomePlayers();
@@ -542,7 +556,7 @@ const enFilterState = {
   },
 };
 
-function openZhSetup() {
+function openZhSetup(kind = "write") {
   zhLessonFilter = "全部";
   buildLessonPicker(zhBank, $("#setup-zh-lesson-books"), {
     filterState: zhFilterState,
@@ -550,6 +564,7 @@ function openZhSetup() {
   });
   syncQuizCountChips();
   renderFlipHomePlayers();
+  applyZhSetupKind(kind);
   showView("setupZh");
 }
 
@@ -854,7 +869,7 @@ function leaveQuizToHome() {
   if (!ok) return;
   hideStrokeOrderPanel();
   persistQuizDraft();
-  showView("home");
+  showView(quiz.subject === "zh" ? "zhHub" : "home");
 }
 
 function setupQuizAutoSave() {
@@ -945,9 +960,14 @@ function renderMistakeBookHome() {
 
   const btnZh = $("#btn-review-zh-mistakes");
   const btnEn = $("#btn-review-en-mistakes");
+  const btnHub = $("#btn-zh-hub-mistakes");
   if (btnZh) {
     btnZh.hidden = zhN === 0;
     btnZh.textContent = `複習國語錯題（${zhN}）`;
+  }
+  if (btnHub) {
+    btnHub.hidden = zhN === 0;
+    btnHub.textContent = `複習國語錯題（${zhN}）`;
   }
   if (btnEn) {
     btnEn.hidden = enN === 0;
@@ -1045,6 +1065,7 @@ function startZhQuiz(options = {}) {
 
   quiz = {
     subject: "zh",
+    mode: options.mode || "write",
     child,
     questions,
     index: 0,
@@ -1067,24 +1088,68 @@ function startZhQuiz(options = {}) {
   persistQuizDraft();
 }
 
+async function playZhAudio() {
+  const q = quiz?.questions[quiz.index];
+  if (!q?.word) return;
+  const btn = $("#btn-speak-zh");
+  unlockSpeechFromGesture();
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "播放中…";
+  }
+  const ok = await speakEnglish(q.word, {
+    lang: "zh",
+    alreadyZh: true,
+    fast: true,
+    speed: 0.9,
+  });
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "🔊 再聽一次";
+  }
+  if (!ok) {
+    const hint = $("#quiz-hint");
+    if (hint) hint.textContent = "無法播音：請確認有網路並調大音量";
+  }
+}
+
 function renderQuestion() {
   hideStrokeOrderPanel();
+  hideLookupCard();
   const q = quiz.questions[quiz.index];
   $("#quiz-progress").textContent = `第 ${quiz.index + 1} / ${quiz.questions.length} 題`;
+  const subjEl = $("#view-quiz-zh .quiz-subject");
+  if (subjEl) subjEl.textContent = quiz.mode === "listen" ? "聽寫" : "國語";
 
   const zhuyinEl = $("#zhuyin-display");
   const sentenceEl = $("#sentence-context");
-  const hasSentence = fillSentenceContext(sentenceEl, q.sentence, q.word, q.zhuyin);
+  const speakBtn = $("#btn-speak-zh");
+  const listen = quiz.mode === "listen";
+  const hasSentence = !listen
+    ? fillSentenceContext(sentenceEl, q.sentence, q.word, q.zhuyin, { tappable: true })
+    : false;
 
   const viewZh = $("#view-quiz-zh");
-  if (viewZh) viewZh.classList.toggle("has-sentence", hasSentence);
+  if (viewZh) {
+    viewZh.classList.toggle("has-sentence", hasSentence);
+    viewZh.classList.toggle("is-listen", listen);
+  }
 
-  if (hasSentence) {
+  if (speakBtn) speakBtn.hidden = !listen;
+
+  if (listen) {
+    zhuyinEl.hidden = true;
+    sentenceEl.hidden = true;
+    $("#quiz-hint").textContent = "聽一聽，寫出國字。沒聽到就再按一次。";
+    void playZhAudio();
+  } else if (hasSentence) {
+    zhuyinEl.hidden = false;
     zhuyinEl.classList.add("is-compact");
     zhuyinEl.textContent = q.zhuyin;
     $("#quiz-hint").textContent =
-      "看例句寫國字；字寫大一點、寫在格子中間，辨識較準";
+      "看例句寫國字；看不懂的字可點一下。字寫大一點、寫在格子中間";
   } else {
+    zhuyinEl.hidden = false;
     zhuyinEl.classList.remove("is-compact");
     zhuyinEl.textContent = q.zhuyin;
     sentenceEl.hidden = true;
@@ -1391,6 +1456,13 @@ function promptStrokeOrderRewrite(q) {
   });
   const hint = $("#quiz-hint");
   if (hint) hint.textContent = "格子裡有淡色筆畫示範，照著描一次再按送出";
+  if (quiz?.mode === "listen") {
+    const zhuyinEl = $("#zhuyin-display");
+    if (zhuyinEl) {
+      zhuyinEl.hidden = false;
+      zhuyinEl.textContent = q.zhuyin;
+    }
+  }
 }
 
 function onHomophonePick(picked) {
@@ -2056,7 +2128,7 @@ function bindEvents() {
     btn.addEventListener("click", go);
   };
 
-  bindStart($("#btn-start-zh"), openZhSetup);
+  bindStart($("#btn-start-zh"), () => openZhHub());
   bindStart($("#btn-start-en"), () => {
     primeSpeech();
     enMode =
@@ -2065,9 +2137,15 @@ function bindEvents() {
     openEnHub();
   });
 
-  $("#btn-setup-zh-back")?.addEventListener("click", () => showView("home"));
+  $("#btn-setup-zh-back")?.addEventListener("click", () => openZhHub());
   $("#btn-setup-en-back")?.addEventListener("click", () => openEnHub());
-  $("#btn-setup-zh-start")?.addEventListener("click", () => startZhQuiz());
+  $("#btn-setup-zh-start")?.addEventListener("click", () => {
+    const kind = getZhSetupKind();
+    if (kind === "listen") startZhQuiz({ mode: "listen" });
+    else if (kind === "pick") startZhChoice("pick");
+    else if (kind === "phrase") startZhChoice("phrase");
+    else startZhQuiz();
+  });
   $("#btn-setup-zh-race")?.addEventListener("click", (e) => {
     e.preventDefault();
     openZhRaceDuoMode();
@@ -2145,13 +2223,22 @@ function bindEvents() {
     unlockSpeechFromGesture();
     void playEnglishAudio();
   });
+  $("#btn-speak-zh")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    unlockSpeechFromGesture();
+    void playZhAudio();
+  });
+  bindLookupClicks($("#sentence-context"), (btn) => {
+    const wrap = btn.closest("[data-lookup-text]");
+    return wrap?.dataset.lookupText || "";
+  });
   $("#en-answer-input").addEventListener("keydown", (e) => {
     if (e.key === "Enter") submitEnAnswer();
   });
 
   $("#btn-retry").addEventListener("click", () => {
     if (quiz?.subject === "en") startEnQuiz();
-    else startZhQuiz();
+    else startZhQuiz({ mode: quiz?.mode === "listen" ? "listen" : "write" });
   });
   $("#btn-home").addEventListener("click", () => showView("home"));
 
@@ -2225,6 +2312,24 @@ async function init() {
     },
   });
   initWriting({ showView });
+  initZhPractice({
+    showView,
+    getZhBank: () => zhBank,
+    getLessonFilter: () => zhLessonFilter,
+    getQuizCountSetting,
+    openLessonSetup: (kind) => openZhSetup(kind),
+    startWrite: () => startZhQuiz(),
+    startListen: () => startZhQuiz({ mode: "listen" }),
+    startMistake: () => startZhQuiz({ mistakeReview: true }),
+    showOk: (title, sub, onClose) => {
+      showFeedback(
+        "ok",
+        title,
+        [{ label: "好耶", primary: true, onClick: () => onClose?.() }],
+        { sub: sub || "" }
+      );
+    },
+  });
   initFlipMath({
     showView,
     getChildNames,

@@ -50,7 +50,11 @@ function rowLooksLikeEnData(cells) {
 function rowLooksLikeZhData(cells) {
   if (!cells || cells.length < 4) return false;
   const t = cellNorm(cells[1]);
-  return (t === "生字" || t === "單字") && cellNorm(cells[2]) && cellNorm(cells[3]);
+  return (
+    (t === "生字" || t === "單字" || t === "詞語" || t === "詞組" || t === "詞組加強") &&
+    cellNorm(cells[2]) &&
+    cellNorm(cells[3])
+  );
 }
 
 function getHeaderAndRows(table) {

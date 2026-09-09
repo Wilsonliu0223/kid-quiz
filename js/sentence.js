@@ -1,11 +1,26 @@
+import { renderTappable } from "./zh-lookup.js";
+
+function appendPart(container, text, tappable) {
+  if (!text) return;
+  if (!tappable) {
+    container.append(document.createTextNode(text));
+    return;
+  }
+  const wrap = document.createElement("span");
+  wrap.dataset.lookupText = text;
+  wrap.innerHTML = renderTappable(text);
+  container.append(wrap);
+}
+
 /**
  * 例句格式：用【國字或詞】標出要考的字，畫面會只把該處顯示成注音。
  * 例：這本【厚厚】的剪貼簿，每一頁……
  */
-export function fillSentenceContext(container, sentence, word, zhuyin) {
+export function fillSentenceContext(container, sentence, word, zhuyin, opts = {}) {
   if (!container) return false;
 
   const sent = String(sentence || "").trim();
+  const tappable = Boolean(opts.tappable);
   if (!sent) {
     container.hidden = true;
     container.replaceChildren();
@@ -19,7 +34,7 @@ export function fillSentenceContext(container, sentence, word, zhuyin) {
   if (sent.includes(marker)) {
     const parts = sent.split(marker);
     parts.forEach((part, i) => {
-      if (part) container.append(document.createTextNode(part));
+      appendPart(container, part, tappable);
       if (i < parts.length - 1) {
         const sp = document.createElement("span");
         sp.className = "zhuyin-in-sentence";
@@ -33,17 +48,17 @@ export function fillSentenceContext(container, sentence, word, zhuyin) {
 
   const idx = sent.indexOf(word);
   if (word && idx >= 0) {
-    container.append(document.createTextNode(sent.slice(0, idx)));
+    appendPart(container, sent.slice(0, idx), tappable);
     const sp = document.createElement("span");
     sp.className = "zhuyin-in-sentence";
     sp.setAttribute("aria-label", `請寫：${word}`);
     sp.textContent = zhuyin;
     container.append(sp);
-    container.append(document.createTextNode(sent.slice(idx + word.length)));
+    appendPart(container, sent.slice(idx + word.length), tappable);
     return true;
   }
 
-  container.append(document.createTextNode(sent));
+  appendPart(container, sent, tappable);
   return true;
 }
 
