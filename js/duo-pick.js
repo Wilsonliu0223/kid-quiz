@@ -155,6 +155,8 @@ function updateDuoMatchupLabels() {
     ["#chess-duo-matchup-a", "#chess-duo-matchup-b"],
     ["#go-duo-matchup-a", "#go-duo-matchup-b"],
     ["#flip-player-a-name", "#flip-player-b-name"],
+    ["#idiom-flip-player-a-name", "#idiom-flip-player-b-name"],
+    ["#idiom-flip-duo-matchup-a", "#idiom-flip-duo-matchup-b"],
     ["#mul-flip-player-a-name", "#mul-flip-player-b-name"],
     ["#en-flip-player-a-name", "#en-flip-player-b-name"],
     ["#en-flip-duo-matchup-a", "#en-flip-duo-matchup-b"],
@@ -171,7 +173,7 @@ function updateDuoMatchupLabels() {
 export function refreshDuoBattleUI() {
   normalizeSelectedChild();
   const activeName = getChildName(getSelectedChild());
-  for (const id of ["math-duo-active-name", "flip-duo-active-name", "gomoku-duo-active-name", "xiangqi-duo-active-name", "anqi-duo-active-name", "chess-duo-active-name", "go-duo-active-name", "en-flip-duo-active-name"]) {
+  for (const id of ["math-duo-active-name", "flip-duo-active-name", "idiom-flip-duo-active-name", "gomoku-duo-active-name", "xiangqi-duo-active-name", "anqi-duo-active-name", "chess-duo-active-name", "go-duo-active-name", "en-flip-duo-active-name"]) {
     const el = document.getElementById(id);
     if (el) el.textContent = activeName;
   }
@@ -180,6 +182,7 @@ export function refreshDuoBattleUI() {
   for (const sel of [
     "#math-duo-opponent-chips",
     "#flip-duo-opponent-chips",
+    "#idiom-flip-duo-opponent-chips",
     "#gomoku-duo-opponent-chips",
     "#xiangqi-duo-opponent-chips",
     "#anqi-duo-opponent-chips",

@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.40";
+        var V = "39.41";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.49" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.50" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -272,6 +272,29 @@
           <button type="button" class="card card-flip" id="btn-start-flip-zh">
             <span class="card-title">開始翻牌</span>
             <span class="card-desc">國字配注音</span>
+          </button>
+        </div>
+
+        <div class="setup-divider" aria-hidden="true"></div>
+
+        <div class="setup-section setup-section-flip">
+          <span class="label">常見成語翻牌</span>
+          <p class="setup-section-sub">雙人同機 · 四字拆成字卡 · 每人一回合翻 4 張，湊成一條得分</p>
+          <div class="flip-players-vs" id="idiom-flip-players-vs">
+            <span id="idiom-flip-player-a-name">思妘</span>
+            <span class="flip-vs">vs</span>
+            <span id="idiom-flip-player-b-name">思妤</span>
+          </div>
+          <div class="flip-pair-count-picker" role="group" aria-label="幾條成語">
+            <span class="label">幾條成語？</span>
+            <div class="lesson-chips" id="idiom-flip-count-chips">
+              <button type="button" class="chip" data-idiom-count="5">5 條 · 20 張</button>
+              <button type="button" class="chip chip-active" data-idiom-count="10">10 條 · 40 張</button>
+            </div>
+          </div>
+          <button type="button" class="card card-flip" id="btn-start-flip-idiom">
+            <span class="card-title">開始成語翻牌</span>
+            <span class="card-desc">翻到同一條四字成語算得分</span>
           </button>
         </div>
       </section>
@@ -855,6 +878,75 @@
         <footer class="result-footer">
           <button type="button" class="btn btn-primary btn-block" id="btn-flip-replay">再玩一局</button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-flip-home">回首頁</button>
+        </footer>
+      </section>
+
+      <!-- 成語翻牌：選先手 -->
+      <section id="view-idiom-flip-first" class="view view-hidden" aria-label="成語翻牌誰先">
+        <header class="quiz-header quiz-header-flip">
+          <button type="button" class="btn-text" id="btn-idiom-flip-first-back">← 返回</button>
+          <span class="quiz-subject">成語翻牌</span>
+        </header>
+        <div class="flip-first-body">
+          <h2 class="flip-first-title">誰先翻牌？</h2>
+          <p class="flip-first-meta" id="idiom-flip-first-count">10 條 · 40 張</p>
+          <p class="flip-first-hint">每人一回合翻 4 張，湊成同一條四字成語得分</p>
+          <p class="flip-first-meta duo-active-line">
+            誰在練習：<strong id="idiom-flip-duo-active-name">思妘</strong>
+          </p>
+          <div class="duo-opponent-picker" role="group" aria-label="對戰對象">
+            <span class="label">對戰對象</span>
+            <div class="lesson-chips" id="idiom-flip-duo-opponent-chips"></div>
+          </div>
+          <div class="flip-players-vs math-players-vs" id="idiom-flip-duo-matchup">
+            <span id="idiom-flip-duo-matchup-a">思妘</span>
+            <span class="flip-vs">vs</span>
+            <span id="idiom-flip-duo-matchup-b">思妤</span>
+          </div>
+          <div class="flip-pick-btns" id="idiom-flip-pick-btns"></div>
+        </div>
+      </section>
+
+      <!-- 成語翻牌：對戰 -->
+      <section id="view-idiom-flip-play" class="view view-hidden" aria-label="成語翻牌對戰">
+        <header class="quiz-header quiz-header-flip">
+          <button type="button" class="btn-text" id="btn-idiom-flip-play-back">← 返回</button>
+          <span class="quiz-subject">成語翻牌</span>
+          <span class="quiz-progress" id="idiom-flip-progress-label">成語 0 / 10</span>
+        </header>
+        <div class="flip-play-body">
+          <div class="flip-scorebar">
+            <div class="flip-score-block" id="idiom-flip-score-block-a">
+              <span class="flip-score-name" id="idiom-flip-play-name-a">思妘</span>
+              <span class="flip-first-tag" id="idiom-flip-first-tag-a">先開</span>
+              <span class="flip-score-num" id="idiom-flip-score-a">0</span>
+            </div>
+            <div class="flip-turn-wrap">
+              <p class="flip-turn-label" id="idiom-flip-turn-label">輪到：思妘</p>
+              <p class="flip-click-label" id="idiom-flip-click-label">本回合 0 / 4 張</p>
+            </div>
+            <div class="flip-score-block" id="idiom-flip-score-block-b">
+              <span class="flip-score-name" id="idiom-flip-play-name-b">思妤</span>
+              <span class="flip-first-tag" id="idiom-flip-first-tag-b" hidden>先開</span>
+              <span class="flip-score-num" id="idiom-flip-score-b">0</span>
+            </div>
+          </div>
+          <p class="idiom-flip-found" id="idiom-flip-found" hidden></p>
+          <div class="flip-card-grid" id="idiom-flip-card-grid"></div>
+        </div>
+      </section>
+
+      <!-- 成語翻牌：結算 -->
+      <section id="view-idiom-flip-result" class="view view-hidden" aria-label="成語翻牌結算">
+        <header class="app-header">
+          <h2 class="result-title" id="idiom-flip-result-title">完成</h2>
+          <p class="flip-result-scores" id="idiom-flip-result-scores"></p>
+          <p class="flip-result-detail" id="idiom-flip-result-detail"></p>
+          <ul class="idiom-flip-result-list" id="idiom-flip-result-list"></ul>
+        </header>
+        <footer class="result-footer">
+          <button type="button" class="btn btn-primary btn-block" id="btn-idiom-flip-replay">再玩一局</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-idiom-flip-home">回國語</button>
         </footer>
       </section>
 
@@ -2603,7 +2695,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.80").catch((e) => {
+      import("./js/app.js?v=app-v45.81").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

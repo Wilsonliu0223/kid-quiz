@@ -1306,39 +1306,45 @@ body {
 
 /* 20 組：縮小間距、壓縮計分列，把空間留給牌格（國字） */
 #flip-card-grid[data-pairs="20"],
-#en-flip-card-grid[data-pairs="20"] {
+#en-flip-card-grid[data-pairs="20"],
+#idiom-flip-card-grid[data-pairs="20"] {
   gap: 4px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-scorebar,
 #view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-scorebar,
-#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-scorebar {
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-scorebar,
+#view-idiom-flip-play:has(#idiom-flip-card-grid[data-pairs="20"]) .flip-scorebar {
   margin-bottom: 6px;
   gap: 6px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-score-block,
 #view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-score-block,
-#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-score-block {
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-score-block,
+#view-idiom-flip-play:has(#idiom-flip-card-grid[data-pairs="20"]) .flip-score-block {
   padding: 5px 4px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-score-num,
 #view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-score-num,
-#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-score-num {
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-score-num,
+#view-idiom-flip-play:has(#idiom-flip-card-grid[data-pairs="20"]) .flip-score-num {
   font-size: 1.4rem;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-card,
 #view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-card,
-#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-card {
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-card,
+#view-idiom-flip-play:has(#idiom-flip-card-grid[data-pairs="20"]) .flip-card {
   border-radius: 8px;
   border-width: 1px;
 }
 
 #view-flip-play:has(#flip-card-grid[data-pairs="20"]) .flip-card-back,
 #view-mul-flip-play:has(#mul-flip-card-grid[data-pairs="20"]) .flip-card-back,
-#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-card-back {
+#view-en-flip-play:has(#en-flip-card-grid[data-pairs="20"]) .flip-card-back,
+#view-idiom-flip-play:has(#idiom-flip-card-grid[data-pairs="20"]) .flip-card-back {
   font-size: min(42cqw, 42cqh);
 }
 
@@ -1346,6 +1352,40 @@ body {
   opacity: 0.45;
   border-color: #b8d4a8;
   background: #f4faf0;
+}
+
+.idiom-flip-found {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #eef7ea;
+  color: #3d6b2e;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.idiom-flip-result-list {
+  margin: 12px 0 0;
+  padding: 0 4px 8px;
+  list-style: none;
+  max-height: 42vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.idiom-flip-result-list li {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.idiom-flip-result-list strong {
+  display: inline-block;
+  min-width: 4.5em;
+  color: var(--zh-dark);
 }
 
 .flip-result-scores {

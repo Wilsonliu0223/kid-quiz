@@ -65,6 +65,7 @@ import {
   initFlipZh,
   renderFlipHomePlayers,
 } from "./flip-zh.js";
+import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v1";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,
@@ -192,6 +193,9 @@ const views = {
   flipFirst: $("#view-flip-first"),
   flipPlay: $("#view-flip-play"),
   flipResult: $("#view-flip-result"),
+  idiomFlipFirst: $("#view-idiom-flip-first"),
+  idiomFlipPlay: $("#view-idiom-flip-play"),
+  idiomFlipResult: $("#view-idiom-flip-result"),
   mathSetup: $("#view-math-setup"),
   mathFirst: $("#view-math-first"),
   mathPlay: $("#view-math-play"),
@@ -2200,6 +2204,15 @@ async function init() {
     showView,
     getZhBank: () => zhBank,
     getLessonFilter: () => zhLessonFilter,
+    getChildNames,
+    showWarn: (title, sub) => {
+      showFeedback("warn", title, [{ label: "好的", primary: true, onClick: () => {} }], {
+        sub: sub || "",
+      });
+    },
+  });
+  initFlipIdiom({
+    showView,
     getChildNames,
     showWarn: (title, sub) => {
       showFeedback("warn", title, [{ label: "好的", primary: true, onClick: () => {} }], {
