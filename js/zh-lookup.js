@@ -195,114 +195,170 @@ export function bindLookupClicks(root, getParaText) {
 
 const CUE_SKIP = new Set(["有喜", "害喜"]);
 const CUE_BLOCK = /[死屍骨罪押捕妖兵稅瘡傷棺葬賭毒殺血妓娼淫孕]/;
-/** 萌典常出現、小孩聽了會誤認成別的字的詞，例如「香茗」聽成「鄉民」。 */
 const CUE_RARE = /[茗閨魂汗泉肌葉]/;
-const CUE_AFTER = ["歡", "愛", "水", "氣", "味", "子", "天", "人", "心", "事", "頭", "兒"];
+const CUE_WEAK = /[裡里的了著着過上下有得地一是就再把被與和及呢嗎呀啊]/;
+const CUE_AFTER = ["子", "果", "見", "話", "氣", "味", "水", "口", "手", "頭", "心", "歡", "愛", "力", "光"];
+const CUE_BEFORE = ["不", "小", "大", "好", "花", "白", "開", "老", "外", "家"];
+const CUE_ZI_OK = /[鞋種院桌椅帽弟子房梳刷刀杯盤碗筷娃]/;
+const CUE_BU_OK = /[要是好對用]/;
 const cueCache = new Map();
 
-function cueFromQuotes(text) {
-  const out = [];
-  for (const m of String(text || "").matchAll(/「([^」]{2,6})」/g)) {
-    out.push(m[1]);
-  }
-  return out;
+function hanOnly(s) {
+  return [...String(s || "")].filter(isHan).join("");
 }
 
 function cleanCueWord(raw, char) {
-  const word = [...String(raw || "")].filter(isHan).join("");
+  const word = hanOnly(raw);
   if ([...word].length !== 2) return "";
   if (!word.includes(char)) return "";
   if (CUE_SKIP.has(word) || CUE_BLOCK.test(word) || CUE_RARE.test(word)) return "";
   return word;
 }
 
-function pickCue(cands, char) {
-  const uniq = [...new Set(cands.filter(Boolean))];
-  return uniq.find((w) => w.startsWith(char)) || uniq[0] || "";
+function rankWords(words, char) {
+  const uniq = [...new Set((words || []).filter(Boolean))];
+  const two = uniq.filter((w) => [...w].length === 2);
+  const rest = uniq.filter((w) => [...w].length !== 2);
+  return [
+    ...two.filter((w) => w.startsWith(char)),
+    ...two.filter((w) => !w.startsWith(char)),
+    ...rest,
+  ];
 }
 
-/** 課本例句「我喜歡…／身上香香的」直接取前後字。 */
-const CUE_WEAK_NEXT = /[裡里的了著着過上下有得地]/;
-function cueFromSentence(char, sentence) {
+function curriculumWords(char, items) {
+  const hits = [];
+  for (const it of items || []) {
+    const w = hanOnly(it.word);
+    const n = [...w].length;
+    if (n < 2 || n > 3 || !w.includes(char)) continue;
+    if (CUE_SKIP.has(w) || CUE_BLOCK.test(w) || CUE_RARE.test(w)) continue;
+    hits.push(w);
+  }
+  return rankWords(hits, char);
+}
+
+function cueRedup(char, sentence) {
+  const text = String(sentence || "").replace(/[【】]/g, "");
+  return text.includes(char + char) ? char + char : "";
+}
+
+function sentencePairs(char, sentence) {
   const chars = [...String(sentence || "").replace(/[【】]/g, "")];
+  const hits = [];
   for (let i = 0; i < chars.length; i++) {
     if (chars[i] !== char) continue;
     const next = chars[i + 1];
     const prev = chars[i - 1];
-    if (next && isHan(next) && !CUE_WEAK_NEXT.test(next)) {
+    if (next && isHan(next) && !CUE_WEAK.test(next)) {
       const word = cleanCueWord(char + next, char);
-      if (word) return word;
+      if (word) hits.push(word);
     }
-    if (prev && isHan(prev)) {
+    if (prev && isHan(prev) && !CUE_WEAK.test(prev)) {
       const word = cleanCueWord(prev + char, char);
-      if (word) return word;
-    }
-    if (next && isHan(next)) {
-      const word = cleanCueWord(char + next, char);
-      if (word) return word;
+      if (word) hits.push(word);
     }
   }
-  return "";
+  return rankWords(hits, char);
 }
 
-function cueFromBank(char, items) {
+function affixCandidates(char) {
   const hits = [];
-  for (const it of items || []) {
-    const word = String(it.word || "").trim();
-    const two = cleanCueWord(word, char);
-    if (two) hits.push(two);
-    else if ([...word].length === 3 && word.includes(char) && !CUE_BLOCK.test(word) && !CUE_RARE.test(word)) {
-      hits.push(word);
-    }
-    const fromSent = cueFromSentence(char, it.sentence);
-    if (fromSent) hits.push(fromSent);
-  }
-  return pickCue(hits, char);
-}
-
-async function findCueWord(char, items, sentence = "") {
-  const fromHere = cueFromSentence(char, sentence);
-  if (fromHere) return fromHere;
-  const fromBank = cueFromBank(char, items);
-  if (fromBank) return fromBank;
-  if (cueCache.has(char)) return cueCache.get(char);
-  const cands = [];
   for (const aff of CUE_AFTER) {
-    const hit = await lookupMoe(char + aff);
-    const word = hit?.word ? cleanCueWord(hit.word, char) : "";
-    if (word) {
-      cands.push(word);
-      break;
-    }
+    const word = cleanCueWord(char + aff, char);
+    if (word) hits.push(word);
   }
-  const data = await fetchMoeRaw(char);
-  const defs = (data?.heteronyms || []).flatMap((h) => h.definitions || []);
-  for (const d of defs) {
-    for (const raw of cueFromQuotes(d.example || "")) {
-      const word = cleanCueWord(raw, char);
-      if (word) cands.push(word);
-    }
+  for (const aff of CUE_BEFORE) {
+    const word = cleanCueWord(aff + char, char);
+    if (word) hits.push(word);
   }
-  if (!cands.length) {
-    for (const d of defs) {
-      for (const raw of cueFromQuotes(d.def || "")) {
-        const word = cleanCueWord(raw, char);
-        if (word) cands.push(word);
-      }
-    }
-  }
-  const picked = pickCue(cands, char);
-  cueCache.set(char, picked);
-  return picked;
+  return hits;
 }
 
-/** 單字聽寫念「喜歡的喜」；已經是詞就直接念該詞。 */
-export async function dictationSpeakText(word, bankItems = [], sentence = "") {
-  const n = [...String(word || "")].filter(isHan).join("");
+async function isDictWord(word) {
+  const info = await lookupMoe(word);
+  return Boolean(info?.zhuyin);
+}
+
+function scoreCue(word, char) {
+  const chars = [...word];
+  if (chars.length !== 2) return chars.includes(char) ? 1 : -9;
+  const [a, b] = chars;
+  let s = 3;
+  if (a === char) s += 2;
+  if (b === "子") s += CUE_ZI_OK.test(char) ? 8 : -6;
+  if (a === "不") s += CUE_BU_OK.test(char) ? 10 : -4;
+  if (a === char && /[果氣味水手心歡愛光]/.test(b)) s += 6;
+  if (b === "見" && /[聽看]/.test(char)) s += 8;
+  if (b === "話" && /[聽說]/.test(char)) s += 8;
+  if (b === "口" && /[港門窗]/.test(char)) s += 8;
+  if (b === "手" && /[把拉推]/.test(char)) s += 6;
+  if (b === char && /[小大好花白開老外家]/.test(a)) s += 4;
+  return s;
+}
+
+async function pickBestVerified(cands, char) {
+  const uniq = [...new Set((cands || []).filter(Boolean))];
+  if (!uniq.length) return "";
+  const ok = await Promise.all(uniq.map(isDictWord));
+  let best = "";
+  let bestScore = 0;
+  uniq.forEach((word, i) => {
+    if (!ok[i]) return;
+    const s = scoreCue(word, char);
+    if (s > bestScore) {
+      bestScore = s;
+      best = word;
+    }
+  });
+  return best;
+}
+
+async function findCueWord(char, lessonItems, sentence = "", allItems = []) {
+  const fromLesson = curriculumWords(char, lessonItems);
+  if (fromLesson[0]) return fromLesson[0];
+  const redup = cueRedup(char, sentence);
+  if (redup) return redup;
+  const fromAll = curriculumWords(char, allItems);
+  if (fromAll[0]) return fromAll[0];
+
+  const cacheKey = char;
+  if (cueCache.has(cacheKey)) return cueCache.get(cacheKey);
+
+  const fromSent = await pickBestVerified(sentencePairs(char, sentence), char);
+  if (fromSent) {
+    cueCache.set(cacheKey, fromSent);
+    return fromSent;
+  }
+  const fromAffix = await pickBestVerified(affixCandidates(char), char);
+  cueCache.set(cacheKey, fromAffix);
+  return fromAffix;
+}
+
+/** 單字先找出真正的詞，再念「喜歡的喜」；已經是詞就直接念該詞。 */
+export async function dictationSpeakText(word, bankItems = [], sentence = "", allItems = []) {
+  const n = hanOnly(word);
   if (!n) return "";
   if ([...n].length >= 2) return n;
-  const cue = await findCueWord(n, bankItems, sentence);
+  const cue = await findCueWord(n, bankItems, sentence, allItems);
   return cue && cue.includes(n) ? `${cue}的${n}` : n;
+}
+
+/** 聽寫開始前先為每題準備詞語，避免邊聽邊抓到不成詞的音。 */
+export async function prepareDictationCues(questions, zhBank = []) {
+  const items = questions || [];
+  let i = 0;
+  async function worker() {
+    while (i < items.length) {
+      const q = items[i++];
+      if (!q || q.dictationCue) continue;
+      const lessonItems = (zhBank || []).filter((it) => !q.lesson || it.lesson === q.lesson);
+      q.dictationCue = await dictationSpeakText(q.word, lessonItems, q.sentence, zhBank);
+    }
+  }
+  const n = Math.min(4, items.length);
+  if (!n) return;
+  await Promise.all(Array.from({ length: n }, () => worker()));
 }
 
 export function initZhLookup() {

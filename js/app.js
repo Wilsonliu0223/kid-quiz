@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.41";
+import { CONFIG } from "./config.site.js?v=config-v45.42";
 import {
   loadZhItems,
   loadEnItems,
@@ -73,8 +73,8 @@ import {
   applyZhSetupKind,
   getZhSetupKind,
   startZhChoice,
-} from "./zh-practice.js?v=zh-practice-v4";
-import { bindLookupClicks, hideLookupCard, dictationSpeakText } from "./zh-lookup.js?v=zh-lookup-v6";
+} from "./zh-practice.js?v=zh-practice-v5";
+import { bindLookupClicks, hideLookupCard, dictationSpeakText, prepareDictationCues } from "./zh-lookup.js?v=zh-lookup-v9";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,
@@ -1038,7 +1038,7 @@ function questionsFromQuizWrong(quiz) {
   return out;
 }
 
-function startZhQuiz(options = {}) {
+async function startZhQuiz(options = {}) {
   if (CONFIG.OCR_ENABLED) {
     ensurePaddleOcr().catch(() => {});
   }
@@ -1063,9 +1063,27 @@ function startZhQuiz(options = {}) {
     return;
   }
 
+  const mode = options.mode || "write";
+  if (mode === "listen") {
+    const startBtn = $("#btn-setup-zh-start");
+    const prev = startBtn?.textContent;
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.textContent = "正在準備詞語…";
+    }
+    try {
+      await prepareDictationCues(questions, zhBank);
+    } finally {
+      if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.textContent = prev || "開始聽寫";
+      }
+    }
+  }
+
   quiz = {
     subject: "zh",
-    mode: options.mode || "write",
+    mode,
     child,
     questions,
     index: 0,
@@ -1101,7 +1119,7 @@ async function playZhAudio() {
   try {
     if (!q.dictationCue) {
       const bank = (zhBank || []).filter((it) => !q.lesson || it.lesson === q.lesson);
-      q.dictationCue = await dictationSpeakText(q.word, bank, q.sentence);
+      q.dictationCue = await dictationSpeakText(q.word, bank, q.sentence, zhBank);
     }
     ok = await speakEnglish(q.dictationCue, {
       lang: "zh",
@@ -2149,7 +2167,7 @@ function bindEvents() {
   $("#btn-setup-en-back")?.addEventListener("click", () => openEnHub());
   $("#btn-setup-zh-start")?.addEventListener("click", () => {
     const kind = getZhSetupKind();
-    if (kind === "listen") startZhQuiz({ mode: "listen" });
+    if (kind === "listen") void startZhQuiz({ mode: "listen" });
     else if (kind === "pick") startZhChoice("pick");
     else if (kind === "phrase") void startZhChoice("phrase");
     else startZhQuiz();
@@ -2246,7 +2264,7 @@ function bindEvents() {
 
   $("#btn-retry").addEventListener("click", () => {
     if (quiz?.subject === "en") startEnQuiz();
-    else startZhQuiz({ mode: quiz?.mode === "listen" ? "listen" : "write" });
+    else void startZhQuiz({ mode: quiz?.mode === "listen" ? "listen" : "write" });
   });
   $("#btn-home").addEventListener("click", () => showView("home"));
 
@@ -2327,7 +2345,7 @@ async function init() {
     getQuizCountSetting,
     openLessonSetup: (kind) => openZhSetup(kind),
     startWrite: () => startZhQuiz(),
-    startListen: () => startZhQuiz({ mode: "listen" }),
+    startListen: () => void startZhQuiz({ mode: "listen" }),
     startMistake: () => startZhQuiz({ mistakeReview: true }),
     showOk: (title, sub, onClose) => {
       showFeedback(
