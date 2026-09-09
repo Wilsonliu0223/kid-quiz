@@ -71,7 +71,9 @@ body {
 
 #view-setup-zh.view-active,
 #view-setup-en.view-active,
-#view-en-flip-setup.view-active {
+#view-en-flip-setup.view-active,
+#view-writing-hub.view-active,
+#view-writing-read.view-active {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -1447,6 +1449,112 @@ body {
   align-self: center;
   margin: 0 0 8px;
   font-size: 0.88rem;
+}
+
+.writing-hub-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+.writing-hub-hint {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.writing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.writing-list-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.writing-list-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--zh-dark);
+}
+
+.writing-list-meta {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.writing-read-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
+.writing-read-title {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--zh-dark);
+}
+
+.writing-read-meta,
+.writing-read-grow {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.writing-read-grow {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff5f0;
+  color: #8a3d1c;
+}
+
+.writing-essay p {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.writing-teach {
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff5f0;
+  border: 1px solid #f0c4a8;
+}
+
+.writing-teach h3 {
+  margin: 10px 0 6px;
+  font-size: 0.95rem;
+  color: var(--zh-dark);
+}
+
+.writing-teach h3:first-child {
+  margin-top: 0;
+}
+
+.writing-teach-list {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 .idiom-flip-result-list {

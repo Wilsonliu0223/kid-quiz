@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.43";
+        var V = "39.44";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.52" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.53" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -248,6 +248,10 @@
 
         <button type="button" class="btn btn-secondary btn-block" id="btn-setup-zh-race">
           搶答對戰（兩台手機）
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-block" id="btn-setup-zh-writing">
+          寫作範文（二～六年級）
         </button>
 
         <div class="setup-divider" aria-hidden="true"></div>
@@ -973,6 +977,46 @@
           <button type="button" class="btn btn-primary btn-block" id="btn-idiom-flip-replay">再玩一局</button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-idiom-flip-home">回國語</button>
         </footer>
+      </section>
+
+      <!-- 寫作教學：年級與題目 -->
+      <section id="view-writing-hub" class="view view-hidden" aria-label="寫作範文">
+        <header class="setup-header setup-header-zh">
+          <button type="button" class="btn-text" id="btn-writing-hub-back">← 返回</button>
+          <span class="setup-subject">寫作範文</span>
+        </header>
+        <div class="writing-hub-body">
+          <p class="writing-hub-hint" id="writing-hub-hint"></p>
+          <span class="label">年級</span>
+          <div class="lesson-chips" role="group" aria-label="年級">
+            <button type="button" class="chip chip-active" data-writing-grade="2">二</button>
+            <button type="button" class="chip" data-writing-grade="3">三</button>
+            <button type="button" class="chip" data-writing-grade="4">四</button>
+            <button type="button" class="chip" data-writing-grade="5">五</button>
+            <button type="button" class="chip" data-writing-grade="6">六</button>
+          </div>
+          <div id="writing-list" class="writing-list"></div>
+        </div>
+      </section>
+
+      <!-- 寫作教學：閱讀 -->
+      <section id="view-writing-read" class="view view-hidden" aria-label="範文閱讀">
+        <header class="quiz-header quiz-header-zh">
+          <button type="button" class="btn-text" id="btn-writing-read-back">← 返回</button>
+          <span class="quiz-subject">怎麼寫</span>
+        </header>
+        <div class="writing-read-body">
+          <h2 class="writing-read-title" id="writing-read-title"></h2>
+          <p class="writing-read-meta" id="writing-read-meta"></p>
+          <p class="writing-read-grow" id="writing-read-grow" hidden></p>
+          <div class="writing-essay" id="writing-read-body"></div>
+          <section class="writing-teach">
+            <h3>這篇怎麼寫</h3>
+            <ol class="writing-teach-list" id="writing-read-steps"></ol>
+            <h3>你可以學的寫法</h3>
+            <ul class="writing-teach-list" id="writing-read-tips"></ul>
+          </section>
+        </div>
       </section>
 
       <!-- 數學：選模式後設定（目標範圍） -->
@@ -2720,7 +2764,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.83").catch((e) => {
+      import("./js/app.js?v=app-v45.84").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
