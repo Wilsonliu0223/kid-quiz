@@ -6,11 +6,12 @@ import { openEnWordGloss } from "./en-daily.js?v=en-daily-v78";
 import {
   ESSAYS,
   LEVELS,
+  ROLE_GROUP,
   essaysForLevel,
   josekiById,
   josekiForLevel,
   levelById,
-} from "./en-writing-bank.js?v=en-writing-bank-v3";
+} from "./en-writing-bank.js?v=en-writing-bank-v4";
 
 const KEY_TAB = "kid-quiz-en-writing-tab";
 const KEY_LEVEL = "kid-quiz-en-writing-level";
@@ -87,18 +88,29 @@ function renderList() {
   if (hint) {
     hint.textContent =
       `${lv.gept}（CEFR ${lv.cefr}）。${lv.canDo} 寫作量：${lv.wordHint}。` +
-      (tab === "joseki" ? " 下面是這一級要練的定式。" : " 下面短文的詞數對齊該級題面。");
+      (tab === "joseki"
+        ? " 定式依起手式、連接詞、關係子句分組；每一招都附文法。"
+        : " 下面短文的詞數對齊該級題面，可點英文查生字。");
   }
   renderSources(lv);
   box.innerHTML = "";
   if (tab === "joseki") {
+    let lastGroup = "";
     josekiForLevel(levelId).forEach((j) => {
+      const group = ROLE_GROUP[j.role] || j.role;
+      if (group !== lastGroup) {
+        lastGroup = group;
+        const head = document.createElement("p");
+        head.className = "en-writing-group";
+        head.textContent = group;
+        box.appendChild(head);
+      }
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "writing-list-item";
       btn.innerHTML =
         `<span class="writing-list-title">${escapeHtml(String(j.n).padStart(2, "0"))}　${escapeHtml(j.name)}</span>` +
-        `<span class="writing-list-meta">${escapeHtml(j.role)} · ${escapeHtml(j.frame.split("\n")[0])}</span>`;
+        `<span class="writing-list-meta">${escapeHtml(j.frame.split("\n")[0])}</span>`;
       btn.addEventListener("click", () => openJoseki(j.id));
       box.appendChild(btn);
     });
@@ -120,9 +132,22 @@ function usedLabel(used) {
   return used
     .map((id) => {
       const j = josekiById(id);
-      return j ? `第 ${j.n} 招 ${j.name}` : id;
+      return j ? j.name : id;
     })
     .join(" · ");
+}
+
+function setGrammar(text) {
+  const wrap = $("#en-writing-grammar-wrap");
+  const el = $("#en-writing-grammar");
+  if (!wrap || !el) return;
+  if (!text) {
+    wrap.hidden = true;
+    el.textContent = "";
+    return;
+  }
+  wrap.hidden = false;
+  el.textContent = text;
 }
 
 function keySet(vocab) {
@@ -220,13 +245,15 @@ function openJoseki(id) {
   currentId = j.id;
   const lv = levelById(j.level);
   $("#en-writing-read-title").textContent = `${lv.label} ${String(j.n).padStart(2, "0")}　${j.name}`;
-  $("#en-writing-read-meta").textContent = `${lv.gept} · CEFR ${lv.cefr} · ${j.role}`;
+  $("#en-writing-read-meta").textContent =
+    `${lv.gept} · CEFR ${lv.cefr} · ${ROLE_GROUP[j.role] || j.role}`;
   const used = $("#en-writing-read-used");
   if (used) {
     used.hidden = true;
     used.textContent = "";
   }
   setBasis(j.basis, j.basisUrl);
+  setGrammar(j.grammar || "");
   setTapHint(true);
   renderVocab(null);
   $("#en-writing-read-body").innerHTML =
@@ -254,6 +281,7 @@ function openEssay(id) {
     used.textContent = usedLabel(e.used);
   }
   setBasis(lv.task, lv.sources[0]?.url);
+  setGrammar("");
   setTapHint(true);
   renderVocab(e.vocab);
   $("#en-writing-read-body").innerHTML = renderEssayBody(e);

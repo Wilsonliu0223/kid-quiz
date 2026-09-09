@@ -1837,6 +1837,29 @@ body {
   color: #6a4a1a;
 }
 
+.en-writing-group {
+  margin: 14px 0 6px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #1a5bb8;
+}
+
+.en-writing-group:first-child {
+  margin-top: 4px;
+}
+
+.en-writing-grammar {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff8e8;
+  border: 1px solid #f0d48a;
+  color: #4a3a10;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
 .writing-try-input {
   width: 100%;
   box-sizing: border-box;

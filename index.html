@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.56";
+        var V = "39.57";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.61" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.62" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -535,6 +535,10 @@
             看不懂的英文，點一下查意思（和時事閱讀同一套）。橘色是本篇生字。
           </p>
           <div class="writing-essay" id="en-writing-read-body"></div>
+          <section class="writing-teach" id="en-writing-grammar-wrap" hidden>
+            <h3>文法</h3>
+            <p class="en-writing-grammar" id="en-writing-grammar"></p>
+          </section>
           <section class="writing-teach" id="en-writing-vocab-wrap" hidden>
             <h3>本篇生字（點了可查）</h3>
             <div id="en-writing-vocab" class="en-writing-vocab"></div>
@@ -3064,7 +3068,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.96").catch((e) => {
+      import("./js/app.js?v=app-v45.97").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
