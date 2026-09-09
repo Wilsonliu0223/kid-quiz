@@ -10,6 +10,8 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** @type {Map<string, { word: string, zhuyin: string, meaning: string } | null>} */
 const dictCache = new Map();
+/** @type {Map<string, object | null>} */
+const rawCache = new Map();
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -103,34 +105,45 @@ function pickDefs(heteronyms) {
   return readings;
 }
 
-export async function lookupMoe(word) {
-  if (dictCache.has(word)) return dictCache.get(word);
+export async function fetchMoeRaw(word) {
+  if (rawCache.has(word)) return rawCache.get(word);
   try {
     const url = `https://www.moedict.tw/uni/${encodeURIComponent(word)}.json`;
     const res = await fetch(url);
     if (res.status === 404) {
-      dictCache.set(word, null);
+      rawCache.set(word, null);
       return null;
     }
     if (!res.ok) return null;
     const data = await res.json();
-    const readings = pickDefs(data.heteronyms);
-    if (!readings.length) {
-      dictCache.set(word, null);
-      return null;
-    }
-    const info = {
-      word,
-      zhuyin: readings.map((r) => r.zhuyin).filter(Boolean).join("　"),
-      meaning: readings
-        .map((r) => (readings.length > 1 && r.zhuyin ? `${r.zhuyin} ${r.meaning}` : r.meaning))
-        .join("／"),
-    };
-    dictCache.set(word, info);
-    return info;
+    rawCache.set(word, data);
+    return data;
   } catch {
     return null;
   }
+}
+
+export async function lookupMoe(word) {
+  if (dictCache.has(word)) return dictCache.get(word);
+  const data = await fetchMoeRaw(word);
+  if (!data) {
+    dictCache.set(word, null);
+    return null;
+  }
+  const readings = pickDefs(data.heteronyms);
+  if (!readings.length) {
+    dictCache.set(word, null);
+    return null;
+  }
+  const info = {
+    word,
+    zhuyin: readings.map((r) => r.zhuyin).filter(Boolean).join("　"),
+    meaning: readings
+      .map((r) => (readings.length > 1 && r.zhuyin ? `${r.zhuyin} ${r.meaning}` : r.meaning))
+      .join("／"),
+  };
+  dictCache.set(word, info);
+  return info;
 }
 
 export async function lookupWord(paraText, index) {

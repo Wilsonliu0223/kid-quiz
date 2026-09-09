@@ -13,6 +13,9 @@ import {
   weekLookupCards,
   clearLookupCards,
   showLookupCard,
+  fetchMoeRaw,
+  lookupMoe,
+  isHan,
 } from "./zh-lookup.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -52,7 +55,7 @@ const SETUP_COPY = {
   phrase: {
     title: "詞語練習",
     start: "開始詞語",
-    hint: "兩個字以上的詞：有例句就選詞，沒有就選注音。",
+    hint: "用本課生字造詞。看意思選詞，或看詞選注音。",
   },
   flip: {
     title: "國字翻牌",
@@ -170,37 +173,233 @@ function phraseItems(bank) {
   return (bank || []).filter((x) => [...String(x.word || "")].length >= 2);
 }
 
-export function startZhChoice(kind) {
+const BLOCK_PHRASE = /[死屍骨罪押捕妖兵稅瘡傷棺葬賭毒殺血妓娼淫]/;
+const AFFIX_AFTER = ["子", "天", "人", "心", "頭", "水", "口", "手"];
+const AFFIX_BEFORE = ["小", "大", "好"];
+/** @type {Map<string, object[]>} */
+const phraseGenCache = new Map();
+let phraseBusy = false;
+
+function lessonChars(items) {
+  const out = [];
+  const seen = new Set();
+  for (const it of items || []) {
+    for (const ch of [...String(it.word || "")]) {
+      if (!isHan(ch) || seen.has(ch)) continue;
+      seen.add(ch);
+      out.push(ch);
+    }
+  }
+  return out;
+}
+
+function addCandidate(list, word, char) {
+  const w = [...String(word || "")].filter((ch) => isHan(ch)).join("");
+  const n = [...w].length;
+  if (n < 2 || n > 3) return;
+  if (char && ![...w].includes(char)) return;
+  if (BLOCK_PHRASE.test(w)) return;
+  list.push(w);
+}
+
+function extractCandidates(char, data) {
+  const found = [];
+  const scanQuotes = (text) => {
+    const s = String(text || "").replace(/<[^>]+>/g, "");
+    for (const m of s.matchAll(/「([^」]+)」/g)) addCandidate(found, m[1], char);
+  };
+  const scanTwo = (text) => {
+    const chars = [...String(text || "").replace(/<[^>]+>/g, "")];
+    for (let i = 0; i < chars.length - 1; i++) {
+      if (isHan(chars[i]) && isHan(chars[i + 1]) && (chars[i] === char || chars[i + 1] === char)) {
+        addCandidate(found, chars[i] + chars[i + 1], char);
+      }
+    }
+  };
+  for (const h of data?.heteronyms || []) {
+    for (const d of h.definitions || []) {
+      scanQuotes(d.def);
+      scanTwo(d.def);
+      for (const ex of d.example || []) {
+        scanQuotes(ex);
+        scanTwo(ex);
+      }
+    }
+  }
+  for (const xr of data?.xrefs || []) {
+    for (const w of xr.words || []) addCandidate(found, w, char);
+  }
+  return unique(found).slice(0, 8);
+}
+
+async function mapPool(items, limit, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx]);
+    }
+  }
+  const n = Math.min(limit, items.length);
+  await Promise.all(Array.from({ length: n }, () => worker()));
+  return out;
+}
+
+async function phrasesFromLessonChars(chars) {
+  const key = chars.join("");
+  if (phraseGenCache.has(key)) return phraseGenCache.get(key);
+  const raws = await mapPool(chars, 4, (ch) => fetchMoeRaw(ch));
+  const fromLesson = [];
+  if (chars.length >= 2 && chars.length <= 10) {
+    for (const a of chars) {
+      for (const b of chars) {
+        if (a === b) addCandidate(fromLesson, a + a, a);
+        else addCandidate(fromLesson, a + b, a);
+      }
+    }
+  }
+  const fromDict = [];
+  chars.forEach((ch, i) => {
+    extractCandidates(ch, raws[i]).forEach((w) => fromDict.push(w));
+  });
+  const lessonUniq = unique(fromLesson).slice(0, 16);
+  const dictUniq = unique(fromDict).slice(0, 24);
+  const uniq = unique([...dictUniq, ...lessonUniq]);
+  const verified = [];
+  const seen = new Set();
+  await mapPool(uniq.slice(0, 40), 5, async (word) => {
+    const info = await lookupMoe(word);
+    if (!info?.zhuyin || seen.has(word)) return;
+    seen.add(word);
+    verified.push({
+      word,
+      zhuyin: info.zhuyin,
+      meaning: info.meaning || "",
+      sentence: "",
+      type: "詞語",
+    });
+  });
+  const haveChar = new Set(verified.flatMap((it) => [...it.word]));
+  const leftover = chars.filter((ch) => !haveChar.has(ch));
+  if (leftover.length) {
+    const extraTry = [];
+    leftover.forEach((ch) => {
+      AFFIX_AFTER.forEach((a) => extraTry.push(ch + a));
+      AFFIX_BEFORE.forEach((a) => extraTry.push(a + ch));
+    });
+    await mapPool(unique(extraTry), 5, async (word) => {
+      const info = await lookupMoe(word);
+      if (!info?.zhuyin || seen.has(word)) return;
+      seen.add(word);
+      verified.push({
+        word,
+        zhuyin: info.zhuyin,
+        meaning: info.meaning || "",
+        sentence: "",
+        type: "詞語",
+      });
+    });
+  }
+  phraseGenCache.set(key, verified);
+  return verified;
+}
+
+async function buildPhraseSource(bank, filter) {
+  const existing = pickRandomQuestions(phraseItems(bank), 0, filter);
+  const lesson = pickRandomQuestions(bank, 0, filter);
+  const chars = lessonChars(lesson).slice(0, 12);
+  const generated = chars.length ? await phrasesFromLessonChars(chars) : [];
+  const seen = new Set(existing.map((x) => x.word));
+  const merged = [...existing];
+  generated.forEach((it) => {
+    if (seen.has(it.word)) return;
+    seen.add(it.word);
+    merged.push(it);
+  });
+  return merged;
+}
+
+export async function startZhChoice(kind) {
   const bank = deps.getZhBank() || [];
   const filter = deps.getLessonFilter();
   const count = deps.getQuizCountSetting();
-  const source = kind === "phrase" ? phraseItems(bank) : bank;
-  const picked = pickRandomQuestions(source, count, filter);
+  if (kind === "phrase") {
+    if (phraseBusy) return;
+    phraseBusy = true;
+    const startBtn = $("#btn-setup-zh-start");
+    const prev = startBtn?.textContent;
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.textContent = "正在用生字造詞…";
+    }
+    try {
+      const source = await buildPhraseSource(bank, filter);
+      const picked = pickRandomQuestions(source, count, "全部");
+      if (!picked.length) {
+        alert("這個範圍暫時造不出詞。請換課次，或先用手寫測驗。");
+        return;
+      }
+      const useMeaning = picked.filter((x) => x.meaning).length >= 4;
+      choice = {
+        kind,
+        questions: picked.map((item) => {
+          if (item.sentence) {
+            return {
+              item,
+              type: "cloze",
+              choices: wordChoices(item, source),
+            };
+          }
+          if (useMeaning && item.meaning) {
+            return {
+              item,
+              type: "meaning",
+              choices: wordChoices(item, source),
+            };
+          }
+          return {
+            item,
+            type: "zhuyin",
+            choices: zhuyinChoices(item, [...bank, ...source]),
+          };
+        }),
+        index: 0,
+        correct: 0,
+      };
+      startChoiceView("詞語");
+    } finally {
+      phraseBusy = false;
+      if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.textContent = prev || "開始詞語";
+      }
+    }
+    return;
+  }
+  const picked = pickRandomQuestions(bank, count, filter);
   if (!picked.length) {
-    alert(
-      kind === "phrase"
-        ? "這個範圍沒有兩個字以上的詞。請換課次，或先用手寫測驗。"
-        : "沒有題目！請檢查試算表或課次篩選。"
-    );
+    alert("沒有題目！請檢查試算表或課次篩選。");
     return;
   }
   choice = {
     kind,
-    questions: picked.map((item) => {
-      const cloze = kind === "phrase" && item.sentence;
-      return {
-        item,
-        type: cloze ? "cloze" : "zhuyin",
-        choices: cloze ? wordChoices(item, source) : zhuyinChoices(item, bank),
-      };
-    }),
+    questions: picked.map((item) => ({
+      item,
+      type: "zhuyin",
+      choices: zhuyinChoices(item, bank),
+    })),
     index: 0,
     correct: 0,
   };
+  startChoiceView("選注音");
+}
+
+function startChoiceView(titleText) {
   choiceLocked = false;
   hideLookupCard();
   const title = $("#view-zh-choice .quiz-subject");
-  if (title) title.textContent = kind === "phrase" ? "詞語" : "選注音";
+  if (title) title.textContent = titleText;
   deps.showView("zhChoice");
   renderChoice();
 }
@@ -223,11 +422,23 @@ function renderChoice() {
   choiceLocked = false;
 
   if (q.type === "cloze") {
-    if (prompt) prompt.textContent = clozeSentence(item.sentence, item.word);
+    if (prompt) {
+      prompt.classList.remove("is-meaning");
+      prompt.textContent = clozeSentence(item.sentence, item.word);
+    }
     if (hint) hint.textContent = "選出句子空格裡的詞";
+  } else if (q.type === "meaning") {
+    if (prompt) {
+      prompt.classList.add("is-meaning");
+      prompt.textContent = item.meaning;
+    }
+    if (hint) hint.textContent = "哪一個詞是這個意思？";
   } else {
-    if (prompt) prompt.textContent = item.word;
-    if (hint) hint.textContent = "這個字怎麼念？";
+    if (prompt) {
+      prompt.classList.remove("is-meaning");
+      prompt.textContent = item.word;
+    }
+    if (hint) hint.textContent = "這個詞怎麼念？";
   }
 
   const box = $("#zh-choice-options");
@@ -246,7 +457,8 @@ function renderChoice() {
 function onChoice(opt, btn) {
   if (!choice || choiceLocked) return;
   const q = choice.questions[choice.index];
-  const answer = q.type === "cloze" ? q.item.word : q.item.zhuyin;
+  const answer =
+    q.type === "cloze" || q.type === "meaning" ? q.item.word : q.item.zhuyin;
   choiceLocked = true;
   const ok = String(opt) === String(answer);
   if (ok) choice.correct += 1;
@@ -260,7 +472,9 @@ function onChoice(opt, btn) {
     fb.hidden = false;
     fb.textContent = ok
       ? "答對了"
-      : `答案是 ${answer}${q.item.zhuyin && q.type === "cloze" ? `（${q.item.zhuyin}）` : ""}`;
+      : q.type === "meaning"
+        ? `答案是 ${answer}${q.item.zhuyin ? `（${q.item.zhuyin}）` : ""}`
+        : `答案是 ${answer}${q.item.zhuyin && q.type === "cloze" ? `（${q.item.zhuyin}）` : ""}`;
   }
   const next = $("#btn-zh-choice-next");
   if (next) {

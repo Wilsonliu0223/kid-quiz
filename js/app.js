@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.38";
+import { CONFIG } from "./config.site.js?v=config-v45.39";
 import {
   loadZhItems,
   loadEnItems,
@@ -73,8 +73,8 @@ import {
   applyZhSetupKind,
   getZhSetupKind,
   startZhChoice,
-} from "./zh-practice.js?v=zh-practice-v2";
-import { bindLookupClicks, hideLookupCard } from "./zh-lookup.js?v=zh-lookup-v2";
+} from "./zh-practice.js?v=zh-practice-v3";
+import { bindLookupClicks, hideLookupCard } from "./zh-lookup.js?v=zh-lookup-v3";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,
@@ -2143,7 +2143,7 @@ function bindEvents() {
     const kind = getZhSetupKind();
     if (kind === "listen") startZhQuiz({ mode: "listen" });
     else if (kind === "pick") startZhChoice("pick");
-    else if (kind === "phrase") startZhChoice("phrase");
+    else if (kind === "phrase") void startZhChoice("phrase");
     else startZhQuiz();
   });
   $("#btn-setup-zh-race")?.addEventListener("click", (e) => {
