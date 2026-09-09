@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.40";
+import { CONFIG } from "./config.site.js?v=config-v45.41";
 import {
   loadZhItems,
   loadEnItems,
@@ -74,7 +74,7 @@ import {
   getZhSetupKind,
   startZhChoice,
 } from "./zh-practice.js?v=zh-practice-v4";
-import { bindLookupClicks, hideLookupCard, dictationSpeakText } from "./zh-lookup.js?v=zh-lookup-v4";
+import { bindLookupClicks, hideLookupCard, dictationSpeakText } from "./zh-lookup.js?v=zh-lookup-v6";
 import {
   initFlipMul,
   renderMulFlipHomePlayers,
@@ -1101,7 +1101,7 @@ async function playZhAudio() {
   try {
     if (!q.dictationCue) {
       const bank = (zhBank || []).filter((it) => !q.lesson || it.lesson === q.lesson);
-      q.dictationCue = await dictationSpeakText(q.word, bank);
+      q.dictationCue = await dictationSpeakText(q.word, bank, q.sentence);
     }
     ok = await speakEnglish(q.dictationCue, {
       lang: "zh",
