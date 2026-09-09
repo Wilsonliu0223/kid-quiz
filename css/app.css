@@ -1664,6 +1664,12 @@ body {
   background: #3d9a6a;
 }
 
+#view-math-grade-quiz .mul-prompt {
+  font-size: clamp(1.15rem, 4.6vw, 1.55rem);
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
 #setup-zh-drill {
   display: flex;
   flex-direction: column;

@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.52";
+        var V = "39.53";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.57" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.58" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -285,78 +285,78 @@
         </header>
         <div class="zh-hub-body math-hub-body">
           <h2 class="zh-hub-group-title math-hub-group-title">二年級</h2>
-          <p class="math-hub-lead">1000 以內加減、時間與長度。九九乘法在最下面。</p>
+          <p class="math-hub-lead">進退位、兩步驟應用。每回 12 題。</p>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g2add100">
-            100 以內加減
+            100 以內進退位
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g2add1000">
-            1000 以內加減
+            1000 以內兩步驟
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g2measure">
-            時間與長度
+            時間與長度應用
           </button>
 
           <h2 class="zh-hub-group-title math-hub-group-title">三年級</h2>
-          <p class="math-hub-lead">乘除、分數入門、長方形周長。</p>
+          <p class="math-hub-lead">三位數乘法、除法應用、分數比較、周長。</p>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g3mul">
-            二位數 × 一位數
+            三位數 × 一位數
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g3div">
-            除法（含餘數）
+            除法應用（含餘數）
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g3frac">
-            分數入門
+            分數比較與剩餘
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g3perim">
-            長方形周長
+            周長應用
           </button>
 
           <h2 class="zh-hub-group-title math-hub-group-title">四年級</h2>
-          <p class="math-hub-lead">二位數乘法、小數、等值分數、面積。</p>
+          <p class="math-hub-lead">較大乘法、百分位小數、帶分數、挖空面積。</p>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4mul">
             二位數 × 二位數
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4dec">
-            小數加減
+            小數加減（百分位）
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4frac">
-            等值分數
+            帶分數與等值
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4area">
-            長方形面積
+            面積應用
           </button>
 
           <h2 class="zh-hub-group-title math-hub-group-title">五年級</h2>
-          <p class="math-hub-lead">小數乘法、分數加減、百分率、體積。</p>
+          <p class="math-hub-lead">小數相乘、異分母、漲跌百分率、體積反求。</p>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5decmul">
-            小數 × 整數
+            小數乘法
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5frac">
-            同分母分數加減
+            異分母分數加減
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5percent">
-            百分率
+            百分率增減
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5volume">
-            長方體體積
+            體積應用
           </button>
 
           <h2 class="zh-hub-group-title math-hub-group-title">六年級</h2>
-          <p class="math-hub-lead">分數乘法、比、折扣、速率、圓（π 用 3）。</p>
+          <p class="math-hub-lead">分數乘除、比的應用、連折扣、平均速率、圓環（π 用 3）。</p>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6fracmul">
-            分數 × 整數
+            分數乘除
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6ratio">
-            比與比值
+            比的應用
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6discount">
-            折扣百分率
+            連折扣與稅
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6speed">
-            速率
+            速率應用
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6circle">
-            圓周長與面積
+            圓與圓環
           </button>
 
           <h2 class="zh-hub-group-title math-hub-group-title">九九乘法</h2>
@@ -385,8 +385,8 @@
         </header>
         <div class="mul-body mul-quiz-body">
           <div class="math-frac-bar" id="math-grade-visual" hidden></div>
-          <p class="mul-prompt" id="math-grade-prompt">38 ＋ 47 ＝ □</p>
-          <p class="mul-quiz-hint">選出正確答案</p>
+          <p class="mul-prompt math-grade-prompt" id="math-grade-prompt">38 ＋ 47 ＝ □</p>
+          <p class="mul-quiz-hint">有進位、退位或兩步驟，看清楚再選</p>
           <div class="mul-answer-area">
             <div class="mul-choice-pad" id="math-grade-choices"></div>
           </div>
@@ -2993,7 +2993,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.92").catch((e) => {
+      import("./js/app.js?v=app-v45.93").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
