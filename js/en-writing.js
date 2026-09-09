@@ -11,7 +11,7 @@ import {
   josekiById,
   josekiForLevel,
   levelById,
-} from "./en-writing-bank.js?v=en-writing-bank-v4";
+} from "./en-writing-bank.js?v=en-writing-bank-v5";
 
 const KEY_TAB = "kid-quiz-en-writing-tab";
 const KEY_LEVEL = "kid-quiz-en-writing-level";
@@ -89,8 +89,8 @@ function renderList() {
     hint.textContent =
       `${lv.gept}（CEFR ${lv.cefr}）。${lv.canDo} 寫作量：${lv.wordHint}。` +
       (tab === "joseki"
-        ? " 定式依起手式、連接詞、關係子句分組；每一招都附文法。"
-        : " 下面短文的詞數對齊該級題面，可點英文查生字。");
+        ? " 先看最上面的「段落／篇章骨架」，那是一段怎麼站、一篇怎麼走。起手式和連接詞是填進格子的零件。"
+        : " 每篇短文上方有篇章地圖；每一段標明它在骨架的哪一格。英文可點查。");
   }
   renderSources(lv);
   box.innerHTML = "";
@@ -122,7 +122,9 @@ function renderList() {
     btn.className = "writing-list-item";
     btn.innerHTML =
       `<span class="writing-list-title">${escapeHtml(e.title)}</span>` +
-      `<span class="writing-list-meta">${escapeHtml(e.zhTitle)} · ${escapeHtml(e.kind)} · ${e.words} 詞（${escapeHtml(lv.wordHint)}）</span>`;
+      `<span class="writing-list-meta">${escapeHtml(e.zhTitle)} · ${escapeHtml(e.kind)} · ${e.words} 詞` +
+      (e.map ? ` · ${escapeHtml(e.map)}` : `（${escapeHtml(lv.wordHint)}）`) +
+      `</span>`;
     btn.addEventListener("click", () => openEssay(e.id));
     box.appendChild(btn);
   });
@@ -172,17 +174,29 @@ function renderParas(text, vocab) {
     .join("");
 }
 
+function renderMap(map) {
+  if (!map) return "";
+  return `<p class="en-writing-map"><strong>篇章地圖</strong> ${escapeHtml(map)}</p>`;
+}
+
 function renderEssayBody(e) {
   const paras = String(e.body || "").split(/\n\n+/).filter(Boolean);
   const notes = e.notes || [];
-  return paras
-    .map((p, i) => {
-      const note = notes[i]
-        ? `<p class="en-writing-para-note">${escapeHtml(notes[i])}</p>`
-        : "";
-      return `<div class="en-writing-para"><p class="writing-essay-p en-writing-essay-p">${renderClickable(p, e.vocab)}</p>${note}</div>`;
-    })
-    .join("");
+  const slots = e.slots || [];
+  return (
+    renderMap(e.map) +
+    paras
+      .map((p, i) => {
+        const slot = slots[i]
+          ? `<p class="en-writing-slot">${escapeHtml(slots[i])}</p>`
+          : "";
+        const note = notes[i]
+          ? `<p class="en-writing-para-note">${escapeHtml(notes[i])}</p>`
+          : "";
+        return `<div class="en-writing-para">${slot}<p class="writing-essay-p en-writing-essay-p">${renderClickable(p, e.vocab)}</p>${note}</div>`;
+      })
+      .join("")
+  );
 }
 
 function renderVocab(vocab) {
@@ -257,6 +271,7 @@ function openJoseki(id) {
   setTapHint(true);
   renderVocab(null);
   $("#en-writing-read-body").innerHTML =
+    (j.role === "骨" ? `<p class="en-writing-map"><strong>這張是骨架</strong> 先記住格子，再把起手式、連接詞填進去。</p>` : "") +
     `<p class="en-writing-frame">${escapeHtml(j.frame).replace(/\n/g, "<br>")}</p>` +
     renderParas(j.samples.join("\n\n"));
   $("#en-writing-read-steps").innerHTML =

@@ -1860,6 +1860,25 @@ body {
   line-height: 1.55;
 }
 
+.en-writing-map {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #eef4ff;
+  border: 1px solid #c5d8f5;
+  color: #1a3a6b;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.en-writing-slot {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #1a5bb8;
+}
+
 .writing-try-input {
   width: 100%;
   box-sizing: border-box;
