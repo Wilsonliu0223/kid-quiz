@@ -1,5 +1,5 @@
 /**
- * 數學中心：二年級／三年級練習，九九乘法從這裡進去。
+ * 數學中心：二～六年級練習，九九乘法從這裡進去。
  */
 const $ = (sel) => document.querySelector(sel);
 const QUIZ_SIZE = 10;
@@ -152,6 +152,142 @@ function makeG3Frac() {
   );
 }
 
+function makeG3Perim() {
+  const l = rand(6, 18);
+  const w = rand(3, l - 1);
+  const ans = 2 * (l + w);
+  return q(`長方形長 ${l} 公分、寬 ${w} 公分，周長是 □ 公分`, ans, [l + w, l * w, 2 * l + w, 4 * l]);
+}
+
+function oneDec(tenths) {
+  const n = tenths / 10;
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
+function makeG4Mul() {
+  const a = rand(12, 24);
+  const b = rand(11, 16);
+  const ans = a * b;
+  return q(`${a} × ${b} ＝ □`, ans, [(a - 1) * b, a * (b - 1), a + b, a * 10 + b]);
+}
+
+function makeG4Dec() {
+  const a = rand(12, 70);
+  const b = rand(11, 90 - a);
+  if (Math.random() < 0.55) {
+    const ans = oneDec(a + b);
+    return q(`${oneDec(a)} ＋ ${oneDec(b)} ＝ □`, ans, [oneDec(a + b + 10), oneDec(Math.abs(a - b)), oneDec(a + b - 1), oneDec(a)]);
+  }
+  const x = Math.max(a, b);
+  const y = Math.min(a, b);
+  const ans = oneDec(x - y);
+  return q(`${oneDec(x)} － ${oneDec(y)} ＝ □`, ans, [oneDec(x + y), oneDec(x - y + 10), oneDec(y), oneDec(x)]);
+}
+
+function makeG4FracEq() {
+  const n = rand(1, 4);
+  const d = n + rand(1, 4);
+  const k = rand(2, 4);
+  const ans = n * k;
+  return q(`${n}/${d} ＝ □／${d * k}`, ans, [n, d * k, n + k, (d - n) * k]);
+}
+
+function makeG4Area() {
+  const l = rand(5, 14);
+  const w = rand(3, 12);
+  const ans = l * w;
+  return q(`長方形長 ${l} 公分、寬 ${w} 公分，面積是 □ 平方公分`, ans, [2 * (l + w), l + w, l * w + l, (l - 1) * w]);
+}
+
+function makeG5DecMul() {
+  const a = rand(12, 48);
+  const b = rand(2, 9);
+  const ans = oneDec(a * b);
+  return q(`${oneDec(a)} × ${b} ＝ □`, ans, [oneDec(a + b), oneDec(a * (b - 1)), oneDec(a), String(a * b)]);
+}
+
+function makeG5FracAdd() {
+  const d = [4, 5, 6, 8, 10][rand(0, 4)];
+  const a = rand(1, d - 2);
+  const b = rand(1, d - a);
+  if (a + b < d && Math.random() < 0.7) {
+    const ans = `${a + b}/${d}`;
+    return q(`${a}/${d} ＋ ${b}/${d} ＝ □`, ans, [`${a + b}/${d * 2}`, `${Math.abs(a - b)}/${d}`, `${a}/${b}`, `${d}/${a + b}`]);
+  }
+  const x = Math.max(a, b);
+  const y = Math.min(a, b);
+  const ans = `${x - y}/${d}`;
+  return q(`${x}/${d} － ${y}/${d} ＝ □`, ans, [`${x + y}/${d}`, `${x - y}/${d * 2}`, `${x}/${y}`, `${d}/${x - y}`]);
+}
+
+function makeG5Percent() {
+  const rows = [
+    [50, 10, 5],
+    [50, 20, 10],
+    [80, 25, 20],
+    [100, 20, 20],
+    [200, 10, 20],
+    [40, 25, 10],
+    [80, 50, 40],
+    [200, 25, 50],
+    [25, 20, 5],
+  ];
+  const [whole, p, ans] = rows[rand(0, rows.length - 1)];
+  return q(`${whole} 的 ${p}% 是 □`, ans, [whole - p, (whole * p) / 10, p, whole / 2]);
+}
+
+function makeG5Volume() {
+  const l = rand(2, 8);
+  const w = rand(2, 6);
+  const h = rand(2, 6);
+  const ans = l * w * h;
+  return q(`長方體長 ${l}、寬 ${w}、高 ${h}，體積是 □ 立方公分`, ans, [l * w, 2 * (l * w + w * h + h * l), l + w + h, l * w * (h + 1)]);
+}
+
+function makeG6FracMul() {
+  const n = rand(1, 4);
+  const d = n + rand(1, 3);
+  const m = rand(1, 3);
+  const k = d * m;
+  const ans = n * m;
+  return q(`${n}/${d} × ${k} ＝ □`, ans, [n * k, k, d, n + k]);
+}
+
+function makeG6Ratio() {
+  const a = rand(2, 5);
+  const b = rand(a + 1, 9);
+  const k = rand(2, 5);
+  const ans = b * k;
+  return q(`比 ${a}：${b}，前項是 ${a * k}，後項是 □`, ans, [a * k, b, (b - a) * k, a * b]);
+}
+
+function makeG6Discount() {
+  const price = [100, 200, 250, 400, 500][rand(0, 4)];
+  const fold = [6, 7, 8, 9][rand(0, 3)];
+  const ans = (price * fold) / 10;
+  return q(`原價 ${price} 元，打 ${fold} 折後是 □ 元`, ans, [price - fold * 10, (price * fold) / 100, price * fold, price - fold]);
+}
+
+function makeG6Speed() {
+  const h = rand(2, 5);
+  const speed = [30, 40, 50, 60, 80][rand(0, 4)];
+  const dist = speed * h;
+  if (Math.random() < 0.5) {
+    return q(`走 ${dist} 公里花 ${h} 小時，平均速率是 □ 公里／小時`, speed, [dist / (h + 1), dist, h, speed + h]);
+  }
+  return q(`速率 ${speed} 公里／小時，走 ${h} 小時共 □ 公里`, dist, [speed + h, speed * (h - 1), h * 10, dist / h]);
+}
+
+function makeG6Circle() {
+  const r = rand(2, 9);
+  if (Math.random() < 0.5) {
+    const ans = 2 * 3 * r;
+    return q(`圓的半徑 ${r} 公分，圓周長約 □ 公分（π 用 3）`, ans, [3 * r, 3 * r * r, 2 * r, 6 * r + 3]);
+  }
+  const ans = 3 * r * r;
+  return q(`圓的半徑 ${r} 公分，圓面積約 □ 平方公分（π 用 3）`, ans, [2 * 3 * r, 3 * r, r * r, 6 * r]);
+}
+
 const PACKS = {
   g2add100: { title: "100 以內加減", make: makeG2Add100 },
   g2add1000: { title: "1000 以內加減", make: makeG2Add1000 },
@@ -159,6 +295,20 @@ const PACKS = {
   g3mul: { title: "二位數 × 一位數", make: makeG3Mul },
   g3div: { title: "除法（含餘數）", make: makeG3Div },
   g3frac: { title: "分數入門", make: makeG3Frac },
+  g3perim: { title: "長方形周長", make: makeG3Perim },
+  g4mul: { title: "二位數 × 二位數", make: makeG4Mul },
+  g4dec: { title: "小數加減", make: makeG4Dec },
+  g4frac: { title: "等值分數", make: makeG4FracEq },
+  g4area: { title: "長方形面積", make: makeG4Area },
+  g5decmul: { title: "小數 × 整數", make: makeG5DecMul },
+  g5frac: { title: "同分母分數加減", make: makeG5FracAdd },
+  g5percent: { title: "百分率", make: makeG5Percent },
+  g5volume: { title: "長方體體積", make: makeG5Volume },
+  g6fracmul: { title: "分數 × 整數", make: makeG6FracMul },
+  g6ratio: { title: "比與比值", make: makeG6Ratio },
+  g6discount: { title: "折扣百分率", make: makeG6Discount },
+  g6speed: { title: "速率", make: makeG6Speed },
+  g6circle: { title: "圓周長與面積", make: makeG6Circle },
 };
 
 function buildQuiz(packId) {

@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.51";
+        var V = "39.52";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -108,7 +108,7 @@
             </button>
             <button type="button" class="card card-mul" id="btn-start-math">
               <span class="card-title">數學</span>
-              <span class="card-desc">加減 · 九九 · 乘除</span>
+              <span class="card-desc">二～六年級 · 九九</span>
             </button>
             <button type="button" class="card card-gifted" id="btn-start-gifted">
               <span class="card-title">思考練習</span>
@@ -285,7 +285,7 @@
         </header>
         <div class="zh-hub-body math-hub-body">
           <h2 class="zh-hub-group-title math-hub-group-title">二年級</h2>
-          <p class="math-hub-lead">1000 以內加減、時間與長度。九九乘法在下面。</p>
+          <p class="math-hub-lead">1000 以內加減、時間與長度。九九乘法在最下面。</p>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g2add100">
             100 以內加減
           </button>
@@ -297,7 +297,7 @@
           </button>
 
           <h2 class="zh-hub-group-title math-hub-group-title">三年級</h2>
-          <p class="math-hub-lead">二位數乘法、除法、分數入門。</p>
+          <p class="math-hub-lead">乘除、分數入門、長方形周長。</p>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g3mul">
             二位數 × 一位數
           </button>
@@ -306,6 +306,57 @@
           </button>
           <button type="button" class="btn btn-secondary btn-block" data-math-pack="g3frac">
             分數入門
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g3perim">
+            長方形周長
+          </button>
+
+          <h2 class="zh-hub-group-title math-hub-group-title">四年級</h2>
+          <p class="math-hub-lead">二位數乘法、小數、等值分數、面積。</p>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4mul">
+            二位數 × 二位數
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4dec">
+            小數加減
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4frac">
+            等值分數
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g4area">
+            長方形面積
+          </button>
+
+          <h2 class="zh-hub-group-title math-hub-group-title">五年級</h2>
+          <p class="math-hub-lead">小數乘法、分數加減、百分率、體積。</p>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5decmul">
+            小數 × 整數
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5frac">
+            同分母分數加減
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5percent">
+            百分率
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g5volume">
+            長方體體積
+          </button>
+
+          <h2 class="zh-hub-group-title math-hub-group-title">六年級</h2>
+          <p class="math-hub-lead">分數乘法、比、折扣、速率、圓（π 用 3）。</p>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6fracmul">
+            分數 × 整數
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6ratio">
+            比與比值
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6discount">
+            折扣百分率
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6speed">
+            速率
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="g6circle">
+            圓周長與面積
           </button>
 
           <h2 class="zh-hub-group-title math-hub-group-title">九九乘法</h2>
@@ -2942,7 +2993,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.91").catch((e) => {
+      import("./js/app.js?v=app-v45.92").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
