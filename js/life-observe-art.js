@@ -124,6 +124,11 @@ const SCENES = {
       `<rect x="0" y="70" width="320" height="90" fill="#4fc3f7"/><ellipse cx="160" cy="100" rx="54" ry="18" fill="#ef9a9a"/><polygon points="210,100 236,86 236,114" fill="#e57373"/><circle cx="122" cy="96" r="3" fill="#212121"/><polygon points="40,70 80,40 90,70" fill="#2e7d32"/>`,
       "#e1f5fe",
     ),
+  transit: () =>
+    svg(
+      `<rect x="0" y="118" width="320" height="42" fill="#90a4ae"/><rect x="20" y="78" width="70" height="36" rx="8" fill="#43a047"/><circle cx="36" cy="118" r="9" fill="#37474f"/><circle cx="74" cy="118" r="9" fill="#37474f"/><rect x="110" y="70" width="90" height="40" rx="6" fill="#1565c0"/><rect x="118" y="78" width="18" height="14" fill="#bbdefb"/><rect x="142" y="78" width="18" height="14" fill="#bbdefb"/><circle cx="128" cy="118" r="9" fill="#37474f"/><circle cx="182" cy="118" r="9" fill="#37474f"/><rect x="220" y="82" width="80" height="32" rx="10" fill="#ef6c00"/><circle cx="238" cy="118" r="9" fill="#37474f"/><circle cx="282" cy="118" r="9" fill="#37474f"/>`,
+      "#eceff1",
+    ),
 };
 
 export function renderScene(id) {

@@ -9,8 +9,8 @@ import {
   nodeById,
   relsOf,
   zonesForCounty,
-} from "./life-observe-bank.js?v=life-observe-bank-v5";
-import { renderScene } from "./life-observe-art.js?v=life-observe-art-v4";
+} from "./life-observe-bank.js?v=life-observe-bank-v6";
+import { renderScene } from "./life-observe-art.js?v=life-observe-art-v5";
 
 const KEY_COUNTY = "kid-quiz-life-county";
 const DEFAULT_COUNTY = "txg";
