@@ -46,7 +46,7 @@ const SCENES = {
     ),
   bird: () =>
     svg(
-      `<path d="M70 90 q50 -40 100 0 q-40 -8 -50 10 q-20 -18 -50 -10" fill="#90a4ae"/><circle cx="168" cy="78" r="5" fill="#212121"/><path d="M200 70 q40 -30 70 -10" fill="none" stroke="#78909c" stroke-width="4"/>`,
+      `<line x1="16" y1="124" x2="304" y2="124" stroke="#546e7a" stroke-width="5"/><polygon points="92,94 64,80 70,108" fill="#6d4c41"/><ellipse cx="148" cy="92" rx="44" ry="28" fill="#a1887f"/><ellipse cx="136" cy="94" rx="22" ry="14" fill="#6d4c41"/><circle cx="188" cy="76" r="20" fill="#8d6e63"/><circle cx="198" cy="82" r="8" fill="#ffcc80"/><circle cx="196" cy="72" r="3.5" fill="#212121"/><polygon points="206,78 228,82 206,88" fill="#ffb300"/><line x1="140" y1="118" x2="140" y2="124" stroke="#5d4037" stroke-width="3"/><line x1="158" y1="118" x2="158" y2="124" stroke="#5d4037" stroke-width="3"/>`,
       "#e3f2fd",
     ),
   veg: () =>
