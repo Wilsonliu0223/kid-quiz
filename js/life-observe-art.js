@@ -29,6 +29,11 @@ const SCENES = {
       `<rect x="0" y="104" width="320" height="56" fill="#29b6f6"/><path d="M0 104 q40 18 80 0 t80 0 t80 0 t80 0" fill="#4fc3f7"/><circle cx="64" cy="42" r="22" fill="#ffd54f"/><ellipse cx="200" cy="48" rx="52" ry="20" fill="#eceff1"/><path d="M36 78 q60 -14 110 10" fill="none" stroke="#90caf9" stroke-width="5"/>`,
       "#e3f2fd",
     ),
+  climate: () =>
+    svg(
+      `<rect x="0" y="108" width="320" height="52" fill="#4fc3f7"/><polygon points="40,108 90,52 130,108" fill="#66bb6a"/><circle cx="230" cy="40" r="18" fill="#ffd54f"/><ellipse cx="270" cy="58" rx="36" ry="14" fill="#eceff1"/><path d="M20 128 q40 14 80 0 t80 0 t80 0 t80 0" fill="none" stroke="#0288d1" stroke-width="4"/>`,
+      "#e3f2fd",
+    ),
   shadow: () =>
     svg(
       `<circle cx="70" cy="40" r="22" fill="#ffd54f"/><rect x="148" y="50" width="16" height="70" fill="#8d6e63"/><ellipse cx="210" cy="128" rx="70" ry="14" fill="#5d4037" opacity=".45"/>`,
