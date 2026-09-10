@@ -700,7 +700,11 @@ body {
   position: relative;
   width: min(100%, 360px);
   aspect-ratio: 1;
-  margin: 4px auto 14px;
+  margin: 4px auto 4px;
+}
+
+.life-map + .life-links-label {
+  margin-top: 4px;
 }
 
 .life-map-lines {
