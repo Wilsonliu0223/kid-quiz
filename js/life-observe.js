@@ -7,11 +7,12 @@ import {
   RINGS,
   countyById,
   nodeById,
+  lensesOf,
   placeNote,
   relsOf,
   zonesForCounty,
-} from "./life-observe-bank.js?v=life-observe-bank-v7";
-import { renderScene } from "./life-observe-art.js?v=life-observe-art-v5";
+} from "./life-observe-bank.js?v=life-observe-bank-v8";
+import { renderScene } from "./life-observe-art.js?v=life-observe-art-v6";
 
 const KEY_COUNTY = "kid-quiz-life-county";
 const DEFAULT_COUNTY = "txg";
@@ -42,6 +43,12 @@ function loadCounty() {
 function setCounty(id) {
   countyId = COUNTIES.some((c) => c.id === id) ? id : DEFAULT_COUNTY;
   localStorage.setItem(KEY_COUNTY, countyId);
+}
+
+function lensTags(node) {
+  return lensesOf(node)
+    .map((x) => `<span class="life-lens life-lens-${escapeHtml(x.id)}">${escapeHtml(x.name)}</span>`)
+    .join("");
 }
 
 function ringMeta(ring) {
@@ -179,6 +186,7 @@ function renderFocus() {
   const note = placeNote(n.id, countyId);
   box.innerHTML =
     `<p class="life-focus-name">${escapeHtml(n.name)}</p>` +
+    `<p class="life-lens-row">${lensTags(n)}</p>` +
     `<p class="life-focus-because">${escapeHtml(n.because || "")}</p>` +
     (note ? `<p class="life-place-note">${escapeHtml(note)}</p>` : "") +
     `<p class="life-read-k">為什麼連在一起</p>` +
@@ -222,7 +230,7 @@ function paintHub() {
   if (hint) {
     const c = countyById(countyId);
     hint.textContent = c.notes
-      ? `中心是「我」，現在放在${c.name}。先點縣市或水，看這一格怎麼往下長。`
+      ? `中心是「我」，現在放在${c.name}。同一張圖可用人文、地理、歷史、生活科學來看。先點縣市、水或舊名字。`
       : `中心是「我」，現在放在${c.name}。點一個點，先看它連到誰；再點一次或按「看觀察卡」。`;
   }
 }
@@ -267,7 +275,9 @@ function openNode(id) {
   const scene = $("#life-read-scene");
   if (scene) scene.innerHTML = renderScene(n.scene);
   $("#life-read-title").textContent = n.name;
-  $("#life-read-meta").textContent = meta.label + (meta.hint ? ` · ${meta.hint}` : "");
+  $("#life-read-meta").innerHTML =
+    escapeHtml(meta.label + (meta.hint ? ` · ${meta.hint}` : "")) +
+    (lensesOf(n).length ? ` <span class="life-lens-row">${lensTags(n)}</span>` : "");
   const rels = relEntries(n)
     .map(([lid, why]) => {
       const x = nodeById(lid);

@@ -844,6 +844,47 @@ body {
   color: #1d5c38;
 }
 
+.life-lens-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.life-read-meta .life-lens-row {
+  display: inline-flex;
+  margin: 0 0 0 6px;
+  vertical-align: middle;
+}
+
+.life-lens {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.life-lens-people {
+  background: #fde8d0;
+  color: #8a4b12;
+}
+
+.life-lens-place {
+  background: #d8efe4;
+  color: #1b5e3a;
+}
+
+.life-lens-story {
+  background: #efe4d4;
+  color: #6b4f2a;
+}
+
+.life-lens-science {
+  background: #dceaf8;
+  color: #1a4a7a;
+}
+
 .life-focus-because,
 .life-read-because {
   margin: 0 0 10px;

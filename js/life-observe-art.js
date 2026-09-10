@@ -124,6 +124,11 @@ const SCENES = {
       `<rect x="0" y="70" width="320" height="90" fill="#4fc3f7"/><ellipse cx="160" cy="100" rx="54" ry="18" fill="#ef9a9a"/><polygon points="210,100 236,86 236,114" fill="#e57373"/><circle cx="122" cy="96" r="3" fill="#212121"/><polygon points="40,70 80,40 90,70" fill="#2e7d32"/>`,
       "#e1f5fe",
     ),
+  oldhouse: () =>
+    svg(
+      `<rect x="0" y="120" width="320" height="40" fill="#a5d6a7"/><rect x="70" y="48" width="120" height="80" fill="#d7ccc8"/><polygon points="60,48 130,18 200,48" fill="#8d6e63"/><rect x="118" y="88" width="24" height="40" fill="#5d4037"/><rect x="86" y="64" width="22" height="18" fill="#81d4fa"/><rect x="210" y="78" width="70" height="42" rx="6" fill="#fff8e1" stroke="#e0b85a"/><text x="245" y="104" text-anchor="middle" font-size="14" fill="#5c4308" font-weight="700">今</text>`,
+      "#fff8e1",
+    ),
   transit: () =>
     svg(
       `<rect x="0" y="118" width="320" height="42" fill="#90a4ae"/><rect x="20" y="78" width="70" height="36" rx="8" fill="#43a047"/><circle cx="36" cy="118" r="9" fill="#37474f"/><circle cx="74" cy="118" r="9" fill="#37474f"/><rect x="110" y="70" width="90" height="40" rx="6" fill="#1565c0"/><rect x="118" y="78" width="18" height="14" fill="#bbdefb"/><rect x="142" y="78" width="18" height="14" fill="#bbdefb"/><circle cx="128" cy="118" r="9" fill="#37474f"/><circle cx="182" cy="118" r="9" fill="#37474f"/><rect x="220" y="82" width="80" height="32" rx="10" fill="#ef6c00"/><circle cx="238" cy="118" r="9" fill="#37474f"/><circle cx="282" cy="118" r="9" fill="#37474f"/>`,
