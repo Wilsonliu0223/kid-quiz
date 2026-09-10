@@ -134,6 +134,46 @@ const SCENES = {
       `<rect x="0" y="118" width="320" height="42" fill="#90a4ae"/><rect x="20" y="78" width="70" height="36" rx="8" fill="#43a047"/><circle cx="36" cy="118" r="9" fill="#37474f"/><circle cx="74" cy="118" r="9" fill="#37474f"/><rect x="110" y="70" width="90" height="40" rx="6" fill="#1565c0"/><rect x="118" y="78" width="18" height="14" fill="#bbdefb"/><rect x="142" y="78" width="18" height="14" fill="#bbdefb"/><circle cx="128" cy="118" r="9" fill="#37474f"/><circle cx="182" cy="118" r="9" fill="#37474f"/><rect x="220" y="82" width="80" height="32" rx="10" fill="#ef6c00"/><circle cx="238" cy="118" r="9" fill="#37474f"/><circle cx="282" cy="118" r="9" fill="#37474f"/>`,
       "#eceff1",
     ),
+  soil: () =>
+    svg(
+      `<rect x="0" y="88" width="320" height="72" fill="#8d6e63"/><rect x="0" y="70" width="320" height="22" fill="#6d4c41"/><rect x="148" y="36" width="12" height="42" fill="#2e7d32"/><circle cx="154" cy="30" r="16" fill="#66bb6a"/><ellipse cx="70" cy="108" rx="18" ry="8" fill="#5d4037"/><ellipse cx="240" cy="118" rx="22" ry="9" fill="#4e342e"/>`,
+      "#efebe9",
+    ),
+  daynight: () =>
+    svg(
+      `<rect x="0" y="0" width="160" height="160" fill="#bbdefb"/><rect x="160" y="0" width="160" height="160" fill="#1a237e"/><circle cx="70" cy="44" r="22" fill="#ffd54f"/><circle cx="246" cy="44" r="16" fill="#fff9c4"/><rect x="0" y="118" width="320" height="42" fill="#81c784"/><rect x="124" y="78" width="72" height="44" fill="#ffe0b2"/><polygon points="120,78 160,52 200,78" fill="#e57373"/>`,
+      "#e3f2fd",
+    ),
+  sea: () =>
+    svg(
+      `<rect x="0" y="70" width="320" height="90" fill="#0288d1"/><path d="M0 70 q40 18 80 0 t80 0 t80 0 t80 0" fill="#4fc3f7"/><ellipse cx="250" cy="40" rx="28" ry="12" fill="#eceff1"/><path d="M40 100 q20 14 40 0 t40 0" fill="none" stroke="#b3e5fc" stroke-width="4"/>`,
+      "#b3e5fc",
+    ),
+  creek: () =>
+    svg(
+      `<polygon points="0,40 80,20 140,70 90,160 0,160" fill="#81c784"/><path d="M60 20 q40 40 30 70 t50 70" fill="none" stroke="#29b6f6" stroke-width="14"/><path d="M60 20 q40 40 30 70 t50 70" fill="none" stroke="#81d4fa" stroke-width="6"/><rect x="200" y="90" width="90" height="70" fill="#c8e6c9"/>`,
+      "#e1f5fe",
+    ),
+  market: () =>
+    svg(
+      `<rect x="0" y="120" width="320" height="40" fill="#a5d6a7"/><rect x="30" y="70" width="80" height="54" fill="#ffcc80"/><rect x="120" y="58" width="90" height="66" fill="#ef9a9a"/><rect x="220" y="74" width="70" height="50" fill="#90caf9"/><rect x="40" y="54" width="60" height="16" fill="#e53935"/><circle cx="70" cy="100" r="8" fill="#66bb6a"/><circle cx="160" cy="92" r="8" fill="#ffee58"/>`,
+      "#fff8e1",
+    ),
+  season: () =>
+    svg(
+      `<rect x="0" y="0" width="80" height="160" fill="#e8f5e9"/><rect x="80" y="0" width="80" height="160" fill="#fff9c4"/><rect x="160" y="0" width="80" height="160" fill="#ffe0b2"/><rect x="240" y="0" width="80" height="160" fill="#e3f2fd"/><circle cx="40" cy="50" r="14" fill="#66bb6a"/><circle cx="120" cy="50" r="14" fill="#43a047"/><circle cx="200" cy="50" r="14" fill="#ef6c00"/><circle cx="280" cy="50" r="14" fill="#90caf9"/>`,
+      "#fffde7",
+    ),
+  nightmarket: () =>
+    svg(
+      `<rect x="0" y="0" width="320" height="160" fill="#1a237e"/><rect x="0" y="118" width="320" height="42" fill="#37474f"/><rect x="36" y="70" width="70" height="50" fill="#ff8a65"/><rect x="124" y="62" width="80" height="58" fill="#ffd54f"/><rect x="220" y="74" width="64" height="46" fill="#ef5350"/><circle cx="50" cy="56" r="6" fill="#fff59d"/><circle cx="160" cy="48" r="6" fill="#fff59d"/><circle cx="250" cy="58" r="6" fill="#fff59d"/>`,
+      "#1a237e",
+    ),
+  trail: () =>
+    svg(
+      `<polygon points="0,160 90,70 150,160" fill="#66bb6a"/><polygon points="120,160 220,40 320,160" fill="#43a047"/><path d="M40 150 q40 -20 70 -6 t70 -10 t80 8" fill="none" stroke="#8d6e63" stroke-width="10"/><rect x="148" y="88" width="10" height="36" fill="#6d4c41"/><circle cx="153" cy="80" r="14" fill="#2e7d32"/>`,
+      "#e8f5e9",
+    ),
 };
 
 export function renderScene(id) {

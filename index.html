@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.68";
+        var V = "39.69";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.69" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.70" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -577,11 +577,13 @@
         </header>
         <div class="life-hub-body">
           <p class="life-hub-hint" id="life-hub-hint"></p>
+          <div id="life-quest" class="life-quest" hidden></div>
+          <button type="button" class="btn-text" id="btn-life-back-maze" hidden>回去走迷宮</button>
           <label class="life-county-label" for="life-county">我們家在</label>
           <select id="life-county" class="life-county-select" aria-label="選擇縣市"></select>
           <p class="life-map-legend">外圈臺灣與海 · 次圈家鄉 · 內圈自然 · 最內日常</p>
           <div class="life-map" id="life-map"></div>
-          <p class="life-links-label">橫向連線：水、風、光</p>
+          <p class="life-links-label">橫向連線：水、溪、風、光</p>
           <div class="life-links" id="life-links"></div>
           <p class="life-links-label" id="life-zones-label" hidden>三種面貌</p>
           <div class="life-links" id="life-zones" hidden></div>
@@ -3110,7 +3112,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.08").catch((e) => {
+      import("./js/app.js?v=app-v46.09").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

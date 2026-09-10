@@ -723,6 +723,18 @@ body {
   opacity: 0.5;
 }
 
+.life-map-lines line.is-door {
+  stroke: #40916c;
+  stroke-width: 4;
+  opacity: 0.85;
+}
+
+.life-map-lines line.is-walked {
+  stroke: #d4a017;
+  stroke-width: 5;
+  opacity: 0.95;
+}
+
 .life-map-orbit {
   position: absolute;
   border-radius: 50%;
@@ -785,11 +797,11 @@ body {
   pointer-events: auto;
   margin-top: calc(-1 * var(--r));
   transform: translate(-50%, -50%) rotate(calc(-1 * var(--a)));
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-radius: 999px;
   background: #fff;
   color: #1b4332;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 800;
   line-height: 1.2;
   box-shadow: 0 1px 0 #95d5b2;
@@ -817,6 +829,125 @@ body {
 .life-map-node.is-dim,
 .life-map-core.is-dim {
   opacity: 0.38;
+}
+
+.life-map-node.is-locked,
+.life-link-chip.is-locked,
+.life-link-chip.is-dim {
+  pointer-events: none;
+}
+
+.life-map-node.is-goal,
+.life-link-chip.is-goal,
+.life-zone-chip.is-goal {
+  outline: 3px solid #e67e22;
+  background: #fff3e0;
+}
+
+.life-map-node.is-must,
+.life-link-chip.is-must,
+.life-zone-chip.is-must {
+  outline: 2px dashed #d4a017;
+}
+
+.life-map-node.is-must-done,
+.life-link-chip.is-must-done,
+.life-zone-chip.is-must-done {
+  outline: 2px solid #d4a017;
+  background: #fff8e1;
+}
+
+.life-map-node.is-here,
+.life-map-core.is-here,
+.life-link-chip.is-here {
+  outline: 3px solid #2d6a4f;
+  box-shadow: 0 0 0 3px #d8f3dc;
+}
+
+.life-map-node.is-walked,
+.life-map-core.is-walked,
+.life-link-chip.is-walked {
+  opacity: 0.85;
+}
+
+.life-walker {
+  position: absolute;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  background: #2d6a4f;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.35);
+  transition: left 0.28s ease, top 0.28s ease;
+}
+
+.life-quest {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff8e8;
+  border: 1px solid #e0b85a;
+}
+
+.life-quest-ask {
+  margin: 0 0 4px;
+  font-weight: 800;
+  color: #5c4308;
+}
+
+.life-quest-path,
+.life-quest-must {
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.life-must {
+  display: inline-block;
+  margin: 0 4px 4px 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px dashed #d4a017;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.life-must.is-done {
+  background: #fff3cd;
+  border-style: solid;
+}
+
+.life-quest-win {
+  margin: 0 0 6px;
+  font-weight: 800;
+  color: #1d5c38;
+}
+
+.life-quest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.life-maze-miss {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fdecea;
+  border: 1px solid #e6a6a1;
+  line-height: 1.5;
+}
+
+#btn-life-back-maze {
+  margin: 0 0 8px;
 }
 
 .life-link-chip.is-focus {
