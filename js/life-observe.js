@@ -187,6 +187,30 @@ function whyBetween(fromId, toId) {
   return found ? found[1] : "";
 }
 
+function pathHops(fromId, toId) {
+  if (!fromId || !toId || fromId === toId) return [];
+  const prev = { [fromId]: null };
+  const q = [fromId];
+  for (let i = 0; i < q.length; i += 1) {
+    const cur = q[i];
+    for (const nb of neighborIds(cur)) {
+      if (prev[nb] !== undefined) continue;
+      prev[nb] = cur;
+      if (nb === toId) {
+        const ids = [toId];
+        while (ids[0] !== fromId) ids.unshift(prev[ids[0]]);
+        const hops = [];
+        for (let j = 0; j < ids.length - 1; j += 1) {
+          hops.push({ from: ids[j], to: ids[j + 1], why: whyBetween(ids[j], ids[j + 1]) });
+        }
+        return hops;
+      }
+      q.push(nb);
+    }
+  }
+  return [];
+}
+
 function firstSentence(s) {
   const t = String(s || "").trim();
   if (!t) return "";
@@ -349,18 +373,48 @@ function renderQuest() {
     `<div class="life-quest-actions">` +
     `<button type="button" class="btn-text" id="btn-life-free">自由看圖</button>` +
     `<button type="button" class="btn-text" id="btn-life-next-maze">再走一題</button>` +
-    `</div>` +
-    joinHtml();
+    `</div>`;
 }
 
 function joinHtml() {
-  const fromN = lastStep ? nodeById(lastStep.from) : null;
-  const toN = lastStep ? nodeById(lastStep.to) : null;
-  if (!lastStep || !fromN || !toN) return "";
+  if (!lastStep) return "";
+  const fromN = nodeById(lastStep.from);
+  const toN = nodeById(lastStep.to);
+  if (!fromN || !toN) return "";
+  const hops = lastStep.hops || [];
+  if (!hops.length) {
+    return (
+      `<p class="life-read-k">組合意義</p>` +
+      `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」沒有連線，中間也接不起來。</p>`
+    );
+  }
+  if (hops.length === 1) {
+    return (
+      `<p class="life-read-k">組合意義</p>` +
+      `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」為什麼能連：${escapeHtml(hops[0].why)}</p>`
+    );
+  }
+  const names = [fromN.name, ...hops.map((h) => nodeById(h.to)?.name || h.to)].join(" → ");
+  const lines = hops
+    .map((h) => {
+      const a = nodeById(h.from);
+      const b = nodeById(h.to);
+      return `<p class="life-join-hop">「${escapeHtml(a ? a.name : h.from)}」→「${escapeHtml(b ? b.name : h.to)}」：${escapeHtml(h.why)}</p>`;
+    })
+    .join("");
   return (
     `<p class="life-read-k">組合意義</p>` +
-    `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」為什麼能連：${escapeHtml(lastStep.why)}</p>`
+    `<p class="life-join">這兩格要這樣連：${escapeHtml(names)}</p>` +
+    lines
   );
+}
+
+function renderJoin() {
+  const box = $("#life-join-slot");
+  if (!box) return;
+  const html = joinHtml();
+  box.hidden = !html;
+  box.innerHTML = html;
 }
 
 function renderFocus() {
@@ -438,7 +492,7 @@ function renderHint() {
     return;
   }
   const c = countyById(countyId);
-  hint.textContent = `自由看圖。現在放在${c.name}。點一個點看它連到誰。`;
+  hint.textContent = `自由看圖。現在放在${c.name}。亂點兩個點，上面會寫它們怎麼連在一起。`;
 }
 
 function renderModeBar() {
@@ -452,6 +506,7 @@ function paintHub() {
   renderCountySelect();
   renderQuest();
   renderModeBar();
+  renderJoin();
   renderHint();
   renderMap();
   renderFocus();
@@ -464,7 +519,7 @@ function walkTo(id) {
   if (!nodeById(id)) return;
   if (!freeBrowse && !canWalk(id)) return;
   if (id !== hereId) {
-    lastStep = { from: hereId, to: id, why: whyBetween(hereId, id) };
+    lastStep = { from: hereId, to: id, hops: pathHops(hereId, id) };
     walked.push([hereId, id]);
     hereId = id;
     visited.add(id);
