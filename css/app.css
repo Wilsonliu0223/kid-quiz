@@ -703,10 +703,27 @@ body {
   margin: 4px auto 14px;
 }
 
+.life-map-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.life-map-lines line {
+  stroke: #2d6a4f;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
 .life-map-orbit {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
+  z-index: 0;
 }
 
 .life-map-orbit[data-ring="4"] {
@@ -734,6 +751,7 @@ body {
   inset: 0;
   transform: rotate(var(--a));
   pointer-events: none;
+  z-index: 2;
 }
 
 .life-map-core,
@@ -756,6 +774,7 @@ body {
   font-weight: 800;
   font-size: 1.15rem;
   box-shadow: 0 4px 12px rgba(45, 106, 79, 0.28);
+  z-index: 3;
 }
 
 .life-map-node {
@@ -778,6 +797,93 @@ body {
   background: #2d6a4f;
   color: #fff;
   border-color: #1b4332;
+}
+
+.life-map-node.is-focus,
+.life-map-core.is-focus {
+  outline: 3px solid #d4a017;
+  box-shadow: 0 0 0 3px #fff3cd;
+}
+
+.life-map-node.is-rel,
+.life-map-core.is-rel {
+  outline: 2px solid #40916c;
+}
+
+.life-map-node.is-dim,
+.life-map-core.is-dim {
+  opacity: 0.38;
+}
+
+.life-link-chip.is-focus {
+  background: #2d6a4f;
+  color: #fff;
+  border-color: #1b4332;
+}
+
+.life-link-chip.is-rel {
+  outline: 2px solid #40916c;
+}
+
+.life-focus {
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f4fbf6;
+  border: 1px solid #8fc9a0;
+}
+
+.life-focus-name {
+  margin: 0 0 4px;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #1d5c38;
+}
+
+.life-focus-because,
+.life-read-because {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #e8f6ee;
+  line-height: 1.5;
+}
+
+.life-rel-rows,
+.life-read-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.life-rel-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid #95d5b2;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.life-rel-row strong {
+  display: block;
+  color: #1d5c38;
+}
+
+.life-rel-row span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.85rem;
+  color: #4a6654;
+  font-weight: 500;
+}
+
+#btn-life-list-toggle {
+  margin: 8px 0 4px;
 }
 
 .life-links-label,
@@ -879,7 +985,7 @@ body {
 
 .life-read-links {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
