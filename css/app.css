@@ -673,6 +673,29 @@ body {
   font: inherit;
 }
 
+.life-zone-chip {
+  background: #fff8e8;
+  border-color: #e0b85a;
+  color: #5c4308;
+}
+
+.life-scene-wrap {
+  margin: 0 0 10px;
+}
+
+.life-scene {
+  overflow: hidden;
+  border-radius: 16px;
+  border: 2px solid #8fc9a0;
+  background: #e8f6ee;
+}
+
+.life-scene-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .life-map {
   position: relative;
   width: min(100%, 360px);

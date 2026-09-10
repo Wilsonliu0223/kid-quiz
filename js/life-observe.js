@@ -7,13 +7,16 @@ import {
   RINGS,
   countyById,
   nodeById,
-} from "./life-observe-bank.js?v=life-observe-bank-v1";
+  zonesForCounty,
+} from "./life-observe-bank.js?v=life-observe-bank-v2";
+import { renderScene } from "./life-observe-art.js?v=life-observe-art-v1";
 
 const KEY_COUNTY = "kid-quiz-life-county";
+const DEFAULT_COUNTY = "txg";
 
 /** @type {{ showView: (name: string) => void } | null} */
 let deps = null;
-let countyId = "tpe";
+let countyId = DEFAULT_COUNTY;
 let currentId = "";
 
 const $ = (sel) => document.querySelector(sel);
@@ -28,17 +31,18 @@ function escapeHtml(s) {
 
 function loadCounty() {
   const id = localStorage.getItem(KEY_COUNTY);
-  return COUNTIES.some((c) => c.id === id) ? id : "tpe";
+  return COUNTIES.some((c) => c.id === id) ? id : DEFAULT_COUNTY;
 }
 
 function setCounty(id) {
-  countyId = COUNTIES.some((c) => c.id === id) ? id : "tpe";
+  countyId = COUNTIES.some((c) => c.id === id) ? id : DEFAULT_COUNTY;
   localStorage.setItem(KEY_COUNTY, countyId);
 }
 
 function ringMeta(ring) {
   if (ring === "core") return { label: "中心", hint: "" };
   if (ring === "link") return { label: "連線", hint: "把地方和觀察接起來。" };
+  if (ring === "zone") return { label: "都市面貌", hint: "同一座城市的不同樣子。" };
   return RINGS.find((r) => r.id === ring) || { label: "", hint: "" };
 }
 
@@ -57,6 +61,21 @@ function renderCountySelect() {
     (c) =>
       `<option value="${escapeHtml(c.id)}"${c.id === countyId ? " selected" : ""}>${escapeHtml(c.name)}</option>`,
   ).join("");
+}
+
+function renderZones() {
+  const box = $("#life-zones");
+  const label = $("#life-zones-label");
+  if (!box) return;
+  const zones = zonesForCounty(countyId);
+  if (label) label.hidden = zones.length === 0;
+  box.hidden = zones.length === 0;
+  box.innerHTML = zones
+    .map(
+      (n) =>
+        `<button type="button" class="life-link-chip life-zone-chip" data-life-node="${escapeHtml(n.id)}">${escapeHtml(n.name)}</button>`,
+    )
+    .join("");
 }
 
 function renderMap() {
@@ -91,7 +110,9 @@ function renderLinks() {
 function renderList() {
   const box = $("#life-list");
   if (!box) return;
+  const zones = zonesForCounty(countyId);
   const groups = [
+    ...(zones.length ? [{ ring: "zone", nodes: zones }] : []),
     { ring: 0, nodes: NODES.filter((n) => n.ring === 0) },
     { ring: 1, nodes: NODES.filter((n) => n.ring === 1) },
     { ring: 2, nodes: NODES.filter((n) => n.ring === 2) },
@@ -114,13 +135,15 @@ function renderList() {
 function openHub() {
   countyId = loadCounty();
   renderCountySelect();
+  renderZones();
   renderMap();
   renderLinks();
   renderList();
   const hint = $("#life-hub-hint");
   if (hint) {
     const c = countyById(countyId);
-    hint.textContent = `第一期：由家門口往外。現在中心是「${c.name}」。先點圖上的圈，或下面的連線。`;
+    const extra = zonesForCounty(countyId).length ? "下面還有這座城市的面貌。" : "";
+    hint.textContent = `由家門口往外看。現在中心是「${c.name}」。先點圖上的圈。${extra}`;
   }
   deps.showView("lifeHub");
 }
@@ -128,11 +151,19 @@ function openHub() {
 function countyExtra(node) {
   if (!node.countyCard) return "";
   const c = countyById(countyId);
+  const zones = zonesForCounty(countyId);
+  const zoneBtns = zones
+    .map(
+      (z) =>
+        `<button type="button" class="life-rel" data-life-node="${escapeHtml(z.id)}">${escapeHtml(z.name)}</button>`,
+    )
+    .join("");
   return (
     `<div class="life-county-card">` +
     `<p class="life-county-name">${escapeHtml(c.name)}</p>` +
     `<p>${escapeHtml(c.pos)}。地形常見：${escapeHtml(c.land)}。</p>` +
     `<p>${escapeHtml(c.life)}</p>` +
+    (zoneBtns ? `<p class="life-read-k">這座城市的面貌</p><div class="life-read-links">${zoneBtns}</div>` : "") +
     `</div>`
   );
 }
@@ -142,6 +173,8 @@ function openNode(id) {
   if (!n) return;
   currentId = n.id;
   const meta = ringMeta(n.ring);
+  const scene = $("#life-read-scene");
+  if (scene) scene.innerHTML = renderScene(n.scene);
   $("#life-read-title").textContent = n.name;
   $("#life-read-meta").textContent = meta.label + (meta.hint ? ` · ${meta.hint}` : "");
   $("#life-read-body").innerHTML =

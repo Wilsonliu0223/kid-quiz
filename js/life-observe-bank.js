@@ -17,7 +17,14 @@ export const COUNTIES = [
   { id: "hcc", name: "新竹市", pos: "西北沿海", land: "平原靠海", life: "風著名，冬天騎車要穿外套。" },
   { id: "hcq", name: "新竹縣", pos: "新竹市旁邊往山裡", land: "丘陵、山", life: "往山上走，樹比樓還多。" },
   { id: "mia", name: "苗栗縣", pos: "中北部", land: "丘陵、海岸", life: "有海線也有山線，火車兩種風景。" },
-  { id: "txg", name: "臺中市", pos: "中部盆地", land: "盆地、大肚山", life: "秋天常乾爽，夕陽看得到山線。" },
+  {
+    id: "txg",
+    name: "臺中市",
+    pos: "中部盆地，一邊山、一邊海",
+    land: "盆地、大肚台地、大甲溪、海線濕地",
+    life: "市區綠園道、海線看夕陽、山線走步道。同一座城市有三種面貌。",
+    zones: ["txg-city", "txg-coast", "txg-mt", "txg-food", "txg-life"],
+  },
   { id: "cha", name: "彰化縣", pos: "中部平原", land: "平原、海岸", life: "田多，風一吹稻子會波浪。" },
   { id: "nan", name: "南投縣", pos: "臺灣正中間、不靠海", land: "山、盆地", life: "全縣沒有海岸，溪從山裡流出來。" },
   { id: "yun", name: "雲林縣", pos: "中南部平原", land: "平原", life: "很多菜和水果從這裡上路。" },
@@ -44,6 +51,7 @@ export const NODES = [
     what: "觀察從自己的腳下開始。你站的地方，就是地圖的中心。",
     where: "家、學校、路上。先問：我現在在哪一層樓、朝哪一邊。",
     do: "走到窗邊，說出你看見的三樣東西：遠的、近的、天上的。",
+    scene: "window",
     links: ["home", "school", "shadow", "taiwan"],
   },
   {
@@ -54,6 +62,7 @@ export const NODES = [
     what: "家是你最熟的空間：門朝哪、窗朝哪、哪裡會積水。",
     where: "大門、陽台、廚房窗戶。",
     do: "畫一張你家平面：門、窗、太陽早上從哪邊進來。",
+    scene: "house",
     links: ["school", "shadow", "food", "address", "light"],
   },
   {
@@ -64,6 +73,7 @@ export const NODES = [
     what: "校園是第二個觀察場：操場、樹、水溝、旗杆的影子。",
     where: "下課十分鐘就能看一圈。",
     do: "在學校找一棵你叫得出名字或特徵的樹，記住它在哪一棟旁邊。",
+    scene: "school",
     links: ["tree", "shadow", "weather", "address"],
   },
   {
@@ -74,6 +84,7 @@ export const NODES = [
     what: "今天要不要加外套，就是最靠近你的科學。",
     where: "出門前的皮膚、窗戶上的水珠、地上乾不乾。",
     do: "連續三天在同一時間摸窗戶：涼、暖、還是有水珠。",
+    scene: "suncloud",
     links: ["wind", "shadow", "light", "county"],
   },
   {
@@ -84,6 +95,7 @@ export const NODES = [
     what: "影子告訴你光從哪裡來。早上和下午，同一根柱子方向不同。",
     where: "窗邊、走廊、操場的旗杆。",
     do: "早上上學、下午放學，各看一次旗杆或電線杆影子指哪。",
+    scene: "shadow",
     links: ["light", "school", "home", "taiwan"],
   },
   {
@@ -94,6 +106,7 @@ export const NODES = [
     what: "今晚的菜來自田、海或山。它把家和遠方的地連起來。",
     where: "晚餐盤子、市場、冰箱標示。",
     do: "問一次：這盤裡有沒有一樣是臺灣自己種或抓的。",
+    scene: "bowl",
     links: ["veg", "water", "county", "taiwan"],
   },
   {
@@ -105,6 +118,7 @@ export const NODES = [
     what: "先認一棵，不要一次認十種。葉子的邊、樹皮、會不會落葉。",
     where: "校園、人行道、公園。",
     do: "選一棵樹，畫一片葉子，寫它現在有沒有花或果。",
+    scene: "tree",
     links: ["bird", "veg", "light", "water"],
   },
   {
@@ -116,6 +130,7 @@ export const NODES = [
     what: "蟲不是髒。看腳幾對、會不會飛、喜歡陰還是亮。",
     where: "花盆底、燈光下、雨後的牆。",
     do: "找到一隻，不抓回家，只記住它在什麼東西旁邊。",
+    scene: "bug",
     links: ["tree", "bird", "weather"],
   },
   {
@@ -127,6 +142,7 @@ export const NODES = [
     what: "城市裡也有鳥。先聽聲音、看體型，不必馬上叫出名字。",
     where: "電線、屋頂、校園榕樹。",
     do: "早上或黃昏站一分鐘，數你聽見幾種叫聲。",
+    scene: "bird",
     links: ["tree", "wind", "taiwan"],
   },
   {
@@ -138,6 +154,7 @@ export const NODES = [
     what: "菜是被照顧的植物。根在土裡，葉子吃光。",
     where: "陽台盆、學校菜園、市場。",
     do: "認一種你這週吃過的菜，說它是葉、果，還是根。",
+    scene: "veg",
     links: ["food", "tree", "water", "county"],
   },
   {
@@ -148,6 +165,7 @@ export const NODES = [
     what: "地址是一串由大到小的位置：縣市、鄉鎮區、路、號。地圖上還要知道哪裡是北。",
     where: "信封、門牌、教室的北。",
     do: "說出你家的縣市和鄉鎮區。再指出教室或客廳的北方。",
+    scene: "compass",
     links: ["town", "mapkeys", "county", "taiwan"],
   },
   {
@@ -158,6 +176,7 @@ export const NODES = [
     what: "鄉、鎮、市、區是縣市裡面的一塊。你的學校通常就在其中一區。",
     where: "戶口、公車、地方新聞的標題。",
     do: "問家人：我們算哪個區或哪個鄉？隔壁是哪一區？",
+    scene: "town",
     links: ["address", "placename", "county"],
   },
   {
@@ -168,6 +187,7 @@ export const NODES = [
     what: "地名常常藏故事：靠山、靠水、一種樹、一種工作。",
     where: "路名、舊地名、土地公廟旁的牌子。",
     do: "查一個家附近的地名，猜它跟山、水、還是人有關。",
+    scene: "town",
     links: ["town", "water", "county"],
   },
   {
@@ -178,6 +198,7 @@ export const NODES = [
     what: "地圖四樣：圖名、方向標、圖例、比例尺。沒有北，路會走反。",
     where: "課本附圖、手機地圖、公園導覽圖。",
     do: "打開一張地圖，先找北，再找你家大概在哪一角。",
+    scene: "compass",
     links: ["address", "county", "taiwan"],
   },
   {
@@ -188,6 +209,7 @@ export const NODES = [
     what: "臺灣有許多縣市。先認得自己的那一格，再看它靠山還是靠海。",
     where: "上面選「我們家在」，這張卡會換成你的縣市。",
     do: "用自己的話說：我的縣市在島的哪一邊？看不看得到山或海？",
+    scene: "city",
     links: ["address", "mapkeys", "taiwan", "weather", "food"],
     countyCard: true,
   },
@@ -200,6 +222,7 @@ export const NODES = [
     what: "臺灣是海裡的島。東邊太平洋，西邊臺灣海峽，北邊東海，南邊巴士海峽。",
     where: "世界地圖先找亞洲東邊，再把鏡頭拉近。",
     do: "用手指當島：上北下南，左邊是海峽，右邊是大洋。",
+    scene: "island",
     links: ["county", "water", "wind", "mapkeys", "me"],
   },
   {
@@ -210,6 +233,7 @@ export const NODES = [
     what: "水把家、田、河、海串成一條線。你喝的、洗的，最後多半往低處走。",
     where: "水龍頭、水溝、家鄉的溪、海邊。",
     do: "下雨後看水往哪流。猜它會不會走到河，再走到海。",
+    scene: "water",
     links: ["food", "veg", "placename", "taiwan", "county"],
   },
   {
@@ -220,6 +244,7 @@ export const NODES = [
     what: "風從海上來，雨落在你家。宜蘭的雨和澎湖的風，都跟位置有關。",
     where: "臉頰、衣服乾得快不快、氣象圖上的風向。",
     do: "今天有風嗎？從哪邊吹來？和昨天一樣嗎？",
+    scene: "wind",
     links: ["weather", "bird", "taiwan", "county"],
   },
   {
@@ -230,16 +255,81 @@ export const NODES = [
     what: "光讓植物長大，也讓影子搬家。之後才會走到太陽和星星。",
     where: "窗、燈、操場。",
     do: "同一面牆，早上和傍晚哪個比較亮？影子誰比較長？",
+    scene: "light",
     links: ["shadow", "tree", "weather", "me"],
   },
 ];
 
+/** 縣市專屬面貌。不進同心圓，選了該縣市才出現。 */
+export const ZONE_NODES = [
+  {
+    id: "txg-city",
+    ring: "zone",
+    county: "txg",
+    name: "市區",
+    scene: "city",
+    what: "臺中市區在盆地裡。草悟道、秋紅谷是可以走路的綠園道；逢甲晚上很亮；科博館能看恐龍和星星；彩虹眷村的牆畫滿顏色。宮原眼科現在是老房子裡的甜點店，很多人來拍照。",
+    where: "西區、北區的園道，西屯逢甲，館前路的科博館，南屯彩虹眷村。",
+    do: "走一段綠園道，數你看見幾種樹，再抬頭看遠方有沒有山。",
+    links: ["county", "light", "mapkeys", "txg-food", "txg-mt"],
+  },
+  {
+    id: "txg-coast",
+    ring: "zone",
+    county: "txg",
+    name: "海線",
+    scene: "wetland",
+    what: "臺中西邊靠海。清水高美濕地在大甲溪出海口，木棧道、夕陽和雲林莞草很有名。草澤裡有招潮蟹，秋冬常有候鳥停腳。梧棲漁港是魚上岸的地方。",
+    where: "清水高美濕地、梧棲漁港。只走木棧道，不要踩進草澤。",
+    do: "看一次夕陽，或在地圖上找：大甲溪從山裡流到海，濕地就在河口。",
+    links: ["water", "wind", "bird", "county", "txg-mt"],
+  },
+  {
+    id: "txg-mt",
+    ring: "zone",
+    county: "txg",
+    name: "山線",
+    scene: "mountain",
+    what: "臺中東邊往山裡走。北屯大坑是市區的後花園，有步道。再進去是和平的谷關、梨山、武陵。大甲溪從山裡流出來，經過谷關再往海走。",
+    where: "大坑步道、谷關、梨山、武陵農場附近。",
+    do: "問家人：我們比較常去大坑，還是更裡面的山？",
+    links: ["water", "tree", "county", "taiwan", "txg-life", "txg-coast"],
+  },
+  {
+    id: "txg-food",
+    ring: "zone",
+    county: "txg",
+    name: "臺中吃的",
+    scene: "food",
+    what: "太陽餅是臺中很有名的伴手禮，薄皮裡包麥芽餡。珍珠奶茶常有人說跟臺中有關，可是「誰最先發明」說法不只一種，先當有趣的茶飲就好。在地還有爌肉飯、大麵羹；大坑步道口常吃得到芋圓。",
+    where: "太陽餅店、夜市、大坑的冰店或芋圓店。",
+    do: "咬一口太陽餅，看皮有多薄；或問家人比較常吃爌肉飯還是大麵羹。",
+    links: ["food", "county", "veg", "txg-city"],
+  },
+  {
+    id: "txg-life",
+    ring: "zone",
+    county: "txg",
+    name: "山裡的生命",
+    scene: "butterfly",
+    what: "大坑春夏有時看得到紫斑蝶、獨角仙，傍晚可能有螢火蟲。黃裳鳳蝶是保育類，翅膀很大、很少見，看見就看、不要抓。武陵附近的七家灣溪住著國寶魚櫻花鉤吻鮭，牠是冰河時代留下來的山溪鮭魚，只能看、不能抓。淺山還有石虎，大肚台地、東勢與和平交界有人看過，市區很少見。",
+    where: "大坑步道看蝶、甲蟲、螢火蟲。櫻花鉤吻鮭多半在解說牌或圖上看；石虎住淺山，不是公園裡的貓。",
+    do: "上山只帶眼睛。看見蟲或蝶，記住它停在哪一種植物旁邊。",
+    links: ["bug", "bird", "tree", "water", "txg-mt"],
+  },
+];
+
 export function nodeById(id) {
-  return NODES.find((n) => n.id === id) || null;
+  return NODES.find((n) => n.id === id) || ZONE_NODES.find((n) => n.id === id) || null;
 }
 
 export function countyById(id) {
-  return COUNTIES.find((c) => c.id === id) || COUNTIES[0];
+  return COUNTIES.find((c) => c.id === id) || COUNTIES.find((c) => c.id === "txg") || COUNTIES[0];
+}
+
+export function zonesForCounty(id) {
+  const c = countyById(id);
+  return (c.zones || []).map((zid) => nodeById(zid)).filter(Boolean);
 }
 
 export function nodesForRing(ring) {
