@@ -68,7 +68,7 @@ import {
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
 import { initWriting } from "./writing.js?v=writing-v3";
 import { initEnWriting } from "./en-writing.js?v=en-writing-v5";
-import { initLifeObserve } from "./life-observe.js?v=life-observe-v13";
+import { initLifeObserve } from "./life-observe.js?v=life-observe-v14";
 import {
   initZhPractice,
   openZhHub,

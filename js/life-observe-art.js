@@ -174,6 +174,21 @@ const SCENES = {
       `<polygon points="0,160 90,70 150,160" fill="#66bb6a"/><polygon points="120,160 220,40 320,160" fill="#43a047"/><path d="M40 150 q40 -20 70 -6 t70 -10 t80 8" fill="none" stroke="#8d6e63" stroke-width="10"/><rect x="148" y="88" width="10" height="36" fill="#6d4c41"/><circle cx="153" cy="80" r="14" fill="#2e7d32"/>`,
       "#e8f5e9",
     ),
+  basin: () =>
+    svg(
+      `<polygon points="0,40 70,90 0,160" fill="#66bb6a"/><polygon points="320,30 250,88 320,160" fill="#43a047"/><ellipse cx="160" cy="118" rx="110" ry="36" fill="#c8e6c9"/><rect x="90" y="96" width="70" height="28" fill="#90caf9"/><rect x="170" y="100" width="36" height="24" fill="#ffe0b2"/><path d="M40 70 q60 30 120 8 t120 10" fill="none" stroke="#29b6f6" stroke-width="6"/>`,
+      "#e8f5e9",
+    ),
+  mouth: () =>
+    svg(
+      `<rect x="0" y="88" width="320" height="72" fill="#0288d1"/><path d="M0 88 q50 20 100 0 t100 0 t120 0" fill="#4fc3f7"/><path d="M20 20 q30 50 50 70 t70 40" fill="none" stroke="#29b6f6" stroke-width="16"/><path d="M20 20 q30 50 50 70 t70 40" fill="none" stroke="#81d4fa" stroke-width="7"/><ellipse cx="150" cy="118" rx="54" ry="16" fill="#81c784"/>`,
+      "#b3e5fc",
+    ),
+  slope: () =>
+    svg(
+      `<polygon points="0,160 220,20 320,20 320,160" fill="#a5d6a7"/><polygon points="0,160 220,20 220,160" fill="#81c784"/><path d="M40 150 q50 -40 90 -20 t90 -50" fill="none" stroke="#29b6f6" stroke-width="8"/><rect x="36" y="118" width="28" height="22" fill="#ffe0b2"/><polygon points="34,118 50,102 66,118" fill="#e57373"/>`,
+      "#e8f5e9",
+    ),
 };
 
 export function renderScene(id) {

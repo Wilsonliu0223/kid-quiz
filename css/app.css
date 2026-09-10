@@ -887,6 +887,24 @@ body {
   line-height: 1.5;
 }
 
+.life-join-see,
+.life-join-think {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.life-join-see {
+  background: #eaf6ee;
+  border: 1px solid #8fbf9a;
+}
+
+.life-join-think {
+  background: #fff6e4;
+  border: 1px solid #e0b85a;
+}
+
 #life-join-slot {
   margin-top: 8px;
 }

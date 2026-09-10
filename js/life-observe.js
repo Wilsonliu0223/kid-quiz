@@ -10,10 +10,11 @@ import {
   mazesForCounty,
   nodeById,
   placeNote,
+  relJoin,
   relsOf,
   zonesForCounty,
-} from "./life-observe-bank.js?v=life-observe-bank-v9";
-import { renderScene } from "./life-observe-art.js?v=life-observe-art-v7";
+} from "./life-observe-bank.js?v=life-observe-bank-v10";
+import { renderScene } from "./life-observe-art.js?v=life-observe-art-v8";
 
 const KEY_COUNTY = "kid-quiz-life-county";
 const KEY_FREE = "kid-quiz-life-free";
@@ -185,6 +186,20 @@ function whyBetween(fromId, toId) {
   if (!n) return "";
   const found = relEntries(n).find(([id]) => id === toId);
   return found ? found[1] : "";
+}
+
+function whyText(val) {
+  return relJoin(val).why;
+}
+
+function joinLayers(val, extraClass) {
+  const j = relJoin(val);
+  if (!j.why && !j.see && !j.think) return "";
+  const cls = extraClass || "life-join";
+  let html = `<p class="${cls}">因為：${escapeHtml(j.why)}</p>`;
+  if (j.see) html += `<p class="life-join-see">所以會看見：${escapeHtml(j.see)}</p>`;
+  if (j.think) html += `<p class="life-join-think">想一想：${escapeHtml(j.think)}</p>`;
+  return html;
 }
 
 function pathHops(fromId, toId) {
@@ -391,7 +406,8 @@ function joinHtml() {
   if (hops.length === 1) {
     return (
       `<p class="life-read-k">組合意義</p>` +
-      `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」為什麼能連：${escapeHtml(hops[0].why)}</p>`
+      `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」</p>` +
+      joinLayers(hops[0].why)
     );
   }
   const names = [fromN.name, ...hops.map((h) => nodeById(h.to)?.name || h.to)].join(" → ");
@@ -399,7 +415,10 @@ function joinHtml() {
     .map((h) => {
       const a = nodeById(h.from);
       const b = nodeById(h.to);
-      return `<p class="life-join-hop">「${escapeHtml(a ? a.name : h.from)}」→「${escapeHtml(b ? b.name : h.to)}」：${escapeHtml(h.why)}</p>`;
+      return (
+        `<p class="life-join-hop">「${escapeHtml(a ? a.name : h.from)}」→「${escapeHtml(b ? b.name : h.to)}」</p>` +
+        joinLayers(h.why, "life-join-hop")
+      );
     })
     .join("");
   return (
@@ -430,7 +449,7 @@ function renderFocus() {
     .map(([id, why]) => {
       const x = nodeById(id);
       if (!x) return "";
-      return `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(id)}"><strong>${escapeHtml(x.name)}</strong><span>${escapeHtml(why)}</span></button>`;
+      return `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(id)}"><strong>${escapeHtml(x.name)}</strong><span>${escapeHtml(whyText(why))}</span></button>`;
     })
     .join("");
   const note = placeNote(n.id, countyId);
@@ -581,7 +600,7 @@ function openNode(id) {
   const rels = relEntries(n)
     .map(([lid, why]) => {
       const x = nodeById(lid);
-      return `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(x.id)}"><strong>${escapeHtml(x.name)}</strong><span>${escapeHtml(why)}</span></button>`;
+      return `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(x.id)}"><strong>${escapeHtml(x.name)}</strong><span>${escapeHtml(whyText(why))}</span></button>`;
     })
     .join("");
   $("#life-read-body").innerHTML =
