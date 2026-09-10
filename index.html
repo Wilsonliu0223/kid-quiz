@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.62";
+        var V = "39.63";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -582,7 +582,7 @@
           <p class="life-map-legend">外圈臺灣與海 · 次圈家鄉 · 內圈自然 · 最內日常</p>
           <div class="life-map" id="life-map"></div>
           <div id="life-focus" class="life-focus" hidden></div>
-          <p class="life-links-label">橫向連線：水、風、光</p>
+          <p class="life-links-label">橫向連線：水、風、光、天氣</p>
           <div class="life-links" id="life-links"></div>
           <p class="life-links-label" id="life-zones-label" hidden>縣市往下長</p>
           <div class="life-links" id="life-zones" hidden></div>
@@ -3108,7 +3108,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.02").catch((e) => {
+      import("./js/app.js?v=app-v46.03").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
