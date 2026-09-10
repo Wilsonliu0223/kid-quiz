@@ -870,23 +870,13 @@ body {
   opacity: 0.85;
 }
 
-.life-walker {
-  position: absolute;
-  z-index: 5;
-  width: 28px;
-  height: 28px;
-  margin: -14px 0 0 -14px;
-  border-radius: 50%;
-  background: #2d6a4f;
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.35);
-  transition: left 0.28s ease, top 0.28s ease;
+.life-join {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #e8f0fb;
+  border: 1px solid #9bb8e0;
+  line-height: 1.5;
 }
 
 .life-quest {

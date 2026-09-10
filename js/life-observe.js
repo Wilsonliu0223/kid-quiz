@@ -37,6 +37,8 @@ let visited = new Set(["me"]);
 /** @type {Array<[string, string]>} */
 let walked = [];
 let won = false;
+/** @type {{ from: string, to: string, why: string } | null} */
+let lastStep = null;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -164,6 +166,7 @@ function pickMaze(index) {
 }
 
 function resetWalk() {
+  lastStep = null;
   if (!maze) {
     hereId = "me";
     visited = new Set(["me"]);
@@ -175,6 +178,13 @@ function resetWalk() {
   visited = new Set([maze.start]);
   walked = [];
   won = hasStamp();
+}
+
+function whyBetween(fromId, toId) {
+  const n = nodeById(fromId);
+  if (!n) return "";
+  const found = relEntries(n).find(([id]) => id === toId);
+  return found ? found[1] : "";
 }
 
 function firstSentence(s) {
@@ -260,12 +270,6 @@ function renderLines() {
   return `<svg class="life-map-lines" viewBox="0 0 ${MAP_BOX} ${MAP_BOX}" aria-hidden="true">${parts.join("")}</svg>`;
 }
 
-function walkerHtml() {
-  const pt = mapPoint(nodeById(hereId));
-  if (!pt) return "";
-  return `<span class="life-walker" style="left:${pt[0]}px;top:${pt[1]}px" aria-hidden="true">人</span>`;
-}
-
 function renderMap() {
   const box = $("#life-map");
   if (!box) return;
@@ -303,8 +307,7 @@ function renderMap() {
     renderLines() +
     rings +
     nodes +
-    `<button type="button" class="life-map-core${coreOn}" data-life-node="me">我</button>` +
-    walkerHtml();
+    `<button type="button" class="life-map-core${coreOn}" data-life-node="me">我</button>`;
 }
 
 function renderLinks() {
@@ -368,10 +371,18 @@ function renderFocus() {
   const note = placeNote(n.id, countyId);
   const missed = atGoal() && !mustDone() && !freeBrowse;
   const canWin = atGoal() && mustDone() && !freeBrowse;
+  const fromN = lastStep ? nodeById(lastStep.from) : null;
+  const toN = lastStep ? nodeById(lastStep.to) : null;
+  const join =
+    lastStep && fromN && toN
+      ? `<p class="life-read-k">組合意義</p>` +
+        `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」為什麼能連：${escapeHtml(lastStep.why)}</p>`
+      : "";
   box.hidden = false;
   box.innerHTML =
     `<p class="life-focus-name">${escapeHtml(n.name)}</p>` +
     `<p class="life-lens-row">${lensTags(n)}</p>` +
+    join +
     `<p class="life-focus-because">${escapeHtml(n.because || "")}</p>` +
     (note ? `<p class="life-place-note">${escapeHtml(note)}</p>` : "") +
     (missed ? `<p class="life-maze-miss">還沒接到路上的知識。先走到還沒亮的那幾格。</p>` : "") +
@@ -449,11 +460,12 @@ function paintHub() {
 function walkTo(id) {
   if (!nodeById(id)) return;
   if (!freeBrowse && !canWalk(id)) return;
-  if (!freeBrowse && id !== hereId) {
+  if (id !== hereId) {
+    lastStep = { from: hereId, to: id, why: whyBetween(hereId, id) };
     walked.push([hereId, id]);
     hereId = id;
     visited.add(id);
-    if (atGoal() && mustDone()) {
+    if (!freeBrowse && atGoal() && mustDone()) {
       won = true;
       saveStamp();
     }
