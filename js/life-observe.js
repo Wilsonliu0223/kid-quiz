@@ -349,7 +349,18 @@ function renderQuest() {
     `<div class="life-quest-actions">` +
     `<button type="button" class="btn-text" id="btn-life-free">自由看圖</button>` +
     `<button type="button" class="btn-text" id="btn-life-next-maze">再走一題</button>` +
-    `</div>`;
+    `</div>` +
+    joinHtml();
+}
+
+function joinHtml() {
+  const fromN = lastStep ? nodeById(lastStep.from) : null;
+  const toN = lastStep ? nodeById(lastStep.to) : null;
+  if (!lastStep || !fromN || !toN) return "";
+  return (
+    `<p class="life-read-k">組合意義</p>` +
+    `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」為什麼能連：${escapeHtml(lastStep.why)}</p>`
+  );
 }
 
 function renderFocus() {
@@ -371,18 +382,10 @@ function renderFocus() {
   const note = placeNote(n.id, countyId);
   const missed = atGoal() && !mustDone() && !freeBrowse;
   const canWin = atGoal() && mustDone() && !freeBrowse;
-  const fromN = lastStep ? nodeById(lastStep.from) : null;
-  const toN = lastStep ? nodeById(lastStep.to) : null;
-  const join =
-    lastStep && fromN && toN
-      ? `<p class="life-read-k">組合意義</p>` +
-        `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」為什麼能連：${escapeHtml(lastStep.why)}</p>`
-      : "";
   box.hidden = false;
   box.innerHTML =
     `<p class="life-focus-name">${escapeHtml(n.name)}</p>` +
     `<p class="life-lens-row">${lensTags(n)}</p>` +
-    join +
     `<p class="life-focus-because">${escapeHtml(n.because || "")}</p>` +
     (note ? `<p class="life-place-note">${escapeHtml(note)}</p>` : "") +
     (missed ? `<p class="life-maze-miss">還沒接到路上的知識。先走到還沒亮的那幾格。</p>` : "") +

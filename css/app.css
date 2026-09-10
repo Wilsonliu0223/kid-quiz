@@ -925,6 +925,11 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 8px;
+}
+
+.life-quest .life-read-k {
+  margin-top: 4px;
 }
 
 .life-maze-miss {
