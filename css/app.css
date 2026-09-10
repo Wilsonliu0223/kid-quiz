@@ -853,6 +853,15 @@ body {
   line-height: 1.5;
 }
 
+.life-place-note {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff8e8;
+  border: 1px solid #f0d48a;
+  line-height: 1.5;
+}
+
 .life-rel-rows,
 .life-read-links {
   display: flex;

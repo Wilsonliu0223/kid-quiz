@@ -7,9 +7,10 @@ import {
   RINGS,
   countyById,
   nodeById,
+  placeNote,
   relsOf,
   zonesForCounty,
-} from "./life-observe-bank.js?v=life-observe-bank-v6";
+} from "./life-observe-bank.js?v=life-observe-bank-v7";
 import { renderScene } from "./life-observe-art.js?v=life-observe-art-v5";
 
 const KEY_COUNTY = "kid-quiz-life-county";
@@ -87,19 +88,30 @@ function chipClass(id, extra) {
   return `${extra || "life-link-chip"}${on}`;
 }
 
+function zoneChip(n) {
+  return `<button type="button" class="${chipClass(n.id, "life-link-chip life-zone-chip")}" data-life-node="${escapeHtml(n.id)}">${escapeHtml(n.name)}</button>`;
+}
+
 function renderZones() {
   const box = $("#life-zones");
   const label = $("#life-zones-label");
+  const fromBox = $("#life-zones-from");
+  const fromLabel = $("#life-zones-from-label");
   if (!box) return;
   const zones = zonesForCounty(countyId);
-  if (label) label.hidden = zones.length === 0;
-  box.hidden = zones.length === 0;
-  box.innerHTML = zones
-    .map(
-      (n) =>
-        `<button type="button" class="${chipClass(n.id, "life-link-chip life-zone-chip")}" data-life-node="${escapeHtml(n.id)}">${escapeHtml(n.name)}</button>`,
-    )
-    .join("");
+  const faces = zones.filter((z) => z.kind !== "from");
+  const from = zones.filter((z) => z.kind === "from");
+  if (label) {
+    label.hidden = faces.length === 0;
+    label.textContent = faces.length ? "三種面貌" : "縣市往下長";
+  }
+  box.hidden = faces.length === 0;
+  box.innerHTML = faces.map(zoneChip).join("");
+  if (fromLabel) fromLabel.hidden = from.length === 0;
+  if (fromBox) {
+    fromBox.hidden = from.length === 0;
+    fromBox.innerHTML = from.map(zoneChip).join("");
+  }
 }
 
 function renderLines(focus) {
@@ -164,9 +176,11 @@ function renderFocus() {
     })
     .join("");
   box.hidden = false;
+  const note = placeNote(n.id, countyId);
   box.innerHTML =
     `<p class="life-focus-name">${escapeHtml(n.name)}</p>` +
     `<p class="life-focus-because">${escapeHtml(n.because || "")}</p>` +
+    (note ? `<p class="life-place-note">${escapeHtml(note)}</p>` : "") +
     `<p class="life-read-k">為什麼連在一起</p>` +
     `<div class="life-rel-rows">${rows}</div>` +
     `<button type="button" class="btn btn-secondary btn-block" data-life-open="${escapeHtml(n.id)}">看觀察卡</button>`;
@@ -207,7 +221,9 @@ function paintHub() {
   const hint = $("#life-hub-hint");
   if (hint) {
     const c = countyById(countyId);
-    hint.textContent = `中心是「我」，現在放在${c.name}。點一個點，先看它連到誰；再點一次或按「看觀察卡」。`;
+    hint.textContent = c.notes
+      ? `中心是「我」，現在放在${c.name}。先點縣市或水，看這一格怎麼往下長。`
+      : `中心是「我」，現在放在${c.name}。點一個點，先看它連到誰；再點一次或按「看觀察卡」。`;
   }
 }
 
@@ -228,17 +244,16 @@ function countyExtra(node) {
   if (!node.countyCard) return "";
   const c = countyById(countyId);
   const zones = zonesForCounty(countyId);
-  const zoneBtns = zones
-    .map(
-      (z) =>
-        `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(z.id)}"><strong>${escapeHtml(z.name)}</strong><span>${escapeHtml(z.branch || z.because)}</span></button>`,
-    )
-    .join("");
+  const faces = zones.filter((z) => z.kind !== "from");
+  const from = zones.filter((z) => z.kind === "from");
+  const row = (z) =>
+    `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(z.id)}"><strong>${escapeHtml(z.name)}</strong><span>${escapeHtml(z.branch || z.because)}</span></button>`;
   return (
     `<div class="life-county-card">` +
     `<p class="life-county-name">${escapeHtml(c.name)}</p>` +
     `<p>${escapeHtml(c.pos)}。${escapeHtml(c.life)}</p>` +
-    (zoneBtns ? `<p class="life-read-k">這一格往下長</p><div class="life-rel-rows">${zoneBtns}</div>` : "") +
+    (faces.length ? `<p class="life-read-k">三種面貌</p><div class="life-rel-rows">${faces.map(row).join("")}</div>` : "") +
+    (from.length ? `<p class="life-read-k">從面貌長出來</p><div class="life-rel-rows">${from.map(row).join("")}</div>` : "") +
     `</div>`
   );
 }
@@ -262,6 +277,7 @@ function openNode(id) {
   $("#life-read-body").innerHTML =
     countyExtra(n) +
     (n.because ? `<p class="life-read-k">它為什麼在這張圖上</p><p class="life-read-because">${escapeHtml(n.because)}</p>` : "") +
+    (placeNote(n.id, countyId) ? `<p class="life-place-note">${escapeHtml(placeNote(n.id, countyId))}</p>` : "") +
     `<p class="life-read-k">這是什麼</p><p class="life-read-p">${escapeHtml(n.what)}</p>` +
     `<p class="life-read-k">我在哪裡看得到</p><p class="life-read-p">${escapeHtml(n.where)}</p>` +
     `<p class="life-read-k">去做一件小事</p><p class="life-read-do">${escapeHtml(n.do)}</p>`;

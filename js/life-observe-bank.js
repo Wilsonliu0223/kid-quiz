@@ -24,6 +24,15 @@ export const COUNTIES = [
     land: "盆地、大肚台地、大甲溪、海線濕地",
     life: "同一座城市有市區、山線、海線。水從山裡流到海。公車、火車、捷運把這三邊接起來。",
     zones: ["txg-city", "txg-coast", "txg-mt", "txg-food", "txg-life", "txg-ride"],
+    notes: {
+      water: "臺中這條線叫大甲溪：從山線出發，經過盆地，到海線出海。",
+      climate: "同一座城市三種氣候：盆地較乾、海線較濕、山線較涼。",
+      food: "盤子裡可能出現太陽餅、爌肉飯，或大坑的芋圓。",
+      transit: "捷運走盆地，火車分海線和山線，市區最多是公車。",
+      town: "北屯有大坑，清水在海線，和平在山裡，都是臺中的區。",
+      placename: "大坑、清水、大甲溪，名字就在講山或水。",
+      county: "先認三種面貌：市區、海線、山線。吃的、生命、怎麼走，是從面貌長出來的。",
+    },
   },
   { id: "cha", name: "彰化縣", pos: "中部平原", land: "平原、海岸", life: "田多，風一吹稻子會波浪。" },
   { id: "nan", name: "南投縣", pos: "臺灣正中間、不靠海", land: "山、盆地", life: "全縣沒有海岸，溪從山裡流出來。" },
@@ -450,6 +459,7 @@ export const ZONE_NODES = [
     county: "txg",
     name: "市區",
     scene: "city",
+    kind: "face",
     branch: "盆地裡的市區",
     because: "市區在盆地裡，抬頭看得到山線。",
     what: "草悟道、秋紅谷是可以走路的樹蔭。逢甲的燈、科博館、彩虹眷村，都是盆地裡的點。",
@@ -461,6 +471,7 @@ export const ZONE_NODES = [
       climate: "盆地市區秋天常比較乾爽",
       light: "園道白天有樹蔭，晚上有燈",
       "txg-mt": "市區往東走就進山線",
+      "txg-coast": "市區往西走就到海線",
       "txg-food": "夜市的味道連到晚餐",
       "txg-ride": "捷運和公車多在盆地裡走",
     },
@@ -471,6 +482,7 @@ export const ZONE_NODES = [
     county: "txg",
     name: "海線",
     scene: "wetland",
+    kind: "face",
     branch: "水走到海的那一邊",
     because: "海線是大甲溪走到海的嘴巴。",
     what: "清水高美濕地在出海口：木棧道、雲林莞草、招潮蟹。秋冬有候鳥。梧棲是魚上岸的港。",
@@ -493,6 +505,7 @@ export const ZONE_NODES = [
     county: "txg",
     name: "山線",
     scene: "mountain",
+    kind: "face",
     branch: "水的起點在山裡",
     because: "山線是水的起點，也是樹和蟲住的地方。",
     what: "北屯大坑是市區後花園。再進去是谷關、梨山、武陵。大甲溪從這裡出發。",
@@ -514,8 +527,9 @@ export const ZONE_NODES = [
     id: "txg-food",
     ring: "zone",
     county: "txg",
-    name: "臺中吃的",
+    name: "吃的",
     scene: "food",
+    kind: "from",
     branch: "盤子連到這座城市",
     because: "吃的把晚餐連到這座城市。",
     what: "太陽餅是常見伴手禮。爌肉飯、大麵羹是在地味道；大坑有芋圓。珍珠奶茶常有人說跟臺中有關，發明說法不只一種。",
@@ -525,6 +539,7 @@ export const ZONE_NODES = [
       food: "這些味道會出現在盤子裡",
       veg: "芋圓的芋頭來自山邊",
       "txg-city": "很多味道在市區夜市",
+      "txg-mt": "大坑芋圓連到山線",
       county: "這是臺中常被提到的味道",
     },
   },
@@ -534,6 +549,7 @@ export const ZONE_NODES = [
     county: "txg",
     name: "山裡的生命",
     scene: "butterfly",
+    kind: "from",
     branch: "山裡的蟲鳥魚",
     because: "山裡的生命，是蟲、鳥、樹、水長到山線的樣子。",
     what: "大坑春夏有時有紫斑蝶、獨角仙、螢火蟲。黃裳鳳蝶是保育類，少見，只看不抓。七家灣溪有國寶魚櫻花鉤吻鮭。石虎住淺山，市區很少見。",
@@ -551,8 +567,9 @@ export const ZONE_NODES = [
     id: "txg-ride",
     ring: "zone",
     county: "txg",
-    name: "臺中怎麼走",
+    name: "怎麼走",
     scene: "transit",
+    kind: "from",
     branch: "捷運、火車、公車",
     because: "公車、火車、捷運把市區、海線、山線接起來。",
     what: "捷運綠線走北屯到高鐵附近。火車過臺中車站；海線往清水、沙鹿，山線往豐原、后里。市區最常見是公車。要出市常坐高鐵（烏日）或火車。",
@@ -580,6 +597,11 @@ export function countyById(id) {
 export function zonesForCounty(id) {
   const c = countyById(id);
   return (c.zones || []).map((zid) => nodeById(zid)).filter(Boolean);
+}
+
+export function placeNote(nodeId, id) {
+  const c = countyById(id);
+  return (c.notes && c.notes[nodeId]) || "";
 }
 
 export function relsOf(node, countyId) {
