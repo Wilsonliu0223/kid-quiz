@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.58";
+        var V = "39.59";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.63" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.64" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -113,6 +113,10 @@
             <button type="button" class="card card-gifted" id="btn-start-gifted">
               <span class="card-title">思考練習</span>
               <span class="card-desc">語文 · 圖形 · 記憶 · 快快找</span>
+            </button>
+            <button type="button" class="card card-life" id="btn-start-life">
+              <span class="card-title">生活觀察</span>
+              <span class="card-desc">家門口 · 臺灣 · 心智圖</span>
             </button>
             <button type="button" class="card card-sudoku" id="btn-start-sudoku">
               <span class="card-title">數獨</span>
@@ -563,6 +567,37 @@
             </button>
             <p class="writing-try-model" id="en-writing-try-model" hidden></p>
           </section>
+        </div>
+      </section>
+
+      <section id="view-life-hub" class="view view-hidden" aria-label="生活觀察">
+        <header class="setup-header setup-header-life">
+          <button type="button" class="btn-text" id="btn-life-hub-back">← 返回</button>
+          <span class="setup-subject">生活觀察</span>
+        </header>
+        <div class="life-hub-body">
+          <p class="life-hub-hint" id="life-hub-hint"></p>
+          <label class="life-county-label" for="life-county">我們家在</label>
+          <select id="life-county" class="life-county-select" aria-label="選擇縣市"></select>
+          <p class="life-map-legend">外圈臺灣與海 · 次圈家鄉 · 內圈自然 · 最內日常</p>
+          <div class="life-map" id="life-map"></div>
+          <p class="life-links-label">三條連線</p>
+          <div class="life-links" id="life-links"></div>
+          <div class="life-list" id="life-list"></div>
+        </div>
+      </section>
+
+      <section id="view-life-read" class="view view-hidden" aria-label="觀察卡">
+        <header class="quiz-header quiz-header-life">
+          <button type="button" class="btn-text" id="btn-life-read-back">← 返回</button>
+          <span class="quiz-subject">觀察卡</span>
+        </header>
+        <div class="life-read-body">
+          <h2 class="life-read-title" id="life-read-title"></h2>
+          <p class="life-read-meta" id="life-read-meta"></p>
+          <div id="life-read-body"></div>
+          <p class="life-read-k">連到誰</p>
+          <div class="life-read-links" id="life-read-links"></div>
         </div>
       </section>
 
@@ -3068,7 +3103,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v45.98").catch((e) => {
+      import("./js/app.js?v=app-v45.99").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

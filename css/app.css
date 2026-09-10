@@ -79,7 +79,9 @@ body {
 #view-writing-hub.view-active,
 #view-writing-read.view-active,
 #view-en-writing-hub.view-active,
-#view-en-writing-read.view-active {
+#view-en-writing-read.view-active,
+#view-life-hub.view-active,
+#view-life-read.view-active {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -197,7 +199,8 @@ body {
 
 .home-zone-solo .card-mul,
 .home-zone-solo .card-sudoku,
-.home-zone-solo .card-gifted {
+.home-zone-solo .card-gifted,
+.home-zone-solo .card-life {
   min-height: 68px;
   margin-bottom: 0;
 }
@@ -618,6 +621,243 @@ body {
 
 .card-gifted .card-title {
   color: #4a2f8c;
+}
+
+.card-life {
+  background: linear-gradient(135deg, #e8f6ee 0%, #cfe8d6 100%);
+  border: 2px solid #7cbc8e;
+}
+
+.card-life .card-title {
+  color: #1d5c38;
+}
+
+.setup-header-life .setup-subject,
+.quiz-header-life .quiz-subject {
+  color: #1d5c38;
+}
+
+.quiz-header-life {
+  border-bottom: 3px solid #40916c;
+  padding-bottom: 8px;
+}
+
+.life-hub-body,
+.life-read-body {
+  padding: 0 4px 24px;
+}
+
+.life-hub-hint,
+.life-map-legend {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.life-county-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1d5c38;
+  margin-bottom: 4px;
+}
+
+.life-county-select {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #8fc9a0;
+  background: #f4fbf6;
+  font: inherit;
+}
+
+.life-map {
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 1;
+  margin: 4px auto 14px;
+}
+
+.life-map-orbit {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.life-map-orbit[data-ring="4"] {
+  inset: 2%;
+  border: 2px dashed #74c69d;
+}
+
+.life-map-orbit[data-ring="2"] {
+  inset: 10%;
+  border: 2px dashed #95d5b2;
+}
+
+.life-map-orbit[data-ring="1"] {
+  inset: 20%;
+  border: 2px dashed #b7e4c7;
+}
+
+.life-map-orbit[data-ring="0"] {
+  inset: 32%;
+  border: 2px solid #d8f3dc;
+}
+
+.life-map-arm {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--a));
+  pointer-events: none;
+}
+
+.life-map-core,
+.life-map-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.life-map-core {
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+  border-radius: 50%;
+  background: #2d6a4f;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.15rem;
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.28);
+}
+
+.life-map-node {
+  pointer-events: auto;
+  margin-top: calc(-1 * var(--r));
+  transform: translate(-50%, -50%) rotate(calc(-1 * var(--a)));
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff;
+  color: #1b4332;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  box-shadow: 0 1px 0 #95d5b2;
+  border: 1px solid #95d5b2;
+  white-space: nowrap;
+}
+
+.life-map-node[data-life-node="taiwan"] {
+  background: #2d6a4f;
+  color: #fff;
+  border-color: #1b4332;
+}
+
+.life-links-label,
+.life-list-group,
+.life-read-k {
+  margin: 12px 0 6px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #1d5c38;
+}
+
+.life-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.life-link-chip,
+.life-rel {
+  border: 1px solid #74c69d;
+  background: #e8f6ee;
+  color: #1b4332;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.life-list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #cfe8d6;
+  background: #f7fcf8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.life-list-item span {
+  display: block;
+}
+
+.life-list-meta {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #4a6654;
+  font-weight: 500;
+}
+
+.life-read-title {
+  margin: 8px 0 4px;
+  color: #1d5c38;
+  font-size: 1.35rem;
+}
+
+.life-read-meta {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.life-read-p,
+.life-read-do {
+  margin: 0 0 10px;
+  line-height: 1.6;
+}
+
+.life-read-do {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff8e8;
+  border: 1px solid #f0d48a;
+}
+
+.life-county-card {
+  margin: 0 0 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #e8f6ee;
+  border: 1px solid #8fc9a0;
+}
+
+.life-county-name {
+  margin: 0 0 6px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #1d5c38;
+}
+
+.life-county-card p {
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.life-read-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .gifted-intro-body,

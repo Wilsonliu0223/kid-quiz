@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.50";
+import { CONFIG } from "./config.site.js?v=config-v45.51";
 import {
   loadZhItems,
   loadEnItems,
@@ -68,6 +68,7 @@ import {
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
 import { initWriting } from "./writing.js?v=writing-v3";
 import { initEnWriting } from "./en-writing.js?v=en-writing-v5";
+import { initLifeObserve } from "./life-observe.js?v=life-observe-v1";
 import {
   initZhPractice,
   openZhHub,
@@ -197,6 +198,8 @@ const views = {
   enHub: $("#view-en-hub"),
   enWritingHub: $("#view-en-writing-hub"),
   enWritingRead: $("#view-en-writing-read"),
+  lifeHub: $("#view-life-hub"),
+  lifeRead: $("#view-life-read"),
   enDailyList: $("#view-en-daily-list"),
   enDailyRead: $("#view-en-daily-read"),
   enDailyDialogue: $("#view-en-daily-dialogue"),
@@ -2346,6 +2349,7 @@ async function init() {
   });
   initWriting({ showView });
   initEnWriting({ showView });
+  initLifeObserve({ showView });
   initZhPractice({
     showView,
     getZhBank: () => zhBank,
