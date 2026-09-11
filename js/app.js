@@ -109,7 +109,7 @@ import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v11";
 import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v3";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v79";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v80";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v3";
 import {
   addMistake,
