@@ -67,7 +67,7 @@ import {
 } from "./flip-zh.js";
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
 import { initWriting } from "./writing.js?v=writing-v3";
-import { initEnWriting } from "./en-writing.js?v=en-writing-v5";
+import { initEnWriting } from "./en-writing.js?v=en-writing-v6";
 import { initLifeObserve } from "./life-observe.js?v=life-observe-v14";
 import {
   initZhPractice,
@@ -109,8 +109,8 @@ import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v11";
 import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v3";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v80";
-import { initFlipEn } from "./flip-en.js?v=en-flip-v3";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v81";
+import { initFlipEn } from "./flip-en.js?v=en-flip-v4";
 import {
   addMistake,
   removeMistake,
