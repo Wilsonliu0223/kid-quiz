@@ -12,6 +12,7 @@ import {
   getLastSpeakEngine,
   lookupEnglishGloss,
   translateEnToZh,
+  isPlausibleZh,
   glossWordCandidates,
   getEnVoice,
   setEnVoice,
@@ -22,7 +23,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v32";
+} from "./english.js?v=en-speak-v33";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 import {
   analyzeEnglishMorph,
@@ -33,7 +34,7 @@ import {
   getAffixFamily,
   wordMatchesAffix,
   refreshMorphCombo,
-} from "./en-morph.js?v=en-morph-v8";
+} from "./en-morph.js?v=en-morph-v9";
 import { getSelectedChild } from "./store.js";
 import { logQuizResult } from "./score-log.js?v=score-log-v2";
 
@@ -859,6 +860,15 @@ function todayIso() {
   return `${y}-${m}-${day}`;
 }
 
+function addDaysIso(iso, n) {
+  const d = new Date(`${iso || todayIso()}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function reviewKey() {
   return `kid-quiz-en-review-${getSelectedChild() || "A"}`;
 }
@@ -924,21 +934,26 @@ function shortZh(s) {
   return first.slice(0, 24);
 }
 
+function reviewZhOk(word, zh) {
+  const t = shortZh(zh);
+  if (!t) return "";
+  return isPlausibleZh(word, t) ? t : "";
+}
+
 async function zhForReviewEntry(entry) {
+  const w = String(entry?.word || "").trim();
   const hints = [
+    entry?.contextZh,
     entry?.zh,
     entry?.zhGloss,
-    entry?.contextGloss,
-    entry?.gloss,
   ];
   for (const h of hints) {
-    const s = shortZh(h);
+    const s = reviewZhOk(w, h);
     if (s) return s;
   }
-  const w = String(entry?.word || "").trim();
   if (!w) return "";
   const raw = (await translateEnToZh(w)) || "";
-  return shortZh(raw) || (hasCjkText(raw) ? raw.trim() : "");
+  return reviewZhOk(w, raw);
 }
 
 /** 幫還沒中文的複習字補上翻譯（加入翻牌、複習字區都會用） */
@@ -947,13 +962,17 @@ export async function ensureReviewChinese() {
   if (!Array.isArray(list) || !list.length) return list;
   let changed = false;
   for (const item of list) {
-    const have = shortZh(item.zh) || shortZh(item.gloss);
+    const have = reviewZhOk(item.word, item.zh) || reviewZhOk(item.word, item.gloss);
     if (have) {
-      if (!shortZh(item.zh)) {
+      if (item.zh !== have) {
         item.zh = have;
         changed = true;
       }
       continue;
+    }
+    if (shortZh(item.zh) && !reviewZhOk(item.word, item.zh)) {
+      item.zh = "";
+      changed = true;
     }
     const zh = await zhForReviewEntry(item);
     if (zh) {
@@ -1239,9 +1258,12 @@ function syncHubMeta() {
   const meta = $("#en-hub-daily-meta");
   if (!meta) return;
   const n = articles.filter((a) => a.date === todayIso()).length;
-  const rev = loadReview().length;
+  const rev = loadReview();
+  const due = rev.filter((x) => isReviewDue(x)).length;
   meta.textContent =
-    (n ? `今日 ${n} 篇` : "今日尚無文章") + (rev ? ` · 複習字 ${rev}` : "");
+    (n ? `今日 ${n} 篇` : "今日尚無文章") +
+    (due ? ` · 聽寫 ${due} 個還不會` : "") +
+    (rev.length ? ` · 生字 ${rev.length}` : "");
 }
 
 function bindUi() {
@@ -1353,6 +1375,11 @@ function bindUi() {
   });
   $("#btn-en-gloss-zh-toggle")?.addEventListener("click", () => {
     toggleGlossZhExpanded();
+  });
+  $("#btn-en-gloss-more")?.addEventListener("click", () => {
+    const panel = $("#en-gloss-panel");
+    setGlossMoreOpen(!glossMoreOpen, panel?.classList.contains("has-context"));
+    requestAnimationFrame(() => syncDockVisibility());
   });
   $("#btn-en-gloss-add")?.addEventListener("click", () => {
     void addCurrentGlossToReview();
@@ -2206,6 +2233,22 @@ function popGloss() {
 
 /** 中文說明句是否展開（預設收合，點 ▼ 才顯示） */
 let glossZhExpanded = false;
+let glossMoreOpen = false;
+
+function setGlossMoreOpen(open, hasContext = false) {
+  glossMoreOpen = Boolean(open);
+  const panel = $("#en-gloss-panel");
+  if (panel) {
+    panel.classList.toggle("en-gloss-compact", !glossMoreOpen);
+    panel.classList.toggle("has-context", Boolean(hasContext));
+  }
+  const btn = $("#btn-en-gloss-more");
+  if (btn) {
+    btn.hidden = false;
+    btn.textContent = glossMoreOpen ? "收合意思 ▲" : "更多意思";
+    btn.setAttribute("aria-expanded", glossMoreOpen ? "true" : "false");
+  }
+}
 
 function setGlossZhExpanded(open) {
   glossZhExpanded = Boolean(open);
@@ -2272,6 +2315,7 @@ function glossHeadZhText(entry) {
     ? entry.senses.find((s) => hasCjkText(s.zh))?.zh
     : "";
   return (
+    reviewZhOk(entry.word, entry.contextZh) ||
     shortZh(entry.zh) ||
     firstZhClause(entry.zh) ||
     firstZhClause(senseZh) ||
@@ -2313,12 +2357,16 @@ async function fillGlossChinese(entry, seq) {
     if (hasCjkText(sense.zh)) sense.zh = toTraditional(sense.zh);
   }
   const wordZhJob = (async () => {
-    if (shortZh(entry.zh)) return;
+    if (reviewZhOk(entry.word, entry.contextZh)) {
+      entry.zh = shortZh(entry.contextZh);
+      return;
+    }
+    if (reviewZhOk(entry.word, entry.zh)) return;
     const src = String(entry.word || "").trim();
     if (!src || !/^[a-zA-Z]/.test(src)) return;
     const raw = (await translateEnToZh(src)) || "";
     const zh = firstZhClause(raw);
-    if (zh) entry.zh = zh;
+    if (zh && isPlausibleZh(src, zh)) entry.zh = zh;
   })();
   await Promise.all([
     wordZhJob,
@@ -2332,7 +2380,7 @@ async function fillGlossChinese(entry, seq) {
         String(entry.word || "").trim();
       if (!src) return;
       const raw = (await translateEnToZh(src)) || "";
-      if (hasCjkText(raw)) {
+      if (hasCjkText(raw) && isPlausibleZh(src, raw)) {
         sense.zh = firstZhClause(raw) || raw;
         sense.zhSource = "machine";
       }
@@ -2341,7 +2389,10 @@ async function fillGlossChinese(entry, seq) {
   const contextEn = String(entry.contextGloss || "").trim();
   if (contextEn && !hasCjkText(entry.contextZh)) {
     const raw = (await translateEnToZh(contextEn)) || "";
-    if (hasCjkText(raw)) entry.contextZh = raw;
+    if (hasCjkText(raw) && isPlausibleZh(contextEn, raw)) entry.contextZh = raw;
+  }
+  if (reviewZhOk(entry.word, entry.contextZh)) {
+    entry.zh = shortZh(entry.contextZh);
   }
   if (!hasCjkText(entry.zhGloss)) {
     const fromContext = hasCjkText(entry.contextZh) ? entry.contextZh : "";
@@ -2360,9 +2411,12 @@ async function fillGlossChinese(entry, seq) {
       }
     }
   }
-  if (!firstZhClause(entry.zh)) {
-    entry.zh =
-      firstZhClause(entry.contextZh) || firstZhClause(entry.zhGloss);
+  if (!firstZhClause(entry.zh) || !reviewZhOk(entry.word, entry.zh)) {
+    const fallback =
+      reviewZhOk(entry.word, entry.contextZh) ||
+      firstZhClause(entry.contextZh) ||
+      firstZhClause(entry.zhGloss);
+    if (reviewZhOk(entry.word, fallback)) entry.zh = fallback;
   }
   if (seq !== glossSeq) return;
   if (glossStack.length) {
@@ -2433,8 +2487,11 @@ function showGloss(entry, opts = {}) {
   }
   const addBtn = $("#btn-en-gloss-add");
   if (addBtn) addBtn.hidden = entry.kind === "family";
+  const moreBtn = $("#btn-en-gloss-more");
 
   if (entry.kind === "family") {
+    if (moreBtn) moreBtn.hidden = true;
+    panel.classList.remove("en-gloss-compact", "has-context");
     if (sensesEl) {
       sensesEl.innerHTML = "";
       sensesEl.hidden = true;
@@ -2473,6 +2530,9 @@ function showGloss(entry, opts = {}) {
     requestAnimationFrame(() => syncDockVisibility());
     return;
   }
+  if (moreBtn) moreBtn.hidden = false;
+  setGlossMoreOpen(false, Boolean(String(entry.contextGloss || "").trim()));
+
   const hasSenses = Array.isArray(entry.senses) && entry.senses.length > 0;
   if (sensesEl) {
     sensesEl.innerHTML = hasSenses ? renderGlossSenses(entry.senses, entry.word) : "";
@@ -2669,7 +2729,7 @@ function renderReviewList() {
   const drillBtn = $("#btn-en-review-dictation");
   if (drillBtn) drillBtn.disabled = !list.length;
   if (!list.length) {
-    box.innerHTML = "<p class=\"en-daily-empty-hint\">還沒有複習字。今天時事載入後會自動放進 8 個聽寫字；也可在閱讀時按「加入複習字」。</p>";
+    box.innerHTML = "<p class=\"en-daily-empty-hint\">還沒有生字。今天時事載入後會自動放進聽寫；也可在閱讀時按「加入複習字」。</p>";
     return;
   }
   for (const item of list) {
@@ -2688,6 +2748,7 @@ function renderReviewList() {
       <button type="button" class="btn-text en-review-word">${escapeHtml(item.word)}</button>
       <button type="button" class="btn-text en-review-speak" aria-label="朗讀 ${escapeHtml(item.word)}">🔊</button>
       ${item.source === "today" ? '<span class="en-review-tag">今日</span>' : ""}
+      ${reviewStatusTag(item)}
       <button type="button" class="btn-text en-review-remove">移除</button>
     </div>
       ${zh ? `<p>${escapeHtml(zh)}</p>` : ""}
@@ -2723,6 +2784,51 @@ function renderReviewList() {
 
 const DICTATION_N = 8;
 const DICTATION_SEEN_DAYS = 14;
+const REVIEW_REST_DAYS = 3;
+
+function isReviewResting(item) {
+  const streak = Number(item?.correctStreak || 0);
+  const due = String(item?.dueDate || "").trim();
+  return streak >= 2 && due && due > todayIso();
+}
+
+function isReviewDue(item) {
+  if (!item) return false;
+  if (isReviewResting(item)) return false;
+  const due = String(item?.dueDate || "").trim();
+  if (!due) return true;
+  return due <= todayIso();
+}
+
+function reviewStatusTag(item) {
+  if (isReviewResting(item)) return '<span class="en-review-tag en-review-tag-rest">會了</span>';
+  if (item?.lastResult === "no") return '<span class="en-review-tag en-review-tag-due">還要練</span>';
+  if (isReviewDue(item)) return '<span class="en-review-tag en-review-tag-due">要聽寫</span>';
+  return "";
+}
+
+function recordDictationResult(word, ok) {
+  const key = String(word || "")
+    .trim()
+    .toLowerCase();
+  if (!key) return;
+  const list = loadReview();
+  const item = list.find((x) => String(x.word || "").toLowerCase() === key);
+  if (!item) return;
+  if (ok) {
+    item.correctStreak = Number(item.correctStreak || 0) + 1;
+    item.lastResult = "ok";
+    item.dueDate =
+      item.correctStreak >= 2
+        ? addDaysIso(todayIso(), REVIEW_REST_DAYS)
+        : addDaysIso(todayIso(), 1);
+  } else {
+    item.correctStreak = 0;
+    item.lastResult = "no";
+    item.dueDate = todayIso();
+  }
+  saveReview(list);
+}
 
 function dictationSeenKey() {
   return `kid-quiz-en-dictation-seen-${getSelectedChild() || "A"}`;
@@ -2932,14 +3038,28 @@ function clearManualReview() {
   seedTodayPinIntoReview();
 }
 
-/** 聽寫今日詞：當天固定 8 個時事 vocab。reviewOnly 抽複習字區（含今日這 8 個）。 */
+/** 聽寫：優先還不會的複習字，再用今日時事字補滿。reviewOnly 只抽生字本。 */
 function pickDictationWords({ reviewOnly = false } = {}) {
+  seedTodayPinIntoReview();
+  const review = loadReview();
+  const due = review.filter((x) => isReviewDue(x));
+  const wrong = due.filter((x) => x.lastResult === "no");
+  const restDue = due.filter((x) => x.lastResult !== "no");
   if (reviewOnly) {
-    seedTodayPinIntoReview();
-    const review = collectReviewWords();
-    return shuffle(review).slice(0, Math.min(DICTATION_N, review.length));
+    const pool = [...wrong, ...restDue];
+    const take = pool.length ? pool : review;
+    return shuffle(uniqWordEntries(take, "review")).slice(
+      0,
+      Math.min(DICTATION_N, take.length)
+    );
   }
-  return ensureTodayPin();
+  const today = ensureTodayPin().filter((w) => {
+    const key = String(w.word || "").toLowerCase();
+    const item = review.find((x) => String(x.word || "").toLowerCase() === key);
+    return !isReviewResting(item);
+  });
+  const ranked = [...wrong, ...restDue, ...today];
+  return uniqWordEntries(ranked, "mix").slice(0, DICTATION_N);
 }
 
 async function openDictation(opts = {}) {
@@ -2950,8 +3070,8 @@ async function openDictation(opts = {}) {
     deps?.showWarn?.(
       reviewOnly ? "還沒有複習字" : "還沒有可聽寫的字",
       reviewOnly
-        ? "閱讀時點生字，按「加入複習字」，或先聽寫今日詞讓單字自動進來。"
-        : "今天還沒有時事單字。請先等今日文章載入，或到複習字區聽寫收藏的字。"
+        ? "閱讀時點生字，按「加入複習字」，或先聽寫讓單字自動進來。"
+        : "今天還沒有時事單字，生字本也沒有到期的字。";
     );
     return;
   }
@@ -3022,6 +3142,7 @@ async function onDictationNext() {
   const ok = typed.toLowerCase() === String(q.word).toLowerCase();
   dictationLocked = true;
   if (ok) dictationCorrect += 1;
+  recordDictationResult(q.word, ok);
   if (fb) {
     fb.hidden = false;
     fb.classList.toggle("is-ok", ok);
@@ -3062,7 +3183,7 @@ async function finishDictation() {
         })),
         pending: 0,
       },
-      `聽寫今日詞 ${todayIso()}`
+        `聽寫 ${todayIso()}`
     );
     message = result?.message || "";
   } catch (e) {

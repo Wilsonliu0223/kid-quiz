@@ -7397,11 +7397,46 @@ body.sudoku-dragging .sudoku-cell-movable {
   flex-direction: column;
   gap: 12px;
 }
+.en-hub-label {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.en-hub-label:first-of-type {
+  margin-top: 0;
+}
 .en-hub-meta,
 .en-daily-date-label {
   margin: 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+.en-review-tag-due {
+  color: #b45309;
+}
+.en-review-tag-rest {
+  color: #3d7a4a;
+}
+.en-gloss-panel.en-gloss-compact .en-gloss-related,
+.en-gloss-panel.en-gloss-compact .en-gloss-source,
+.en-gloss-panel.en-gloss-compact .en-gloss-zh-row,
+.en-gloss-panel.en-gloss-compact .en-gloss-zh,
+.en-gloss-panel.en-gloss-compact .en-gloss-example-label,
+.en-gloss-panel.en-gloss-compact #en-gloss-example,
+.en-gloss-panel.en-gloss-compact #btn-en-gloss-example-speak {
+  display: none !important;
+}
+.en-gloss-panel.en-gloss-compact.has-context .en-gloss-senses {
+  display: none !important;
+}
+.en-gloss-panel.en-gloss-compact:not(.has-context) .en-gloss-sense:not(:first-child) {
+  display: none !important;
+}
+#btn-en-gloss-more {
+  margin: 4px 0 8px;
+  align-self: flex-start;
 }
 .en-flip-extra-row {
   display: flex;

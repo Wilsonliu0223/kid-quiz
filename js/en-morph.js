@@ -463,6 +463,70 @@ function worthTrying(word) {
   return true;
 }
 
+const INFL_ZH = {
+  ed: "過去、完成",
+  ing: "進行、動名詞",
+  s: "複數、第三人稱",
+};
+
+/** 規則變化：只還原 lemma，不要切出 practic 這種半截去配 -ic */
+function inflectionOf(word) {
+  const w = normWord(word);
+  if (w.length < 5) return null;
+  if (w.endsWith("ies") && w.length >= 6) {
+    return { lemma: w.slice(0, -3) + "y", suffix: "s" };
+  }
+  if (w.endsWith("ied") && w.length >= 6) {
+    return { lemma: w.slice(0, -3) + "y", suffix: "ed" };
+  }
+  if (w.endsWith("ing") && w.length >= 7) {
+    const base = w.slice(0, -3);
+    const doubled =
+      base.length >= 2 && base[base.length - 1] === base[base.length - 2]
+        ? base.slice(0, -1)
+        : "";
+    const lemma = `${base}e`.length >= 4 ? `${base}e` : base;
+    return { lemma: doubled || lemma, suffix: "ing" };
+  }
+  if (w.endsWith("ed") && w.length >= 5) {
+    const base = w.slice(0, -2);
+    const doubled =
+      base.length >= 2 && base[base.length - 1] === base[base.length - 2]
+        ? base.slice(0, -1)
+        : "";
+    const lemma = doubled
+      ? doubled
+      : /[aeiouy]$/.test(base)
+        ? base
+        : `${base}e`;
+    return { lemma, suffix: "ed" };
+  }
+  if (w.endsWith("es") && w.length >= 5) {
+    return { lemma: w.slice(0, -2), suffix: "s" };
+  }
+  if (w.endsWith("s") && !w.endsWith("ss") && w.length >= 5) {
+    return { lemma: w.slice(0, -1), suffix: "s" };
+  }
+  return null;
+}
+
+function suffixFitsSurface(suffix, surface) {
+  const suf = String(suffix || "")
+    .replace(/-/g, "")
+    .toLowerCase();
+  if (!suf) return true;
+  const w = normWord(surface);
+  if (w.endsWith(suf)) return true;
+  const infl = inflectionOf(w);
+  if (!infl) return false;
+  if (infl.suffix === suf) return true;
+  return Boolean(
+    infl.lemma &&
+      infl.lemma.endsWith(suf) &&
+      w.endsWith(`${suf}${infl.suffix}`)
+  );
+}
+
 function stemVariants(word) {
   const w = normWord(word);
   const out = [];
@@ -470,18 +534,8 @@ function stemVariants(word) {
     if (x && /^[a-z]{4,}$/.test(x)) out.push(x);
   };
   add(w);
-  if (w.endsWith("ies") && w.length >= 6) add(w.slice(0, -3) + "y");
-  if (w.endsWith("es") && w.length >= 5) add(w.slice(0, -2));
-  if (w.endsWith("s") && !w.endsWith("ss") && w.length >= 5) add(w.slice(0, -1));
-  if (w.endsWith("ing") && w.length >= 7) {
-    add(w.slice(0, -3));
-    add(w.slice(0, -3) + "e");
-  }
-  if (w.endsWith("ed") && w.length >= 6) {
-    add(w.slice(0, -2));
-    add(w.slice(0, -1));
-    add(w.slice(0, -2) + "e");
-  }
+  const infl = inflectionOf(w);
+  if (infl?.lemma) add(infl.lemma);
   return [...new Set(out)];
 }
 
@@ -577,7 +631,11 @@ function affixView(kind, form) {
     return { form: key, label: `${key}-`, zh: known?.zh || "" };
   }
   if (kind === "suffix") {
-    return { form: key, label: `-${key}`, zh: known?.zh || "" };
+    return {
+      form: key,
+      label: `-${key}`,
+      zh: known?.zh || INFL_ZH[key] || "",
+    };
   }
   return { form: key, label: key, zh: known?.zh || "" };
 }
@@ -591,7 +649,8 @@ function decorate(parsed, word) {
   if (!parsed) return null;
   const w = normWord(word);
   const prefix = parsed.prefix ? affixView("prefix", parsed.prefix) : null;
-  const suffix = parsed.suffix ? affixView("suffix", parsed.suffix) : null;
+  let suffix = parsed.suffix ? affixView("suffix", parsed.suffix) : null;
+  if (suffix && !suffixFitsSurface(suffix.form, w)) suffix = null;
   const stem = String(parsed.stem || "").toLowerCase();
   const compound = String(parsed.compound || "").toLowerCase();
   let root = parsed.root ? affixView("root", parsed.root) : null;
@@ -631,11 +690,11 @@ export function refreshMorphCombo(morph) {
 export function peekLocalMorph(word) {
   const surface = normWord(word);
   if (NEVER_SPLIT.has(surface)) return null;
-  const vars = stemVariants(surface).sort((a, b) => a.length - b.length);
-  for (const v of vars) {
-    if (NEVER_SPLIT.has(v)) continue;
-    const hit = decorate(localGuess(v), surface);
-    if (hit) return hit;
+  const direct = decorate(localGuess(surface), surface);
+  if (direct) return direct;
+  const infl = inflectionOf(surface);
+  if (infl?.lemma && infl.lemma !== surface && !NEVER_SPLIT.has(infl.lemma)) {
+    return decorate({ stem: infl.lemma, suffix: infl.suffix }, surface);
   }
   return null;
 }
@@ -702,7 +761,9 @@ export async function analyzeEnglishMorph(word) {
   if (morphCache.has(w)) return morphCache.get(w);
 
   let result = null;
-  const vars = stemVariants(w).sort((a, b) => a.length - b.length);
+  const infl = inflectionOf(w);
+  const vars = [w];
+  if (infl?.lemma && infl.lemma !== w) vars.push(infl.lemma);
   for (const v of vars) {
     if (NEVER_SPLIT.has(v)) continue;
     const wiki = await fetchWikiEtymology(v);

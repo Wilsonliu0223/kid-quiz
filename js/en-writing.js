@@ -1,8 +1,8 @@
 /**
  * 英語寫作：初級／中級／中高級定式與短文。
  */
-import { speakEnglish } from "./english.js?v=en-speak-v32";
-import { openEnWordGloss } from "./en-daily.js?v=en-daily-v78";
+import { speakEnglish } from "./english.js?v=en-speak-v33";
+import { openEnWordGloss } from "./en-daily.js?v=en-daily-v79";
 import {
   ESSAYS,
   LEVELS,

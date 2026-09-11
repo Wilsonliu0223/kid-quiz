@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.74" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.75" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -104,7 +104,7 @@
               data-action="start-en"
             >
               <span class="card-title">英語</span>
-              <span class="card-desc">測驗 · 時事 · 翻牌</span>
+              <span class="card-desc">時事 · 聽寫 · 課本</span>
             </button>
             <button type="button" class="card card-mul" id="btn-start-math">
               <span class="card-title">數學</span>
@@ -477,23 +477,27 @@
         </header>
         <div class="en-hub-body">
           <p class="en-hub-meta" id="en-hub-daily-meta">今日時事與複習字</p>
-          <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-hub-quiz">
-            拼字測驗／搶答
-          </button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-daily">
+          <p class="en-hub-label">今天</p>
+          <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-hub-daily">
             每日時事閱讀
           </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-dictation">
-            聽寫今日詞
+            聽寫（今日＋還不會的）
           </button>
+          <p class="en-hub-label">這週</p>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-review">
             複習字區
           </button>
-          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-writing">
-            基本寫作 · 初級／中級／中高級
-          </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-flip">
             英語翻牌
+          </button>
+          <p class="en-hub-label">課本</p>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-quiz">
+            課本拼字／聽寫
+          </button>
+          <p class="en-hub-label">進階</p>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-writing">
+            基本寫作 · 初級／中級／中高級
           </button>
         </div>
       </section>
@@ -841,11 +845,11 @@
                 <label class="en-play-voice en-play-voice-zh">
                   <span class="en-play-accent-label">中</span>
                   <select id="en-play-zh-voice" aria-label="中文聲音">
-                    <option value="zh-TW-HsiaoChenNeural">台女 曉臻</option>
+                    <option value="zh-TW-HsiaoChenNeural" selected>台女 曉臻</option>
                     <option value="zh-TW-HsiaoYuNeural">台女 曉雨</option>
                     <option value="zh-TW-YunJheNeural">台男 雲哲</option>
                     <option value="zh-CN-XiaoxiaoNeural">陸女 曉曉</option>
-                    <option value="zh-CN-YunxiNeural" selected>陸男 雲希</option>
+                    <option value="zh-CN-YunxiNeural">陸男 雲希</option>
                     <option value="zh-CN-YunyangNeural">陸男 雲揚</option>
                   </select>
                 </label>
@@ -896,6 +900,7 @@
             <button type="button" class="btn-text" id="btn-en-gloss-example-speak">🔊 例句</button>
             <div class="en-gloss-related" id="en-gloss-related" hidden></div>
             <p class="en-gloss-source" id="en-gloss-source" hidden></p>
+            <button type="button" class="btn-text" id="btn-en-gloss-more">更多意思</button>
             <button type="button" class="btn btn-primary btn-block btn-primary-en" id="btn-en-gloss-add">
               ☆ 加入複習字
             </button>
@@ -909,7 +914,7 @@
           <span class="setup-subject">複習字區</span>
         </header>
         <div class="en-review-body">
-          <p class="en-hub-meta" id="en-review-hint">今天時事那 8 個聽寫字會一直留在這裡。「清空」只會刪掉你手點加入的字。</p>
+          <p class="en-hub-meta" id="en-review-hint">聽寫會優先抽還不會的字；連對兩次會先休息幾天。「清空」只會刪掉你手點加入的字。</p>
           <div id="en-review-list" class="en-review-list"></div>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-review-dictation">
             聽寫這些字
@@ -919,10 +924,10 @@
       </section>
 
       <!-- 聽寫今日詞 -->
-      <section id="view-en-daily-dictation" class="view view-hidden" aria-label="聽寫今日詞">
+      <section id="view-en-daily-dictation" class="view view-hidden" aria-label="聽寫">
         <header class="quiz-header quiz-header-en">
           <button type="button" class="btn-text btn-text-en" id="btn-en-daily-dictation-back">← 返回</button>
-          <span class="quiz-subject">聽寫今日詞</span>
+          <span class="quiz-subject">聽寫</span>
           <span class="quiz-progress" id="en-daily-dictation-progress">第 1 / 6 題</span>
         </header>
         <div class="en-daily-quiz-body">
@@ -973,7 +978,7 @@
       <section id="view-setup-en" class="view view-hidden" aria-label="英語設定">
         <header class="setup-header setup-header-en">
           <button type="button" class="btn-text" id="btn-setup-en-back">← 返回</button>
-          <span class="setup-subject">英語測驗</span>
+          <span class="setup-subject">課本拼字／聽寫</span>
         </header>
 
         <div class="setup-section">
@@ -990,7 +995,7 @@
 
         <div class="setup-section">
           <span class="label">考試範圍</span>
-          <p class="setup-section-sub">選 TJ3 或 TJ4 等試算表課次</p>
+          <p class="setup-section-sub">佳音課次。看中拼英或聽音拼字，和時事聽寫是同一種練習、題庫不同。</p>
           <div class="lesson-books" id="setup-en-exam-books"></div>
         </div>
 
@@ -3113,7 +3118,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.13").catch((e) => {
+      import("./js/app.js?v=app-v46.14").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

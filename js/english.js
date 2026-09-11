@@ -295,13 +295,11 @@ export function setEnVoice(id) {
 export function getZhVoice() {
   const raw = String(localStorage.getItem(ZH_VOICE_KEY) || "").trim();
   if (voiceIds(ZH_TTS_VOICES).includes(raw)) return raw;
-  return localStorage.getItem(ZH_ACCENT_KEY) === "tw"
-    ? "zh-TW-HsiaoChenNeural"
-    : "zh-CN-YunxiNeural";
+  return "zh-TW-HsiaoChenNeural";
 }
 
 export function setZhVoice(id) {
-  const next = voiceIds(ZH_TTS_VOICES).includes(id) ? id : "zh-CN-YunxiNeural";
+  const next = voiceIds(ZH_TTS_VOICES).includes(id) ? id : "zh-TW-HsiaoChenNeural";
   localStorage.setItem(ZH_VOICE_KEY, next);
 }
 
@@ -1088,7 +1086,7 @@ function chunkTextForTts(text, maxLen = 160) {
 
 const zhTranslateCache = new Map();
 
-function isPlausibleZh(src, zh) {
+export function isPlausibleZh(src, zh) {
   const t = String(zh || "").trim();
   if (!/[\u3400-\u9fff]/.test(t)) return false;
   const enTokens = String(src || "")
