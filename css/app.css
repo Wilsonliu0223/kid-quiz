@@ -924,6 +924,7 @@ body {
 }
 
 .life-quest-path,
+.life-quest-now,
 .life-quest-must {
   margin: 0 0 6px;
   line-height: 1.5;

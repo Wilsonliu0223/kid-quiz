@@ -116,11 +116,57 @@ function neighborIds(id) {
   return n ? relEntries(n).map(([rid]) => rid) : [];
 }
 
+function distTo(fromId, toId) {
+  if (!fromId || !toId) return Infinity;
+  if (fromId === toId) return 0;
+  const hops = pathHops(fromId, toId);
+  return hops.length ? hops.length : Infinity;
+}
+
+function walkTarget() {
+  if (!maze) return "";
+  const miss = maze.must.find((id) => !visited.has(id));
+  if (maze.kind === "middle") {
+    if (atGoal() && miss) return miss;
+    return maze.goal;
+  }
+  return miss || maze.goal;
+}
+
+function doorIds(fromId) {
+  const nbs = neighborIds(fromId);
+  if (freeBrowse || !maze) return nbs;
+  const target = walkTarget();
+  if (!target) return nbs;
+  const hereD = distTo(fromId, target);
+  const keep = nbs.filter((id) => {
+    if (id === target) return true;
+    if (maze.must.includes(id) && !visited.has(id)) return true;
+    return distTo(id, target) < hereD;
+  });
+  if (keep.length <= 3) return keep;
+  const rank = (id) => (id === target ? -1 : distTo(id, target));
+  return [...keep].sort((a, b) => rank(a) - rank(b)).slice(0, 3);
+}
+
+function walkSet() {
+  return new Set(doorIds(hereId));
+}
+
+function mazeShow(id) {
+  if (freeBrowse || !maze) return true;
+  if (id === hereId || id === maze.start || id === maze.goal) return true;
+  if (walkSet().has(id)) return true;
+  if (walked.some(([a, b]) => a === id || b === id)) return true;
+  if (markMust(id)) return true;
+  return false;
+}
+
 function canWalk(id) {
   if (freeBrowse) return true;
   if (!maze) return true;
   if (id === hereId) return true;
-  return neighborIds(hereId).includes(id);
+  return walkSet().has(id);
 }
 
 function mustDone() {
@@ -243,6 +289,9 @@ function firstSentence(s) {
 
 function renderCountySelect() {
   const sel = $("#life-county");
+  const lab = document.querySelector(".life-county-label");
+  if (sel) sel.hidden = !freeBrowse && Boolean(maze);
+  if (lab) lab.hidden = !freeBrowse && Boolean(maze);
   if (!sel) return;
   sel.innerHTML = COUNTIES.map(
     (c) =>
@@ -251,7 +300,7 @@ function renderCountySelect() {
 }
 
 function chipClass(id, extra) {
-  const nbs = new Set(neighborIds(hereId));
+  const nbs = walkSet();
   const locked = freeBrowse || id === hereId || nbs.has(id) ? "" : " is-locked";
   const on =
     id === hereId
@@ -278,7 +327,7 @@ function renderZones() {
   const fromBox = $("#life-zones-from");
   const fromLabel = $("#life-zones-from-label");
   if (!box) return;
-  const zones = zonesForCounty(countyId);
+  const zones = zonesForCounty(countyId).filter((z) => mazeShow(z.id));
   const faces = zones.filter((z) => z.kind !== "from");
   const from = zones.filter((z) => z.kind === "from");
   if (label) {
@@ -312,7 +361,7 @@ function renderLines() {
   };
   for (const [a, b] of walked) add(a, b, "is-walked");
   if (hereId) {
-    for (const id of neighborIds(hereId)) add(hereId, id, "is-door");
+    for (const id of doorIds(hereId)) add(hereId, id, "is-door");
   }
   return `<svg class="life-map-lines" viewBox="0 0 ${MAP_BOX} ${MAP_BOX}" aria-hidden="true">${parts.join("")}</svg>`;
 }
@@ -320,11 +369,11 @@ function renderLines() {
 function renderMap() {
   const box = $("#life-map");
   if (!box) return;
-  const nbs = new Set(neighborIds(hereId));
+  const nbs = walkSet();
   const rings = [4, 2, 1, 0]
     .map((id) => `<div class="life-map-orbit" data-ring="${id}" aria-hidden="true"></div>`)
     .join("");
-  const nodes = NODES.filter((n) => n.ring !== "link" && n.ring !== "core")
+  const nodes = NODES.filter((n) => n.ring !== "link" && n.ring !== "core" && mazeShow(n.id))
     .map((n) => {
       const state =
         n.id === hereId
@@ -342,25 +391,29 @@ function renderMap() {
       return `<span class="life-map-arm" style="--a:${n.angle}deg"><button type="button" class="life-map-node${state}${locked}" data-life-node="${escapeHtml(n.id)}" style="--r:${radiusFor(n.ring)}">${escapeHtml(n.short || n.name)}</button></span>`;
     })
     .join("");
-  const coreOn =
-    hereId === "me"
-      ? " is-here is-focus"
-      : nbs.has("me")
-        ? " is-rel"
-        : visited.has("me")
-          ? " is-walked"
-          : " is-dim";
-  box.innerHTML =
-    renderLines() +
-    rings +
-    nodes +
-    `<button type="button" class="life-map-core${coreOn}" data-life-node="me">我</button>`;
+  const core =
+    !mazeShow("me")
+      ? ""
+      : `<button type="button" class="life-map-core${
+          hereId === "me"
+            ? " is-here is-focus"
+            : nbs.has("me")
+              ? " is-rel"
+              : visited.has("me")
+                ? " is-walked"
+                : " is-dim"
+        }" data-life-node="me">我</button>`;
+  box.innerHTML = renderLines() + rings + nodes + core;
 }
 
 function renderLinks() {
   const box = $("#life-links");
   if (!box) return;
-  box.innerHTML = NODES.filter((n) => n.ring === "link")
+  const list = NODES.filter((n) => n.ring === "link" && mazeShow(n.id));
+  const lab = box.previousElementSibling;
+  if (lab && lab.classList.contains("life-links-label")) lab.hidden = list.length === 0;
+  box.hidden = list.length === 0;
+  box.innerHTML = list
     .map(
       (n) =>
         `<button type="button" class="${chipClass(n.id)}" data-life-node="${escapeHtml(n.id)}">${escapeHtml(n.name)}</button>`,
@@ -378,6 +431,7 @@ function renderQuest() {
   }
   const start = nodeById(maze.start);
   const goal = nodeById(maze.goal);
+  const here = nodeById(hereId);
   const middle = maze.kind === "middle";
   const must = middle
     ? ""
@@ -394,6 +448,7 @@ function renderQuest() {
     (middle
       ? `<p class="life-quest-path">自己走過去。走到了但中間沒踩到，就不算。</p>`
       : `<p class="life-quest-path">從「${escapeHtml(start ? start.name : maze.start)}」走到「${escapeHtml(goal ? goal.name : maze.goal)}」</p>`) +
+    `<p class="life-quest-now">現在在「${escapeHtml(here ? here.name : hereId)}」。只走亮的門。</p>` +
     (must ? `<p class="life-quest-must">路上要經過：${must}</p>` : "") +
     (won ? `<p class="life-quest-win">走到了。</p>` : "") +
     `<div class="life-quest-actions">` +
@@ -490,7 +545,9 @@ function renderFocus() {
     box.innerHTML = "";
     return;
   }
+  const open = new Set(doorIds(n.id));
   const doors = relEntries(n)
+    .filter(([id]) => freeBrowse || open.has(id))
     .map(([id, why]) => {
       const x = nodeById(id);
       if (!x) return "";
@@ -512,7 +569,7 @@ function renderFocus() {
       : freeBrowse
         ? `<button type="button" class="btn btn-secondary btn-block" data-life-open="${escapeHtml(n.id)}">看觀察卡</button>`
         : "") +
-    `<p class="life-read-k">${freeBrowse ? "為什麼連在一起" : "可以走的門"}</p>` +
+    `<p class="life-read-k">${freeBrowse ? "為什麼連在一起" : "亮的門"}</p>` +
     `<div class="life-rel-rows">${doors}</div>`;
 }
 
@@ -552,7 +609,8 @@ function renderHint() {
   const hint = $("#life-hub-hint");
   if (!hint) return;
   if (!freeBrowse && maze) {
-    hint.textContent = maze.hint || "只能走進有連線的格子。走錯可以退回。";
+    const goal = nodeById(maze.goal);
+    hint.textContent = `只走亮的門${goal ? `，接到「${goal.name}」` : ""}。${maze.hint || ""}`;
     return;
   }
   const c = countyById(countyId);
