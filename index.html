@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.73";
+        var V = "39.74";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.75" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.76" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -116,7 +116,7 @@
             </button>
             <button type="button" class="card card-life" id="btn-start-life">
               <span class="card-title">生活觀察</span>
-              <span class="card-desc">心智圖 · 看它連到誰</span>
+              <span class="card-desc">怎麼接到 · 走一走看</span>
             </button>
             <button type="button" class="card card-sudoku" id="btn-start-sudoku">
               <span class="card-title">數獨</span>
@@ -3118,7 +3118,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.16").catch((e) => {
+      import("./js/app.js?v=app-v46.17").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

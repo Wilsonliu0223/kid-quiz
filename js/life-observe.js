@@ -13,7 +13,7 @@ import {
   relJoin,
   relsOf,
   zonesForCounty,
-} from "./life-observe-bank.js?v=life-observe-bank-v10";
+} from "./life-observe-bank.js?v=life-observe-bank-v11";
 import { renderScene } from "./life-observe-art.js?v=life-observe-art-v8";
 
 const KEY_COUNTY = "kid-quiz-life-county";
@@ -125,6 +125,14 @@ function canWalk(id) {
 
 function mustDone() {
   return Boolean(maze && maze.must.every((id) => visited.has(id)));
+}
+
+function hideMustMark() {
+  return Boolean(maze && maze.kind === "middle");
+}
+
+function markMust(id) {
+  return Boolean(maze && maze.must.includes(id) && (!hideMustMark() || visited.has(id)));
 }
 
 function atGoal() {
@@ -250,7 +258,7 @@ function chipClass(id, extra) {
       ? " is-here is-focus"
       : maze && id === maze.goal
         ? " is-goal" + (nbs.has(id) ? " is-rel" : "")
-        : maze && maze.must.includes(id)
+        : markMust(id)
           ? (visited.has(id) ? " is-must-done" : " is-must") + (nbs.has(id) ? " is-rel" : "")
           : nbs.has(id)
             ? " is-rel"
@@ -323,7 +331,7 @@ function renderMap() {
           ? " is-here is-focus"
           : maze && n.id === maze.goal
             ? " is-goal" + (nbs.has(n.id) ? " is-rel" : "")
-            : maze && maze.must.includes(n.id)
+            : markMust(n.id)
               ? (visited.has(n.id) ? " is-must-done" : " is-must") + (nbs.has(n.id) ? " is-rel" : "")
               : nbs.has(n.id)
                 ? " is-rel"
@@ -370,62 +378,99 @@ function renderQuest() {
   }
   const start = nodeById(maze.start);
   const goal = nodeById(maze.goal);
-  const must = maze.must
-    .map((id) => {
-      const n = nodeById(id);
-      const done = visited.has(id);
-      return `<span class="life-must${done ? " is-done" : ""}">${escapeHtml(n ? n.name : id)}${done ? " ✓" : ""}</span>`;
-    })
-    .join("");
-  const lens = maze.lens && lensesOf({ id: maze.start }) ? "" : "";
-  void lens;
+  const middle = maze.kind === "middle";
+  const must = middle
+    ? ""
+    : maze.must
+        .map((id) => {
+          const n = nodeById(id);
+          const done = visited.has(id);
+          return `<span class="life-must${done ? " is-done" : ""}">${escapeHtml(n ? n.name : id)}${done ? " ✓" : ""}</span>`;
+        })
+        .join("");
   box.hidden = false;
   box.innerHTML =
     `<p class="life-quest-ask">${escapeHtml(maze.ask)}</p>` +
-    `<p class="life-quest-path">從「${escapeHtml(start ? start.name : maze.start)}」走到「${escapeHtml(goal ? goal.name : maze.goal)}」</p>` +
-    `<p class="life-quest-must">路上要經過：${must}</p>` +
-    (won ? `<p class="life-quest-win">走到了！今天這題蓋過章。</p>` : "") +
+    (middle
+      ? `<p class="life-quest-path">自己走過去。走到了但中間沒踩到，就不算。</p>`
+      : `<p class="life-quest-path">從「${escapeHtml(start ? start.name : maze.start)}」走到「${escapeHtml(goal ? goal.name : maze.goal)}」</p>`) +
+    (must ? `<p class="life-quest-must">路上要經過：${must}</p>` : "") +
+    (won ? `<p class="life-quest-win">走到了。</p>` : "") +
     `<div class="life-quest-actions">` +
     `<button type="button" class="btn-text" id="btn-life-free">自由看圖</button>` +
     `<button type="button" class="btn-text" id="btn-life-next-maze">再走一題</button>` +
     `</div>`;
 }
 
+function mazeHops() {
+  if (!maze) return [];
+  const ids = [maze.start];
+  for (const id of maze.must) {
+    if (id !== maze.start && id !== maze.goal && !ids.includes(id)) ids.push(id);
+  }
+  if (!ids.includes(maze.goal)) ids.push(maze.goal);
+  const hops = [];
+  for (let i = 0; i < ids.length - 1; i += 1) hops.push(...pathHops(ids[i], ids[i + 1]));
+  return hops;
+}
+
+function hopNames(fromName, hops) {
+  return [fromName, ...hops.map((h) => nodeById(h.to)?.name || h.to)].join(" → ");
+}
+
+function midNames(hops) {
+  return hops
+    .slice(0, -1)
+    .map((h) => nodeById(h.to)?.name)
+    .filter(Boolean);
+}
+
+function keyMiddle(hops) {
+  const mids = hops.slice(0, -1);
+  if (!mids.length) return null;
+  return nodeById(mids[Math.floor((mids.length - 1) / 2)].to);
+}
+
+function chainBlock(fromName, toName, hops, authored) {
+  const names = hopNames(fromName, hops);
+  const mids = midNames(hops);
+  const key = keyMiddle(hops);
+  const say =
+    (authored && authored.say) ||
+    (mids.length ? `沒有「${mids.join("、")}」，「${fromName}」就接不到「${toName}」。` : "");
+  const think =
+    (authored && authored.think) ||
+    (key ? `如果沒有「${key.name}」，還走得到「${toName}」嗎？` : "");
+  return (
+    `<p class="life-read-k">整條線</p>` +
+    `<p class="life-join">要這樣走：${escapeHtml(names)}</p>` +
+    (say ? `<p class="life-join">${escapeHtml(say)}</p>` : "") +
+    (think ? `<p class="life-join-think">想一想：${escapeHtml(think)}</p>` : "")
+  );
+}
+
 function joinHtml() {
+  if (!freeBrowse && won && maze) {
+    const hops = mazeHops();
+    const fromN = nodeById(maze.start);
+    const toN = nodeById(maze.goal);
+    if (fromN && toN && hops.length) return chainBlock(fromN.name, toN.name, hops, maze.chain);
+  }
   if (!lastStep) return "";
   const fromN = nodeById(lastStep.from);
   const toN = nodeById(lastStep.to);
   if (!fromN || !toN) return "";
   const hops = lastStep.hops || [];
   if (!hops.length) {
-    return (
-      `<p class="life-read-k">組合意義</p>` +
-      `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」沒有連線，中間也接不起來。</p>`
-    );
+    return `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」沒有連線，中間也接不起來。</p>`;
   }
   if (hops.length === 1) {
     return (
-      `<p class="life-read-k">組合意義</p>` +
       `<p class="life-join">「${escapeHtml(fromN.name)}」和「${escapeHtml(toN.name)}」</p>` +
       joinLayers(hops[0].why)
     );
   }
-  const names = [fromN.name, ...hops.map((h) => nodeById(h.to)?.name || h.to)].join(" → ");
-  const lines = hops
-    .map((h) => {
-      const a = nodeById(h.from);
-      const b = nodeById(h.to);
-      return (
-        `<p class="life-join-hop">「${escapeHtml(a ? a.name : h.from)}」→「${escapeHtml(b ? b.name : h.to)}」</p>` +
-        joinLayers(h.why, "life-join-hop")
-      );
-    })
-    .join("");
-  return (
-    `<p class="life-read-k">組合意義</p>` +
-    `<p class="life-join">這兩格要這樣連：${escapeHtml(names)}</p>` +
-    lines
-  );
+  return chainBlock(fromN.name, toN.name, hops, null);
 }
 
 function renderJoin() {
@@ -461,7 +506,7 @@ function renderFocus() {
     `<p class="life-lens-row">${lensTags(n)}</p>` +
     `<p class="life-focus-because">${escapeHtml(n.because || "")}</p>` +
     (note ? `<p class="life-place-note">${escapeHtml(note)}</p>` : "") +
-    (missed ? `<p class="life-maze-miss">還沒接到路上的知識。先走到還沒亮的那幾格。</p>` : "") +
+    (missed ? `<p class="life-maze-miss">還沒接到。自己再走走看。</p>` : "") +
     (canWin
       ? `<button type="button" class="btn btn-primary btn-block" data-life-open="${escapeHtml(n.id)}">走到了，看這格</button>`
       : freeBrowse
@@ -511,7 +556,7 @@ function renderHint() {
     return;
   }
   const c = countyById(countyId);
-  hint.textContent = `自由看圖。現在放在${c.name}。亂點兩個點，上面會寫它們怎麼連在一起。`;
+  hint.textContent = `自由看圖。現在放在${c.name}。亂點兩個點，上面會寫怎麼接到。`;
 }
 
 function renderModeBar() {

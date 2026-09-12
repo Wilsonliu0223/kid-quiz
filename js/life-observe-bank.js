@@ -66,7 +66,7 @@ export const NODES = [
     ring: "core",
     name: "我",
     angle: 0,
-    because: "心智圖的中心永遠是你的腳下。",
+    because: "中心永遠是你的腳下。",
     what: "你站的地方，就是地圖的中心。先能指自己，外面的圈才有意義。",
     where: "家、學校、路上。先問：我在哪一層、朝哪一邊。",
     do: "走到窗邊，說出遠的、近的、天上的各一樣。",
@@ -1167,6 +1167,10 @@ export const MAZES = [
     ask: "盤子裡的水從哪來",
     lens: "science",
     hint: "從「我」走到「溪」，路上要經過晚餐、市場。",
+    chain: {
+      say: "盤子裡的東西先經過市場，水才走得回溪。",
+      think: "如果沒有市場，盤子還接得到溪嗎？",
+    },
   },
   {
     id: "hot-mountain",
@@ -1176,6 +1180,10 @@ export const MAZES = [
     ask: "熱是今天，涼是這座山",
     lens: "science",
     hint: "從「冷熱」走到「山」，路上要經過天氣、季節、氣候。",
+    chain: {
+      say: "皮膚上的冷熱疊很多天，才變成這座山的氣候。",
+      think: "今天熱，能說這座山常常熱嗎？",
+    },
   },
   {
     id: "west-sea",
@@ -1186,6 +1194,10 @@ export const MAZES = [
     ask: "往西會碰到海",
     lens: "place",
     hint: "從「縣市」走到「海」，路上要經過市區、海線。",
+    chain: {
+      say: "縣市往西，先過市區再過海線，才摸到海。",
+      think: "如果沒有海線，市區走得到海嗎？",
+    },
   },
   {
     id: "qingshui",
@@ -1196,6 +1208,10 @@ export const MAZES = [
     ask: "名字為什麼叫清水",
     lens: "story",
     hint: "從「鄉鎮」走到「舊名字」，路上要經過地名、溪。",
+    chain: {
+      say: "區的名字裡藏著溪，舊名字還在講那條水。",
+      think: "溪如果改了名字，清水還講得通嗎？",
+    },
   },
   {
     id: "night-taste",
@@ -1206,6 +1222,10 @@ export const MAZES = [
     ask: "晚上的味道",
     lens: "people",
     hint: "從「家」走到「吃的」，路上要經過市場、夜市。",
+    chain: {
+      say: "家的晚餐，晚上常從市場變成夜市再回到盤子。",
+      think: "如果沒有夜市，晚上的味道還從哪裡來？",
+    },
   },
   {
     id: "mountain-life",
@@ -1216,6 +1236,52 @@ export const MAZES = [
     ask: "上山看誰",
     lens: "science",
     hint: "從「縣市」走到「山裡的生命」，路上要經過山線、步道。",
+    chain: {
+      say: "要進山線、走上步道，才看得到山裡的生命。",
+      think: "不上步道，蟲還在嗎？你看不看得到？",
+    },
+  },
+  {
+    id: "food-to-creek",
+    kind: "middle",
+    start: "food",
+    must: ["market"],
+    goal: "creek",
+    ask: "「晚餐」怎麼接到「溪」？",
+    lens: "science",
+    hint: "自己走過去。走到了但中間沒踩到，就不算。",
+    chain: {
+      say: "盤子裡的東西先經過市場，水才走得回溪。",
+      think: "如果沒有市場，盤子還接得到溪嗎？",
+    },
+  },
+  {
+    id: "weather-to-hill",
+    kind: "middle",
+    start: "weather",
+    must: ["climate"],
+    goal: "hill",
+    ask: "「冷熱」怎麼接到「山」？",
+    lens: "science",
+    hint: "自己走過去。走到了但中間沒踩到，就不算。",
+    chain: {
+      say: "皮膚上的冷熱疊很多天，才變成這座山的氣候。",
+      think: "今天熱，能說這座山常常熱嗎？",
+    },
+  },
+  {
+    id: "creek-to-sea",
+    kind: "middle",
+    start: "creek",
+    must: ["mouth"],
+    goal: "sea",
+    ask: "「溪」怎麼接到「海」？",
+    lens: "place",
+    hint: "自己走過去。走到了但中間沒踩到，就不算。",
+    chain: {
+      say: "溪走到盡頭張開嘴巴，才進到海。",
+      think: "如果沒有出海口，溪還進得到海嗎？",
+    },
   },
 ];
 
