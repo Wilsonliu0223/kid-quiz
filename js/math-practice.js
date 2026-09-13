@@ -608,6 +608,7 @@ export function initMathPractice(d) {
   $("#btn-math-hub-open")?.addEventListener("click", () => $("#btn-start-math-open")?.click());
   $("#btn-math-hub-flip")?.addEventListener("click", () => $("#btn-start-math-flip")?.click());
   $("#btn-math-hub-guess")?.addEventListener("click", () => $("#btn-start-math-guess")?.click());
+  $("#btn-math-hub-num-mem")?.addEventListener("click", () => deps.openNumMemory?.());
   $("#btn-math-grade-back")?.addEventListener("click", () => {
     if (confirm("離開練習？進度不會儲存。")) {
       session = null;

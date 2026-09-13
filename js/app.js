@@ -106,7 +106,8 @@ import {
   openMulRaceDuoMode,
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v11";
-import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v3";
+import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v4";
+import { initNumMemory, openNumMemory } from "./num-memory.js?v=num-mem-v1";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
 import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v81";
@@ -191,6 +192,7 @@ const views = {
   mathHub: $("#view-math-hub"),
   mathGradeQuiz: $("#view-math-grade-quiz"),
   mathGradeResult: $("#view-math-grade-result"),
+  numMem: $("#view-num-mem"),
   zhChoice: $("#view-zh-choice"),
   zhCards: $("#view-zh-cards"),
   setupZh: $("#view-setup-zh"),
@@ -2534,9 +2536,11 @@ async function init() {
       });
     },
   });
+  initNumMemory({ showView });
   initMathPractice({
     showView,
     openMulHome,
+    openNumMemory,
   });
   $("#btn-start-math")?.addEventListener("click", (e) => {
     e.preventDefault();

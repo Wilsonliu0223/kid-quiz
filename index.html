@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.77" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.78" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -378,6 +378,42 @@
           <button type="button" class="btn btn-secondary btn-block" id="btn-math-hub-guess">
             猜數字
           </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-math-hub-num-mem">
+            數字記憶
+          </button>
+        </div>
+      </section>
+
+      <section id="view-num-mem" class="view view-hidden" aria-label="數字記憶">
+        <header class="setup-header setup-header-math">
+          <button type="button" class="btn-text" id="btn-num-mem-back">← 返回</button>
+          <span class="setup-subject">數字記憶</span>
+        </header>
+        <div class="num-mem-body">
+          <p class="math-hub-lead">數字會閃一下再蓋住，依序點 1、2、3…（和猩猩記位置同一種玩法）</p>
+          <span class="label">幾個數字</span>
+          <div class="lesson-chips" role="group" aria-label="數字個數">
+            <button type="button" class="chip" data-num-mem-n="4">4</button>
+            <button type="button" class="chip chip-active" data-num-mem-n="5">5</button>
+            <button type="button" class="chip" data-num-mem-n="6">6</button>
+            <button type="button" class="chip" data-num-mem-n="7">7</button>
+            <button type="button" class="chip" data-num-mem-n="8">8</button>
+            <button type="button" class="chip" data-num-mem-n="9">9</button>
+          </div>
+          <span class="label">開牌秒數</span>
+          <div class="lesson-chips" role="group" aria-label="開牌秒數捷徑">
+            <button type="button" class="chip" data-num-mem-sec="0.5">0.5</button>
+            <button type="button" class="chip" data-num-mem-sec="1">1</button>
+            <button type="button" class="chip chip-active" data-num-mem-sec="2">2</button>
+            <button type="button" class="chip" data-num-mem-sec="3">3</button>
+            <button type="button" class="chip" data-num-mem-sec="5">5</button>
+          </div>
+          <label class="num-mem-sec-row" for="num-mem-sec">自訂秒數
+            <input id="num-mem-sec" type="number" inputmode="decimal" min="0.2" max="15" step="0.1" value="2" />
+          </label>
+          <button type="button" class="btn btn-primary btn-block" id="btn-num-mem-start">開始</button>
+          <p class="num-mem-status" id="num-mem-status">選個數和開牌秒數，按開始</p>
+          <div class="num-mem-board" id="num-mem-board" aria-label="數字盤"></div>
         </div>
       </section>
 
@@ -3118,7 +3154,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.18").catch((e) => {
+      import("./js/app.js?v=app-v46.19").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

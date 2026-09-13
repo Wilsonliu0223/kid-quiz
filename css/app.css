@@ -74,6 +74,7 @@ body {
 #view-en-flip-setup.view-active,
 #view-zh-hub.view-active,
 #view-math-hub.view-active,
+#view-num-mem.view-active,
 #view-zh-choice.view-active,
 #view-zh-cards.view-active,
 #view-writing-hub.view-active,
@@ -2225,6 +2226,77 @@ body {
   margin: -4px 0 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.num-mem-body {
+  padding: 12px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.num-mem-sec-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.num-mem-sec-row input {
+  width: 5.5rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font: inherit;
+}
+.num-mem-status {
+  margin: 4px 0 0;
+  min-height: 1.4em;
+  font-weight: 700;
+  color: #2d6b4a;
+}
+.num-mem-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: min(100%, 360px);
+  margin: 4px auto 0;
+  padding: 12px;
+  background: #1a2433;
+  border-radius: 16px;
+}
+.num-mem-cell {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: clamp(1.1rem, 5vw, 1.6rem);
+  font-weight: 800;
+  color: #fff;
+  background: #2b3b52;
+}
+.num-mem-cell.is-empty {
+  background: #151c27;
+  pointer-events: none;
+}
+.num-mem-cell.is-open {
+  background: #2b3b52;
+}
+.num-mem-cell.is-hidden {
+  background: #e8eef6;
+  color: transparent;
+}
+.num-mem-cell.is-ok {
+  background: #2d6b4a;
+  color: #fff;
+}
+.num-mem-cell.is-no {
+  background: #b42318;
+  color: #fff;
+}
+.num-mem-cell.is-need {
+  outline: 3px solid #f5c518;
+}
+.num-mem-cell:disabled {
+  opacity: 1;
 }
 
 .math-frac-bar {
