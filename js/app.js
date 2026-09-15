@@ -22,7 +22,7 @@ import {
   primeSpeech,
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
-} from "./english.js?v=en-speak-v34";
+} from "./english.js?v=en-speak-v35";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
   buildHomophoneChoices,
@@ -67,7 +67,7 @@ import {
 } from "./flip-zh.js";
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
 import { initWriting } from "./writing.js?v=writing-v3";
-import { initEnWriting } from "./en-writing.js?v=en-writing-v9";
+import { initEnWriting } from "./en-writing.js?v=en-writing-v10";
 import { initLifeObserve } from "./life-observe.js?v=life-observe-v16";
 import {
   initZhPractice,
@@ -110,8 +110,8 @@ import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v4"
 import { initNumMemory, openNumMemory } from "./num-memory.js?v=num-mem-v1";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v82";
-import { initFlipEn } from "./flip-en.js?v=en-flip-v4";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v83";
+import { initFlipEn } from "./flip-en.js?v=en-flip-v5";
 import {
   addMistake,
   removeMistake,

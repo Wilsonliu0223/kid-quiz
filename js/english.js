@@ -1229,7 +1229,14 @@ function isUsableTtsUrl(url) {
   const s = String(url || "").trim();
   if (!/^https:\/\//i.test(s)) return false;
   if (/wangwangit/i.test(s)) return false;
+  if (/api\.trycloudflare\.com/i.test(s)) return false;
   return true;
+}
+
+function ttsProxyUrlFromPayload(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data.items)) return "";
+  const url = String(data.url || "").trim();
+  return isUsableTtsUrl(url) ? url : "";
 }
 
 function configuredTtsUrl() {
@@ -1267,29 +1274,41 @@ async function discoverHomeTtsProxy() {
   homeTtsDiscoverAt = now;
   const endpoint = String(CONFIG.SCORE_LOG_URL || "").trim();
   if (!endpoint) return cachedHomeTtsUrl();
-  try {
-    const res = await fetchWithTimeout(
-      endpoint,
-      {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "getTtsProxy" }),
-        redirect: "follow",
-      },
-      5000
-    );
-    const data = JSON.parse(await res.text());
-    const url = String((data && data.url) || "").trim();
-    if (isUsableTtsUrl(url)) {
-      homeTtsUrl = url;
-      try {
-        sessionStorage.setItem(HOME_TTS_CACHE_KEY, url);
-      } catch {
-        /* ignore */
-      }
+  const saveProxyUrl = (data) => {
+    const url = ttsProxyUrlFromPayload(data);
+    if (!url) return false;
+    homeTtsUrl = url;
+    try {
+      sessionStorage.setItem(HOME_TTS_CACHE_KEY, url);
+    } catch {
+      /* ignore */
     }
+    return true;
+  };
+  try {
+    const getUrl = new URL(endpoint);
+    getUrl.searchParams.set("action", "getTtsProxy");
+    const res = await fetchWithTimeout(getUrl.toString(), { method: "GET" }, 8000);
+    saveProxyUrl(JSON.parse(await res.text()));
   } catch (e) {
-    console.warn("getTtsProxy", e);
+    console.warn("getTtsProxy GET", e);
+  }
+  if (!cachedHomeTtsUrl()) {
+    try {
+      const res = await fetchWithTimeout(
+        endpoint,
+        {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "getTtsProxy" }),
+          redirect: "follow",
+        },
+        5000
+      );
+      saveProxyUrl(JSON.parse(await res.text()));
+    } catch (e) {
+      console.warn("getTtsProxy POST", e);
+    }
   }
   return cachedHomeTtsUrl();
 }
@@ -1344,7 +1363,7 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
             response_format: "mp3",
           }),
         },
-        8000
+        20000
       );
       if (res.status === 401 || res.status === 403) {
         edgeTtsCooldownUntil = Date.now() + 45000;
@@ -1375,7 +1394,7 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
     } catch (e) {
       console.warn("Edge TTS", voice, e);
       homeTtsUrl = "";
-      edgeTtsCooldownUntil = Date.now() + 20000;
+      homeTtsDiscoverAt = 0;
       try {
         sessionStorage.removeItem(HOME_TTS_CACHE_KEY);
       } catch {

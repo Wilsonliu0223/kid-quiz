@@ -14,8 +14,8 @@ import {
   listEnReviewItems,
   patchEnReviewZh,
   ensureReviewChinese,
-} from "./en-daily.js?v=en-daily-v82";
-import { speakEnglish, unlockSpeechFromGesture } from "./english.js?v=en-speak-v34";
+} from "./en-daily.js?v=en-daily-v83";
+import { speakEnglish, unlockSpeechFromGesture } from "./english.js?v=en-speak-v35";
 
 const PAIR_OPTIONS = [10, 20];
 const KEY_PAIRS = "kid-quiz-en-flip-pairs";
