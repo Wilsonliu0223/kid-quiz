@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.10";
+import { CONFIG } from "./config.site.js?v=config-v45.70";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 
 export function normalizeEnglish(s) {
