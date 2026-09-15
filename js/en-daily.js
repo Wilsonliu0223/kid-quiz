@@ -23,7 +23,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v33";
+} from "./english.js?v=en-speak-v34";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 import {
   analyzeEnglishMorph,

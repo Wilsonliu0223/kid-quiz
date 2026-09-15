@@ -1250,6 +1250,16 @@ function cachedHomeTtsUrl() {
   return "";
 }
 
+async function fetchWithTimeout(url, opts, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function discoverHomeTtsProxy() {
   const now = Date.now();
   if (homeTtsUrl && now - homeTtsDiscoverAt < 120000) return homeTtsUrl;
@@ -1258,12 +1268,16 @@ async function discoverHomeTtsProxy() {
   const endpoint = String(CONFIG.SCORE_LOG_URL || "").trim();
   if (!endpoint) return cachedHomeTtsUrl();
   try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "getTtsProxy" }),
-      redirect: "follow",
-    });
+    const res = await fetchWithTimeout(
+      endpoint,
+      {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "getTtsProxy" }),
+        redirect: "follow",
+      },
+      5000
+    );
     const data = JSON.parse(await res.text());
     const url = String((data && data.url) || "").trim();
     if (isUsableTtsUrl(url)) {
@@ -1317,17 +1331,21 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
     try {
       const headers = { "Content-Type": "application/json" };
       if (ttsToken) headers["X-Kid-Quiz-Tts"] = ttsToken;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: "tts-1",
-          input: text,
-          voice,
-          speed: 1,
-          response_format: "mp3",
-        }),
-      });
+      const res = await fetchWithTimeout(
+        endpoint,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: "tts-1",
+            input: text,
+            voice,
+            speed: 1,
+            response_format: "mp3",
+          }),
+        },
+        8000
+      );
       if (res.status === 401 || res.status === 403) {
         edgeTtsCooldownUntil = Date.now() + 45000;
         homeTtsUrl = "";
@@ -1356,6 +1374,13 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
       return url;
     } catch (e) {
       console.warn("Edge TTS", voice, e);
+      homeTtsUrl = "";
+      edgeTtsCooldownUntil = Date.now() + 20000;
+      try {
+        sessionStorage.removeItem(HOME_TTS_CACHE_KEY);
+      } catch {
+        /* ignore */
+      }
     }
   }
   return "";
@@ -1401,16 +1426,20 @@ async function resolveZhNeuralUrl(chunk, voice) {
   const action = /^en/i.test(useVoice) ? "synthesizeSpeech" : "synthesizeZh";
 
   try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        action,
-        text: key,
-        voice: useVoice,
-      }),
-      redirect: "follow",
-    });
+    const res = await fetchWithTimeout(
+      endpoint,
+      {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action,
+          text: key,
+          voice: useVoice,
+        }),
+        redirect: "follow",
+      },
+      8000
+    );
     const raw = await res.text();
     let data;
     try {

@@ -21,7 +21,9 @@ sys.path.insert(0, str(TOOLS))
 
 from edge_tts_proxy import HOST, PORT, TOKEN, serve_forever  # noqa: E402
 
-TUNNEL_RE = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com", re.I)
+TUNNEL_RE = re.compile(
+    r"https://(?!api\.)[a-z0-9-]+\.trycloudflare\.com", re.I
+)
 
 _state_lock = threading.Lock()
 _current_url = ""
