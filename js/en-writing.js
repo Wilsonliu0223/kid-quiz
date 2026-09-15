@@ -11,7 +11,7 @@ import {
   josekiById,
   josekiForLevel,
   levelById,
-} from "./en-writing-bank.js?v=en-writing-bank-v7";
+} from "./en-writing-bank.js?v=en-writing-bank-v8";
 
 const KEY_TAB = "kid-quiz-en-writing-tab";
 const KEY_LEVEL = "kid-quiz-en-writing-level";
