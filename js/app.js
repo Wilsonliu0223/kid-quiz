@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.70";
+import { CONFIG } from "./config.site.js?v=config-v45.71";
 import {
   loadZhItems,
   loadEnItems,
@@ -22,7 +22,7 @@ import {
   primeSpeech,
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
-} from "./english.js?v=en-speak-v36";
+} from "./english.js?v=en-speak-v37";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
   buildHomophoneChoices,
@@ -110,7 +110,7 @@ import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v4"
 import { initNumMemory, openNumMemory } from "./num-memory.js?v=num-mem-v1";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v84";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v85";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v5";
 import {
   addMistake,

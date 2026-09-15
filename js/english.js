@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.70";
+import { CONFIG } from "./config.site.js?v=config-v45.71";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 
 export function normalizeEnglish(s) {
@@ -1288,7 +1288,7 @@ async function discoverHomeTtsProxy() {
   try {
     const getUrl = new URL(endpoint);
     getUrl.searchParams.set("action", "getTtsProxy");
-    const res = await fetchWithTimeout(getUrl.toString(), { method: "GET" }, 8000);
+    const res = await fetchWithTimeout(getUrl.toString(), { method: "GET" }, 20000);
     saveProxyUrl(JSON.parse(await res.text()));
   } catch (e) {
     console.warn("getTtsProxy GET", e);
@@ -1303,7 +1303,7 @@ async function discoverHomeTtsProxy() {
           body: JSON.stringify({ action: "getTtsProxy" }),
           redirect: "follow",
         },
-        5000
+        12000
       );
       saveProxyUrl(JSON.parse(await res.text()));
     } catch (e) {
