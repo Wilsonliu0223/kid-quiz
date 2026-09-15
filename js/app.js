@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.71";
+import { CONFIG } from "./config.site.js?v=config-v45.72";
 import {
   loadZhItems,
   loadEnItems,
@@ -66,7 +66,7 @@ import {
   renderFlipHomePlayers,
 } from "./flip-zh.js";
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
-import { initWriting } from "./writing.js?v=writing-v3";
+import { initWriting } from "./writing.js?v=writing-v4";
 import { initEnWriting } from "./en-writing.js?v=en-writing-v10";
 import { initLifeObserve } from "./life-observe.js?v=life-observe-v16";
 import {

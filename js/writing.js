@@ -1,7 +1,7 @@
 /**
  * 國語寫作教學：二～六年級常見題，點開看範文與寫法。
  */
-import { WRITING_BANK, WRITING_GRADES, writingByGrade } from "./writing-bank.js";
+import { WRITING_BANK, WRITING_GRADES, writingByGrade } from "./writing-bank.js?v=writing-bank-v2";
 import {
   escapeHtml,
   hideLookupCard,
@@ -66,7 +66,7 @@ function renderList() {
   const [lo, hi] = WORD_GOAL[grade] || [150, 250];
   const hint = $("#writing-hub-hint");
   if (hint) {
-    hint.textContent = `二年級起才開始寫短文。${grade} 年級常見作業／比賽約 ${lo}～${hi} 字；先看結構，再學怎麼加長。`;
+    hint.textContent = `${grade} 年級共 ${items.length} 篇。二年級起才開始寫短文；常見作業／比賽約 ${lo}～${hi} 字。先看結構，再學怎麼加長。`;
   }
   box.innerHTML = "";
   items.forEach((item) => {
