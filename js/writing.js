@@ -1,7 +1,7 @@
 /**
  * 國語寫作教學：二～六年級常見題，點開看範文與寫法。
  */
-import { WRITING_BANK, WRITING_GRADES, writingByGrade } from "./writing-bank.js?v=writing-bank-v2";
+import { WRITING_BANK, WRITING_GRADES, writingByGrade } from "./writing-bank.js?v=writing-bank-v3";
 import {
   escapeHtml,
   hideLookupCard,
