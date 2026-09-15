@@ -533,7 +533,7 @@
           </button>
           <p class="en-hub-label">進階</p>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-writing">
-            基本寫作 · 初級／中級／中高級
+            基本寫作 · L1／L2／L3
           </button>
         </div>
       </section>
@@ -547,9 +547,9 @@
           <p class="writing-hub-hint" id="en-writing-hub-hint"></p>
           <span class="label">程度</span>
           <div class="lesson-chips" role="group" aria-label="寫作程度">
-            <button type="button" class="chip chip-active" data-en-writing-level="elem">初級 A2</button>
-            <button type="button" class="chip" data-en-writing-level="mid">中級 B1</button>
-            <button type="button" class="chip" data-en-writing-level="high">中高級 B2</button>
+            <button type="button" class="chip chip-active" data-en-writing-level="elem">L1 · A2</button>
+            <button type="button" class="chip" data-en-writing-level="mid">L2 · B1</button>
+            <button type="button" class="chip" data-en-writing-level="high">L3 · B2</button>
           </div>
           <span class="label">看什麼</span>
           <div class="lesson-chips" role="group" aria-label="定式或短文">
@@ -3154,7 +3154,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.19").catch((e) => {
+      import("./js/app.js?v=app-v46.20").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

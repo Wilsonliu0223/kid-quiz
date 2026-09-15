@@ -1,5 +1,6 @@
 /**
- * 英語寫作：初級／中級／中高級。
+ * 英語寫作：L1／L2／L3＝全民英檢初級／中級／中高級（CEFR A2／B1／B2）。
+ * 與每日時事閱讀的 L1／L2／L3（字數分層）不是同一把尺。
  * 級名與「能做什麼」來自全民英檢；CEFR 對照來自 LTTC 寫作參照研究。
  * 句型與連接詞對齊 CEFR 寫作量表、劍橋 A2 Key／B1 Preliminary／B2 First 寫作評分。
  */
@@ -7,7 +8,8 @@
 export const LEVELS = [
   {
     id: "elem",
-    label: "初級",
+    lane: "L1",
+    label: "L1 初級",
     cefr: "A2",
     gept: "全民英檢初級",
     words: [40, 60],
@@ -40,7 +42,8 @@ export const LEVELS = [
   },
   {
     id: "mid",
-    label: "中級",
+    lane: "L2",
+    label: "L2 中級",
     cefr: "B1",
     gept: "全民英檢中級",
     words: [100, 130],
@@ -73,7 +76,8 @@ export const LEVELS = [
   },
   {
     id: "high",
-    label: "中高級",
+    lane: "L3",
+    label: "L3 中高級",
     cefr: "B2",
     gept: "全民英檢中高級",
     words: [150, 180],
@@ -260,14 +264,14 @@ export const JOSEKI = [
     role: "承",
     name: "When / After 時間從句",
     frame: "When ____, I ____.\nAfter I ____, I ____.",
-    why: "中級開始要有「部分複雜句」。把兩件事黏在同一時間，比一直 and 更像作文。",
+    why: "中級開始要有「部分複雜句」。把兩件事黏在同一時間，比一直 and 更像作文。L2 先寫完整從句；句首分詞構句留給 L3。",
     basis: "Cambridge B1 Preliminary 寫作 Language：a range of simple and some complex grammatical forms.",
     basisUrl: "https://www.cambridgeenglish.org/images/231794-cambridge-english-assessing-writing-performance-at-level-b1.pdf",
     samples: [
       "When the wind blew, I felt like I was flying.",
       "After I read the story, I told Mom about whales.",
     ],
-    trap: "When 後面先寫事情，逗號後再寫你做什麼。",
+    trap: "When / After 後面要有主詞＋動詞。不要在 L2 寫 Walking home, I… 那種分詞構句。",
     tryHint: "用 When 或 After 寫兩句。",
   },
   {
@@ -501,6 +505,25 @@ export const JOSEKI = [
     ],
     trap: "結論不要突然換立場。開頭 In my view 和結尾 For these reasons 要同一邊。",
     tryHint: "用 In conclusion 重寫你的立場，不要加新論點。",
+  },
+  {
+    id: "jh19",
+    level: "high",
+    n: 19,
+    role: "句",
+    name: "選修：分詞構句（把從句再縮短）",
+    frame: "Walking home, I ____.\nTired after school, they ____.\nHaving finished ____, I ____.",
+    why: "L3 才適合主動寫。這是把 When / After 從句縮成一句，讓文章比較省、比較像正式書面。不是每天必用；用錯主詞比寫長句更糟。",
+    basis: "British Council：participle clauses 多用於書面，分詞與主要子句要同一主詞。劍橋 B2 要能控制部分複雜句，不要求篇篇都用。",
+    basisUrl: "https://learnenglish.britishcouncil.org/free-resources/grammar/c1/participle-clauses",
+    samples: [
+      "Walking in the yard after dinner, children often sleep more easily.",
+      "Tired from sitting all afternoon, they still need ten minutes outside.",
+      "Having finished a short game, they come back to the table more awake.",
+    ],
+    trap: "兩個動詞必須是同一個人做。不要寫 Walking home, the rain started.（變成雨在走路）。沒把握就寫回 When I walked home, …。Having finished 表示「先做完再…」，不要跟現在進行搞混。",
+    tryHint: "先寫 When I finished my homework, I went outside. 再縮成 Having finished my homework, I went outside.",
+    grammar: "現在分詞 V-ing 表同時或原因：Walking home, I saw a cat.＝When I was walking home…。過去分詞常表被動或狀態：Tired from sitting, they…。完成分詞 Having + 過去分詞表先完成：Having finished…, I…。主詞必須與主要子句相同；不同主詞就不要縮。L2 用完整 When / After 從句即可。",
   },
   {
     id: "je09",
@@ -1293,7 +1316,7 @@ const JOSEKI_GRAMMAR = {
   je07: "First / Then / Finally 是順序副詞，後面仍要完整句。First, I put bread on a plate. 逗號可加在句首副詞後。",
   je08: "一段裡把誰、在哪、做什麼、為什麼寫完。現在簡單式寫習慣或看圖。目標約 50 詞，不要為了湊長而堆形容詞。",
   jm01: "時間副詞放句首：Last Saturday, + 過去式。故事用過去式 took / was / rode。After that / In the end 後面一樣用過去式接完整句。",
-  jm02: "When / After + 子句（主詞＋動詞）, 主要子句。這是時間從屬子句。When the wind blew, I felt… 從句在前要加逗號。",
+  jm02: "When / After + 子句（主詞＋動詞）, 主要子句。這是時間從屬子句。When the wind blew, I felt… 從句在前要加逗號。不要在這一級改成 Walking home, I…（那是 L3 分詞構句）。",
   jm03: "feel 的過去式 felt。I felt + 形容詞 + because + 原因從句。make 可表「使」：It made me feel tired.",
   jm04: "I think + 完整句（常接 we should）。One reason is that + 子句。For example, + 完整句，要有人、有時候，不要只寫 it is good.",
   jm05: "Although + 子句, 主要子句。Although 是從屬連接詞，不要再加 but。I still 表示「仍然」。",
@@ -1308,6 +1331,7 @@ const JOSEKI_GRAMMAR = {
   jh06: "In addition, + 再加一個論點。As a result, + 結果。兩者都是連接副詞，通常獨立成句，不要同一段連用三次。",
   jh07: "題目用 Should…? 或比較級 Which is better…? 主題句仍是主張。生活例子只能當證據，不能取代主張。",
   jh08: "In conclusion, + 重申立場。For these reasons, I would argue that + 子句。would argue 比 I think 正式。不要加新論點。",
+  jh19: "分詞構句把 When / After 從句縮短。V-ing 表同時或原因；過去分詞常表狀態／被動；Having + 過去分詞表先完成。分詞與主要子句必須同一主詞。",
 };
 
 JOSEKI.forEach((j) => {
@@ -1906,7 +1930,7 @@ That is why I choose the park on Sunday morning. Therefore, I hope we can take o
     kind: "引導寫作／論說",
     map: "四段論說：In my view → Some people／However → In addition → In conclusion",
     slots: ["引言：每天該出去", "正反：學習單 vs 睡眠與思考", "第二論點：說話＋精神", "結論：玩不是浪費時間"],
-    used: ["jb21", "jh01", "jh03", "jh05", "jh06", "jh08"],
+    used: ["jb21", "jh01", "jh03", "jh05", "jh06", "jh08", "jh19"],
     vocab: [
       { word: "outside", zh: "戶外" },
       { word: "yard", zh: "院子" },
@@ -1914,20 +1938,20 @@ That is why I choose the park on Sunday morning. Therefore, I hope we can take o
     ],
     notes: [
       "引言 In my view 亮邊，第二句解釋為什麼坐在室內也會累。",
-      "Some people 覺得學習單比較有用。However 守住戶外。Even though 下雨或功課，十分鐘仍比再看一支影片好。",
+      "Some people 覺得學習單比較有用。However 守住戶外。Playing in the yard after dinner 是分詞構句，主詞仍是 children。",
       "In addition 用 whose 寫整天待在室內的孩子。As a result 寫回到桌子時更好。Despite this 很多家人仍躺沙發。",
       "結論 play is not a waste。For these reasons 與開頭同一邊。",
     ],
     body: `In my view, children should play outside every day. Sitting inside after school makes the body tired in a quiet way, and the mind stays on screens for too long.
 
-Some people argue that extra worksheets are more useful than a walk. However, I believe a short game outside helps children sleep and think the next morning. Even though rain or homework can stop a long game, ten minutes in the yard is still better than another video.
+Some people argue that extra worksheets are more useful than a walk. However, I believe a short game outside helps more. Playing in the yard after dinner, children often sleep and think better the next morning. Even though rain or homework can stop a long game, ten minutes outside is still better than another video.
 
 In addition, children whose days are full of indoor work have fewer chances to talk and share. As a result, they come back to the table kinder and more awake. Despite this, many families stay on the sofa until late and hardly open the door.
 
 In conclusion, play is not a waste of time. For these reasons, I would argue that a daily outdoor habit helps children more than one more page of homework.`,
     steps: [
       "四段各做一件事：立場、正反、加論點、結論。",
-      "whose days are full 是關係子句，不要 whose they stay。",
+      "Playing in the yard after dinner, children… 是 L3 選修的分詞構句，兩個動作都是 children 做的。",
       "詞數 150～180。結論不加新論點。",
     ],
     tips: [

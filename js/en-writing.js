@@ -1,5 +1,5 @@
 /**
- * 英語寫作：初級／中級／中高級定式與短文。
+ * 英語寫作：L1／L2／L3 定式與短文。
  */
 import { speakEnglish } from "./english.js?v=en-speak-v33";
 import { openEnWordGloss } from "./en-daily.js?v=en-daily-v81";
@@ -11,7 +11,7 @@ import {
   josekiById,
   josekiForLevel,
   levelById,
-} from "./en-writing-bank.js?v=en-writing-bank-v5";
+} from "./en-writing-bank.js?v=en-writing-bank-v6";
 
 const KEY_TAB = "kid-quiz-en-writing-tab";
 const KEY_LEVEL = "kid-quiz-en-writing-level";
@@ -69,7 +69,7 @@ function renderSources(lv) {
   const box = $("#en-writing-sources");
   if (!box) return;
   box.innerHTML =
-    `<p class="en-writing-source-lead">這一級不是自訂的。級名用全民英檢；程度對齊 CEFR ${escapeHtml(lv.cefr)}。</p>` +
+    `<p class="en-writing-source-lead">寫作 ${escapeHtml(lv.lane)}＝${escapeHtml(lv.gept)}（CEFR ${escapeHtml(lv.cefr)}）。這和每日時事閱讀的 L1／L2／L3 不是同一把尺。</p>` +
     `<ul class="writing-teach-list">` +
     lv.sources
       .map(
@@ -87,7 +87,7 @@ function renderList() {
   if (!box) return;
   if (hint) {
     hint.textContent =
-      `${lv.gept}（CEFR ${lv.cefr}）。${lv.canDo} 寫作量：${lv.wordHint}。` +
+      `${lv.lane} · ${lv.gept}（CEFR ${lv.cefr}）。${lv.canDo} 寫作量：${lv.wordHint}。` +
       (tab === "joseki"
         ? " 先看最上面的「段落／篇章骨架」，那是一段怎麼站、一篇怎麼走。起手式和連接詞是填進格子的零件。"
         : " 每篇短文上方有篇章地圖；每一段標明它在骨架的哪一格。英文可點查。");
