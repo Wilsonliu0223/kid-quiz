@@ -8250,6 +8250,14 @@ body.en-gloss-open .en-play-accent-btn {
 .en-cloze-feedback.is-no {
   color: #c0392b;
 }
+.en-daily-dictation-hint {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a5bb8;
+  line-height: 1.45;
+}
 .en-daily-dictation-feedback {
   margin: 0;
   font-weight: 700;

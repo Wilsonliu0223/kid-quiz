@@ -2889,6 +2889,7 @@ function uniqWordEntries(items, source) {
     out.push({
       word: w,
       gloss: String(item.gloss || "").trim(),
+      zh: String(item.zh || item.zhGloss || item.contextZh || "").trim(),
       source,
       articleId: String(item.articleId || "").trim(),
     });
@@ -3062,8 +3063,62 @@ function pickDictationWords({ reviewOnly = false } = {}) {
   return uniqWordEntries(ranked, "mix").slice(0, DICTATION_N);
 }
 
+function dictationLetterCount(word) {
+  return String(word || "").replace(/[^A-Za-z]/g, "").length;
+}
+
+function dictationZhHint(q) {
+  const word = String(q?.word || "").trim();
+  const fromQ =
+    reviewZhOk(word, q?.zh) ||
+    reviewZhOk(word, q?.gloss) ||
+    reviewZhOk(word, q?.zhGloss);
+  if (fromQ) return fromQ;
+  const review = loadReview().find(
+    (x) => String(x.word || "").toLowerCase() === word.toLowerCase()
+  );
+  if (review) {
+    const z =
+      reviewZhOk(word, review.zh) ||
+      reviewZhOk(word, review.gloss) ||
+      reviewZhOk(word, review.contextZh);
+    if (z) return z;
+  }
+  const art = findArticleForWord(word, q?.articleId, q?.date);
+  const v = (art?.vocab || []).find(
+    (x) => String(x.word || "").toLowerCase() === word.toLowerCase()
+  );
+  if (v) {
+    return (
+      reviewZhOk(word, v.zh) ||
+      reviewZhOk(word, v.zhGloss) ||
+      reviewZhOk(word, v.gloss_zh) ||
+      ""
+    );
+  }
+  return "";
+}
+
+function paintDictationHint(q) {
+  const el = $("#en-daily-dictation-hint");
+  if (!el) return;
+  const letters = dictationLetterCount(q?.word);
+  const zh = dictationZhHint(q);
+  if (zh && letters) {
+    el.textContent = `提示：${zh} · ${letters} 個字母`;
+  } else if (zh) {
+    el.textContent = `提示：${zh}`;
+  } else if (letters) {
+    el.textContent = `提示：這個字有 ${letters} 個字母`;
+  } else {
+    el.textContent = "";
+  }
+  el.hidden = !el.textContent;
+}
+
 async function openDictation(opts = {}) {
   await ensureArticles();
+  await ensureReviewChinese();
   const reviewOnly = !!opts.reviewOnly;
   const pool = pickDictationWords({ reviewOnly });
   if (!pool.length) {
@@ -3112,7 +3167,16 @@ function renderDictationQ() {
       dictationIndex >= dictationQs.length - 1 ? "送出" : "送出";
   }
   dictationLocked = false;
+  paintDictationHint(q);
   if (q?.word) prefetchEnglishAudio(q.word);
+  if (q && !dictationZhHint(q)) {
+    const idx = dictationIndex;
+    void zhForReviewEntry(q).then((zh) => {
+      if (!zh || idx !== dictationIndex) return;
+      q.zh = zh;
+      paintDictationHint(q);
+    });
+  }
 }
 
 async function speakDictationWord() {
