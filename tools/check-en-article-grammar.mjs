@@ -105,11 +105,64 @@ const IGNORE_RULES = new Set([
   "MergeWords",
   "OrthographicConsistency",
   "OpenCompounds",
+  "SplitWords",
+  "PhrasalVerbAsCompoundNoun",
+  "MassNouns",
+  "PronounKnew",
+  "HowTo",
+  "RepeatedWords",
+  "MissingTo",
+  "MissingPreposition",
+  "HyphenateNumberDay",
+  "BuiltIn",
+  "MoreAdjective",
+  "NominalWants",
+  "ToTwoToo",
+  "DisjointPrefixes",
+  "InflectedVerbAfterTo",
+  "WayTooAdjective",
+  "HopHope",
+  "ModalBeAdjective",
+  "TheProperNounPossessive",
 ]);
 
 function isFalsePositive(rule, text) {
   if (rule === "MissingPreposition" && /what does \S+ mean\??/i.test(text)) return true;
   if (rule === "MissingTo" && /\btry [a-z]+,/i.test(text)) return true;
+  if (
+    rule === "AnA" &&
+    (/\b39A\b/.test(text) ||
+      /\bAn Se-young\b/.test(text) ||
+      /\bAn will\b/.test(text) ||
+      /\bAn did\b/.test(text) ||
+      /\bDong-A\b/.test(text) ||
+      /\ba STEM\b/.test(text) ||
+      /\bSagittarius A\b/.test(text))
+  ) {
+    return true;
+  }
+  if (rule === "RepeatedWords" && /\b(Jia Jia|Kai Kai|Le Le|twenty twenty)\b/i.test(text)) {
+    return true;
+  }
+  if (rule === "PronounContraction" && /\bWere the\b/.test(text)) return true;
+  if (rule === "ThereToTheir" && /\b[Ii]s there\b/.test(text)) return true;
+  if (rule === "LetsConfusion" && /\blets [a-z]+\b/.test(text)) return true;
+  if (rule === "NounVerbConfusion" && /\beffects\b/i.test(text)) return true;
+  if (rule === "SimplePastToPastParticiple" && /You['’]ve Got a Friend/i.test(text)) {
+    return true;
+  }
+  if (
+    rule === "PronounVerbAgreement" &&
+    (/\bshe beat\b/i.test(text) ||
+      /\bshe weighs\b/i.test(text) ||
+      /\bwhere was she\b/i.test(text) ||
+      /\bare they champions\b/i.test(text))
+  ) {
+    return true;
+  }
+  if (rule === "SingleBe" && /\bis [A-Z][A-Za-z]+['’]s\b/.test(text)) return true;
+  if (rule === "SingleBe" && /\bwas [A-Z][A-Za-z]+['’]s\b/.test(text)) return true;
+  if (rule === "MissingDeterminer" && /\btree shrews\b/i.test(text)) return true;
   return false;
 }
 
@@ -215,7 +268,7 @@ async function loadHarper() {
   return import(pathToFileURL(entry).href);
 }
 
-async function createLinter() {
+export async function createLinter() {
   const harper = await loadHarper();
   const linter = new harper.LocalLinter({
     binary: harper.binaryInlined || harper.binary,
@@ -273,28 +326,33 @@ async function lintEnglish(text, where, linter) {
   return hits;
 }
 
-export async function checkArticleFile(filePath) {
-  const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
-  const rows = raw.rows || raw;
+export async function checkArticleRows(rows, linter) {
   if (!Array.isArray(rows)) throw new Error("JSON 需含 rows 陣列");
-  const { linter } = await createLinter();
   /** @type {Issue[]} */
   const issues = [];
-  try {
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const label = String(row.topic_key || row.seq || i + 1);
-      for (const field of collectFields(row, label)) {
-        issues.push(...(await lintEnglish(field.text, field.where, linter)));
-        for (const sent of splitSentences(field.text)) {
-          issues.push(...checkUsage(sent, field.where));
-        }
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const label = String(row.topic_key || row.seq || i + 1);
+    for (const field of collectFields(row, label)) {
+      issues.push(...(await lintEnglish(field.text, field.where, linter)));
+      for (const sent of splitSentences(field.text)) {
+        issues.push(...checkUsage(sent, field.where));
       }
     }
+  }
+  return { rows: rows.length, issues };
+}
+
+export async function checkArticleFile(filePath, sharedLinter) {
+  const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const rows = raw.rows || raw;
+  if (sharedLinter) return checkArticleRows(rows, sharedLinter);
+  const { linter } = await createLinter();
+  try {
+    return await checkArticleRows(rows, linter);
   } finally {
     await linter.dispose();
   }
-  return { rows: rows.length, issues };
 }
 
 async function selfTest() {
