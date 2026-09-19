@@ -31,6 +31,17 @@ if errorlevel 1 (
   exit /b 1
 )
 
+if not exist "tools\node_modules\harper.js" (
+  echo installing grammar engine>> "%LOG%"
+  pushd tools
+  call npm install >> "%LOG%" 2>&1
+  popd
+  if not exist "tools\node_modules\harper.js" (
+    echo harper.js install failed>> "%LOG%"
+    exit /b 1
+  )
+)
+
 agent --print --trust --force --sandbox disabled --approve-mcps --workspace "%CD%" --model cursor-grok-4.6-high -- "Read tools/daily-en-articles-prompt.txt and follow it exactly. Produce and upload today's ten English articles now." >> "%LOG%" 2>&1
 set "ERR=%ERRORLEVEL%"
 echo ===== %DATE% %TIME% exit %ERR% =====>> "%LOG%"

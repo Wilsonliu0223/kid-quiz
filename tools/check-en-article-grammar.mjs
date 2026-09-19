@@ -1,17 +1,119 @@
 /**
- * 兒童時事英文：上傳前文法／用法查核。
+ * 上傳前文法查核：離線引擎 Harper 檢查每一段英文，不是只對已知錯句做規則比對。
  *
  *   node tools/check-en-article-grammar.mjs articles.json
  *   node tools/check-en-article-grammar.mjs --self-test
  *
- * 擋的是「孩子會學走」的錯句與教學範本彆扭句，不是一般新聞標題省略。
+ * 第一次：cd tools && npm install
  */
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
-const DAYS =
-  "Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday";
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const HARPER_DIR = path.join(ROOT, "tools", "node_modules", "harper.js");
+
+/** Harper 裡偏風格、專有名詞、程式縮寫，不當兒童時事文法錯誤。 */
+const IGNORE_RULES = new Set([
+  "SpellCheck",
+  "Misspell",
+  "ProperNouns",
+  "CompaniesProductsAndTrademarks",
+  "NotablePlaces",
+  "NationalCapitals",
+  "Countries",
+  "Holidays",
+  "Americas",
+  "Koreas",
+  "Laos",
+  "Malaysia",
+  "Australia",
+  "Canada",
+  "USUniversities",
+  "UnitedOrganizations",
+  "OceansAndSeas",
+  "UpdatePlaceNames",
+  "AmazonNames",
+  "AppleNames",
+  "GoogleNames",
+  "MicrosoftNames",
+  "MetaNames",
+  "JetpackNames",
+  "TumblrNames",
+  "PocketCastsNames",
+  "DayOneNames",
+  "AzureNames",
+  "GoggleBrand",
+  "WordPressDotcom",
+  "AvoidCurses",
+  "FillerWords",
+  "Hedging",
+  "BoringWords",
+  "LongSentences",
+  "OxfordComma",
+  "NoOxfordComma",
+  "Spaces",
+  "QuoteSpacing",
+  "NoFrenchSpaces",
+  "TransposedSpace",
+  "UseTitleCase",
+  "SentenceCapitalization",
+  "Dashes",
+  "EllipsisLength",
+  "CurrencyPlacement",
+  "SpelledNumbers",
+  "CorrectNumberSuffix",
+  "NumberSuffixCapitalization",
+  "DotInitialisms",
+  "ExpandAlloc",
+  "ExpandArgument",
+  "ExpandBecause",
+  "ExpandControl",
+  "ExpandDecl",
+  "ExpandDependencies",
+  "ExpandDeref",
+  "ExpandForward",
+  "ExpandMemoryShorthands",
+  "ExpandMinimum",
+  "ExpandParameter",
+  "ExpandPointer",
+  "ExpandPrevious",
+  "ExpandStandardInputAndOutput",
+  "ExpandThrough",
+  "ExpandTimeShorthands",
+  "ExpandWith",
+  "ExpandWithout",
+  "Devops",
+  "Cybersec",
+  "Overclocking",
+  "Underclock",
+  "Multicore",
+  "Multithreading",
+  "Middleware",
+  "Desktop",
+  "Laptop",
+  "OperatingSystem",
+  "Proofread",
+  "Regionalisms",
+  "KindOf",
+  "KindSortOf",
+  "Really",
+  "QuiteQuiet",
+  "DiscourseMarkers",
+  "CompoundNouns",
+  "AvoidAndAlso",
+  "MergeWords",
+  "OrthographicConsistency",
+  "OpenCompounds",
+]);
+
+function isFalsePositive(rule, text) {
+  if (rule === "MissingPreposition" && /what does \S+ mean\??/i.test(text)) return true;
+  if (rule === "MissingTo" && /\btry [a-z]+,/i.test(text)) return true;
+  return false;
+}
+
+const DAYS = "Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday";
 
 /** @typedef {{ where: string, text: string, rule: string, hint: string }} Issue */
 
@@ -35,186 +137,195 @@ function splitSentences(text) {
     .filter(Boolean);
 }
 
-/**
- * @param {string} sentence
- * @returns {Issue[]}
- */
-export function checkSentence(sentence, where = "") {
+/** 引擎漏掉、但孩子會學走的用法（補充，不是主查核）。 */
+function checkUsage(sentence, where) {
   const t = String(sentence || "").trim();
   if (!t) return [];
   /** @type {Issue[]} */
   const hits = [];
   const add = (rule, hint) => hits.push({ where, text: t, rule, hint });
-
-  if (
-    /\bdelay(?:ed|s)? the\b.+\b(?:field|stadium|park|ground|court)\b/i.test(t)
-  ) {
-    add(
-      "delay-place",
-      "delay 的受詞應是活動（practice / game），不是場地（field / stadium）。"
-    );
+  if (/\bdelay(?:ed|s)? the\b.+\b(?:field|stadium|park|ground|court)\b/i.test(t)) {
+    add("usage:delay-place", "delay 的受詞應是活動，不是場地。");
   }
-
   if (/\btry with effort\b/i.test(t) || /\ba goal you try(?!\s+to\b)/i.test(t)) {
-    add("try-incomplete", "try 後面要有 to + 原形，例如 try to reach。");
+    add("usage:try-incomplete", "try 後面要有 to + 原形。");
   }
-
   if (/\bmultiplayer let\b/i.test(t)) {
-    add("multiplayer-sva", "multiplayer 當不可數名詞時用 lets，或改成 modes let。");
+    add("usage:multiplayer-sva", "multiplayer 用 lets，或改成 modes let。");
   }
-
   if (
     new RegExp(
       `\\b(?:festival|event|show|concert|game|class|meeting|parade)s? is (?!on )(?:${DAYS})\\b`,
       "i"
     ).test(t)
   ) {
-    add("missing-on-day", "活動 + is 後面的星期幾前面加 on。");
+    add("usage:missing-on-day", "活動 + is 後面的星期幾前面加 on。");
   }
-
   if (new RegExp(`\\b(?:shows|games|events|concerts) are (?!on )(?:${DAYS})\\b`, "i").test(t)) {
-    add("missing-on-day", "複數活動 + are 後面的星期幾前面加 on。");
+    add("usage:missing-on-day", "複數活動 + are 後面的星期幾前面加 on。");
   }
-
-  if (/\bnot a sweet soda all day\b/i.test(t)) {
-    add("uneven-contrast", "對比不平行：改成 not sweet soda all day。");
-  }
-
-  if (/\bjoin sports,\s*food\b/i.test(t) && !/\bmini-?games?\b/i.test(t)) {
-    add("join-list", "join sports, food 讀起來像加入食物。在最後補上 mini-games。");
-  }
-
   if (/\b(?:landed|arrived|left|came) before one(?!\s+o['’]?clock)\b/i.test(t)) {
-    add("before-one", "before one 對孩子太省略，寫 before one o'clock。");
+    add("usage:before-one", "寫 before one o'clock。");
   }
-
-  if (/\bmonths of growing\b/i.test(t)) {
-    add("months-growing", "懷孕／待產不要寫 months of growing，容易讀成出生後還在長。");
-  }
-
-  if (/\bbefore they stand in the world\b/i.test(t)) {
-    add("stand-in-world", "長頸鹿是出生後很快站起來；十五個月是出生前。改 before they are born。");
-  }
-
-  if (/\blog minutes with books\b/i.test(t)) {
-    add("log-minutes", "改成 log their reading minutes。");
-  }
-
-  if (/\b\w+s already (?:reached|arrived|joined|entered)\b/i.test(t) && !/\bhave already\b/i.test(t)) {
-    if (!/\b(?:yesterday|last)\b/i.test(t)) {
-      add("already-present-perfect", "already + 完成動作用 have / has already，不要只用過去式。");
-    }
-  }
-
   if (/\b(?:should|can|must|will) drink(?!\s+\w)/i.test(t)) {
-    add("drink-object", "drink 後面要有受詞，例如 drink water。");
+    add("usage:drink-object", "drink 後面要有受詞。");
   }
-
   return hits;
 }
 
-function pushField(out, where, text) {
-  const raw = String(text || "").trim();
-  if (!raw) return;
-  for (const sent of splitSentences(raw)) {
-    out.push(...checkSentence(sent, where));
-  }
-}
-
-function walkDialogue(out, prefix, dialogue) {
-  if (!dialogue || typeof dialogue !== "object") return;
-  pushField(out, `${prefix}.scene`, dialogue.scene);
-  const turns = Array.isArray(dialogue.turns) ? dialogue.turns : [];
-  turns.forEach((turn, i) => {
-    pushField(out, `${prefix}.turn${i + 1}.l1`, turn.l1);
-    pushField(out, `${prefix}.turn${i + 1}.l2`, turn.l2);
-    pushField(out, `${prefix}.turn${i + 1}.l3`, turn.l3);
-  });
-  const quiz = Array.isArray(dialogue.quiz) ? dialogue.quiz : [];
-  quiz.forEach((q, i) => pushField(out, `${prefix}.dquiz${i + 1}`, q.q));
-}
-
-/**
- * @param {object} row
- * @param {string} label
- * @returns {Issue[]}
- */
-export function checkArticleRow(row, label = "") {
-  /** @type {Issue[]} */
+function collectFields(row, label) {
+  /** @type {{ where: string, text: string }[]} */
   const out = [];
+  const add = (where, text) => {
+    const t = String(text || "").trim();
+    if (t) out.push({ where, text: t });
+  };
   const p = label || String(row.topic_key || row.topicKey || row.seq || "row");
-  pushField(out, `${p}.title`, row.title);
-  pushField(out, `${p}.body_l1`, row.body_l1 || row.bodyL1);
-  pushField(out, `${p}.body_l2`, row.body_l2 || row.bodyL2);
-  pushField(out, `${p}.body_l3`, row.body_l3 || row.bodyL3);
+  add(`${p}.title`, row.title);
+  add(`${p}.body_l1`, row.body_l1 || row.bodyL1);
+  add(`${p}.body_l2`, row.body_l2 || row.bodyL2);
+  add(`${p}.body_l3`, row.body_l3 || row.bodyL3);
   const vocab = Array.isArray(row.vocab) ? row.vocab : [];
   vocab.forEach((v, i) => {
-    pushField(out, `${p}.vocab${i + 1}.gloss`, v.gloss);
-    pushField(out, `${p}.vocab${i + 1}.example`, v.example);
+    add(`${p}.vocab${i + 1}.gloss`, v.gloss);
+    add(`${p}.vocab${i + 1}.example`, v.example);
   });
   const quiz = Array.isArray(row.quiz) ? row.quiz : [];
-  quiz.forEach((q, i) => pushField(out, `${p}.quiz${i + 1}`, q.q));
-  walkDialogue(out, `${p}.dialogue`, row.dialogue);
+  quiz.forEach((q, i) => add(`${p}.quiz${i + 1}`, q.q));
+  const dialogue = row.dialogue && typeof row.dialogue === "object" ? row.dialogue : null;
+  if (dialogue) {
+    add(`${p}.dialogue.scene`, dialogue.scene);
+    const turns = Array.isArray(dialogue.turns) ? dialogue.turns : [];
+    turns.forEach((turn, i) => {
+      add(`${p}.dialogue.turn${i + 1}.l1`, turn.l1);
+      add(`${p}.dialogue.turn${i + 1}.l2`, turn.l2);
+      add(`${p}.dialogue.turn${i + 1}.l3`, turn.l3);
+    });
+    const dquiz = Array.isArray(dialogue.quiz) ? dialogue.quiz : [];
+    dquiz.forEach((q, i) => add(`${p}.dialogue.dquiz${i + 1}`, q.q));
+  }
   return out;
 }
 
-export function checkArticleFile(filePath) {
+async function loadHarper() {
+  const entry = path.join(HARPER_DIR, "dist", "harper.js");
+  if (!fs.existsSync(entry)) {
+    throw new Error("尚未安裝文法引擎。請在專案執行：cd tools && npm install");
+  }
+  return import(pathToFileURL(entry).href);
+}
+
+async function createLinter() {
+  const harper = await loadHarper();
+  const linter = new harper.LocalLinter({
+    binary: harper.binaryInlined || harper.binary,
+    dialect: harper.Dialect.American,
+  });
+  await linter.setup();
+  const config = await linter.getLintConfig();
+  for (const rule of IGNORE_RULES) {
+    if (rule in config) config[rule] = false;
+  }
+  await linter.setLintConfig(config);
+  return { harper, linter };
+}
+
+/**
+ * @param {string} text
+ * @param {string} where
+ * @param {Awaited<ReturnType<typeof createLinter>>["linter"]} linter
+ * @returns {Promise<Issue[]>}
+ */
+async function lintEnglish(text, where, linter) {
+  const organized = await linter.organizedLints(text);
+  /** @type {Issue[]} */
+  const hits = [];
+  for (const [rule, list] of Object.entries(organized)) {
+    if (IGNORE_RULES.has(rule)) continue;
+    if (isFalsePositive(rule, text)) continue;
+    for (const lint of list) {
+      const problem = lint.get_problem_text();
+      if (
+        rule === "CapitalizePersonalPronouns" &&
+        /^i$/i.test(problem.trim()) &&
+        /\b(?:ke|ka|o|na|pu|huki|uhane|mahoe)\b/i.test(text)
+      ) {
+        continue;
+      }
+      const start = lint.span().start;
+      const end = lint.span().end;
+      const snippet = text.slice(Math.max(0, start - 40), Math.min(text.length, end + 40)).trim();
+      const suggestions = [];
+      for (const sug of lint.suggestions()) {
+        suggestions.push(sug.get_replacement_text());
+      }
+      const hint = suggestions.filter(Boolean).length
+        ? `${lint.message()} 建議：${suggestions.filter(Boolean).slice(0, 3).join(" / ")}`
+        : lint.message();
+      hits.push({
+        where,
+        text: snippet || lint.get_problem_text(),
+        rule: `harper:${rule}`,
+        hint,
+      });
+    }
+  }
+  return hits;
+}
+
+export async function checkArticleFile(filePath) {
   const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
   const rows = raw.rows || raw;
-  if (!Array.isArray(rows)) {
-    throw new Error("JSON 需含 rows 陣列");
-  }
+  if (!Array.isArray(rows)) throw new Error("JSON 需含 rows 陣列");
+  const { linter } = await createLinter();
   /** @type {Issue[]} */
   const issues = [];
-  rows.forEach((row, i) => {
-    issues.push(...checkArticleRow(row, String(row.topic_key || row.seq || i + 1)));
-  });
+  try {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const label = String(row.topic_key || row.seq || i + 1);
+      for (const field of collectFields(row, label)) {
+        issues.push(...(await lintEnglish(field.text, field.where, linter)));
+        for (const sent of splitSentences(field.text)) {
+          issues.push(...checkUsage(sent, field.where));
+        }
+      }
+    }
+  } finally {
+    await linter.dispose();
+  }
   return { rows: rows.length, issues };
 }
 
-function selfTest() {
-  const cases = [
-    ["Rain delayed the Saturday practice field.", "delay-place"],
-    ["A challenge is a goal you try with effort.", "try-incomplete"],
-    ["Local and online multiplayer let friends play.", "multiplayer-sva"],
-    ["The festival is Saturday and Sunday by the river.", "missing-on-day"],
-    ["The shows are Friday evening and twice on Saturday.", "missing-on-day"],
-    ["Water is a kind drink, not a sweet soda all day.", "uneven-contrast"],
-    ["Players can join sports, food, and music clubs.", "join-list"],
-    ["They landed before one.", "before-one"],
-    ["The baby arrived after about fifteen months of growing.", "months-growing"],
-    ["Giraffe calves grow for about fifteen months before they stand in the world.", "stand-in-world"],
-    ["Kids log minutes with books.", "log-minutes"],
-    ["Three bushels of pears already reached cafeteria trays.", "already-present-perfect"],
-    ["Kids should drink.", "drink-object"],
-    ["Rain delayed Saturday practice.", null],
-    ["A challenge is a goal you try to reach with effort.", null],
-    ["Local and online multiplayer lets friends play.", null],
-    ["The festival is on Saturday and Sunday by the river.", null],
-    ["They landed before one o'clock.", null],
-    ["Three bushels of pears have already reached cafeteria trays.", null],
-    ["Kids should drink water.", null],
-  ];
-  let failed = 0;
-  for (const [sent, expect] of cases) {
-    const rules = checkSentence(sent).map((x) => x.rule);
-    const ok = expect ? rules.includes(expect) : rules.length === 0;
-    if (!ok) {
-      failed += 1;
-      console.error("SELF-TEST FAIL", sent, "got", rules, "expect", expect);
+async function selfTest() {
+  const { linter } = await createLinter();
+  try {
+    const badAn = await lintEnglish("This is an test.", "t", linter);
+    const badAgr = await lintEnglish("She go to school every day.", "t", linter);
+    const good = await lintEnglish("Kids should drink water at school.", "t", linter);
+    if (!badAn.some((x) => x.rule.includes("AnA") || /indefinite article/i.test(x.hint))) {
+      throw new Error("self-test: 應抓到 This is an test.");
     }
+    if (!badAgr.some((x) => /agree/i.test(x.hint) || x.rule.includes("Agreement"))) {
+      throw new Error("self-test: 應抓到 She go to school.");
+    }
+    if (good.length) {
+      throw new Error(`self-test: 正確句不應報錯：${JSON.stringify(good)}`);
+    }
+    const usage = checkUsage("Rain delayed the Saturday practice field.", "t");
+    if (!usage.some((x) => x.rule.includes("delay"))) {
+      throw new Error("self-test: 補充規則 delay-place 失效");
+    }
+  } finally {
+    await linter.dispose();
   }
-  if (failed) {
-    console.error(`self-test: ${failed} failed`);
-    process.exit(1);
-  }
-  console.log("self-test: ok");
+  console.log("self-test: ok (Harper + usage)");
 }
 
-function main() {
+async function main() {
   const argv = process.argv.slice(2);
   if (argv.includes("--self-test")) {
-    selfTest();
+    await selfTest();
     return;
   }
   const file = argv.find((a) => !a.startsWith("-"));
@@ -225,9 +336,9 @@ function main() {
     process.exit(1);
   }
   const abs = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
-  const { rows, issues } = checkArticleFile(abs);
+  const { rows, issues } = await checkArticleFile(abs);
   if (!issues.length) {
-    console.log(`grammar: ok (${rows} rows)`);
+    console.log(`grammar: ok (${rows} rows, Harper)`);
     return;
   }
   console.error(`grammar: ${issues.length} issue(s) in ${rows} rows`);
@@ -242,10 +353,8 @@ function main() {
 const thisFile = fileURLToPath(import.meta.url);
 const invoked = process.argv[1] && path.resolve(process.argv[1]) === thisFile;
 if (invoked) {
-  try {
-    main();
-  } catch (err) {
+  main().catch((err) => {
     console.error(err.message || err);
     process.exit(1);
-  }
+  });
 }
