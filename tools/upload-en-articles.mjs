@@ -3,6 +3,7 @@
  *
  * 用法：
  *   node tools/upload-en-articles.mjs articles.json
+ *   node tools/upload-en-articles.mjs --skip-grammar articles.json
  *   node tools/upload-en-articles.mjs --list --days 7
  *   node tools/upload-en-articles.mjs --list --date 2026-08-26
  *
@@ -13,6 +14,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { spawnSync } from "child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -97,15 +99,31 @@ async function postJson(url, body) {
 }
 
 function parseArgs(argv) {
-  const args = { list: false, days: 7, date: "", file: "" };
+  const args = { list: false, skipGrammar: false, days: 7, date: "", file: "" };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--list") args.list = true;
+    else if (a === "--skip-grammar") args.skipGrammar = true;
     else if (a === "--days") args.days = Number(argv[++i]) || 7;
     else if (a === "--date") args.date = String(argv[++i] || "");
     else if (!a.startsWith("-")) args.file = a;
   }
   return args;
+}
+
+function runGrammarCheck(filePath) {
+  const checker = path.join(ROOT, "tools", "check-en-article-grammar.mjs");
+  const result = spawnSync(process.execPath, [checker, filePath], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.status !== 0) {
+    throw new Error(
+      "文法查核未過。先改 JSON，或緊急時用 --skip-grammar（不要當常態）。"
+    );
+  }
 }
 
 async function main() {
@@ -127,7 +145,7 @@ async function main() {
 
   if (!args.file) {
     console.error(
-      "用法:\n  node tools/upload-en-articles.mjs articles.json\n  node tools/upload-en-articles.mjs --list --days 7"
+      "用法:\n  node tools/upload-en-articles.mjs articles.json\n  node tools/upload-en-articles.mjs --skip-grammar articles.json\n  node tools/upload-en-articles.mjs --list --days 7"
     );
     process.exit(1);
   }
@@ -135,6 +153,11 @@ async function main() {
   const abs = path.isAbsolute(args.file)
     ? args.file
     : path.resolve(process.cwd(), args.file);
+  if (!args.skipGrammar) {
+    runGrammarCheck(abs);
+  } else {
+    console.warn("skip-grammar: 略過文法查核");
+  }
   const raw = JSON.parse(fs.readFileSync(abs, "utf8"));
   const rowsIn = raw.rows || raw;
   if (!Array.isArray(rowsIn) || !rowsIn.length) {
