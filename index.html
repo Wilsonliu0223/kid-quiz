@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.80" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.81" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1365,13 +1365,15 @@
         <header class="quiz-header quiz-header-zh">
           <button type="button" class="btn-text" id="btn-writing-read-back">← 返回</button>
           <span class="quiz-subject">怎麼寫</span>
-          <button type="button" class="btn-text" id="btn-writing-speak">朗讀</button>
         </header>
         <div class="writing-read-body">
-          <h2 class="writing-read-title" id="writing-read-title"></h2>
+          <div class="writing-read-title-row">
+            <h2 class="writing-read-title" id="writing-read-title"></h2>
+            <button type="button" class="writing-essay-play" id="btn-writing-speak" aria-label="朗讀整篇">▶</button>
+          </div>
           <p class="writing-read-meta" id="writing-read-meta"></p>
           <p class="writing-read-grow" id="writing-read-grow" hidden></p>
-          <p class="writing-read-tap-hint">看不懂的字，點一下看注音和意思。左邊 ▶ 聽神經音。</p>
+          <p class="writing-read-tap-hint">看不懂的字，點一下看注音和意思（教育部萌典）</p>
           <div class="writing-essay" id="writing-read-body"></div>
           <section class="writing-teach">
             <h3>這篇怎麼寫</h3>
@@ -3156,7 +3158,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.30").catch((e) => {
+      import("./js/app.js?v=app-v46.31").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -88,24 +88,34 @@ function renderList() {
   });
 }
 
-function setSpeakLabel(on) {
+function setSpeakUi(on) {
   const btn = $("#btn-writing-speak");
-  if (btn) btn.textContent = on ? "停止" : "朗讀";
+  if (!btn) return;
+  btn.textContent = on ? "■" : "▶";
+  btn.setAttribute("aria-label", on ? "停止朗讀" : "朗讀整篇");
 }
 
 function stopEssaySpeech() {
   speakGen += 1;
   stopSpeaking();
-  setSpeakLabel(false);
+  setSpeakUi(false);
+}
+
+function currentEssaySpeakText() {
+  const item = WRITING_BANK.find((x) => x.id === currentId);
+  if (!item) return "";
+  const title = String(item.title || "").trim();
+  const body = String(item.body || "").replace(/\s+/g, "");
+  return title ? `${title}。${body}` : body;
 }
 
 async function speakEssayText(text) {
-  const raw = String(text || "").replace(/\s+/g, "");
+  const raw = String(text || "").trim();
   if (!raw) return;
   const gen = ++speakGen;
   unlockSpeechFromGesture();
   stopSpeaking();
-  setSpeakLabel(true);
+  setSpeakUi(true);
   try {
     await speakEnglish(raw, {
       lang: "zh",
@@ -114,22 +124,17 @@ async function speakEssayText(text) {
       speed: 0.92,
     });
   } finally {
-    if (gen === speakGen) setSpeakLabel(false);
+    if (gen === speakGen) setSpeakUi(false);
   }
-}
-
-function currentEssayParas() {
-  const item = WRITING_BANK.find((x) => x.id === currentId);
-  if (!item) return [];
-  return String(item.body || "").split(/\n\n+/).filter(Boolean);
 }
 
 function speakCurrentEssay() {
-  if ($("#btn-writing-speak")?.textContent === "停止") {
+  const btn = $("#btn-writing-speak");
+  if (btn && btn.getAttribute("aria-label") === "停止朗讀") {
     stopEssaySpeech();
     return;
   }
-  void speakEssayText(currentEssayParas().join(""));
+  void speakEssayText(currentEssaySpeakText());
 }
 
 function syncTryPartChips() {
@@ -194,17 +199,11 @@ function openRead(id) {
     `${item.grade} 年級 · ${item.kind} · 本篇 ${item.words} 字 · 常見目標 ${lo}～${hi} 字`;
   $("#writing-read-body").innerHTML = item.body
     .split(/\n\n+/)
-    .map(
-      (p, i) =>
-        `<div class="writing-essay-row">` +
-        `<button type="button" class="writing-para-play" data-writing-para="${i}" aria-label="播放這一段">▶</button>` +
-        `<p class="writing-essay-p">${renderTappable(p)}</p>` +
-        `</div>`
-    )
+    .map((p) => `<p class="writing-essay-p">${renderTappable(p)}</p>`)
     .join("");
   hideLookupCard();
   stopEssaySpeech();
-  prefetchChineseAudio(item.body.split(/\n\n+/)[0] || "", "");
+  prefetchChineseAudio(currentEssaySpeakText(), "");
 
   const steps = $("#writing-read-steps");
   steps.innerHTML = item.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
@@ -258,13 +257,6 @@ function bindEvents() {
     });
   });
   $("#writing-read-body")?.addEventListener("click", (e) => {
-    const play = e.target instanceof Element ? e.target.closest(".writing-para-play") : null;
-    if (play) {
-      e.preventDefault();
-      const i = Number(play.getAttribute("data-writing-para"));
-      void speakEssayText(currentEssayParas()[i] || "");
-      return;
-    }
     const btn = e.target instanceof Element ? e.target.closest(".zh-char") : null;
     if (!btn) return;
     const p = btn.closest(".writing-essay-p");
