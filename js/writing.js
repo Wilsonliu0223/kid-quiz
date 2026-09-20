@@ -3,6 +3,12 @@
  */
 import { WRITING_BANK, WRITING_GRADES, writingByGrade } from "./writing-bank.js?v=writing-bank-v3";
 import {
+  prefetchChineseAudio,
+  speakEnglish,
+  stopSpeaking,
+  unlockSpeechFromGesture,
+} from "./english.js?v=en-speak-v37";
+import {
   escapeHtml,
   hideLookupCard,
   onLookupTap,
@@ -29,6 +35,7 @@ let deps = null;
 let grade = 2;
 let currentId = null;
 let tryPart = 1;
+let speakGen = 0;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -79,6 +86,50 @@ function renderList() {
     btn.addEventListener("click", () => openRead(item.id));
     box.appendChild(btn);
   });
+}
+
+function setSpeakLabel(on) {
+  const btn = $("#btn-writing-speak");
+  if (btn) btn.textContent = on ? "停止" : "朗讀";
+}
+
+function stopEssaySpeech() {
+  speakGen += 1;
+  stopSpeaking();
+  setSpeakLabel(false);
+}
+
+async function speakEssayText(text) {
+  const raw = String(text || "").replace(/\s+/g, "");
+  if (!raw) return;
+  const gen = ++speakGen;
+  unlockSpeechFromGesture();
+  stopSpeaking();
+  setSpeakLabel(true);
+  try {
+    await speakEnglish(raw, {
+      lang: "zh",
+      alreadyZh: true,
+      fast: true,
+      speed: 0.92,
+    });
+  } finally {
+    if (gen === speakGen) setSpeakLabel(false);
+  }
+}
+
+function currentEssayParas() {
+  const item = WRITING_BANK.find((x) => x.id === currentId);
+  if (!item) return [];
+  return String(item.body || "").split(/\n\n+/).filter(Boolean);
+}
+
+function speakCurrentEssay() {
+  if ($("#btn-writing-speak")?.textContent === "停止") {
+    stopEssaySpeech();
+    return;
+  }
+  void speakEssayText(currentEssayParas().join(""));
 }
 
 function syncTryPartChips() {
@@ -143,9 +194,17 @@ function openRead(id) {
     `${item.grade} 年級 · ${item.kind} · 本篇 ${item.words} 字 · 常見目標 ${lo}～${hi} 字`;
   $("#writing-read-body").innerHTML = item.body
     .split(/\n\n+/)
-    .map((p) => `<p class="writing-essay-p">${renderTappable(p)}</p>`)
+    .map(
+      (p, i) =>
+        `<div class="writing-essay-row">` +
+        `<button type="button" class="writing-para-play" data-writing-para="${i}" aria-label="播放這一段">▶</button>` +
+        `<p class="writing-essay-p">${renderTappable(p)}</p>` +
+        `</div>`
+    )
     .join("");
   hideLookupCard();
+  stopEssaySpeech();
+  prefetchChineseAudio(item.body.split(/\n\n+/)[0] || "", "");
 
   const steps = $("#writing-read-steps");
   steps.innerHTML = item.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("");
@@ -175,9 +234,11 @@ function bindEvents() {
   $("#btn-writing-hub-back")?.addEventListener("click", () => deps.showView("zhHub"));
   $("#btn-writing-read-back")?.addEventListener("click", () => {
     currentId = null;
+    stopEssaySpeech();
     hideLookupCard();
     openWritingHub();
   });
+  $("#btn-writing-speak")?.addEventListener("click", () => speakCurrentEssay());
   document.querySelectorAll("[data-writing-grade]").forEach((btn) => {
     btn.addEventListener("click", () => {
       setGrade(Number(btn.dataset.writingGrade));
@@ -197,6 +258,13 @@ function bindEvents() {
     });
   });
   $("#writing-read-body")?.addEventListener("click", (e) => {
+    const play = e.target instanceof Element ? e.target.closest(".writing-para-play") : null;
+    if (play) {
+      e.preventDefault();
+      const i = Number(play.getAttribute("data-writing-para"));
+      void speakEssayText(currentEssayParas()[i] || "");
+      return;
+    }
     const btn = e.target instanceof Element ? e.target.closest(".zh-char") : null;
     if (!btn) return;
     const p = btn.closest(".writing-essay-p");

@@ -2123,8 +2123,34 @@ body {
   color: var(--zh-dark);
 }
 
-.writing-essay-p {
+.writing-essay-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0 0 12px;
+}
+
+.writing-para-play {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 999px;
+  background: var(--zh);
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.writing-para-play:active {
+  background: var(--zh-dark);
+}
+
+.writing-essay-p {
+  flex: 1 1 auto;
+  margin: 0;
   font-size: 1.05rem;
   line-height: 1.85;
 }
