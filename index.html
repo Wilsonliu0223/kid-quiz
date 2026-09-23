@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.81" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.82" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -581,7 +581,7 @@
           <div class="writing-essay" id="en-writing-read-body"></div>
           <section class="writing-teach" id="en-writing-grammar-wrap" hidden>
             <h3>文法</h3>
-            <p class="en-writing-grammar" id="en-writing-grammar"></p>
+            <div class="en-writing-grammar" id="en-writing-grammar"></div>
           </section>
           <section class="writing-teach" id="en-writing-vocab-wrap" hidden>
             <h3>本篇生字（點了可查）</h3>
@@ -3158,7 +3158,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.31").catch((e) => {
+      import("./js/app.js?v=app-v46.33").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -2482,6 +2482,42 @@ body {
   margin: 0 0 12px;
 }
 
+.en-writing-sents {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.en-writing-sents li {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #f7f8f4;
+}
+
+.en-writing-sent {
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.en-writing-sent-role {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #1a5bb8;
+}
+
+.en-writing-grammar-item {
+  margin: 0 0 8px;
+}
+
+.en-writing-grammar-item:last-child {
+  margin-bottom: 0;
+}
+
 .en-writing-para-note {
   margin: 6px 0 0;
   padding: 8px 10px;

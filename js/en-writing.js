@@ -179,10 +179,158 @@ function renderMap(map) {
   return `<p class="en-writing-map"><strong>篇章地圖</strong> ${escapeHtml(map)}</p>`;
 }
 
+/** 由長到短，避免 and 搶走 because / in conclusion。 */
+const SENT_MARKERS = [
+  "for these reasons",
+  "on the other hand",
+  "in conclusion",
+  "in addition",
+  "as a result",
+  "even though",
+  "that is why",
+  "for example",
+  "in my view",
+  "some people",
+  "one advantage",
+  "a disadvantage",
+  "another reason",
+  "one reason",
+  "let me tell you",
+  "i will never forget",
+  "there are",
+  "there is",
+  "not only",
+  "so that",
+  "even if",
+  "after that",
+  "after",
+  "nowadays",
+  "although",
+  "however",
+  "despite",
+  "therefore",
+  "because",
+  "whereas",
+  "finally",
+  "i think",
+  "i hope",
+  "i like",
+  "i can't",
+  "i can",
+  "which",
+  "whose",
+  "who",
+  "when",
+  "first",
+  "then",
+  "but",
+  "and",
+  "if",
+  "so",
+];
+
+function splitEssaySentences(text) {
+  const s = String(text || "").replace(/\s+/g, " ").trim();
+  if (!s) return [];
+  return (s.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [s]).map((p) => p.trim()).filter(Boolean);
+}
+
+function markersIn(text) {
+  const low = ` ${String(text || "").toLowerCase().replace(/[^a-z']+/g, " ")} `;
+  return SENT_MARKERS.filter((m) => low.includes(` ${m} `));
+}
+
+function frameLiterals(j) {
+  return String(j.frame || "")
+    .split(/[\n/]/)
+    .map((bit) =>
+      bit
+        .replace(/_+/g, " ")
+        .replace(/[^a-z' ]+/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase()
+    )
+    .filter((phrase) => {
+      const words = phrase.split(" ").filter((w) => w.length > 2);
+      return words.length >= 2 && phrase.length >= 8;
+    });
+}
+
+function scorePatterns(sentence, patterns) {
+  const sentMarkers = markersIn(sentence);
+  const low = ` ${String(sentence || "").toLowerCase().replace(/[^a-z']+/g, " ")} `;
+  /** @type {{ name: string, grammar: string, score: number }[]} */
+  const hits = [];
+  for (const j of patterns) {
+    const frameBag = markersIn(`${j.name}\n${j.frame}`);
+    const phrases = frameLiterals(j);
+    let score = 0;
+    for (const m of sentMarkers) {
+      if (!frameBag.includes(m)) continue;
+      const blocking = phrases.some(
+        (p) => p.startsWith(m) && p.length > m.length + 2 && !low.includes(` ${p} `)
+      );
+      if (blocking) continue;
+      score = Math.max(score, m.length + 40);
+    }
+    for (const phrase of phrases) {
+      if (low.includes(` ${phrase} `)) score = Math.max(score, phrase.length + 30);
+    }
+    if (score > 0) hits.push({ name: j.name, grammar: j.grammar || "", score });
+  }
+  hits.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  return hits;
+}
+
+function labelSentence(sentence, patterns) {
+  const specific = scorePatterns(sentence, patterns.filter((j) => j.role !== "骨"));
+  const hits = specific.length ? specific : scorePatterns(sentence, patterns.filter((j) => j.role === "骨"));
+  const top = hits[0];
+  if (!top) return { role: "補上一句的畫面或細節", grammar: "" };
+  const second = hits.find((h) => h.name !== top.name && h.score >= top.score - 8 && h.score >= 12);
+  const role = second ? `${top.name} ＋ ${second.name}` : top.name;
+  return { role, grammar: top.grammar };
+}
+
+function essayPatterns(e) {
+  return (e.used || []).map((id) => josekiById(id)).filter(Boolean);
+}
+
+function renderSentenceParse(paragraph, patterns) {
+  const items = splitEssaySentences(paragraph).map((sentence) => {
+    const { role } = labelSentence(sentence, patterns);
+    return (
+      `<li><span class="en-writing-sent">${escapeHtml(sentence)}</span>` +
+      `<span class="en-writing-sent-role">${escapeHtml(role)}</span></li>`
+    );
+  });
+  if (!items.length) return "";
+  return `<ol class="en-writing-sents">${items.join("")}</ol>`;
+}
+
+function renderPatternGrammar(patterns, paragraphs) {
+  const seen = new Set();
+  const blocks = [];
+  for (const p of paragraphs) {
+    for (const sentence of splitEssaySentences(p)) {
+      const { role, grammar } = labelSentence(sentence, patterns);
+      const name = role.split(" ＋ ")[0];
+      if (!grammar || seen.has(name)) continue;
+      seen.add(name);
+      blocks.push(
+        `<p class="en-writing-grammar-item"><strong>${escapeHtml(name)}</strong> ${escapeHtml(grammar)}</p>`
+      );
+    }
+  }
+  return blocks.join("");
+}
+
 function renderEssayBody(e) {
   const paras = String(e.body || "").split(/\n\n+/).filter(Boolean);
   const notes = e.notes || [];
   const slots = e.slots || [];
+  const patterns = essayPatterns(e);
   return (
     renderMap(e.map) +
     paras
@@ -193,7 +341,12 @@ function renderEssayBody(e) {
         const note = notes[i]
           ? `<p class="en-writing-para-note">${escapeHtml(notes[i])}</p>`
           : "";
-        return `<div class="en-writing-para">${slot}<p class="writing-essay-p en-writing-essay-p">${renderClickable(p, e.vocab)}</p>${note}</div>`;
+        return (
+          `<div class="en-writing-para">${slot}` +
+          `<p class="writing-essay-p en-writing-essay-p">${renderClickable(p, e.vocab)}</p>` +
+          renderSentenceParse(p, patterns) +
+          `${note}</div>`
+        );
       })
       .join("")
   );
@@ -296,7 +449,14 @@ function openEssay(id) {
     used.textContent = usedLabel(e.used);
   }
   setBasis(lv.task, lv.sources[0]?.url);
-  setGrammar("");
+  const paras = String(e.body || "").split(/\n\n+/).filter(Boolean);
+  const grammarHtml = renderPatternGrammar(essayPatterns(e), paras);
+  const gWrap = $("#en-writing-grammar-wrap");
+  const gEl = $("#en-writing-grammar");
+  if (gWrap && gEl) {
+    gWrap.hidden = !grammarHtml;
+    gEl.innerHTML = grammarHtml;
+  }
   setTapHint(true);
   renderVocab(e.vocab);
   $("#en-writing-read-body").innerHTML = renderEssayBody(e);
