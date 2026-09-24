@@ -23,7 +23,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v37";
+} from "./english.js?v=en-speak-v40";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 import {
   analyzeEnglishMorph,
@@ -2150,7 +2150,8 @@ function bindWordClicks(root) {
       const inGloss = Boolean(
         btn.closest("#en-gloss-text, #en-gloss-senses, #en-gloss-related")
       );
-      openGloss(w, !inGloss);
+      const next = btn.nextElementSibling?.getAttribute("data-en-word") || "";
+      openGloss(w, !inGloss, phraseZhFor(w, next));
     });
   });
 }
@@ -2180,21 +2181,44 @@ function lookupLocalGloss(word) {
   return null;
 }
 
-async function openGloss(word, reset) {
+function phraseZhFor(word, next) {
+  const w = String(word || "").toLowerCase();
+  const n = String(next || "").toLowerCase();
+  if (w === "fair" && n === "touch") return "公平的觸擊";
+  return "";
+}
+
+function applyPhraseZh(entry, phraseZh) {
+  if (!entry || !phraseZh) return entry;
+  entry.zh = phraseZh;
+  entry.contextZh = phraseZh;
+  for (const sense of entry.senses || []) {
+    if (sense.pos !== "adj.") continue;
+    if (/^just\b/i.test(String(sense.definition || ""))) sense.zh = "公平";
+    else if (/市集|集市/.test(String(sense.zh || ""))) sense.zh = "";
+  }
+  return entry;
+}
+
+async function openGloss(word, reset, phraseZh = "") {
   const seq = ++glossSeq;
   const local = lookupLocalGloss(word);
   if (local) {
     if (reset) glossStack = [local];
     else glossStack.push(local);
+    applyPhraseZh(local, phraseZh);
     showGloss(local);
     const online = await lookupEnglishGloss(word);
     if (seq !== glossSeq || !online?.senses?.length) return;
-    const upgraded = {
-      ...online,
-      contextGloss: local.gloss,
-      contextZh: hasCjkText(local.contextZh) ? local.contextZh : local.zh,
-      zh: local.zh || online.zh,
-    };
+    const upgraded = applyPhraseZh(
+      {
+        ...online,
+        contextGloss: local.gloss,
+        contextZh: phraseZh || (hasCjkText(local.contextZh) ? local.contextZh : local.zh),
+        zh: phraseZh || local.zh || online.zh,
+      },
+      phraseZh
+    );
     glossStack[glossStack.length - 1] = upgraded;
     showGloss(upgraded);
     return;
@@ -2212,12 +2236,15 @@ async function openGloss(word, reset) {
 
   const online = await lookupEnglishGloss(word);
   if (seq !== glossSeq) return;
-  const entry = online || {
-    word,
-    gloss: fallbackGloss(word),
-    example: "",
-    phonetic: "",
-  };
+  const entry = applyPhraseZh(
+    online || {
+      word,
+      gloss: fallbackGloss(word),
+      example: "",
+      phonetic: "",
+    },
+    phraseZh
+  );
   glossStack[glossStack.length - 1] = entry;
   showGloss(entry);
 }
@@ -2361,6 +2388,7 @@ async function fillGlossChinese(entry, seq) {
       entry.zh = shortZh(entry.contextZh);
       return;
     }
+    if (senses.some((s) => hasCjkText(s.zh) || s.definition)) return;
     if (reviewZhOk(entry.word, entry.zh)) return;
     const src = String(entry.word || "").trim();
     if (!src || !/^[a-zA-Z]/.test(src)) return;
@@ -2374,14 +2402,20 @@ async function fillGlossChinese(entry, seq) {
       if (hasCjkText(sense.zh)) return;
       const lemma = lemmaFromGloss(sense.definition);
       const def = String(sense.definition || "").trim();
+      const word = String(entry.word || "").trim();
       const src =
+        (def && def.length <= 24 && word
+          ? `${word}, meaning ${def.replace(/\.$/, "")}`
+          : "") ||
         lemma ||
         (def.length <= 80 ? def : "") ||
-        String(entry.word || "").trim();
+        word;
       if (!src) return;
       const raw = (await translateEnToZh(src)) || "";
       if (hasCjkText(raw) && isPlausibleZh(src, raw)) {
-        sense.zh = firstZhClause(raw) || raw;
+        let zh = firstZhClause(raw) || raw;
+        if (/meaning /i.test(src)) zh = zh.split(/[，,]/)[0].trim() || zh;
+        sense.zh = zh;
         sense.zhSource = "machine";
       }
     }),
@@ -2391,6 +2425,15 @@ async function fillGlossChinese(entry, seq) {
     const raw = (await translateEnToZh(contextEn)) || "";
     if (hasCjkText(raw) && isPlausibleZh(contextEn, raw)) entry.contextZh = raw;
   }
+  const justSense = senses.find(
+    (s) =>
+      s.pos === "adj." &&
+      /^(just|equitable|impartial|unbiased|honest|lawful|legal)\b/i.test(
+        String(s.definition || "").trim()
+      ) &&
+      hasCjkText(s.zh)
+  );
+  if (justSense) entry.zh = firstZhClause(justSense.zh);
   if (reviewZhOk(entry.word, entry.contextZh)) {
     entry.zh = shortZh(entry.contextZh);
   }

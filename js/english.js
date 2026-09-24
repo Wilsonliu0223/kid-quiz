@@ -418,9 +418,13 @@ function simplifyKidDefinition(def) {
 
 /** 循環定義／過短／幾乎只重複原字 → 當弱結果，改試其他來源 */
 function isWeakGloss(gloss, word) {
-  const g = String(gloss || "").trim().toLowerCase();
+  const g = String(gloss || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\.+$/, "");
   const w = String(word || "").trim().toLowerCase();
-  if (!g || g.length < 8) return true;
+  if (!g) return true;
+  if (g.length < 8 && (g === w || !/^[a-z]+$/.test(g))) return true;
   if (/^(a |an )?surname\b/.test(g) || /\bgiven name\b/.test(g)) return true;
   if (!w) return false;
   const words = g.split(/[^a-z]+/).filter(Boolean);
@@ -499,7 +503,8 @@ function harvestChinese(entries, preferPos) {
       any.push(zh);
     }
   }
-  return same[0] || any[0] || "";
+  if (preferPos) return same[0] || "";
+  return any[0] || "";
 }
 
 function isUncommonDictionarySense(sense) {
@@ -587,9 +592,9 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
     posTotals.set(pos, (posTotals.get(pos) || 0) + total);
   }
   const primaryPos = dictionaryPosLabel(entries[0]?.partOfSpeech);
-  const commonPos = new Set([primaryPos]);
+  const commonPos = new Set([primaryPos, "adj.", "adv."]);
   for (const [pos, total] of posTotals) {
-    // Wiktionary 未必標出「少見」；義項數太少的次要詞性先收起。
+    // Wiktionary 未必標出「少見」；義項數太少的次要詞性先收起。形容詞、副詞要留，避免 fair 只剩「市集」。
     if (total >= 5) commonPos.add(pos);
   }
   const senses = [];
@@ -625,25 +630,27 @@ async function glossFromFreeDictionaryApi(q, displayWord) {
   }
   if (!senses.length) return null;
 
-  const harvested = toTraditional(harvestChinese(entries, primaryPos));
-  const missing = senses.filter((s) => !s.zh);
-  if (missing.length) {
-    const wordZhTry = harvested || (await translateEnToZh(q)) || "";
-    if (wordZhTry) {
-      for (const sense of missing) {
-        sense.zh = wordZhTry;
-        sense.zhSource = harvested ? "" : "machine";
-      }
-    }
+  const posRank = { "adj.": 0, "adv.": 1, "v.": 2, "n.": 3 };
+  const justSense = (sense) =>
+    /^(just|equitable|impartial|unbiased|honest|lawful|legal)\b/i.test(
+      String(sense?.definition || "").trim()
+    );
+  senses.sort((a, b) => {
+    const aj = a.pos === "adj." && justSense(a) ? -1 : 0;
+    const bj = b.pos === "adj." && justSense(b) ? -1 : 0;
+    if (aj !== bj) return aj - bj;
+    return (posRank[a.pos] ?? 9) - (posRank[b.pos] ?? 9);
+  });
+
+  for (const sense of senses) {
+    if (sense.zh) continue;
+    const samePos = toTraditional(harvestChinese(entries, sense.pos));
+    if (samePos) sense.zh = samePos;
   }
 
-  const first = senses[0];
-  const wordZh = harvested || first.zh || "";
-  if (wordZh) {
-    for (const sense of senses) {
-      if (!sense.zh) sense.zh = wordZh;
-    }
-  }
+  const first =
+    senses.find((s) => s.pos === "adj." && justSense(s)) || senses[0];
+  const wordZh = first?.zh || "";
   return {
     word: data.word || displayWord || q,
     gloss: first.definition,
