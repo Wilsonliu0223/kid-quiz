@@ -2184,7 +2184,7 @@ function lookupLocalGloss(word) {
 function phraseZhFor(word, next) {
   const w = String(word || "").toLowerCase();
   const n = String(next || "").toLowerCase();
-  if (w === "fair" && n === "touch") return "公平的觸擊";
+  if (w === "fair" && n === "touch") return "公平的";
   return "";
 }
 
@@ -2194,7 +2194,7 @@ function applyPhraseZh(entry, phraseZh) {
   entry.contextZh = phraseZh;
   for (const sense of entry.senses || []) {
     if (sense.pos !== "adj.") continue;
-    if (/^just\b/i.test(String(sense.definition || ""))) sense.zh = "公平";
+    if (/^just\b/i.test(String(sense.definition || ""))) sense.zh = "公平的";
     else if (/市集|集市/.test(String(sense.zh || ""))) sense.zh = "";
   }
   return entry;
@@ -2404,7 +2404,7 @@ async function fillGlossChinese(entry, seq) {
       const def = String(sense.definition || "").trim();
       const word = String(entry.word || "").trim();
       const src =
-        (def && def.length <= 24 && word
+        (def && /^just\b/i.test(def) && word
           ? `${word}, meaning ${def.replace(/\.$/, "")}`
           : "") ||
         lemma ||

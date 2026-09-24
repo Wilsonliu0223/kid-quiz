@@ -110,7 +110,7 @@ import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v4"
 import { initNumMemory, openNumMemory } from "./num-memory.js?v=num-mem-v1";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v89";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v90";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v6";
 import {
   addMistake,
