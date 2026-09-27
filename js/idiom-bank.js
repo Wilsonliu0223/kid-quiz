@@ -1,4 +1,6 @@
-/** 小學常見四字成語（繁體、四個不同字）。解釋用白話。 */
+/** 小學常見四字成語（繁體）。解釋用白話。翻牌只用四個字都不重複的條目。 */
+import { IDIOM_EXTRA } from "./idiom-extra.js";
+
 const RAW = [
   ["一石二鳥", "做一件事得到兩種好處"],
   ["守株待兔", "只想靠運氣，自己不努力"],
@@ -216,15 +218,37 @@ const RAW = [
   ["尊師重道", "尊敬老師，重視學問"],
 ];
 
+function charsOf(idiom) {
+  return [...String(idiom || "").trim()];
+}
+
 function isFourDistinct(idiom) {
-  const chars = [...String(idiom || "")];
+  const chars = charsOf(idiom);
   return chars.length === 4 && new Set(chars).size === 4;
 }
 
-export const IDIOM_BANK = RAW.filter(([idiom, meaning]) => isFourDistinct(idiom) && meaning).map(
-  ([idiom, meaning], i) => ({
-    id: `idiom-${String(i + 1).padStart(3, "0")}`,
-    idiom,
-    meaning,
-  })
-);
+function collect(rows, distinctOnly) {
+  const seen = new Set();
+  const items = [];
+  for (const [idiom, meaning] of rows) {
+    const word = String(idiom || "").trim();
+    const gloss = String(meaning || "").trim();
+    if (charsOf(word).length !== 4 || !gloss || seen.has(word)) continue;
+    if (distinctOnly && !isFourDistinct(word)) continue;
+    seen.add(word);
+    items.push({
+      id: `idiom-${String(items.length + 1).padStart(3, "0")}`,
+      idiom: word,
+      meaning: gloss,
+    });
+  }
+  return items;
+}
+
+const SOURCE = [...RAW, ...IDIOM_EXTRA];
+
+/** 可查閱的全部成語，含四個字有重複的常見條目。 */
+export const IDIOM_ALL = collect(SOURCE, false);
+
+/** 翻牌用：剛好四個字，而且四個字都不一樣。 */
+export const IDIOM_BANK = collect(SOURCE, true);

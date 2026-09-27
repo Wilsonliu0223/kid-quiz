@@ -65,7 +65,7 @@ import {
   initFlipZh,
   renderFlipHomePlayers,
 } from "./flip-zh.js";
-import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v4";
+import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v5";
 import { initWriting } from "./writing.js?v=writing-v6";
 import { initEnWriting } from "./en-writing.js?v=en-writing-v14";
 import { initLifeObserve } from "./life-observe.js?v=life-observe-v16";
@@ -221,6 +221,7 @@ const views = {
   idiomFlipFirst: $("#view-idiom-flip-first"),
   idiomFlipPlay: $("#view-idiom-flip-play"),
   idiomFlipResult: $("#view-idiom-flip-result"),
+  idiomList: $("#view-idiom-list"),
   writingHub: $("#view-writing-hub"),
   writingRead: $("#view-writing-read"),
   mathSetup: $("#view-math-setup"),

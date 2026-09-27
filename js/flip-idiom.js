@@ -8,8 +8,8 @@ import {
   refreshDuoBattleUI,
   renderDuoPickButtons,
 } from "./duo-pick.js";
-import { IDIOM_BANK } from "./idiom-bank.js";
-import { bindLookupClicks, renderTappable } from "./zh-lookup.js";
+import { IDIOM_ALL, IDIOM_BANK } from "./idiom-bank.js?v=idiom-bank-v2";
+import { bindLookupClicks, hideLookupCard, renderTappable } from "./zh-lookup.js";
 
 const KEY_IDIOM_COUNT = "kid-quiz-idiom-flip-count";
 const IDIOM_COUNT_OPTIONS = [5, 10];
@@ -486,6 +486,39 @@ export function beginIdiomFlipFromHome() {
   beginLocal();
 }
 
+function renderIdiomCatalog() {
+  const q = ($("#idiom-list-search")?.value || "").trim();
+  const items = IDIOM_ALL.filter(
+    (item) => !q || item.idiom.includes(q) || item.meaning.includes(q)
+  );
+  const count = $("#idiom-list-count");
+  if (count) {
+    count.textContent = q
+      ? `找到 ${items.length} 條，全部有 ${IDIOM_ALL.length} 條`
+      : `共 ${IDIOM_ALL.length} 條。點字可以看注音。`;
+  }
+  const el = $("#idiom-list");
+  if (!el) return;
+  el.innerHTML = items
+    .map(
+      (item) =>
+        `<li data-idiom="${escapeHtml(item.idiom)}">` +
+        `<div class="idiom-flip-teach-main">` +
+        `<span class="idiom-flip-teach-word">${renderTappable(item.idiom)}</span>` +
+        `<span class="idiom-flip-teach-meaning">${escapeHtml(item.meaning)}</span>` +
+        `</div></li>`
+    )
+    .join("");
+}
+
+function openIdiomCatalog() {
+  hideLookupCard();
+  const search = $("#idiom-list-search");
+  if (search) search.value = "";
+  renderIdiomCatalog();
+  deps.showView("idiomList");
+}
+
 function bindEvents() {
   $("#btn-start-flip-idiom")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -521,6 +554,13 @@ function bindEvents() {
   });
   $("#btn-idiom-flip-replay")?.addEventListener("click", () => beginLocal());
   $("#btn-idiom-flip-home")?.addEventListener("click", () => deps.showView("zhHub"));
+  $("#btn-zh-hub-idiom-list")?.addEventListener("click", () => openIdiomCatalog());
+  $("#btn-idiom-list-back")?.addEventListener("click", () => {
+    hideLookupCard();
+    deps.showView("zhHub");
+  });
+  $("#idiom-list-search")?.addEventListener("input", () => renderIdiomCatalog());
+  bindLookupClicks($("#idiom-list"), (btn) => btn.closest("li")?.getAttribute("data-idiom") || "");
   bindLookupClicks($("#idiom-flip-teach-list"), (btn) => {
     const word = btn.closest("li")?.querySelector(".idiom-flip-teach-word");
     return word?.textContent || "";
@@ -533,5 +573,7 @@ function bindEvents() {
 export function initFlipIdiom(d) {
   deps = d;
   initIdiomCountPicker();
+  const listBtn = $("#btn-zh-hub-idiom-list");
+  if (listBtn) listBtn.textContent = `看全部成語（${IDIOM_ALL.length}）`;
   bindEvents();
 }

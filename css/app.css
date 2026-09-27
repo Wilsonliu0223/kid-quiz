@@ -79,6 +79,7 @@ body {
 #view-zh-cards.view-active,
 #view-writing-hub.view-active,
 #view-writing-read.view-active,
+#view-idiom-list.view-active,
 #view-en-writing-hub.view-active,
 #view-en-writing-read.view-active,
 #view-life-hub.view-active,
@@ -1959,6 +1960,30 @@ body {
   line-height: 1.35;
 }
 
+.idiom-list-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+  padding-bottom: 8px;
+}
+
+.idiom-list-search {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  font-size: 1.05rem;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 0 12px;
+}
+
+#view-idiom-list .idiom-list {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+}
+
 .idiom-flip-teach-body {
   flex: 1;
   display: flex;
@@ -2240,6 +2265,10 @@ body {
 
 .zh-hub-idiom {
   margin: 0;
+}
+
+.zh-hub-idiom #btn-zh-hub-idiom-list {
+  margin-top: 12px;
 }
 
 .math-hub-group-title {
