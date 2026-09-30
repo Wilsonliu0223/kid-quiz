@@ -1,6 +1,6 @@
 /**
  * 家用遠方視力篩檢。距離 3 公尺，E 的實際公分數固定，再依螢幕寬高換算像素。
- * 每一級四個方向各一次，答對 3 個才進更小的一級。
+ * 每一級八題：四個方向各兩次，答對 5 個才進更小的一級。
  */
 import { getSelectedChild } from "./store.js";
 import { getChildName } from "./children.js";
@@ -11,7 +11,8 @@ const KEY_SCREEN = "kid-quiz-vision-screen";
 const LEVELS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
 const DIRS = ["up", "right", "down", "left"];
 const ROT = { right: 0, down: 90, left: 180, up: -90 };
-const PASS_NEED = 3;
+const PASS_NEED = 5;
+const PER_LEVEL = 8;
 const KEY_LOG = "kid-quiz-vision-log";
 const KEY_CAMERA = "kid-quiz-vision-camera";
 const ARC_MIN = Math.PI / (180 * 60);
@@ -53,15 +54,23 @@ export function eSizeMm(acuity, distanceM = DISTANCE_M) {
 }
 
 export function shuffleDirs(avoidFirst) {
-  const dirs = DIRS.slice();
-  for (let i = dirs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [dirs[i], dirs[j]] = [dirs[j], dirs[i]];
+  const mix = () => {
+    const dirs = DIRS.slice();
+    for (let i = dirs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [dirs[i], dirs[j]] = [dirs[j], dirs[i]];
+    }
+    return dirs;
+  };
+  const first = mix();
+  const second = mix();
+  if (avoidFirst && first[0] === avoidFirst) {
+    [first[0], first[1]] = [first[1], first[0]];
   }
-  if (avoidFirst && dirs[0] === avoidFirst) {
-    [dirs[0], dirs[1]] = [dirs[1], dirs[0]];
+  if (second[0] === first[first.length - 1]) {
+    [second[0], second[1]] = [second[1], second[0]];
   }
-  return dirs;
+  return first.concat(second);
 }
 
 function parseCm(value) {
@@ -203,7 +212,7 @@ function renderProgress() {
   const el = $("#vision-progress");
   if (!el) return;
   const acuity = LEVELS[levelIndex].toFixed(1);
-  el.textContent = `${eyeLabel(eye)}　${acuity}　${asked + 1}/4`;
+  el.textContent = `${eyeLabel(eye)}　${acuity}　${asked + 1}/${PER_LEVEL}`;
 }
 
 function showQuestion() {
@@ -363,7 +372,7 @@ function mark(ok) {
   advanceTimer = setTimeout(() => {
     if (ticket !== roundToken) return;
     hideFlash();
-    if (asked < 4) {
+    if (asked < PER_LEVEL) {
       showQuestion();
       return;
     }
