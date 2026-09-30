@@ -1,5 +1,5 @@
 /**
- * 成語短題：看意思選成語、看成語選意思、近義配對。每回 8 題。
+ * 成語短題：看意思選成語、看成語選意思、近義、反義。每回 8 題。
  */
 import { IDIOM_ALL } from "./idiom-bank.js?v=idiom-bank-v2";
 
@@ -10,19 +10,18 @@ const QUIZ_SIZE = 8;
 const NEAR = [
   ["一石二鳥", "一箭雙鵰", "一舉兩得"],
   ["半途而廢", "虎頭蛇尾"],
-  ["井底之蛙", "坐井觀天", "鼠目寸光"],
+  ["井底之蛙", "坐井觀天"],
   ["畫蛇添足", "弄巧成拙"],
   ["專心致志", "全神貫注", "聚精會神"],
   ["水滴石穿", "鐵杵成針", "繩鋸木斷"],
   ["聚沙成塔", "積少成多", "集腋成裘"],
   ["改過自新", "洗心革面", "痛改前非", "迷途知返"],
   ["光陰似箭", "日月如梭", "時光飛逝"],
-  ["一諾千金", "言而有信", "說一不二", "一言九鼎"],
+  ["一諾千金", "言而有信"],
   ["口是心非", "言不由衷", "陽奉陰違"],
   ["望梅止渴", "畫餅充飢"],
   ["東施效顰", "邯鄲學步"],
   ["狐假虎威", "仗勢欺人"],
-  ["亡羊補牢", "知錯能改"],
   ["舉一反三", "觸類旁通"],
   ["川流不息", "絡繹不絕"],
   ["五光十色", "五彩繽紛", "萬紫千紅"],
@@ -31,31 +30,58 @@ const NEAR = [
   ["才高八斗", "學富五車"],
   ["花言巧語", "甜言蜜語"],
   ["未雨綢繆", "有備無患", "防患未然"],
-  ["道聽途說", "以訛傳訛", "人云亦云", "隨波逐流"],
+  ["道聽途說", "以訛傳訛", "人云亦云"],
   ["自食其果", "玩火自焚", "咎由自取"],
   ["粗心大意", "粗枝大葉"],
-  ["心不在焉", "三心二意"],
   ["勇往直前", "一往無前"],
   ["破釜沉舟", "背水一戰"],
-  ["廢寢忘食", "夜以繼日"],
-  ["杯水車薪", "螳臂當車", "蚍蜉撼樹"],
-  ["緣木求魚", "南轅北轍"],
+  ["螳臂當車", "蚍蜉撼樹"],
   ["手忙腳亂", "七手八腳"],
   ["目瞪口呆", "張口結舌", "呆若木雞"],
   ["見義勇為", "挺身而出"],
-  ["馬到成功", "一帆風順"],
   ["胸有成竹", "十拿九穩"],
   ["一清二楚", "一目了然"],
   ["大驚小怪", "小題大作"],
   ["筋疲力盡", "精疲力竭"],
   ["車水馬龍", "門庭若市"],
-  ["門可羅雀", "無人問津"],
+];
+
+/** 意思相反。同一條若出現在多組，出題時錯項會避開它的全部反義。 */
+const ANTI = [
+  ["雪中送炭", "落井下石"],
+  ["雪中送炭", "雪上加霜"],
+  ["錦上添花", "雪上加霜"],
+  ["門庭若市", "門可羅雀"],
+  ["車水馬龍", "門可羅雀"],
+  ["半途而廢", "持之以恆"],
+  ["半途而廢", "堅持不懈"],
+  ["口是心非", "表裡如一"],
+  ["陽奉陰違", "表裡如一"],
+  ["事半功倍", "事倍功半"],
+  ["一心一意", "三心二意"],
+  ["專心致志", "三心二意"],
+  ["坐井觀天", "見多識廣"],
+  ["井底之蛙", "見多識廣"],
+  ["一意孤行", "集思廣益"],
+  ["一曝十寒", "持之以恆"],
+  ["百折不撓", "半途而廢"],
+  ["不屈不撓", "半途而廢"],
+  ["畫蛇添足", "恰到好處"],
+  ["亡羊補牢", "執迷不悟"],
+  ["痛改前非", "執迷不悟"],
+  ["迷途知返", "執迷不悟"],
+  ["鐵杵成針", "半途而廢"],
+  ["水滴石穿", "半途而廢"],
+  ["繩鋸木斷", "半途而廢"],
+  ["鶴立雞群", "濫竽充數"],
+  ["觸類旁通", "一竅不通"],
 ];
 
 const MODE_TITLE = {
   meaning: "看意思選成語",
   idiom: "看成語選意思",
   near: "近義配對",
+  anti: "反義配對",
 };
 
 /** @type {{ showView: (name: string) => void } | null} */
@@ -76,9 +102,11 @@ function byIdiom() {
   return new Map(IDIOM_ALL.map((item) => [item.idiom, item]));
 }
 
-function nearGroups() {
+function readyGroups(groups) {
   const known = byIdiom();
-  return NEAR.map((group) => group.filter((word) => known.has(word))).filter((group) => group.length >= 2);
+  return groups
+    .map((group) => group.filter((word) => known.has(word)))
+    .filter((group) => group.length >= 2);
 }
 
 function pickChoices(answer, pool, take) {
@@ -111,28 +139,31 @@ function buildIdiomQuiz() {
   }));
 }
 
-function buildNearQuiz() {
+function buildPairQuiz(groups, promptFor) {
   const known = byIdiom();
-  const groups = shuffle(nearGroups());
+  const ready = shuffle(readyGroups(groups));
   const allWords = IDIOM_ALL.map((item) => item.idiom);
   const out = [];
   const seen = new Set();
   let i = 0;
-  while (out.length < QUIZ_SIZE && groups.length && i < groups.length * 4) {
-    const group = groups[i % groups.length];
+  while (out.length < QUIZ_SIZE && ready.length && i < ready.length * 6) {
+    const group = ready[i % ready.length];
     i += 1;
-    const pair = shuffle(group);
-    const anchor = pair[0];
-    const answer = pair[1];
+    const anchor = group[Math.floor(Math.random() * group.length)];
+    const banned = new Set([anchor]);
+    for (const g of ready) {
+      if (g.includes(anchor)) for (const word of g) banned.add(word);
+    }
+    const answers = [...banned].filter((word) => word !== anchor);
+    const answer = answers[Math.floor(Math.random() * answers.length)];
     const key = `${anchor}|${answer}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const banned = new Set(group);
     const distractors = shuffle(allWords.filter((word) => !banned.has(word))).slice(0, 3);
     if (distractors.length < 3) continue;
     const item = known.get(anchor);
     out.push({
-      prompt: `哪一條跟「${anchor}」最接近？`,
+      prompt: promptFor(anchor),
       sub: item ? `${anchor}：${item.meaning}` : "",
       answer,
       choices: shuffle([answer, ...distractors]),
@@ -143,7 +174,8 @@ function buildNearQuiz() {
 
 function buildQuiz(mode) {
   if (mode === "idiom") return buildIdiomQuiz();
-  if (mode === "near") return buildNearQuiz();
+  if (mode === "near") return buildPairQuiz(NEAR, (word) => `哪一條跟「${word}」最接近？`);
+  if (mode === "anti") return buildPairQuiz(ANTI, (word) => `哪一條跟「${word}」意思相反？`);
   return buildMeaningQuiz();
 }
 

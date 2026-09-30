@@ -726,11 +726,9 @@ function setupLifeAsk(node) {
       if (text) pool.push(text);
     }
   }
-  const unique = [...new Set(pool)];
-  const usable = entries.filter(([, why]) => {
-    const text = whyText(why);
-    return text && unique.filter((x) => x !== text).length >= 2;
-  });
+  const own = new Set(entries.map(([, why]) => whyText(why)).filter(Boolean));
+  const distractors = [...new Set(pool)].filter((text) => !own.has(text));
+  const usable = entries.filter(([, why]) => whyText(why) && distractors.length >= 2);
   if (!usable.length) {
     box.hidden = true;
     return false;
@@ -738,7 +736,7 @@ function setupLifeAsk(node) {
   const [lid, why] = usable[Math.floor(Math.random() * usable.length)];
   const other = nodeById(lid);
   const correct = whyText(why);
-  const choices = shuffle([correct, ...shuffle(unique.filter((text) => text !== correct)).slice(0, 2)]);
+  const choices = shuffle([correct, ...shuffle(distractors).slice(0, 2)]);
   box.hidden = false;
   qEl.textContent = `為什麼「${node.name}」會連到「${other?.name || ""}」？`;
   result.hidden = true;

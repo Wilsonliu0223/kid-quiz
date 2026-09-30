@@ -487,37 +487,31 @@ const CHART_SETS = [
   ["公車", "腳踏車", "走路"],
 ];
 
+const CHART_MAX = 12;
+const CHART_STEPS = [2, 4, 6, 8, 10, 12];
+
 function makeChart() {
   const names = CHART_SETS[rand(0, CHART_SETS.length - 1)];
-  const used = new Set();
-  const vals = names.map(() => {
-    let n = rand(2, 12);
-    let guard = 0;
-    while (used.has(n) && guard++ < 20) n = rand(2, 12);
-    used.add(n);
-    return n;
-  });
+  const vals = shuffle(CHART_STEPS).slice(0, names.length);
   const chart = names.map((name, i) => ({ name, n: vals[i] }));
   const kind = rand(1, 4);
   const ranked = [...chart].sort((a, b) => b.n - a.n);
   if (kind === 1) {
+    const bar = chart[rand(0, chart.length - 1)];
+    return q(`哪一項是 ${bar.n}？`, bar.name, names.filter((n) => n !== bar.name), "", chart);
+  }
+  if (kind === 2) {
     const ans = ranked[0].name;
     return q("哪一項最多？", ans, names.filter((n) => n !== ans), "", chart);
   }
-  if (kind === 2) {
+  if (kind === 3) {
     const ans = ranked[ranked.length - 1].name;
     return q("哪一項最少？", ans, names.filter((n) => n !== ans), "", chart);
   }
-  if (kind === 3) {
-    const a = chart[0];
-    const b = chart[1];
-    const ans = Math.abs(a.n - b.n);
-    return q(`${a.name}和${b.name}相差多少？`, ans, [a.n + b.n, a.n, b.n, ans + 2], "", chart);
-  }
   const a = chart[0];
-  const b = chart[2];
-  const ans = a.n + b.n;
-  return q(`${a.name}和${b.name}合起來是多少？`, ans, [Math.abs(a.n - b.n), a.n, b.n, ans + 3], "", chart);
+  const b = chart[1];
+  const ans = Math.abs(a.n - b.n);
+  return q(`${a.name}和${b.name}相差多少？`, ans, [a.n + b.n, a.n, b.n, ans + 2], "", chart);
 }
 
 function roundTo(n, unit) {
@@ -621,20 +615,24 @@ function renderChart(chart) {
     el.innerHTML = "";
     return;
   }
-  const max = Math.max(...chart.map((b) => b.n), 1);
   el.hidden = false;
-  el.innerHTML = chart
+  const cols = chart
     .map((b) => {
-      const h = Math.max(8, Math.round((b.n / max) * 96));
-      return (
-        `<div class="math-bar">` +
-        `<span class="math-bar-n">${b.n}</span>` +
-        `<div class="math-bar-col" style="height:${h}px"></div>` +
-        `<span class="math-bar-name">${b.name}</span>` +
-        `</div>`
-      );
+      const h = Math.round((b.n / CHART_MAX) * 120);
+      return `<div class="math-bar"><div class="math-bar-col" style="height:${h}px"></div></div>`;
     })
     .join("");
+  const names = chart.map((b) => `<span class="math-bar-name">${b.name}</span>`).join("");
+  el.innerHTML =
+    `<div class="math-chart-axis" aria-hidden="true"><span>12</span><span>8</span><span>4</span><span>0</span></div>` +
+    `<div class="math-chart-plot">` +
+    `<div class="math-chart-area">` +
+    `<span class="math-chart-line" style="bottom:33.33%"></span>` +
+    `<span class="math-chart-line" style="bottom:66.67%"></span>` +
+    cols +
+    `</div>` +
+    `<div class="math-chart-names">${names}</div>` +
+    `</div>`;
 }
 
 function renderQuestion() {
@@ -698,8 +696,8 @@ function startPack(packId) {
   const hint = $("#math-grade-hint");
   if (hint) {
     hint.textContent =
-      packId === "charts"
-        ? "看長條圖上的數字，再選答案"
+        packId === "charts"
+        ? "柱子上沒有數字，對照左邊的刻度再選"
         : packId === "round"
           ? "先四捨五入，再選最接近的數"
           : "有進位、退位或兩步驟，看清楚再選";

@@ -2279,20 +2279,62 @@ body {
 
 .math-chart {
   display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.math-chart-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 1.6rem;
+  height: 120px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #5a6b60;
+  text-align: right;
+}
+
+.math-chart-plot {
+  display: flex;
+  flex-direction: column;
+}
+
+.math-chart-area {
+  position: relative;
+  display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 18px;
-  min-height: 140px;
-  margin: 0 0 12px;
+  height: 120px;
+  border-left: 2px solid #9bb5a6;
+  border-bottom: 2px solid #9bb5a6;
+  padding: 0 8px;
+}
+
+.math-chart-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #c5d5cb;
+  pointer-events: none;
+}
+
+.math-chart-names {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 4px 8px 0 10px;
 }
 
 .math-bar {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
+  align-items: flex-end;
+  justify-content: center;
   width: 72px;
+  height: 100%;
 }
 
 .math-bar-col {
@@ -2301,11 +2343,12 @@ body {
   border-radius: 6px 6px 0 0;
 }
 
-.math-bar-n,
 .math-bar-name {
+  width: 72px;
   font-size: 0.95rem;
   font-weight: 700;
   color: #2d6b4a;
+  text-align: center;
 }
 
 .life-ask {

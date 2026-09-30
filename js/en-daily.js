@@ -3381,7 +3381,24 @@ function buildWeekQuiz(pool) {
     .filter(Boolean);
 }
 
+async function weekPromptZh(gloss, word) {
+  const raw = (await translateEnToZh(gloss)) || "";
+  const zh = firstZhClause(raw);
+  if (zh) return zh;
+  const fromReview = loadReview().find(
+    (item) => String(item.word || "").toLowerCase() === String(word || "").toLowerCase()
+  );
+  return firstZhClause(fromReview?.zh) || firstZhClause(fromReview?.zhGloss) || gloss;
+}
+
+let weekOpening = false;
+
 async function openWeekVocab() {
+  if (weekOpening) return;
+  weekOpening = true;
+  const weekBtn = $("#btn-en-hub-week");
+  if (weekBtn) weekBtn.textContent = "正在準備中文題目…";
+  try {
   await ensureArticles();
   const pool = weekVocabPool();
   const built = buildWeekQuiz(pool);
@@ -3392,6 +3409,8 @@ async function openWeekVocab() {
     );
     return;
   }
+  const prompts = await Promise.all(built.map((item) => weekPromptZh(item.q, item.answer)));
+  for (let i = 0; i < built.length; i++) built[i].q = prompts[i];
   quizKind = "week";
   quizReviewing = false;
   quizQs = built;
@@ -3404,6 +3423,10 @@ async function openWeekVocab() {
   if (back) back.textContent = "← 返回";
   renderQuizQ();
   deps?.showView("enDailyQuiz");
+  } finally {
+    weekOpening = false;
+    if (weekBtn) weekBtn.textContent = "這週單字";
+  }
 }
 
 function startMiniQuiz() {
