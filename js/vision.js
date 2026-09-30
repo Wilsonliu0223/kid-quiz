@@ -79,9 +79,9 @@ function readScreen() {
     const heightCm = parseCm(raw?.heightCm);
     if (widthCm && heightCm) return { widthCm, heightCm };
   } catch {
-    /* 尚未填過 */
+    /* 用手機預設 */
   }
-  return null;
+  return { widthCm: 7.5, heightCm: 16 };
 }
 
 function saveScreen(widthCm, heightCm) {
@@ -96,7 +96,6 @@ function horizontalCm(screen) {
 
 function pxPerMm() {
   const screen = readScreen();
-  if (!screen) return window.innerWidth / 75;
   return window.innerWidth / (horizontalCm(screen) * 10);
 }
 
@@ -156,18 +155,12 @@ function renderSetup() {
   const screen = readScreen();
   const widthInput = $("#vision-width");
   const heightInput = $("#vision-height");
-  if (screen && widthInput && document.activeElement !== widthInput) {
-    widthInput.value = String(screen.widthCm);
-  }
-  if (screen && heightInput && document.activeElement !== heightInput) {
-    heightInput.value = String(screen.heightCm);
-  }
+  if (widthInput && document.activeElement !== widthInput) widthInput.value = String(screen.widthCm);
+  if (heightInput && document.activeElement !== heightInput) heightInput.value = String(screen.heightCm);
   const hint = $("#vision-size-hint");
   if (hint) {
     const eCm = (eSizeMm(0.2) / 10).toFixed(1);
-    hint.textContent = screen
-      ? `這台已記住。站 3 公尺時，0.2 的 E 畫成 ${eCm} 公分。換手機或平板要改寬、高。`
-      : `先量這台手機或平板。站 3 公尺時，0.2 的 E 要畫成 ${eCm} 公分。`;
+    hint.textContent = `預設手機寬 7.5、高 16。改用平板再改。站 3 公尺時，0.2 的 E 畫成 ${eCm} 公分。`;
   }
   const prev = $("#vision-prev");
   const last = latestForChild(childId);
