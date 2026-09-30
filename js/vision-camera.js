@@ -10,6 +10,9 @@ const MIN_VIS = 0.5;
 const MIN_EXTEND = 0.12;
 const HOLD_MS = 2000;
 const DIR_ANGLES = {
+  up: -90,
+  left: 180,
+  right: 0,
   upRight: -45,
   upLeft: -135,
   downRight: 45,
@@ -30,7 +33,7 @@ export function directionOf(dx, dy) {
       best = id;
     }
   }
-  if (bestDiff > 40) return null;
+  if (bestDiff > 24) return null;
   return best;
 }
 
