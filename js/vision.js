@@ -57,36 +57,40 @@ export function shuffleDirs(avoidFirst) {
   return dirs;
 }
 
-function clampCm(value, fallback) {
+function parseCm(value) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.min(40, Math.max(3, Math.round(n * 10) / 10));
+  if (!Number.isFinite(n)) return null;
+  const cm = Math.round(n * 10) / 10;
+  if (cm < 3 || cm > 50) return null;
+  return cm;
 }
 
 function readScreen() {
-  let widthCm = 7.5;
-  let heightCm = 16;
   try {
     const raw = JSON.parse(localStorage.getItem(KEY_SCREEN) || "");
-    if (raw && typeof raw === "object") {
-      widthCm = clampCm(raw.widthCm, 7.5);
-      heightCm = clampCm(raw.heightCm, 16);
-    }
+    const widthCm = parseCm(raw?.widthCm);
+    const heightCm = parseCm(raw?.heightCm);
+    if (widthCm && heightCm) return { widthCm, heightCm };
   } catch {
-    /* 用預設 */
+    /* 尚未填過 */
   }
-  return { widthCm, heightCm };
+  return null;
 }
 
 function saveScreen(widthCm, heightCm) {
   localStorage.setItem(KEY_SCREEN, JSON.stringify({ widthCm, heightCm }));
 }
 
+function horizontalCm(screen) {
+  const viewportWide = window.innerWidth >= window.innerHeight;
+  const enteredWide = screen.widthCm >= screen.heightCm;
+  return viewportWide === enteredWide ? screen.widthCm : screen.heightCm;
+}
+
 function pxPerMm() {
-  const { widthCm, heightCm } = readScreen();
-  const portrait = window.innerWidth <= window.innerHeight;
-  const cm = portrait ? widthCm : heightCm;
-  return window.innerWidth / (cm * 10);
+  const screen = readScreen();
+  if (!screen) return window.innerWidth / 75;
+  return window.innerWidth / (horizontalCm(screen) * 10);
 }
 
 function formatAcuity(value) {
@@ -142,12 +146,18 @@ function renderSetup() {
   const screen = readScreen();
   const widthInput = $("#vision-width");
   const heightInput = $("#vision-height");
-  if (widthInput && document.activeElement !== widthInput) widthInput.value = String(screen.widthCm);
-  if (heightInput && document.activeElement !== heightInput) heightInput.value = String(screen.heightCm);
+  if (screen && widthInput && document.activeElement !== widthInput) {
+    widthInput.value = String(screen.widthCm);
+  }
+  if (screen && heightInput && document.activeElement !== heightInput) {
+    heightInput.value = String(screen.heightCm);
+  }
   const hint = $("#vision-size-hint");
   if (hint) {
-    const eCm = eSizeMm(0.2) / 10;
-    hint.textContent = `站 3 公尺時，0.2 的 E 會畫成 ${eCm.toFixed(1)} 公分，並依上面的寬、高換算到這支手機。`;
+    const eCm = (eSizeMm(0.2) / 10).toFixed(1);
+    hint.textContent = screen
+      ? `這台已記住。站 3 公尺時，0.2 的 E 畫成 ${eCm} 公分。換手機或平板要改寬、高。`
+      : `先量這台手機或平板。站 3 公尺時，0.2 的 E 要畫成 ${eCm} 公分。`;
   }
   const prev = $("#vision-prev");
   const last = latestForChild(childId);
@@ -328,14 +338,23 @@ export function initVision(d) {
     });
   });
   const onScreenInput = () => {
-    const widthCm = clampCm($("#vision-width")?.value, 7.5);
-    const heightCm = clampCm($("#vision-height")?.value, 16);
-    saveScreen(widthCm, heightCm);
+    const widthCm = parseCm($("#vision-width")?.value);
+    const heightCm = parseCm($("#vision-height")?.value);
+    if (widthCm && heightCm) saveScreen(widthCm, heightCm);
     renderSetup();
   };
   $("#vision-width")?.addEventListener("change", onScreenInput);
   $("#vision-height")?.addEventListener("change", onScreenInput);
   $("#btn-vision-start")?.addEventListener("click", () => {
+    const widthCm = parseCm($("#vision-width")?.value);
+    const heightCm = parseCm($("#vision-height")?.value);
+    if (!widthCm || !heightCm) {
+      const hint = $("#vision-size-hint");
+      if (hint) hint.textContent = "先填這台手機或平板的寬和高，再開始。";
+      $("#vision-width")?.focus();
+      return;
+    }
+    saveScreen(widthCm, heightCm);
     childId = getSelectedChild();
     childName = getChildName(childId);
     rightScore = null;

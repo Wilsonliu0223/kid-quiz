@@ -672,6 +672,12 @@ body:has(#view-vision.view-active) #app {
   color: #000;
 }
 
+.vision-setup {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  overflow: auto;
+}
+
 .vision-setup[hidden],
 .vision-play[hidden] {
   display: none !important;
@@ -767,6 +773,8 @@ body:has(#view-vision.view-active) #app {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  width: min(100%, 520px);
+  margin: 0 auto 4px;
 }
 
 .vision-mark-btn {
