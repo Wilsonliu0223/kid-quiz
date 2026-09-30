@@ -755,8 +755,29 @@ body:has(#view-vision.view-active) #app {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   background: #fff;
   min-height: 0;
+}
+
+.vision-camera {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border: 2px solid #000;
+  background: #111;
+  transform: scaleX(-1);
+}
+
+.vision-camera-status {
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #000;
 }
 
 .vision-e {

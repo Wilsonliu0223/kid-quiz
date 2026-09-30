@@ -4,6 +4,7 @@
  */
 import { getSelectedChild } from "./store.js";
 import { getChildName } from "./children.js";
+import { startArmCamera } from "./vision-camera.js";
 
 const DISTANCE_M = 3;
 const KEY_SCREEN = "kid-quiz-vision-screen";
@@ -12,6 +13,7 @@ const DIRS = ["up", "right", "down", "left"];
 const ROT = { right: 0, down: 90, left: 180, up: -90 };
 const PASS_NEED = 3;
 const KEY_LOG = "kid-quiz-vision-log";
+const KEY_CAMERA = "kid-quiz-vision-camera";
 const ARC_MIN = Math.PI / (180 * 60);
 
 const $ = (sel) => document.querySelector(sel);
@@ -39,6 +41,9 @@ let rightScore = null;
 let leftScore = null;
 let childId = "A";
 let childName = "";
+let useCamera = false;
+/** @type {(() => void) | null} */
+let stopCamera = null;
 
 export function eSizeMm(acuity, distanceM = DISTANCE_M) {
   const arcmin = 5 / acuity;
@@ -141,6 +146,9 @@ function renderSetup() {
   document.querySelectorAll("[data-vision-wear]").forEach((btn) => {
     btn.classList.toggle("chip-active", btn.dataset.visionWear === wear);
   });
+  document.querySelectorAll("[data-vision-camera]").forEach((btn) => {
+    btn.classList.toggle("chip-active", (btn.dataset.visionCamera === "on") === useCamera);
+  });
   const who = $("#vision-who");
   if (who) who.textContent = childName;
   const screen = readScreen();
@@ -231,6 +239,38 @@ function releaseAwake() {
   wakeLock = null;
 }
 
+function setCameraStatus(text) {
+  const el = $("#vision-camera-status");
+  if (!el) return;
+  el.hidden = !useCamera;
+  el.textContent = text;
+}
+
+function releaseCamera() {
+  stopCamera?.();
+  stopCamera = null;
+  const video = $("#vision-camera");
+  if (video) video.hidden = true;
+  const status = $("#vision-camera-status");
+  if (status) status.hidden = true;
+}
+
+function ensureCamera() {
+  if (!useCamera || stopCamera) return;
+  const video = $("#vision-camera");
+  if (!video) return;
+  video.hidden = false;
+  stopCamera = startArmCamera(video, {
+    onStatus: setCameraStatus,
+    onDirection: (dir) => {
+      if (!accepting) return;
+      const expect = queue[asked];
+      if (!expect) return;
+      mark(dir === expect);
+    },
+  });
+}
+
 function beginEye(which) {
   eye = which;
   levelIndex = 0;
@@ -238,6 +278,7 @@ function beginEye(which) {
   showPanel("vision-play");
   startLevel();
   holdAwake();
+  ensureCamera();
 }
 
 function finishEye(score) {
@@ -256,6 +297,7 @@ function finishEye(score) {
 
 function finishTest() {
   releaseAwake();
+  releaseCamera();
   accepting = false;
   const entry = {
     at: Date.now(),
@@ -318,8 +360,10 @@ function mark(ok) {
 
 export function openVision() {
   wear = "bare";
+  useCamera = localStorage.getItem(KEY_CAMERA) === "on";
   accepting = false;
   releaseAwake();
+  releaseCamera();
   renderSetup();
   deps?.showView("vision");
 }
@@ -328,12 +372,20 @@ export function initVision(d) {
   deps = d;
   $("#btn-vision-back")?.addEventListener("click", () => {
     releaseAwake();
+    releaseCamera();
     accepting = false;
     deps?.showView("home");
   });
   document.querySelectorAll("[data-vision-wear]").forEach((btn) => {
     btn.addEventListener("click", () => {
       wear = btn.dataset.visionWear === "glasses" ? "glasses" : "bare";
+      renderSetup();
+    });
+  });
+  document.querySelectorAll("[data-vision-camera]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      useCamera = btn.dataset.visionCamera === "on";
+      localStorage.setItem(KEY_CAMERA, useCamera ? "on" : "off");
       renderSetup();
     });
   });
@@ -368,14 +420,17 @@ export function initVision(d) {
   });
   $("#btn-vision-abort")?.addEventListener("click", () => {
     releaseAwake();
+    releaseCamera();
     accepting = false;
     renderSetup();
   });
   $("#btn-vision-left")?.addEventListener("click", () => beginEye("left"));
   $("#btn-vision-again")?.addEventListener("click", () => {
+    releaseCamera();
     renderSetup();
   });
   $("#btn-vision-home")?.addEventListener("click", () => {
+    releaseCamera();
     deps?.showView("home");
   });
 }
