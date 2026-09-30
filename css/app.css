@@ -684,6 +684,37 @@ body:has(#view-vision.view-active) #app {
   color: #000;
 }
 
+.vision-screen-row {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 8px;
+}
+
+.vision-screen-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: #000;
+}
+
+.vision-screen-row input {
+  width: 5rem;
+  padding: 8px 10px;
+  border: 2px solid #000;
+  border-radius: 10px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 1.1rem;
+}
+
+.vision-size-hint {
+  margin: 0 0 12px;
+  color: #000;
+  font-size: 0.95rem;
+}
+
 .vision-who-line,
 .vision-prev,
 .vision-result-score {

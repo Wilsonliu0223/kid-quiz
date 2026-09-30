@@ -1,13 +1,12 @@
 /**
- * 家用遠方視力篩檢。手機直放 7.5×16 公分、人站 3 公尺。
+ * 家用遠方視力篩檢。距離 3 公尺，E 的實際公分數固定，再依螢幕寬高換算像素。
  * 每一級四個方向各一次，答對 3 個才進更小的一級。
  */
 import { getSelectedChild } from "./store.js";
 import { getChildName } from "./children.js";
 
-const SCREEN_SHORT_CM = 7.5;
-const SCREEN_LONG_CM = 16;
 const DISTANCE_M = 3;
+const KEY_SCREEN = "kid-quiz-vision-screen";
 const LEVELS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
 const DIRS = ["up", "right", "down", "left"];
 const ROT = { right: 0, down: 90, left: 180, up: -90 };
@@ -58,11 +57,36 @@ export function shuffleDirs(avoidFirst) {
   return dirs;
 }
 
+function clampCm(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(40, Math.max(3, Math.round(n * 10) / 10));
+}
+
+function readScreen() {
+  let widthCm = 7.5;
+  let heightCm = 16;
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY_SCREEN) || "");
+    if (raw && typeof raw === "object") {
+      widthCm = clampCm(raw.widthCm, 7.5);
+      heightCm = clampCm(raw.heightCm, 16);
+    }
+  } catch {
+    /* 用預設 */
+  }
+  return { widthCm, heightCm };
+}
+
+function saveScreen(widthCm, heightCm) {
+  localStorage.setItem(KEY_SCREEN, JSON.stringify({ widthCm, heightCm }));
+}
+
 function pxPerMm() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const widthCm = w <= h ? SCREEN_SHORT_CM : SCREEN_LONG_CM;
-  return w / (widthCm * 10);
+  const { widthCm, heightCm } = readScreen();
+  const portrait = window.innerWidth <= window.innerHeight;
+  const cm = portrait ? widthCm : heightCm;
+  return window.innerWidth / (cm * 10);
 }
 
 function formatAcuity(value) {
@@ -115,6 +139,16 @@ function renderSetup() {
   });
   const who = $("#vision-who");
   if (who) who.textContent = childName;
+  const screen = readScreen();
+  const widthInput = $("#vision-width");
+  const heightInput = $("#vision-height");
+  if (widthInput && document.activeElement !== widthInput) widthInput.value = String(screen.widthCm);
+  if (heightInput && document.activeElement !== heightInput) heightInput.value = String(screen.heightCm);
+  const hint = $("#vision-size-hint");
+  if (hint) {
+    const eCm = eSizeMm(0.2) / 10;
+    hint.textContent = `站 3 公尺時，0.2 的 E 會畫成 ${eCm.toFixed(1)} 公分，並依上面的寬、高換算到這支手機。`;
+  }
   const prev = $("#vision-prev");
   const last = latestForChild(childId);
   if (prev) {
@@ -293,6 +327,14 @@ export function initVision(d) {
       renderSetup();
     });
   });
+  const onScreenInput = () => {
+    const widthCm = clampCm($("#vision-width")?.value, 7.5);
+    const heightCm = clampCm($("#vision-height")?.value, 16);
+    saveScreen(widthCm, heightCm);
+    renderSetup();
+  };
+  $("#vision-width")?.addEventListener("change", onScreenInput);
+  $("#vision-height")?.addEventListener("change", onScreenInput);
   $("#btn-vision-start")?.addEventListener("click", () => {
     childId = getSelectedChild();
     childName = getChildName(childId);
