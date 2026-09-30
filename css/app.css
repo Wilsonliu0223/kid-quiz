@@ -732,39 +732,34 @@ body:has(#view-vision.view-active) #app {
   shape-rendering: crispEdges;
 }
 
-.vision-pad {
+.vision-mark {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-areas:
-    ". up ."
-    "left . right"
-    ". down .";
-  gap: 6px;
-  width: min(100%, 280px);
-  margin: 0 auto;
-  padding-top: 4px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-.vision-key {
-  height: 56px;
+.vision-mark-btn {
+  height: 72px;
   border: 2px solid #000;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
   color: #000;
   font: inherit;
-  font-size: 1.35rem;
+  font-size: 2rem;
   font-weight: 800;
 }
 
-.vision-key:active {
+.vision-mark-btn:active {
   background: #000;
   color: #fff;
 }
 
-.vision-key-up { grid-area: up; }
-.vision-key-left { grid-area: left; }
-.vision-key-right { grid-area: right; }
-.vision-key-down { grid-area: down; }
+.vision-approx {
+  margin: 4px 0 8px;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #000;
+}
 
 .setup-header-life .setup-subject,
 .quiz-header-life .quiz-subject {

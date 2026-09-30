@@ -223,10 +223,16 @@ function finishTest() {
     left: leftScore,
   };
   saveEntry(entry);
+  const approx = $("#vision-approx");
+  if (approx) {
+    const value = worseAcuity(rightScore, leftScore);
+    approx.textContent =
+      value == null ? "目前視力低於 0.2" : `目前視力約 ${formatAcuity(value)}`;
+  }
   const score = $("#vision-result-score");
   if (score) {
     const mode = wear === "glasses" ? "戴鏡" : "裸視";
-    score.textContent = `${childName}　${mode}　右 ${formatAcuity(rightScore)}　左 ${formatAcuity(leftScore)}`;
+    score.textContent = `${childName}　${mode}　右眼 ${formatAcuity(rightScore)}　左眼 ${formatAcuity(leftScore)}`;
   }
   const note = $("#vision-result-note");
   if (note) {
@@ -237,13 +243,17 @@ function finishTest() {
   showPanel("vision-result");
 }
 
-function answer(dir) {
+function worseAcuity(a, b) {
+  return levelRank(a) <= levelRank(b) ? a : b;
+}
+
+function mark(ok) {
   if (!accepting) return;
   const expect = queue[asked];
   if (!expect) return;
   accepting = false;
   lastDir = expect;
-  if (dir === expect) correct += 1;
+  if (ok) correct += 1;
   asked += 1;
   if (asked < 4) {
     showQuestion();
@@ -290,23 +300,10 @@ export function initVision(d) {
     leftScore = null;
     beginEye("right");
   });
-  $("#vision-pad")?.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-vision-dir]");
+  $("#vision-mark")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-vision-mark]");
     if (!btn) return;
-    answer(btn.dataset.visionDir);
-  });
-  document.addEventListener("keydown", (e) => {
-    if ($("#vision-play")?.hidden) return;
-    const map = {
-      ArrowUp: "up",
-      ArrowRight: "right",
-      ArrowDown: "down",
-      ArrowLeft: "left",
-    };
-    const dir = map[e.key];
-    if (!dir) return;
-    e.preventDefault();
-    answer(dir);
+    mark(btn.dataset.visionMark === "ok");
   });
   $("#btn-vision-abort")?.addEventListener("click", () => {
     releaseAwake();
