@@ -787,7 +787,8 @@ body:has(#view-vision.view-active) #app {
 
 .vision-e svg {
   display: block;
-  shape-rendering: crispEdges;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
 }
 
 .vision-mark {

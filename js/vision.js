@@ -79,8 +79,8 @@ export function shuffleDirs(avoidFirst) {
 function cPath(deg) {
   const cx = 2.5;
   const cy = 2.5;
-  const r = 1.55;
-  const gap = (40 * Math.PI) / 180;
+  const r = 2;
+  const gap = 1 / r;
   const mid = (deg * Math.PI) / 180;
   const start = mid + gap / 2;
   const end = mid + Math.PI * 2 - gap / 2;
