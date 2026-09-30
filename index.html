@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.80";
+        var V = "39.81";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.91" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.92" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -434,7 +434,7 @@
             <button type="button" class="chip chip-active" data-vision-camera="off">不啟用</button>
             <button type="button" class="chip" data-vision-camera="on">啟用</button>
           </div>
-          <p class="vision-size-hint">啟用時，小孩把整隻手臂伸直、離開身體，擺向 E 的開口。認不準就改按 ✓ ✕。</p>
+          <p class="vision-size-hint">啟用時，小孩往 E 的開口揮手。揮對出現綠圈，揮錯出現紅叉。認不準就改按下面的圈或叉。</p>
           <p class="vision-prev" id="vision-prev" hidden></p>
           <button type="button" class="btn btn-primary btn-block" id="btn-vision-start">開始測右眼</button>
         </div>
@@ -447,11 +447,14 @@
           <div class="vision-stage">
             <video id="vision-camera" class="vision-camera" playsinline muted hidden></video>
             <div id="vision-e" class="vision-e" role="img" aria-label="E"></div>
+            <div id="vision-flash" class="vision-flash" hidden>
+              <div id="vision-flash-mark"></div>
+            </div>
           </div>
           <p class="vision-camera-status" id="vision-camera-status" hidden></p>
           <div class="vision-mark" id="vision-mark">
-            <button type="button" class="vision-mark-btn" data-vision-mark="wrong" aria-label="錯">✕</button>
-            <button type="button" class="vision-mark-btn" data-vision-mark="ok" aria-label="對">✓</button>
+            <button type="button" class="vision-mark-btn vision-mark-bad" data-vision-mark="wrong" aria-label="錯">✕</button>
+            <button type="button" class="vision-mark-btn vision-mark-ok" data-vision-mark="ok" aria-label="對"></button>
           </div>
         </div>
 
@@ -3317,7 +3320,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.47").catch((e) => {
+      import("./js/app.js?v=app-v46.48").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

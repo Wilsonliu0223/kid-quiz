@@ -1,19 +1,33 @@
 /**
- * 前置鏡頭看整隻手臂。伸直才算，不確定就不記分。
+ * 前置鏡頭看手臂揮動。往一個方向揮過才記，舉著不動不算。
  * 小孩面對鏡頭：畫面左邊是小孩的右邊。
  */
 
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const MODEL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
-const MIN_EXTEND = 0.15;
-const MIN_VIS = 0.55;
+const MIN_VIS = 0.5;
+const WAVE_WINDOW = 560;
+const WAVE_TRAVEL = 0.07;
 
 /**
- * @param {{ x: number, y: number, visibility?: number }[] | undefined} landmarks
+ * @param {{ dx: number, dy: number, t: number }[]} samples
  * @returns {"up"|"right"|"down"|"left"|null}
  */
-export function armDirection(landmarks) {
+export function waveDirection(samples) {
+  if (!samples || samples.length < 4) return null;
+  const first = samples[0];
+  const last = samples[samples.length - 1];
+  if (last.t - first.t < 180) return null;
+  const mx = last.dx - first.dx;
+  const my = last.dy - first.dy;
+  if (Math.hypot(mx, my) < WAVE_TRAVEL) return null;
+  if (Math.abs(mx) > Math.abs(my) * 1.35) return mx > 0 ? "right" : "left";
+  if (Math.abs(my) > Math.abs(mx) * 1.35) return my > 0 ? "down" : "up";
+  return null;
+}
+
+function armSample(landmarks, t) {
   if (!landmarks || landmarks.length < 17) return null;
   let best = null;
   for (const [shoulderI, wristI] of [
@@ -28,14 +42,9 @@ export function armDirection(landmarks) {
     const dx = shoulder.x - wrist.x;
     const dy = wrist.y - shoulder.y;
     const dist = Math.hypot(dx, dy);
-    if (!best || dist > best.dist) best = { dx, dy, dist };
+    if (!best || dist > best.dist) best = { dx, dy, dist, t };
   }
-  if (!best || best.dist < MIN_EXTEND) return null;
-  const deg = (Math.atan2(best.dy, best.dx) * 180) / Math.PI;
-  if (deg >= -45 && deg < 45) return "right";
-  if (deg >= 45 && deg < 135) return "down";
-  if (deg >= -135 && deg < -45) return "up";
-  return "left";
+  return best;
 }
 
 async function createLandmarker() {
@@ -72,10 +81,9 @@ export function startArmCamera(video, hooks) {
   let stream = null;
   /** @type {{ close?: () => void, detectForVideo: Function } | null} */
   let landmarker = null;
-  let armed = false;
-  let downStreak = 0;
-  let lastDir = "";
-  let streak = 0;
+  /** @type {{ dx: number, dy: number, t: number }[]} */
+  let samples = [];
+  let cooldown = 0;
 
   const stopTracks = () => {
     stream?.getTracks().forEach((track) => track.stop());
@@ -91,41 +99,28 @@ export function startArmCamera(video, hooks) {
     const now = performance.now();
     if (now - lastDetect < 80) return;
     lastDetect = now;
-    let dir = null;
+    let sample = null;
     try {
       const result = landmarker.detectForVideo(video, now);
-      dir = armDirection(result?.landmarks?.[0]);
+      sample = armSample(result?.landmarks?.[0], now);
     } catch {
       return;
     }
-    if (!armed) {
-      if (!dir) downStreak += 1;
-      else downStreak = 0;
-      if (downStreak >= 3) {
-        armed = true;
-        hooks.onStatus("看到人了。手臂伸直，離開身體");
-      }
+    if (!sample) {
+      samples = [];
+      if (now >= cooldown) hooks.onStatus("往 E 的開口揮手");
       return;
     }
+    samples.push(sample);
+    samples = samples.filter((item) => now - item.t <= WAVE_WINDOW);
+    if (now < cooldown) return;
+    const dir = waveDirection(samples);
     if (!dir) {
-      streak = 0;
-      lastDir = "";
-      hooks.onStatus("把手臂伸直，離開身體");
+      hooks.onStatus("往 E 的開口揮手");
       return;
     }
-    if (dir === lastDir) streak += 1;
-    else {
-      lastDir = dir;
-      streak = 1;
-    }
-    const label = { up: "上", right: "右", down: "下", left: "左" }[dir];
-    hooks.onStatus(`看到往${label}`);
-    if (streak < 5) return;
-    streak = 0;
-    lastDir = "";
-    armed = false;
-    downStreak = 0;
-    hooks.onStatus("手臂先放下");
+    samples = [];
+    cooldown = now + 900;
     hooks.onDirection(dir);
   };
 
@@ -137,7 +132,7 @@ export function startArmCamera(video, hooks) {
         video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
       });
     } catch {
-      hooks.onStatus("鏡頭沒打開，請改按 ✓ ✕");
+      hooks.onStatus("鏡頭沒打開，請改按綠圈或紅叉");
       return;
     }
     if (stopped) {
@@ -150,18 +145,18 @@ export function startArmCamera(video, hooks) {
     try {
       await video.play();
     } catch {
-      hooks.onStatus("鏡頭沒打開，請改按 ✓ ✕");
+      hooks.onStatus("鏡頭沒打開，請改按綠圈或紅叉");
       return;
     }
     hooks.onStatus("正在載入辨識…");
     try {
       landmarker = await createLandmarker();
     } catch {
-      hooks.onStatus("辨識載入失敗，請改按 ✓ ✕");
+      hooks.onStatus("辨識載入失敗，請改按綠圈或紅叉");
       return;
     }
     if (stopped) return;
-    hooks.onStatus("把手臂放下，再伸直擺方向");
+    hooks.onStatus("往 E 的開口揮手");
     raf = requestAnimationFrame(loop);
   };
 

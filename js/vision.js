@@ -44,6 +44,8 @@ let childName = "";
 let useCamera = false;
 /** @type {(() => void) | null} */
 let stopCamera = null;
+let advanceTimer = 0;
+let roundToken = 0;
 
 export function eSizeMm(acuity, distanceM = DISTANCE_M) {
   const arcmin = 5 / acuity;
@@ -272,6 +274,7 @@ function ensureCamera() {
 }
 
 function beginEye(which) {
+  cancelRound();
   eye = which;
   levelIndex = 0;
   lastDir = null;
@@ -333,6 +336,26 @@ function worseAcuity(a, b) {
   return levelRank(a) <= levelRank(b) ? a : b;
 }
 
+function hideFlash() {
+  const flash = $("#vision-flash");
+  if (flash) flash.hidden = true;
+}
+
+function showFlash(ok) {
+  const flash = $("#vision-flash");
+  const markEl = $("#vision-flash-mark");
+  if (!flash || !markEl) return;
+  flash.hidden = false;
+  markEl.className = ok ? "vision-flash-ok" : "vision-flash-bad";
+  markEl.textContent = ok ? "" : "✕";
+}
+
+function cancelRound() {
+  roundToken += 1;
+  clearTimeout(advanceTimer);
+  hideFlash();
+}
+
 function mark(ok) {
   if (!accepting) return;
   const expect = queue[asked];
@@ -341,21 +364,28 @@ function mark(ok) {
   lastDir = expect;
   if (ok) correct += 1;
   asked += 1;
-  if (asked < 4) {
-    showQuestion();
-    return;
-  }
-  const score = LEVELS[levelIndex];
-  if (correct < PASS_NEED) {
-    finishEye(levelIndex === 0 ? null : LEVELS[levelIndex - 1]);
-    return;
-  }
-  if (levelIndex >= LEVELS.length - 1) {
-    finishEye(score);
-    return;
-  }
-  levelIndex += 1;
-  startLevel();
+  showFlash(ok);
+  const ticket = ++roundToken;
+  clearTimeout(advanceTimer);
+  advanceTimer = setTimeout(() => {
+    if (ticket !== roundToken) return;
+    hideFlash();
+    if (asked < 4) {
+      showQuestion();
+      return;
+    }
+    const score = LEVELS[levelIndex];
+    if (correct < PASS_NEED) {
+      finishEye(levelIndex === 0 ? null : LEVELS[levelIndex - 1]);
+      return;
+    }
+    if (levelIndex >= LEVELS.length - 1) {
+      finishEye(score);
+      return;
+    }
+    levelIndex += 1;
+    startLevel();
+  }, 700);
 }
 
 export function openVision() {
@@ -364,6 +394,7 @@ export function openVision() {
   accepting = false;
   releaseAwake();
   releaseCamera();
+  cancelRound();
   renderSetup();
   deps?.showView("vision");
 }
@@ -373,6 +404,7 @@ export function initVision(d) {
   $("#btn-vision-back")?.addEventListener("click", () => {
     releaseAwake();
     releaseCamera();
+    cancelRound();
     accepting = false;
     deps?.showView("home");
   });
@@ -421,16 +453,19 @@ export function initVision(d) {
   $("#btn-vision-abort")?.addEventListener("click", () => {
     releaseAwake();
     releaseCamera();
+    cancelRound();
     accepting = false;
     renderSetup();
   });
   $("#btn-vision-left")?.addEventListener("click", () => beginEye("left"));
   $("#btn-vision-again")?.addEventListener("click", () => {
     releaseCamera();
+    cancelRound();
     renderSetup();
   });
   $("#btn-vision-home")?.addEventListener("click", () => {
     releaseCamera();
+    cancelRound();
     deps?.showView("home");
   });
 }

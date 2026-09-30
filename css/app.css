@@ -809,9 +809,55 @@ body:has(#view-vision.view-active) #app {
   font-weight: 800;
 }
 
-.vision-mark-btn:active {
-  background: #000;
-  color: #fff;
+.vision-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.vision-flash[hidden] {
+  display: none !important;
+}
+
+.vision-flash-ok {
+  width: 148px;
+  height: 148px;
+  border: 16px solid #1b8f3a;
+  border-radius: 50%;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.vision-flash-bad {
+  color: #d01010;
+  font-size: 160px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.vision-mark-ok {
+  width: 72px;
+  height: 72px;
+  justify-self: center;
+  border: 8px solid #1b8f3a;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.vision-mark-bad {
+  color: #d01010;
+  border-color: #d01010;
+  font-size: 2.6rem;
+}
+
+.vision-mark-ok:active,
+.vision-mark-bad:active {
+  background: #fff;
+  color: #d01010;
 }
 
 .vision-approx {
