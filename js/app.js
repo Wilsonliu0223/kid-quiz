@@ -66,9 +66,10 @@ import {
   renderFlipHomePlayers,
 } from "./flip-zh.js";
 import { initFlipIdiom } from "./flip-idiom.js?v=idiom-flip-v5";
+import { initIdiomQuiz } from "./idiom-quiz.js?v=idiom-quiz-v1";
 import { initWriting } from "./writing.js?v=writing-v6";
 import { initEnWriting } from "./en-writing.js?v=en-writing-v14";
-import { initLifeObserve } from "./life-observe.js?v=life-observe-v16";
+import { initLifeObserve } from "./life-observe.js?v=life-observe-v17";
 import {
   initZhPractice,
   openZhHub,
@@ -106,11 +107,11 @@ import {
   openMulRaceDuoMode,
 } from "./quiz-race-online.js?v=quiz-race-en-choice-v1";
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v11";
-import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v4";
+import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v5";
 import { initNumMemory, openNumMemory } from "./num-memory.js?v=num-mem-v1";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v90";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v91";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v6";
 import {
   addMistake,
@@ -222,6 +223,8 @@ const views = {
   idiomFlipPlay: $("#view-idiom-flip-play"),
   idiomFlipResult: $("#view-idiom-flip-result"),
   idiomList: $("#view-idiom-list"),
+  idiomQuiz: $("#view-idiom-quiz"),
+  idiomQuizResult: $("#view-idiom-quiz-result"),
   writingHub: $("#view-writing-hub"),
   writingRead: $("#view-writing-read"),
   mathSetup: $("#view-math-setup"),
@@ -2350,6 +2353,7 @@ async function init() {
       });
     },
   });
+  initIdiomQuiz({ showView });
   initWriting({ showView });
   initEnWriting({ showView });
   initLifeObserve({ showView });

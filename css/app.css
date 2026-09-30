@@ -2267,8 +2267,65 @@ body {
   margin: 0;
 }
 
-.zh-hub-idiom #btn-zh-hub-idiom-list {
+.zh-hub-idiom #btn-zh-hub-idiom-list,
+.zh-hub-idiom #btn-zh-hub-idiom-quiz {
   margin-top: 12px;
+}
+
+#idiom-quiz-setup[hidden],
+#idiom-quiz-play[hidden] {
+  display: none !important;
+}
+
+.math-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+  min-height: 140px;
+  margin: 0 0 12px;
+}
+
+.math-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: 72px;
+}
+
+.math-bar-col {
+  width: 36px;
+  background: #3d9a6a;
+  border-radius: 6px 6px 0 0;
+}
+
+.math-bar-n,
+.math-bar-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2d6b4a;
+}
+
+.life-ask {
+  margin-top: 16px;
+}
+
+.life-ask-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.life-ask-ok {
+  border-color: #3d9a6a;
+  background: #e7f6ee;
+}
+
+.life-ask-no {
+  border-color: #c45c5c;
+  background: #fdecec;
 }
 
 .math-hub-group-title {

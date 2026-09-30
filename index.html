@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.83" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.84" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -275,6 +275,9 @@
             <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-idiom-list">
               看全部成語（500）
             </button>
+            <button type="button" class="btn btn-secondary btn-block" id="btn-zh-hub-idiom-quiz">
+              成語練習
+            </button>
           </div>
 
           <h2 class="zh-hub-group-title">想看</h2>
@@ -366,6 +369,15 @@
             圓與圓環
           </button>
 
+          <h2 class="zh-hub-group-title math-hub-group-title">圖表與概數</h2>
+          <p class="math-hub-lead">看長條圖、四捨五入。每回 12 題。</p>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="charts">
+            看長條圖
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-math-pack="round">
+            四捨五入與概數
+          </button>
+
           <h2 class="zh-hub-group-title math-hub-group-title">九九乘法</h2>
           <button type="button" class="btn btn-primary btn-block btn-primary-mul" id="btn-math-hub-mul">
             背誦 · 測驗 · 進階挑戰
@@ -428,8 +440,9 @@
         </header>
         <div class="mul-body mul-quiz-body">
           <div class="math-frac-bar" id="math-grade-visual" hidden></div>
+          <div class="math-chart" id="math-grade-chart" hidden></div>
           <p class="mul-prompt math-grade-prompt" id="math-grade-prompt">38 ＋ 47 ＝ □</p>
-          <p class="mul-quiz-hint">有進位、退位或兩步驟，看清楚再選</p>
+          <p class="mul-quiz-hint" id="math-grade-hint">有進位、退位或兩步驟，看清楚再選</p>
           <div class="mul-answer-area">
             <div class="mul-choice-pad" id="math-grade-choices"></div>
           </div>
@@ -526,6 +539,9 @@
           <p class="en-hub-label">這週</p>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-review">
             複習字區
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-week">
+            這週單字
           </button>
           <button type="button" class="btn btn-secondary btn-block" id="btn-en-hub-flip">
             英語翻牌
@@ -651,6 +667,12 @@
           <div id="life-read-body"></div>
           <p class="life-read-k" id="life-read-links-label">為什麼連在一起</p>
           <div class="life-read-links" id="life-read-links"></div>
+          <section id="life-read-ask" class="life-ask" hidden>
+            <p class="life-read-k">問一題</p>
+            <p id="life-read-ask-q" class="life-read-p"></p>
+            <div id="life-read-ask-opts" class="life-ask-opts"></div>
+            <p id="life-read-ask-result" class="life-read-do" hidden></p>
+          </section>
         </div>
       </section>
 
@@ -1361,6 +1383,45 @@
           />
         </div>
         <ol class="idiom-flip-teach-list idiom-list" id="idiom-list"></ol>
+      </section>
+
+      <!-- 成語練習 -->
+      <section id="view-idiom-quiz" class="view view-hidden" aria-label="成語練習">
+        <header class="quiz-header quiz-header-zh">
+          <button type="button" class="btn-text" id="btn-idiom-quiz-back">← 返回</button>
+          <span class="quiz-subject" id="idiom-quiz-title">成語練習</span>
+          <span class="quiz-progress" id="idiom-quiz-progress"></span>
+        </header>
+        <div class="zh-hub-body" id="idiom-quiz-setup">
+          <p class="setup-section-sub">每回 8 題。選一種再開始。</p>
+          <button type="button" class="btn btn-secondary btn-block" data-idiom-quiz="meaning">
+            看意思選成語
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-idiom-quiz="idiom">
+            看成語選意思
+          </button>
+          <button type="button" class="btn btn-secondary btn-block" data-idiom-quiz="near">
+            近義配對
+          </button>
+        </div>
+        <div class="mul-body mul-quiz-body" id="idiom-quiz-play" hidden>
+          <p class="mul-prompt math-grade-prompt" id="idiom-quiz-prompt"></p>
+          <p class="mul-quiz-hint" id="idiom-quiz-sub"></p>
+          <div class="life-ask-opts" id="idiom-quiz-choices"></div>
+        </div>
+      </section>
+
+      <section id="view-idiom-quiz-result" class="view view-hidden" aria-label="成語練習結算">
+        <header class="app-header">
+          <h2 class="result-title" id="idiom-quiz-result-title">完成</h2>
+          <p class="mul-result-score" id="idiom-quiz-result-score">0 / 8</p>
+          <p class="mul-result-sub" id="idiom-quiz-result-sub"></p>
+        </header>
+        <ul class="mul-wrong-list" id="idiom-quiz-wrong-list" hidden></ul>
+        <footer class="result-footer">
+          <button type="button" class="btn btn-primary btn-block" id="btn-idiom-quiz-retry">再練一次</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-idiom-quiz-hub">回國語</button>
+        </footer>
       </section>
 
       <!-- 寫作教學：年級與題目 -->
@@ -3181,7 +3242,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.39").catch((e) => {
+      import("./js/app.js?v=app-v46.40").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -38,8 +38,8 @@ function choicesFor(answer, extras) {
   return shuffle([...set]).slice(0, 4);
 }
 
-function q(prompt, answer, extras, visual = "") {
-  return { prompt, answer, choices: choicesFor(answer, extras), visual };
+function q(prompt, answer, extras, visual = "", chart = null) {
+  return { prompt, answer, choices: choicesFor(answer, extras), visual, chart };
 }
 
 function gcd(a, b) {
@@ -480,6 +480,84 @@ function makeG6Circle() {
   return q(`圓的半徑 ${r} 公分，圓面積約 □ 平方公分（π 用 3）`, ans, [2 * 3 * r, 3 * (2 * r), r * r, 6 * r]);
 }
 
+const CHART_SETS = [
+  ["蘋果", "香蕉", "橘子"],
+  ["紅隊", "藍隊", "綠隊"],
+  ["貓", "狗", "兔"],
+  ["公車", "腳踏車", "走路"],
+];
+
+function makeChart() {
+  const names = CHART_SETS[rand(0, CHART_SETS.length - 1)];
+  const used = new Set();
+  const vals = names.map(() => {
+    let n = rand(2, 12);
+    let guard = 0;
+    while (used.has(n) && guard++ < 20) n = rand(2, 12);
+    used.add(n);
+    return n;
+  });
+  const chart = names.map((name, i) => ({ name, n: vals[i] }));
+  const kind = rand(1, 4);
+  const ranked = [...chart].sort((a, b) => b.n - a.n);
+  if (kind === 1) {
+    const ans = ranked[0].name;
+    return q("哪一項最多？", ans, names.filter((n) => n !== ans), "", chart);
+  }
+  if (kind === 2) {
+    const ans = ranked[ranked.length - 1].name;
+    return q("哪一項最少？", ans, names.filter((n) => n !== ans), "", chart);
+  }
+  if (kind === 3) {
+    const a = chart[0];
+    const b = chart[1];
+    const ans = Math.abs(a.n - b.n);
+    return q(`${a.name}和${b.name}相差多少？`, ans, [a.n + b.n, a.n, b.n, ans + 2], "", chart);
+  }
+  const a = chart[0];
+  const b = chart[2];
+  const ans = a.n + b.n;
+  return q(`${a.name}和${b.name}合起來是多少？`, ans, [Math.abs(a.n - b.n), a.n, b.n, ans + 3], "", chart);
+}
+
+function roundTo(n, unit) {
+  return Math.round(n / unit) * unit;
+}
+
+function makeRound() {
+  const kind = rand(1, 4);
+  if (kind === 1) {
+    let n = rand(21, 97);
+    if (n % 10 === 0) n += 3;
+    const ans = roundTo(n, 10);
+    return q(`${n} 四捨五入到十位是 □`, ans, [ans + 10, ans - 10, n, ans + 20]);
+  }
+  if (kind === 2) {
+    let n = rand(120, 880);
+    if (n % 100 === 0) n += 30;
+    const ans = roundTo(n, 100);
+    return q(`${n} 四捨五入到百位是 □`, ans, [ans + 100, Math.max(0, ans - 100), n, roundTo(n, 10)]);
+  }
+  if (kind === 3) {
+    let each = rand(36, 64);
+    if (each % 10 === 0) each += 4;
+    const boxes = rand(2, 5);
+    const about = roundTo(each, 10);
+    const ans = about * boxes;
+    return q(
+      `一盒 ${each} 枝，${boxes} 盒大約共 □ 枝（先把每盒四捨五入到十位）`,
+      ans,
+      [each * boxes, about, about * (boxes + 1), ans + 10]
+    );
+  }
+  let a = rand(160, 440);
+  let b = rand(160, 440);
+  if (a % 100 === 0) a += 40;
+  if (b % 100 === 0) b += 30;
+  const ans = roundTo(a, 100) + roundTo(b, 100);
+  return q(`${a} ＋ ${b} 大約是 □（先各自四捨五入到百位）`, ans, [a + b, roundTo(a, 100), roundTo(b, 100), ans + 100]);
+}
+
 const PACKS = {
   g2add100: { title: "100 以內進退位", make: makeG2Add100 },
   g2add1000: { title: "1000 以內兩步驟", make: makeG2Add1000 },
@@ -501,6 +579,8 @@ const PACKS = {
   g6discount: { title: "連折扣與稅", make: makeG6Discount },
   g6speed: { title: "速率應用", make: makeG6Speed },
   g6circle: { title: "圓與圓環", make: makeG6Circle },
+  charts: { title: "看長條圖", make: makeChart },
+  round: { title: "四捨五入與概數", make: makeRound },
 };
 
 function buildQuiz(packId) {
@@ -533,11 +613,36 @@ function renderFrac(visual) {
     .join("");
 }
 
+function renderChart(chart) {
+  const el = $("#math-grade-chart");
+  if (!el) return;
+  if (!chart?.length) {
+    el.hidden = true;
+    el.innerHTML = "";
+    return;
+  }
+  const max = Math.max(...chart.map((b) => b.n), 1);
+  el.hidden = false;
+  el.innerHTML = chart
+    .map((b) => {
+      const h = Math.max(8, Math.round((b.n / max) * 96));
+      return (
+        `<div class="math-bar">` +
+        `<span class="math-bar-n">${b.n}</span>` +
+        `<div class="math-bar-col" style="height:${h}px"></div>` +
+        `<span class="math-bar-name">${b.name}</span>` +
+        `</div>`
+      );
+    })
+    .join("");
+}
+
 function renderQuestion() {
   const qn = session.questions[session.index];
   $("#math-grade-progress").textContent = `第 ${session.index + 1} / ${session.questions.length} 題`;
   $("#math-grade-prompt").textContent = qn.prompt;
   renderFrac(qn.visual);
+  renderChart(qn.chart);
   const pad = $("#math-grade-choices");
   pad.innerHTML = "";
   qn.choices.forEach((c) => {
@@ -590,6 +695,15 @@ function startPack(packId) {
     wrongs: [],
   };
   $("#math-grade-title").textContent = pack.title;
+  const hint = $("#math-grade-hint");
+  if (hint) {
+    hint.textContent =
+      packId === "charts"
+        ? "看長條圖上的數字，再選答案"
+        : packId === "round"
+          ? "先四捨五入，再選最接近的數"
+          : "有進位、退位或兩步驟，看清楚再選";
+  }
   deps.showView("mathGradeQuiz");
   renderQuestion();
 }

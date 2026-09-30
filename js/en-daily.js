@@ -1278,6 +1278,9 @@ function bindUi() {
   $("#btn-en-hub-review")?.addEventListener("click", () => {
     void openReview();
   });
+  $("#btn-en-hub-week")?.addEventListener("click", () => {
+    void openWeekVocab();
+  });
 
   $("#btn-en-daily-list-back")?.addEventListener("click", () => openEnHub());
   $("#btn-en-daily-reload")?.addEventListener("click", async () => {
@@ -1464,7 +1467,9 @@ function bindUi() {
       return;
     }
     if (confirm("離開小測？進度不會儲存。")) {
-      if (quizKind === "dialogue") {
+      if (quizKind === "week") {
+        openEnHub();
+      } else if (quizKind === "dialogue") {
         deps?.showView("enDailyDialogue");
         renderDialogue();
       } else {
@@ -3302,6 +3307,105 @@ async function finishDictation() {
   );
 }
 
+function weekOkKey() {
+  return `kid-quiz-en-week-ok-${getSelectedChild() || "A"}`;
+}
+
+function loadWeekOk() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(weekOkKey()) || "{}");
+    return raw && typeof raw === "object" ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
+function markWeekOk(word, ok) {
+  const key = String(word || "").trim().toLowerCase();
+  if (!key) return;
+  const map = loadWeekOk();
+  if (ok) map[key] = todayIso();
+  else delete map[key];
+  const cutoff = addDaysIso(todayIso(), -14);
+  for (const [k, iso] of Object.entries(map)) {
+    if (String(iso) < cutoff) delete map[k];
+  }
+  localStorage.setItem(weekOkKey(), JSON.stringify(map));
+}
+
+function weekVocabPool() {
+  const start = addDaysIso(todayIso(), -6);
+  const end = todayIso();
+  const weekOk = loadWeekOk();
+  const resting = new Set(
+    loadReview()
+      .filter((item) => isReviewResting(item))
+      .map((item) => String(item.word || "").trim().toLowerCase())
+  );
+  const seen = new Set();
+  const out = [];
+  for (const art of articles) {
+    const date = String(art?.date || "");
+    if (!date || date < start || date > end) continue;
+    if (String(art.status || "").toLowerCase() === "draft") continue;
+    for (const v of art.vocab || []) {
+      const word = String(v.word || "").trim();
+      const gloss = String(v.gloss || "").trim();
+      const key = word.toLowerCase();
+      if (!word || !gloss || seen.has(key) || resting.has(key)) continue;
+      if (weekOk[key] && weekOk[key] >= start) continue;
+      seen.add(key);
+      out.push({ word, gloss });
+    }
+  }
+  return out;
+}
+
+function buildWeekQuiz(pool) {
+  const picked = shuffle(pool).slice(0, 8);
+  return picked
+    .map((item) => {
+      const distractors = shuffle(
+        pool.filter((x) => x.word.toLowerCase() !== item.word.toLowerCase())
+      )
+        .slice(0, 3)
+        .map((x) => x.word);
+      if (distractors.length < 1) return null;
+      return {
+        type: "vocab",
+        q: item.gloss,
+        options: shuffle([item.word, ...distractors]),
+        answer: item.word,
+      };
+    })
+    .filter(Boolean);
+}
+
+async function openWeekVocab() {
+  await ensureArticles();
+  const pool = weekVocabPool();
+  const built = buildWeekQuiz(pool);
+  if (built.length < 4) {
+    deps?.showWarn?.(
+      "這週單字還不夠",
+      "最近 7 天至少要 4 個還沒學會的單字。先讀每日時事，或等已經會的字休息結束。"
+    );
+    return;
+  }
+  quizKind = "week";
+  quizReviewing = false;
+  quizQs = built;
+  quizAnswers = quizQs.map(() => null);
+  quizIndex = 0;
+  quizCorrect = 0;
+  const subj = $("#en-daily-quiz-subject");
+  if (subj) subj.textContent = "這週單字";
+  const back = $("#btn-en-daily-quiz-back");
+  if (back) back.textContent = "← 返回";
+  renderQuizQ();
+  deps?.showView("enDailyQuiz");
+}
+
 function startMiniQuiz() {
   if (!current) return;
   const built = buildQuizQuestions(current);
@@ -3478,7 +3582,7 @@ function enterQuizReview() {
   const hint = $("#en-daily-quiz-review-hint");
   if (hint) hint.hidden = false;
   const back = $("#btn-en-daily-quiz-back");
-  if (back) back.textContent = "← 回列表";
+  if (back) back.textContent = quizKind === "week" ? "← 回英語" : "← 回列表";
   renderQuizQ();
 }
 
@@ -3488,7 +3592,8 @@ function leaveQuizReview() {
   if (hint) hint.hidden = true;
   const back = $("#btn-en-daily-quiz-back");
   if (back) back.textContent = "← 返回";
-  openDailyList();
+  if (quizKind === "week") openEnHub();
+  else openDailyList();
 }
 
 function renderQuizQ() {
@@ -3511,7 +3616,11 @@ function renderQuizQ() {
         : "這題答錯了";
     } else {
       typeLabel.textContent =
-        q?.type === "vocab" ? "Which word matches this meaning?" : "Reading check";
+        quizKind === "week"
+          ? "哪個字是這個意思？"
+          : q?.type === "vocab"
+            ? "Which word matches this meaning?"
+            : "Reading check";
     }
   }
   if (prompt) prompt.textContent = q?.q || "";
@@ -3602,12 +3711,14 @@ async function submitMiniQuiz() {
   for (let i = 0; i < quizQs.length; i++) {
     const q = quizQs[i];
     const a = quizAnswers[i];
-    if (
+    const ok =
       q &&
       a != null &&
-      String(a).toLowerCase() === String(q.answer).toLowerCase()
-    ) {
-      quizCorrect++;
+      String(a).toLowerCase() === String(q.answer).toLowerCase();
+    if (ok) quizCorrect++;
+    if (quizKind === "week" && q?.answer) {
+      markWeekOk(q.answer, Boolean(ok));
+      recordDictationResult(q.answer, Boolean(ok));
     }
   }
   try {
@@ -3640,12 +3751,16 @@ async function finishQuiz() {
       {
         subject: "en",
         child,
-        mode: quizKind === "dialogue" ? "daily-dialogue" : "daily-read",
+        mode:
+          quizKind === "dialogue" ? "daily-dialogue" : quizKind === "week" ? "daily-week" : "daily-read",
         autoCorrect: quizCorrect,
         questions: quizQs,
         pending: 0,
       },
-      `${quizKind === "dialogue" ? "情境對話" : "每日閱讀"} ${current?.date || ""} ${current?.category || ""}`.trim()
+      (quizKind === "week"
+        ? `這週單字 ${addDaysIso(todayIso(), -6)}～${todayIso()}`
+        : `${quizKind === "dialogue" ? "情境對話" : "每日閱讀"} ${current?.date || ""} ${current?.category || ""}`
+      ).trim()
     );
     message = result?.message || "";
   } catch (e) {
@@ -3654,6 +3769,6 @@ async function finishQuiz() {
   }
   deps?.showOk?.(`完成！${quizCorrect} / ${total}`, message, null, [
     { label: "看每題對錯", primary: true, onClick: () => enterQuizReview() },
-    { label: "回列表", onClick: () => leaveQuizReview() },
+    { label: quizKind === "week" ? "回英語" : "回列表", onClick: () => leaveQuizReview() },
   ]);
 }

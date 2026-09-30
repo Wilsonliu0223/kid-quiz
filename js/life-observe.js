@@ -686,6 +686,85 @@ function countyExtra(node) {
   );
 }
 
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function relButtons(node, showWhy) {
+  return relEntries(node)
+    .map(([lid, why]) => {
+      const x = nodeById(lid);
+      const whyHtml = showWhy ? `<span>${escapeHtml(whyText(why))}</span>` : "";
+      return `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(x.id)}"><strong>${escapeHtml(x.name)}</strong>${whyHtml}</button>`;
+    })
+    .join("");
+}
+
+function revealWhys(node) {
+  const rel = $("#life-read-links");
+  if (rel) rel.innerHTML = relButtons(node, true);
+  const relLabel = $("#life-read-links-label");
+  if (relLabel) relLabel.textContent = "為什麼連在一起";
+}
+
+function setupLifeAsk(node) {
+  const box = $("#life-read-ask");
+  const qEl = $("#life-read-ask-q");
+  const opts = $("#life-read-ask-opts");
+  const result = $("#life-read-ask-result");
+  if (!box || !qEl || !opts || !result) return false;
+  const entries = relEntries(node);
+  const pool = [];
+  for (const item of [...NODES, ...zonesForCounty(countyId)]) {
+    for (const [, why] of relEntries(item)) {
+      const text = whyText(why);
+      if (text) pool.push(text);
+    }
+  }
+  const unique = [...new Set(pool)];
+  const usable = entries.filter(([, why]) => {
+    const text = whyText(why);
+    return text && unique.filter((x) => x !== text).length >= 2;
+  });
+  if (!usable.length) {
+    box.hidden = true;
+    return false;
+  }
+  const [lid, why] = usable[Math.floor(Math.random() * usable.length)];
+  const other = nodeById(lid);
+  const correct = whyText(why);
+  const choices = shuffle([correct, ...shuffle(unique.filter((text) => text !== correct)).slice(0, 2)]);
+  box.hidden = false;
+  qEl.textContent = `為什麼「${node.name}」會連到「${other?.name || ""}」？`;
+  result.hidden = true;
+  result.textContent = "";
+  opts.innerHTML = "";
+  for (const choice of choices) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-secondary btn-block";
+    btn.textContent = choice;
+    btn.addEventListener("click", () => {
+      const ok = choice === correct;
+      result.hidden = false;
+      result.textContent = ok ? "答對了。" : `其實是：${correct}`;
+      opts.querySelectorAll("button").forEach((b) => {
+        b.disabled = true;
+        if (b.textContent === correct) b.classList.add("life-ask-ok");
+        else if (b === btn && !ok) b.classList.add("life-ask-no");
+      });
+      revealWhys(node);
+    });
+    opts.appendChild(btn);
+  }
+  return true;
+}
+
 function openNode(id) {
   const n = nodeById(id);
   if (!n) return;
@@ -700,12 +779,7 @@ function openNode(id) {
     escapeHtml(meta.label + (meta.hint ? ` · ${meta.hint}` : "")) +
     (lensesOf(n).length ? ` <span class="life-lens-row">${lensTags(n)}</span>` : "");
   const short = !freeBrowse && maze && n.id === maze.goal;
-  const rels = relEntries(n)
-    .map(([lid, why]) => {
-      const x = nodeById(lid);
-      return `<button type="button" class="life-rel-row" data-life-node="${escapeHtml(x.id)}"><strong>${escapeHtml(x.name)}</strong><span>${escapeHtml(whyText(why))}</span></button>`;
-    })
-    .join("");
+  const ask = setupLifeAsk(n);
   $("#life-read-body").innerHTML =
     (short ? "" : countyExtra(n)) +
     (n.because ? `<p class="life-read-k">它為什麼在這張圖上</p><p class="life-read-because">${escapeHtml(n.because)}</p>` : "") +
@@ -714,9 +788,9 @@ function openNode(id) {
     (short ? "" : `<p class="life-read-k">我在哪裡看得到</p><p class="life-read-p">${escapeHtml(n.where)}</p>`) +
     `<p class="life-read-k">去做一件小事</p><p class="life-read-do">${escapeHtml(n.do)}</p>`;
   const rel = $("#life-read-links");
-  if (rel) rel.innerHTML = rels;
+  if (rel) rel.innerHTML = relButtons(n, !ask);
   const relLabel = $("#life-read-links-label");
-  if (relLabel) relLabel.textContent = "為什麼連在一起";
+  if (relLabel) relLabel.textContent = ask ? "連到這些（先答下面那一題）" : "為什麼連在一起";
   deps.showView("lifeRead");
 }
 
