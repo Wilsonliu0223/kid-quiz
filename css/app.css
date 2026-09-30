@@ -202,7 +202,8 @@ body {
 .home-zone-solo .card-mul,
 .home-zone-solo .card-sudoku,
 .home-zone-solo .card-gifted,
-.home-zone-solo .card-life {
+.home-zone-solo .card-life,
+.home-zone-solo .card-vision {
   min-height: 68px;
   margin-bottom: 0;
 }
@@ -633,6 +634,137 @@ body {
 .card-life .card-title {
   color: #1d5c38;
 }
+
+.card-vision {
+  background: #fff;
+  border: 2px solid #111;
+}
+
+.card-vision .card-title {
+  color: #111;
+}
+
+body:has(#view-vision.view-active),
+body:has(#view-vision.view-active) #app {
+  background: #fff;
+}
+
+#view-vision.view-active {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  max-width: none;
+  height: 100dvh;
+  margin: 0;
+  padding: calc(8px + var(--safe-top)) 12px calc(8px + var(--safe-bottom));
+  background: #fff;
+  color: #000;
+  overflow: hidden;
+}
+
+.vision-setup,
+.vision-play {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: #fff;
+  color: #000;
+}
+
+.vision-setup[hidden],
+.vision-play[hidden] {
+  display: none !important;
+}
+
+.vision-lead {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: #000;
+}
+
+.vision-who-line,
+.vision-prev,
+.vision-result-score {
+  margin: 0 0 12px;
+  color: #000;
+  font-size: 1.05rem;
+}
+
+.vision-switch-title {
+  margin: 12px 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #000;
+}
+
+.vision-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+}
+
+.vision-progress {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.vision-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  min-height: 0;
+}
+
+.vision-e {
+  flex: none;
+  background: #fff;
+}
+
+.vision-e svg {
+  display: block;
+  shape-rendering: crispEdges;
+}
+
+.vision-pad {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-areas:
+    ". up ."
+    "left . right"
+    ". down .";
+  gap: 6px;
+  width: min(100%, 280px);
+  margin: 0 auto;
+  padding-top: 4px;
+}
+
+.vision-key {
+  height: 56px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.vision-key:active {
+  background: #000;
+  color: #fff;
+}
+
+.vision-key-up { grid-area: up; }
+.vision-key-left { grid-area: left; }
+.vision-key-right { grid-area: right; }
+.vision-key-down { grid-area: down; }
 
 .setup-header-life .setup-subject,
 .quiz-header-life .quiz-subject {

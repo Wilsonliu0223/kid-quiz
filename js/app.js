@@ -109,6 +109,7 @@ import {
 import { initTimesTable, openMulHome } from "./times-table.js?v=mul-pair-v11";
 import { initMathPractice, openMathHub } from "./math-practice.js?v=math-hub-v7";
 import { initNumMemory, openNumMemory } from "./num-memory.js?v=num-mem-v1";
+import { initVision, openVision } from "./vision.js?v=vision-v1";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
 import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v93";
@@ -194,6 +195,7 @@ const views = {
   mathGradeQuiz: $("#view-math-grade-quiz"),
   mathGradeResult: $("#view-math-grade-result"),
   numMem: $("#view-num-mem"),
+  vision: $("#view-vision"),
   zhChoice: $("#view-zh-choice"),
   zhCards: $("#view-zh-cards"),
   setupZh: $("#view-setup-zh"),
@@ -2542,6 +2544,7 @@ async function init() {
     },
   });
   initNumMemory({ showView });
+  initVision({ showView });
   initMathPractice({
     showView,
     openMulHome,
@@ -2554,6 +2557,10 @@ async function init() {
   $("#btn-start-sudoku")?.addEventListener("click", (e) => {
     e.preventDefault();
     openSudokuHome();
+  });
+  $("#btn-start-vision")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openVision();
   });
   $("#btn-start-sky-shooter")?.addEventListener("click", (e) => {
     e.preventDefault();

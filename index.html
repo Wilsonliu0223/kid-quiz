@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.75";
+        var V = "39.76";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.85" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.87" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -117,6 +117,10 @@
             <button type="button" class="card card-life" id="btn-start-life">
               <span class="card-title">生活觀察</span>
               <span class="card-desc">怎麼接到 · 走一走看</span>
+            </button>
+            <button type="button" class="card card-vision" id="btn-start-vision">
+              <span class="card-title">視力檢測</span>
+              <span class="card-desc">3 公尺 · 白底黑 E</span>
             </button>
             <button type="button" class="card card-sudoku" id="btn-start-sudoku">
               <span class="card-title">數獨</span>
@@ -396,6 +400,56 @@
           <button type="button" class="btn btn-secondary btn-block" id="btn-math-hub-num-mem">
             數字記憶
           </button>
+        </div>
+      </section>
+
+      <section id="view-vision" class="view view-hidden" aria-label="視力檢測">
+        <div id="vision-setup" class="vision-setup">
+          <header class="setup-header">
+            <button type="button" class="btn-text" id="btn-vision-back">← 返回</button>
+            <span class="setup-subject">視力檢測</span>
+          </header>
+          <p class="vision-lead">手機直著放，亮度調到最亮。人站在距離螢幕 <strong>3 公尺</strong> 的地方，比 E 的開口。旁邊的人按下面的方向。</p>
+          <p class="vision-lead">先遮左眼測右眼，再遮右眼測左眼。紙板遮眼，不要壓到眼睛，也不要瞇眼。</p>
+          <p class="vision-lead">每一級 4 題，上、下、左、右各一次，不重複。對了 3 題才換更小的 E，從 0.2 測到 1.0。</p>
+          <p class="vision-who-line">誰在測：<strong id="vision-who">—</strong></p>
+          <span class="label">這次</span>
+          <div class="lesson-chips" role="group" aria-label="裸視或戴鏡">
+            <button type="button" class="chip chip-active" data-vision-wear="bare">裸視</button>
+            <button type="button" class="chip" data-vision-wear="glasses">戴鏡</button>
+          </div>
+          <p class="vision-prev" id="vision-prev" hidden></p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-vision-start">開始測右眼</button>
+        </div>
+
+        <div id="vision-play" class="vision-play" hidden>
+          <header class="vision-top">
+            <button type="button" class="btn-text" id="btn-vision-abort">結束</button>
+            <p class="vision-progress" id="vision-progress">右眼　0.2　1/4</p>
+          </header>
+          <div class="vision-stage">
+            <div id="vision-e" class="vision-e" role="img" aria-label="E"></div>
+          </div>
+          <div class="vision-pad" id="vision-pad">
+            <button type="button" class="vision-key vision-key-up" data-vision-dir="up">上</button>
+            <button type="button" class="vision-key vision-key-left" data-vision-dir="left">左</button>
+            <button type="button" class="vision-key vision-key-right" data-vision-dir="right">右</button>
+            <button type="button" class="vision-key vision-key-down" data-vision-dir="down">下</button>
+          </div>
+        </div>
+
+        <div id="vision-switch" class="vision-setup" hidden>
+          <p class="vision-switch-title" id="vision-switch-title">右眼</p>
+          <p class="vision-lead">換遮右眼，測左眼。兩眼自然張開，不要瞇，也不要偷看。</p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-vision-left">開始測左眼</button>
+        </div>
+
+        <div id="vision-result" class="vision-setup" hidden>
+          <h2 class="vision-switch-title">測完了</h2>
+          <p class="vision-result-score" id="vision-result-score"></p>
+          <p class="vision-lead" id="vision-result-note"></p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-vision-again">再測一次</button>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-vision-home">回首頁</button>
         </div>
       </section>
 
@@ -3245,7 +3299,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.42").catch((e) => {
+      import("./js/app.js?v=app-v46.43").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
