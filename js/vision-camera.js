@@ -7,24 +7,81 @@ const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
 const MODEL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 const MIN_VIS = 0.5;
-const WAVE_WINDOW = 560;
-const WAVE_TRAVEL = 0.07;
+const WAVE_TRAVEL = 0.18;
+const WAVE_MIN_MS = 350;
 
 /**
- * @param {{ dx: number, dy: number, t: number }[]} samples
- * @returns {"up"|"right"|"down"|"left"|null}
+ * 要揮夠遠、夠久，而且手停下來才算一次。揮回去的那段不算。
+ * @returns {{ push: (sample: { dx: number, dy: number, t: number } | null) => "up"|"right"|"down"|"left"|null }}
  */
-export function waveDirection(samples) {
-  if (!samples || samples.length < 4) return null;
-  const first = samples[0];
-  const last = samples[samples.length - 1];
-  if (last.t - first.t < 180) return null;
-  const mx = last.dx - first.dx;
-  const my = last.dy - first.dy;
-  if (Math.hypot(mx, my) < WAVE_TRAVEL) return null;
-  if (Math.abs(mx) > Math.abs(my) * 1.35) return mx > 0 ? "right" : "left";
-  if (Math.abs(my) > Math.abs(mx) * 1.35) return my > 0 ? "down" : "up";
-  return null;
+export function createWaveTracker() {
+  /** @type {{ dx: number, dy: number, t: number } | null} */
+  let origin = null;
+  /** @type {{ dx: number, dy: number, t: number } | null} */
+  let prev = null;
+  let peakX = 0;
+  let peakY = 0;
+  let still = 0;
+  let waitStill = true;
+
+  const reset = (sample) => {
+    origin = sample;
+    prev = sample;
+    peakX = 0;
+    peakY = 0;
+    still = 0;
+  };
+
+  return {
+    push(sample) {
+      if (!sample) {
+        reset(null);
+        waitStill = true;
+        return null;
+      }
+      if (!prev) {
+        reset(sample);
+        return null;
+      }
+      const step = Math.hypot(sample.dx - prev.dx, sample.dy - prev.dy);
+      prev = sample;
+      const quiet = step < 0.015;
+      if (waitStill) {
+        if (quiet) still += 1;
+        else still = 0;
+        if (still >= 4) {
+          waitStill = false;
+          reset(sample);
+        }
+        return null;
+      }
+      if (!origin) {
+        reset(sample);
+        return null;
+      }
+      const mx = sample.dx - origin.dx;
+      const my = sample.dy - origin.dy;
+      if (Math.abs(mx) > Math.abs(peakX)) peakX = mx;
+      if (Math.abs(my) > Math.abs(peakY)) peakY = my;
+      if (quiet) still += 1;
+      else still = 0;
+      const travel = Math.hypot(peakX, peakY);
+      if (travel < WAVE_TRAVEL || sample.t - origin.t < WAVE_MIN_MS || still < 4) {
+        if (still >= 5 && travel < WAVE_TRAVEL) reset(sample);
+        return null;
+      }
+      let dir = null;
+      if (Math.abs(peakX) > Math.abs(peakY) * 1.4) dir = peakX > 0 ? "right" : "left";
+      else if (Math.abs(peakY) > Math.abs(peakX) * 1.4) dir = peakY > 0 ? "down" : "up";
+      waitStill = true;
+      still = 0;
+      origin = null;
+      prev = sample;
+      peakX = 0;
+      peakY = 0;
+      return dir;
+    },
+  };
 }
 
 function armSample(landmarks, t) {
@@ -81,9 +138,7 @@ export function startArmCamera(video, hooks) {
   let stream = null;
   /** @type {{ close?: () => void, detectForVideo: Function } | null} */
   let landmarker = null;
-  /** @type {{ dx: number, dy: number, t: number }[]} */
-  let samples = [];
-  let cooldown = 0;
+  const tracker = createWaveTracker();
 
   const stopTracks = () => {
     stream?.getTracks().forEach((track) => track.stop());
@@ -106,21 +161,11 @@ export function startArmCamera(video, hooks) {
     } catch {
       return;
     }
-    if (!sample) {
-      samples = [];
-      if (now >= cooldown) hooks.onStatus("往 E 的開口揮手");
-      return;
-    }
-    samples.push(sample);
-    samples = samples.filter((item) => now - item.t <= WAVE_WINDOW);
-    if (now < cooldown) return;
-    const dir = waveDirection(samples);
+    const dir = tracker.push(sample);
     if (!dir) {
-      hooks.onStatus("往 E 的開口揮手");
+      hooks.onStatus("慢慢往開口揮，揮完停一下");
       return;
     }
-    samples = [];
-    cooldown = now + 900;
     hooks.onDirection(dir);
   };
 
@@ -156,7 +201,7 @@ export function startArmCamera(video, hooks) {
       return;
     }
     if (stopped) return;
-    hooks.onStatus("往 E 的開口揮手");
+    hooks.onStatus("慢慢往開口揮，揮完停一下");
     raf = requestAnimationFrame(loop);
   };
 

@@ -378,7 +378,7 @@ function mark(ok) {
     }
     levelIndex += 1;
     startLevel();
-  }, 700);
+  }, 1200);
 }
 
 export function openVision() {

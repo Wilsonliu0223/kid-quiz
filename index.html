@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.82";
+        var V = "39.83";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -434,7 +434,7 @@
             <button type="button" class="chip chip-active" data-vision-camera="off">不啟用</button>
             <button type="button" class="chip" data-vision-camera="on">啟用</button>
           </div>
-          <p class="vision-size-hint">啟用時，小孩往 E 的開口揮手。揮對出現綠圈，揮錯出現紅叉。認不準就改按下面的圈或叉。</p>
+          <p class="vision-size-hint">啟用時，小孩慢慢往 E 的開口揮過去，揮完停一下。揮對出現綠圈，揮錯出現紅叉。</p>
           <p class="vision-prev" id="vision-prev" hidden></p>
           <button type="button" class="btn btn-primary btn-block" id="btn-vision-start">開始測右眼</button>
         </div>
@@ -3320,7 +3320,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.49").catch((e) => {
+      import("./js/app.js?v=app-v46.50").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
