@@ -719,15 +719,22 @@ function setupLifeAsk(node) {
   const result = $("#life-read-ask-result");
   if (!box || !qEl || !opts || !result) return false;
   const entries = relEntries(node);
-  const pool = [];
+  const own = new Set(entries.map(([, why]) => whyText(why)).filter(Boolean));
+  const lensIds = new Set(lensesOf(node).map((lens) => lens.id));
+  const near = [];
+  const far = [];
   for (const item of [...NODES, ...zonesForCounty(countyId)]) {
+    if (item.id === node.id) continue;
+    const share = lensesOf(item).some((lens) => lensIds.has(lens.id));
     for (const [, why] of relEntries(item)) {
       const text = whyText(why);
-      if (text) pool.push(text);
+      if (!text || own.has(text)) continue;
+      if (share) near.push(text);
+      else far.push(text);
     }
   }
-  const own = new Set(entries.map(([, why]) => whyText(why)).filter(Boolean));
-  const distractors = [...new Set(pool)].filter((text) => !own.has(text));
+  const nearUnique = [...new Set(near)];
+  const distractors = nearUnique.length >= 2 ? nearUnique : [...new Set([...nearUnique, ...far])];
   const usable = entries.filter(([, why]) => whyText(why) && distractors.length >= 2);
   if (!usable.length) {
     box.hidden = true;

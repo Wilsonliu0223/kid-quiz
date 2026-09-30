@@ -490,26 +490,40 @@ const CHART_SETS = [
 const CHART_MAX = 12;
 const CHART_STEPS = [2, 4, 6, 8, 10, 12];
 
+function readValueQuestion(chart, names) {
+  const bar = chart[rand(0, chart.length - 1)];
+  return q(`哪一項是 ${bar.n}？`, bar.name, names.filter((n) => n !== bar.name), "", chart);
+}
+
+function compareScaleQuestion(chart, names, mode) {
+  const cuts = shuffle([4, 8]);
+  for (const cut of cuts) {
+    const hits = chart.filter((b) => (mode === "more" ? b.n > cut : b.n < cut));
+    if (hits.length !== 1) continue;
+    const word = mode === "more" ? "多" : "少";
+    return q(`哪一項比 ${cut} ${word}？`, hits[0].name, names.filter((n) => n !== hits[0].name), "", chart);
+  }
+  return readValueQuestion(chart, names);
+}
+
 function makeChart() {
   const names = CHART_SETS[rand(0, CHART_SETS.length - 1)];
   const vals = shuffle(CHART_STEPS).slice(0, names.length);
   const chart = names.map((name, i) => ({ name, n: vals[i] }));
   const kind = rand(1, 4);
-  const ranked = [...chart].sort((a, b) => b.n - a.n);
-  if (kind === 1) {
-    const bar = chart[rand(0, chart.length - 1)];
-    return q(`哪一項是 ${bar.n}？`, bar.name, names.filter((n) => n !== bar.name), "", chart);
+  if (kind === 1) return readValueQuestion(chart, names);
+  if (kind === 2) return compareScaleQuestion(chart, names, "more");
+  if (kind === 3) return compareScaleQuestion(chart, names, "less");
+  let a = chart[0];
+  let b = chart[1];
+  for (let i = 0; i < chart.length; i++) {
+    for (let j = i + 1; j < chart.length; j++) {
+      if (Math.abs(chart[i].n - chart[j].n) > Math.abs(a.n - b.n)) {
+        a = chart[i];
+        b = chart[j];
+      }
+    }
   }
-  if (kind === 2) {
-    const ans = ranked[0].name;
-    return q("哪一項最多？", ans, names.filter((n) => n !== ans), "", chart);
-  }
-  if (kind === 3) {
-    const ans = ranked[ranked.length - 1].name;
-    return q("哪一項最少？", ans, names.filter((n) => n !== ans), "", chart);
-  }
-  const a = chart[0];
-  const b = chart[1];
   const ans = Math.abs(a.n - b.n);
   return q(`${a.name}和${b.name}相差多少？`, ans, [a.n + b.n, a.n, b.n, ans + 2], "", chart);
 }

@@ -3381,14 +3381,51 @@ function buildWeekQuiz(pool) {
     .filter(Boolean);
 }
 
-async function weekPromptZh(gloss, word) {
-  const raw = (await translateEnToZh(gloss)) || "";
-  const zh = firstZhClause(raw);
-  if (zh) return zh;
-  const fromReview = loadReview().find(
-    (item) => String(item.word || "").toLowerCase() === String(word || "").toLowerCase()
-  );
-  return firstZhClause(fromReview?.zh) || firstZhClause(fromReview?.zhGloss) || gloss;
+const WEEK_ZH_KEY = "kid-quiz-en-week-zh";
+
+function loadWeekZh() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEEK_ZH_KEY) || "{}");
+    return raw && typeof raw === "object" ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveWeekZh(map) {
+  const keys = Object.keys(map);
+  if (keys.length > 400) {
+    for (const key of keys.slice(0, keys.length - 300)) delete map[key];
+  }
+  localStorage.setItem(WEEK_ZH_KEY, JSON.stringify(map));
+}
+
+function punctuateKidZh(text) {
+  let t = String(text || "")
+    .replace(/[。．.\s]+$/g, "")
+    .trim();
+  if (!t || !hasCjkText(t)) return "";
+  if (!/[，,、；]/.test(t) && t.length > 8) {
+    const m = t.match(/^(.{4,8}?)(從|到|在|用|和|與|並)/);
+    if (m) t = `${m[1]}，${t.slice(m[1].length)}`;
+  }
+  return `${t}。`;
+}
+
+async function weekPromptZh(gloss, word, cache) {
+  const src = String(gloss || "").trim();
+  if (cache && cache[src]) return cache[src];
+  const raw = (await translateEnToZh(src)) || "";
+  let zh = punctuateKidZh(firstZhClause(raw));
+  if (!zh) {
+    const fromReview = loadReview().find(
+      (item) => String(item.word || "").toLowerCase() === String(word || "").toLowerCase()
+    );
+    zh = punctuateKidZh(firstZhClause(fromReview?.zh) || firstZhClause(fromReview?.zhGloss));
+  }
+  const prompt = zh || src;
+  if (cache && zh) cache[src] = prompt;
+  return prompt;
 }
 
 let weekOpening = false;
@@ -3409,7 +3446,9 @@ async function openWeekVocab() {
     );
     return;
   }
-  const prompts = await Promise.all(built.map((item) => weekPromptZh(item.q, item.answer)));
+  const zhCache = loadWeekZh();
+  const prompts = await Promise.all(built.map((item) => weekPromptZh(item.q, item.answer, zhCache)));
+  saveWeekZh(zhCache);
   for (let i = 0; i < built.length; i++) built[i].q = prompts[i];
   quizKind = "week";
   quizReviewing = false;
