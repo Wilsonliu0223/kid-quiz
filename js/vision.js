@@ -9,15 +9,12 @@ import { startArmCamera } from "./vision-camera.js";
 const DISTANCE_M = 3;
 const KEY_SCREEN = "kid-quiz-vision-screen";
 const LEVELS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
-const DIRS = ["right", "upRight", "up", "upLeft", "left", "downLeft", "downRight"];
+const DIRS = ["upRight", "upLeft", "downRight", "downLeft"];
 const GAP_DEG = {
-  right: 0,
   upRight: -45,
-  up: -90,
   upLeft: -135,
-  left: 180,
-  downLeft: 135,
   downRight: 45,
+  downLeft: 135,
 };
 const PASS_NEED = 3;
 const PER_LEVEL = 4;

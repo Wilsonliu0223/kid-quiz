@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.86";
+        var V = "39.87";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -434,7 +434,7 @@
             <button type="button" class="chip chip-active" data-vision-camera="off">不啟用</button>
             <button type="button" class="chip" data-vision-camera="on">啟用</button>
           </div>
-          <p class="vision-size-hint">啟用鏡頭時，把手停在 C 的開口方向 2 秒。沒有正下方開口，斜向 45 度可以。停對出現綠圈，停錯出現紅叉。</p>
+          <p class="vision-size-hint">每一級四題：右上、左上、右下、左下。啟用鏡頭時，把手停在開口方向 2 秒。停對出現綠圈，停錯出現紅叉。</p>
           <p class="vision-prev" id="vision-prev" hidden></p>
           <button type="button" class="btn btn-primary btn-block" id="btn-vision-start">開始測右眼</button>
         </div>
@@ -3320,7 +3320,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.53").catch((e) => {
+      import("./js/app.js?v=app-v46.54").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
