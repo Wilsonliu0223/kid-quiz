@@ -34,8 +34,8 @@ let wakeLock = null;
 
 /** @type {'bare' | 'glasses'} */
 let wear = "bare";
-/** @type {'right' | 'left'} */
-let eye = "right";
+/** @type {'both' | 'right' | 'left'} */
+let eye = "both";
 let levelIndex = 0;
 /** @type {string[]} */
 let queue = [];
@@ -44,6 +44,8 @@ let correct = 0;
 let accepting = false;
 /** @type {string | null} */
 let lastDir = null;
+/** @type {number | null} */
+let bothScore = null;
 /** @type {number | null} */
 let rightScore = null;
 /** @type {number | null} */
@@ -195,13 +197,15 @@ function renderSetup() {
       const when = new Date(last.at);
       const day = `${when.getMonth() + 1}/${when.getDate()}`;
       const mode = last.wear === "glasses" ? "戴鏡" : "裸視";
-      prev.textContent = `上次 ${day} ${mode}　右 ${formatAcuity(last.right)}　左 ${formatAcuity(last.left)}`;
+      const both = last.both === undefined ? "" : `　雙 ${formatAcuity(last.both)}`;
+      prev.textContent = `上次 ${day} ${mode}${both}　右 ${formatAcuity(last.right)}　左 ${formatAcuity(last.left)}`;
     }
   }
   showPanel("vision-setup");
 }
 
 function eyeLabel(which) {
+  if (which === "both") return "雙眼";
   return which === "right" ? "右眼" : "左眼";
 }
 
@@ -298,14 +302,35 @@ function beginEye(which) {
   ensureCamera();
 }
 
+function showSwitch(title, lead, button) {
+  const titleEl = $("#vision-switch-title");
+  const leadEl = $("#vision-switch-lead");
+  const btn = $("#btn-vision-next");
+  if (titleEl) titleEl.textContent = title;
+  if (leadEl) leadEl.textContent = lead;
+  if (btn) btn.textContent = button;
+  showPanel("vision-switch");
+}
+
 function finishEye(score) {
   accepting = false;
   lastDir = null;
+  if (eye === "both") {
+    bothScore = score;
+    showSwitch(
+      `雙眼 ${formatAcuity(score)}`,
+      "接著遮住左眼，測右眼。不要壓到眼睛，也不要瞇眼。",
+      "開始測右眼"
+    );
+    return;
+  }
   if (eye === "right") {
     rightScore = score;
-    const title = $("#vision-switch-title");
-    if (title) title.textContent = `右眼 ${formatAcuity(score)}`;
-    showPanel("vision-switch");
+    showSwitch(
+      `右眼 ${formatAcuity(score)}`,
+      "接著遮住右眼，測左眼。兩眼自然張開，不要偷看。",
+      "開始測左眼"
+    );
     return;
   }
   leftScore = score;
@@ -322,6 +347,7 @@ function finishTest() {
     childName,
     wear,
     distanceM: DISTANCE_M,
+    both: bothScore,
     right: rightScore,
     left: leftScore,
   };
@@ -335,7 +361,7 @@ function finishTest() {
   const score = $("#vision-result-score");
   if (score) {
     const mode = wear === "glasses" ? "戴鏡" : "裸視";
-    score.textContent = `${childName}　${mode}　右眼 ${formatAcuity(rightScore)}　左眼 ${formatAcuity(leftScore)}`;
+    score.textContent = `${childName}　${mode}　雙眼 ${formatAcuity(bothScore)}　右眼 ${formatAcuity(rightScore)}　左眼 ${formatAcuity(leftScore)}`;
   }
   const note = $("#vision-result-note");
   if (note) {
@@ -455,9 +481,10 @@ export function initVision(d) {
     saveScreen(widthCm, heightCm);
     childId = getSelectedChild();
     childName = getChildName(childId);
+    bothScore = null;
     rightScore = null;
     leftScore = null;
-    beginEye("right");
+    beginEye("both");
   });
   $("#vision-mark")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-vision-mark]");
@@ -471,7 +498,9 @@ export function initVision(d) {
     accepting = false;
     renderSetup();
   });
-  $("#btn-vision-left")?.addEventListener("click", () => beginEye("left"));
+  $("#btn-vision-next")?.addEventListener("click", () => {
+    beginEye(eye === "both" ? "right" : "left");
+  });
   $("#btn-vision-again")?.addEventListener("click", () => {
     releaseCamera();
     cancelRound();

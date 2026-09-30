@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.88";
+        var V = "39.89";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -410,7 +410,7 @@
             <span class="setup-subject">視力檢測</span>
           </header>
           <p class="vision-lead">大人拿著手機或平板，亮度調到最亮。小孩站在 <strong>3 公尺</strong>外看 C 的開口。對了按綠圈，錯了按紅叉。</p>
-          <p class="vision-lead">先遮左眼測右眼，再遮右眼測左眼。紙板遮眼，不要壓到眼睛，也不要瞇眼。</p>
+          <p class="vision-lead">先兩眼一起看，再遮左眼測右眼，最後遮右眼測左眼。紙板遮眼，不要壓到眼睛，也不要瞇眼。</p>
           <span class="label">這台螢幕有亮的畫面（外框不算）</span>
           <div class="vision-screen-row">
             <label for="vision-width">寬
@@ -436,7 +436,7 @@
           </div>
           <p class="vision-size-hint">每次從上、左、右和四個斜向裡抽 4 題，開口不重複。沒有正下方。把手停在開口方向 2 秒。</p>
           <p class="vision-prev" id="vision-prev" hidden></p>
-          <button type="button" class="btn btn-primary btn-block" id="btn-vision-start">開始測右眼</button>
+          <button type="button" class="btn btn-primary btn-block" id="btn-vision-start">開始測雙眼</button>
         </div>
 
         <div id="vision-play" class="vision-play" hidden>
@@ -459,9 +459,9 @@
         </div>
 
         <div id="vision-switch" class="vision-setup" hidden>
-          <p class="vision-switch-title" id="vision-switch-title">右眼</p>
-          <p class="vision-lead">換遮右眼，測左眼。兩眼自然張開，不要瞇，也不要偷看。</p>
-          <button type="button" class="btn btn-primary btn-block" id="btn-vision-left">開始測左眼</button>
+          <p class="vision-switch-title" id="vision-switch-title">雙眼</p>
+          <p class="vision-lead" id="vision-switch-lead">接著遮住左眼，測右眼。</p>
+          <button type="button" class="btn btn-primary btn-block" id="btn-vision-next">開始測右眼</button>
         </div>
 
         <div id="vision-result" class="vision-setup" hidden>
@@ -3320,7 +3320,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.55").catch((e) => {
+      import("./js/app.js?v=app-v46.56").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
