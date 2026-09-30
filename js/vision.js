@@ -102,12 +102,14 @@ function readScreen() {
     const raw = JSON.parse(localStorage.getItem(KEY_SCREEN) || "");
     const widthCm = parseCm(raw?.widthCm);
     const heightCm = parseCm(raw?.heightCm);
-    if (widthCm === 7.5 && heightCm === 16) return { widthCm: 6.9, heightCm: 14.7 };
+    if ((widthCm === 7.5 && heightCm === 16) || (widthCm === 6.9 && heightCm === 14.7)) {
+      return { widthCm: 7, heightCm: 16 };
+    }
     if (widthCm && heightCm) return { widthCm, heightCm };
   } catch {
     /* 用手機預設 */
   }
-  return { widthCm: 6.9, heightCm: 14.7 };
+  return { widthCm: 7, heightCm: 16 };
 }
 
 function saveScreen(widthCm, heightCm) {
@@ -186,7 +188,7 @@ function renderSetup() {
   const hint = $("#vision-size-hint");
   if (hint) {
     const eCm = (eSizeMm(0.2) / 10).toFixed(1);
-    hint.textContent = `預設寬 6.9、高 14.7，讓 0.2 的 C 外徑是 ${eCm} 公分。改用平板再改。`;
+    hint.textContent = `預設寬 7、高 16。站 3 公尺時，0.2 的 C 外徑是 ${eCm} 公分。改用平板再改。`;
   }
   const prev = $("#vision-prev");
   const last = latestForChild(childId);
