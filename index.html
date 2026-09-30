@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.90";
+        var V = "39.91";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -414,11 +414,11 @@
           <span class="label">這台螢幕有亮的畫面（外框不算）</span>
           <div class="vision-screen-row">
             <label for="vision-width">寬
-              <input id="vision-width" type="number" inputmode="decimal" min="3" max="50" step="0.1" value="7.5" />
+              <input id="vision-width" type="number" inputmode="decimal" min="3" max="50" step="0.1" value="6.9" />
               公分
             </label>
             <label for="vision-height">高
-              <input id="vision-height" type="number" inputmode="decimal" min="3" max="50" step="0.1" value="16" />
+              <input id="vision-height" type="number" inputmode="decimal" min="3" max="50" step="0.1" value="14.7" />
               公分
             </label>
           </div>
@@ -3320,7 +3320,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.57").catch((e) => {
+      import("./js/app.js?v=app-v46.58").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
