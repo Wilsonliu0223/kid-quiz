@@ -1,5 +1,5 @@
 /**
- * 前置鏡頭看手臂揮動。往一個方向揮過才記，舉著不動不算。
+ * 前置鏡頭看手臂停住的方向。同一方向維持 2 秒才記一次。
  * 小孩面對鏡頭：畫面左邊是小孩的右邊。
  */
 
@@ -7,79 +7,63 @@ const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
 const MODEL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 const MIN_VIS = 0.5;
-const WAVE_TRAVEL = 0.18;
-const WAVE_MIN_MS = 350;
+const MIN_EXTEND = 0.12;
+const HOLD_MS = 2000;
+const DIR_ANGLES = {
+  right: 0,
+  upRight: -45,
+  up: -90,
+  upLeft: -135,
+  left: 180,
+  downLeft: 135,
+  downRight: 45,
+};
 
-/**
- * 要揮夠遠、夠久，而且手停下來才算一次。揮回去的那段不算。
- * @returns {{ push: (sample: { dx: number, dy: number, t: number } | null) => "up"|"right"|"down"|"left"|null }}
- */
-export function createWaveTracker() {
-  /** @type {{ dx: number, dy: number, t: number } | null} */
-  let origin = null;
-  /** @type {{ dx: number, dy: number, t: number } | null} */
-  let prev = null;
-  let peakX = 0;
-  let peakY = 0;
-  let still = 0;
-  let waitStill = true;
+export function directionOf(dx, dy) {
+  const dist = Math.hypot(dx, dy);
+  if (dist < MIN_EXTEND) return null;
+  const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
+  let best = null;
+  let bestDiff = 180;
+  for (const [id, target] of Object.entries(DIR_ANGLES)) {
+    let diff = Math.abs(deg - target);
+    if (diff > 180) diff = 360 - diff;
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = id;
+    }
+  }
+  if (bestDiff > 26) return null;
+  return best;
+}
 
-  const reset = (sample) => {
-    origin = sample;
-    prev = sample;
-    peakX = 0;
-    peakY = 0;
-    still = 0;
-  };
-
+export function createHoldTracker() {
+  let dir = null;
+  let since = 0;
+  let locked = false;
   return {
     push(sample) {
-      if (!sample) {
-        reset(null);
-        waitStill = true;
-        return null;
+      const nowDir =
+        sample && sample.dist >= MIN_EXTEND ? directionOf(sample.dx, sample.dy) : null;
+      if (!nowDir) {
+        dir = null;
+        since = 0;
+        locked = false;
+        return { dir: null, ms: 0, fire: false };
       }
-      if (!prev) {
-        reset(sample);
-        return null;
+      if (nowDir !== dir) {
+        dir = nowDir;
+        since = sample.t;
+        locked = false;
+        return { dir: nowDir, ms: 0, fire: false };
       }
-      const step = Math.hypot(sample.dx - prev.dx, sample.dy - prev.dy);
-      prev = sample;
-      const quiet = step < 0.015;
-      if (waitStill) {
-        if (quiet) still += 1;
-        else still = 0;
-        if (still >= 4) {
-          waitStill = false;
-          reset(sample);
-        }
-        return null;
+      const ms = sample.t - since;
+      if (locked) return { dir: nowDir, ms, fire: false };
+      if (ms >= HOLD_MS) {
+        locked = true;
+        return { dir: nowDir, ms, fire: true };
       }
-      if (!origin) {
-        reset(sample);
-        return null;
-      }
-      const mx = sample.dx - origin.dx;
-      const my = sample.dy - origin.dy;
-      if (Math.abs(mx) > Math.abs(peakX)) peakX = mx;
-      if (Math.abs(my) > Math.abs(peakY)) peakY = my;
-      if (quiet) still += 1;
-      else still = 0;
-      const travel = Math.hypot(peakX, peakY);
-      if (travel < WAVE_TRAVEL || sample.t - origin.t < WAVE_MIN_MS || still < 4) {
-        if (still >= 5 && travel < WAVE_TRAVEL) reset(sample);
-        return null;
-      }
-      let dir = null;
-      if (Math.abs(peakX) > Math.abs(peakY) * 1.4) dir = peakX > 0 ? "right" : "left";
-      else if (Math.abs(peakY) > Math.abs(peakX) * 1.4) dir = peakY > 0 ? "down" : "up";
-      waitStill = true;
-      still = 0;
-      origin = null;
-      prev = sample;
-      peakX = 0;
-      peakY = 0;
-      return dir;
+      return { dir: nowDir, ms, fire: false };
     },
   };
 }
@@ -138,7 +122,7 @@ export function startArmCamera(video, hooks) {
   let stream = null;
   /** @type {{ close?: () => void, detectForVideo: Function } | null} */
   let landmarker = null;
-  const tracker = createWaveTracker();
+  const tracker = createHoldTracker();
 
   const stopTracks = () => {
     stream?.getTracks().forEach((track) => track.stop());
@@ -161,12 +145,17 @@ export function startArmCamera(video, hooks) {
     } catch {
       return;
     }
-    const dir = tracker.push(sample);
-    if (!dir) {
-      hooks.onStatus("慢慢往開口揮，揮完停一下");
+    const state = tracker.push(sample);
+    if (!state.dir) {
+      hooks.onStatus("把手停在開口方向");
       return;
     }
-    hooks.onDirection(dir);
+    if (state.fire) {
+      hooks.onStatus("可以換方向了");
+      hooks.onDirection(state.dir);
+      return;
+    }
+    hooks.onStatus(`停住 ${(state.ms / 1000).toFixed(1)} 秒`);
   };
 
   const run = async () => {
@@ -201,7 +190,7 @@ export function startArmCamera(video, hooks) {
       return;
     }
     if (stopped) return;
-    hooks.onStatus("慢慢往開口揮，揮完停一下");
+    hooks.onStatus("把手停在開口方向 2 秒");
     raf = requestAnimationFrame(loop);
   };
 

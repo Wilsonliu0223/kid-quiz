@@ -9,8 +9,16 @@ import { startArmCamera } from "./vision-camera.js";
 const DISTANCE_M = 3;
 const KEY_SCREEN = "kid-quiz-vision-screen";
 const LEVELS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
-const DIRS = ["up", "right", "down", "left"];
-const ROT = { right: 0, down: 90, left: 180, up: -90 };
+const DIRS = ["right", "upRight", "up", "upLeft", "left", "downLeft", "downRight"];
+const GAP_DEG = {
+  right: 0,
+  upRight: -45,
+  up: -90,
+  upLeft: -135,
+  left: 180,
+  downLeft: 135,
+  downRight: 45,
+};
 const PASS_NEED = 3;
 const PER_LEVEL = 4;
 const KEY_LOG = "kid-quiz-vision-log";
@@ -59,10 +67,24 @@ export function shuffleDirs(avoidFirst) {
     const j = Math.floor(Math.random() * (i + 1));
     [dirs[i], dirs[j]] = [dirs[j], dirs[i]];
   }
-  if (avoidFirst && dirs[0] === avoidFirst) {
-    [dirs[0], dirs[1]] = [dirs[1], dirs[0]];
+  const picked = dirs.slice(0, PER_LEVEL);
+  if (avoidFirst && picked[0] === avoidFirst && picked.length > 1) {
+    [picked[0], picked[1]] = [picked[1], picked[0]];
   }
-  return dirs;
+  return picked;
+}
+
+function cPath(deg) {
+  const cx = 2.5;
+  const cy = 2.5;
+  const r = 1.55;
+  const gap = (40 * Math.PI) / 180;
+  const mid = (deg * Math.PI) / 180;
+  const start = mid + gap / 2;
+  const end = mid + Math.PI * 2 - gap / 2;
+  const x = (a) => cx + r * Math.cos(a);
+  const y = (a) => cy + r * Math.sin(a);
+  return `M ${x(start).toFixed(3)} ${y(start).toFixed(3)} A ${r} ${r} 0 1 1 ${x(end).toFixed(3)} ${y(end).toFixed(3)}`;
 }
 
 function parseCm(value) {
@@ -161,7 +183,7 @@ function renderSetup() {
   const hint = $("#vision-size-hint");
   if (hint) {
     const eCm = (eSizeMm(0.2) / 10).toFixed(1);
-    hint.textContent = `預設手機寬 7.5、高 16。改用平板再改。站 3 公尺時，0.2 的 E 畫成 ${eCm} 公分。`;
+    hint.textContent = `預設手機寬 7.5、高 16。改用平板再改。站 3 公尺時，0.2 的 C 畫成 ${eCm} 公分。`;
   }
   const prev = $("#vision-prev");
   const last = latestForChild(childId);
@@ -191,12 +213,10 @@ function renderE(dir) {
   const px = Math.max(8, Math.round(eSizeMm(acuity) * pxPerMm() * dpr) / dpr);
   host.style.width = `${px}px`;
   host.style.height = `${px}px`;
-  host.style.transform = `rotate(${ROT[dir]}deg)`;
+  host.style.transform = "none";
+  const deg = GAP_DEG[dir] ?? 0;
   host.innerHTML = `<svg viewBox="0 0 5 5" width="100%" height="100%" aria-hidden="true">
-    <rect width="5" height="1" fill="#000"/>
-    <rect y="2" width="5" height="1" fill="#000"/>
-    <rect y="4" width="5" height="1" fill="#000"/>
-    <rect width="1" height="5" fill="#000"/>
+    <path d="${cPath(deg)}" fill="none" stroke="#000" stroke-width="1" stroke-linecap="butt"/>
   </svg>`;
 }
 
