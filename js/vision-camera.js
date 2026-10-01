@@ -6,9 +6,12 @@
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const MODEL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
-const MIN_VIS = 0.5;
-const MIN_EXTEND = 0.12;
+const MIN_VIS = 0.45;
+const MIN_EXTEND = 0.08;
 const HOLD_MS = 2000;
+const MATCH_DEG = 28;
+const SWITCH_MS = 400;
+const GRACE_MS = 500;
 const DIR_ANGLES = {
   up: -90,
   left: 180,
@@ -19,6 +22,12 @@ const DIR_ANGLES = {
   downLeft: 135,
 };
 
+function angleDiff(a, b) {
+  let diff = Math.abs(a - b);
+  if (diff > 180) diff = 360 - diff;
+  return diff;
+}
+
 export function directionOf(dx, dy) {
   const dist = Math.hypot(dx, dy);
   if (dist < MIN_EXTEND) return null;
@@ -26,14 +35,13 @@ export function directionOf(dx, dy) {
   let best = null;
   let bestDiff = 180;
   for (const [id, target] of Object.entries(DIR_ANGLES)) {
-    let diff = Math.abs(deg - target);
-    if (diff > 180) diff = 360 - diff;
+    const diff = angleDiff(deg, target);
     if (diff < bestDiff) {
       bestDiff = diff;
       best = id;
     }
   }
-  if (bestDiff > 24) return null;
+  if (bestDiff > MATCH_DEG) return null;
   return best;
 }
 
@@ -41,29 +49,67 @@ export function createHoldTracker() {
   let dir = null;
   let since = 0;
   let locked = false;
+  let pending = null;
+  let pendingSince = 0;
+  let gapSince = 0;
+  /** @type {{ dx: number, dy: number, t: number }[]} */
+  const history = [];
+
+  const smoothed = (now) => {
+    while (history.length && now - history[0].t > 350) history.shift();
+    if (!history.length) return null;
+    const dx = history.reduce((sum, item) => sum + item.dx, 0) / history.length;
+    const dy = history.reduce((sum, item) => sum + item.dy, 0) / history.length;
+    return { dx, dy, dist: Math.hypot(dx, dy), t: now };
+  };
+
   return {
     push(sample) {
-      const nowDir =
-        sample && sample.dist >= MIN_EXTEND ? directionOf(sample.dx, sample.dy) : null;
+      const now = sample?.t || 0;
+      if (sample && sample.dist >= 0.04) history.push(sample);
+      const smooth = smoothed(now || history.at(-1)?.t || 0);
+      const nowDir = smooth ? directionOf(smooth.dx, smooth.dy) : null;
       if (!nowDir) {
+        pending = null;
+        if (dir && !gapSince) gapSince = now;
+        if (dir && now - gapSince < GRACE_MS) {
+          return { dir, ms: Math.max(0, now - since), fire: false };
+        }
         dir = null;
         since = 0;
         locked = false;
+        gapSince = 0;
         return { dir: null, ms: 0, fire: false };
       }
+      gapSince = 0;
+      if (dir && nowDir !== dir) {
+        if (pending !== nowDir) {
+          pending = nowDir;
+          pendingSince = now;
+        }
+        if (now - pendingSince < SWITCH_MS) {
+          return { dir, ms: Math.max(0, now - since), fire: false };
+        }
+        dir = nowDir;
+        since = pendingSince;
+        pending = null;
+        locked = false;
+        return { dir, ms: now - since, fire: false };
+      }
+      pending = null;
       if (nowDir !== dir) {
         dir = nowDir;
-        since = sample.t;
+        since = now;
         locked = false;
-        return { dir: nowDir, ms: 0, fire: false };
+        return { dir, ms: 0, fire: false };
       }
-      const ms = sample.t - since;
-      if (locked) return { dir: nowDir, ms, fire: false };
+      const ms = now - since;
+      if (locked) return { dir, ms, fire: false };
       if (ms >= HOLD_MS) {
         locked = true;
-        return { dir: nowDir, ms, fire: true };
+        return { dir, ms, fire: true };
       }
-      return { dir: nowDir, ms, fire: false };
+      return { dir, ms, fire: false };
     },
   };
 }
@@ -145,7 +191,7 @@ export function startArmCamera(video, hooks) {
     } catch {
       return;
     }
-    const state = tracker.push(sample);
+    const state = tracker.push(sample || { dx: 0, dy: 0, dist: 0, t: now });
     hooks.onProgress?.(state.dir ? state.ms : 0);
     if (!state.dir) {
       hooks.onStatus("把手停在開口方向");
