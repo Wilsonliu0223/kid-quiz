@@ -217,6 +217,8 @@ function renderLogList() {
   const trend = $("#vision-log-trend");
   if (edit) edit.hidden = true;
   if (list) list.hidden = false;
+  const clearBtn = $("#btn-vision-log-clear");
+  if (clearBtn) clearBtn.hidden = false;
   if (trend) trend.textContent = trendText();
   if (!list) return;
   const rows = loadLog().filter((row) => row && row.childId === childId);
@@ -250,6 +252,8 @@ function openLogEdit(at) {
   const when = $("#vision-log-edit-when");
   if (list) list.hidden = true;
   if (edit) edit.hidden = false;
+  const clearBtn = $("#btn-vision-log-clear");
+  if (clearBtn) clearBtn.hidden = true;
   if (when) when.textContent = `${row.childName || childName}　${dayLabel(row.at)}`;
   const wearSel = $("#vision-log-wear");
   if (wearSel) wearSel.value = row.wear === "glasses" ? "glasses" : "bare";
@@ -650,6 +654,12 @@ export function initVision(d) {
   $("#btn-vision-edit")?.addEventListener("click", () => openLog(lastSavedAt));
   $("#btn-vision-log-back")?.addEventListener("click", () => renderSetup());
   $("#btn-vision-log-cancel")?.addEventListener("click", () => renderLogList());
+  $("#btn-vision-log-clear")?.addEventListener("click", () => {
+    const name = childName || "這個人";
+    if (!confirm(`清空${name}的視力紀錄？`)) return;
+    writeLog(loadLog().filter((row) => !row || row.childId !== childId));
+    renderLogList();
+  });
   $("#vision-log-list")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-vision-at]");
     if (!btn) return;

@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "39.95";
+        var V = "39.96";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -489,6 +489,7 @@
           <p class="vision-lead">這裡記的是 C 字表小數，不是醫院驗光的度數。測太快可以改數字，再按確認。</p>
           <p class="vision-size-hint" id="vision-log-trend"></p>
           <div id="vision-log-list"></div>
+          <button type="button" class="btn btn-secondary btn-block" id="btn-vision-log-clear">清空這人的紀錄</button>
           <form id="vision-log-edit" class="vision-log-edit" hidden>
             <p class="vision-who-line" id="vision-log-edit-when"></p>
             <label class="vision-log-field">狀態
@@ -3358,7 +3359,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.62").catch((e) => {
+      import("./js/app.js?v=app-v46.63").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
