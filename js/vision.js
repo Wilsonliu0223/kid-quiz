@@ -60,6 +60,7 @@ let stopCamera = null;
 let advanceTimer = 0;
 let roundToken = 0;
 let lastSavedAt = 0;
+let sessionAt = 0;
 let editingAt = 0;
 
 export function eSizeMm(acuity, distanceM = DISTANCE_M) {
@@ -132,16 +133,22 @@ function pxPerMm() {
 }
 
 function formatAcuity(value) {
+  if (value === undefined) return "未測";
   if (value == null) return "低於 0.2";
   return value.toFixed(1);
 }
 
 function levelRank(value) {
+  if (value === undefined) return null;
   if (value == null) return -1;
-  return LEVELS.indexOf(value);
+  const index = LEVELS.indexOf(value);
+  return index < 0 ? null : index;
 }
 
 function needsReferral(right, left) {
+  if (right === undefined || left === undefined) {
+    return [right, left].some((v) => v !== undefined && (v == null || v < 0.9));
+  }
   const low = [right, left].some((v) => v == null || v < 0.9);
   const apart = Math.abs(levelRank(right) - levelRank(left)) >= 2;
   return low || apart;
@@ -164,6 +171,34 @@ function saveEntry(entry) {
 
 function writeLog(list) {
   localStorage.setItem(KEY_LOG, JSON.stringify(list.slice(0, 180)));
+}
+
+function persistProgress() {
+  const list = loadLog();
+  const existing = sessionAt ? list.find((row) => row && row.at === sessionAt) : null;
+  if (existing) {
+    existing.both = bothScore;
+    existing.right = rightScore;
+    existing.left = leftScore;
+    existing.wear = wear;
+    writeLog(list);
+    lastSavedAt = existing.at;
+    return;
+  }
+  const entry = {
+    at: Date.now(),
+    childId,
+    childName,
+    wear,
+    distanceM: DISTANCE_M,
+    both: bothScore,
+    right: rightScore,
+    left: leftScore,
+    confirmed: false,
+  };
+  sessionAt = entry.at;
+  lastSavedAt = entry.at;
+  saveEntry(entry);
 }
 
 function latestForChild(id) {
@@ -452,18 +487,20 @@ function finishEye(score) {
   lastDir = null;
   if (eye === "both") {
     bothScore = score;
+    persistProgress();
     showSwitch(
       `雙眼 ${formatAcuity(score)}`,
-      "接著遮住左眼，測右眼。不要壓到眼睛，也不要瞇眼。",
+      "這筆已記入視力紀錄。可以接著遮住左眼測右眼，不測也已保存。",
       "開始測右眼"
     );
     return;
   }
   if (eye === "right") {
     rightScore = score;
+    persistProgress();
     showSwitch(
       `右眼 ${formatAcuity(score)}`,
-      "接著遮住右眼，測左眼。兩眼自然張開，不要偷看。",
+      "右眼已記入同一筆。接著可以遮住右眼測左眼。",
       "開始測左眼"
     );
     return;
@@ -476,19 +513,7 @@ function finishTest() {
   releaseAwake();
   releaseCamera();
   accepting = false;
-  const entry = {
-    at: Date.now(),
-    childId,
-    childName,
-    wear,
-    distanceM: DISTANCE_M,
-    both: bothScore,
-    right: rightScore,
-    left: leftScore,
-    confirmed: false,
-  };
-  lastSavedAt = entry.at;
-  saveEntry(entry);
+  persistProgress();
   const approx = $("#vision-approx");
   if (approx) {
     const value = worseAcuity(rightScore, leftScore);
@@ -510,6 +535,10 @@ function finishTest() {
 }
 
 function worseAcuity(a, b) {
+  if (a === undefined) return b;
+  if (b === undefined) return a;
+  if (levelRank(a) == null) return b;
+  if (levelRank(b) == null) return a;
   return levelRank(a) <= levelRank(b) ? a : b;
 }
 
@@ -628,9 +657,10 @@ export function initVision(d) {
     saveScreen(widthCm, heightCm);
     childId = getSelectedChild();
     childName = getChildName(childId);
-    bothScore = null;
-    rightScore = null;
-    leftScore = null;
+    bothScore = undefined;
+    rightScore = undefined;
+    leftScore = undefined;
+    sessionAt = 0;
     beginPractice();
   });
   $("#vision-mark")?.addEventListener("click", (e) => {
