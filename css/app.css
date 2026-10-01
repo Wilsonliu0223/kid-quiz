@@ -891,6 +891,55 @@ body:has(#view-vision.view-active) #app {
   color: #d01010;
 }
 
+.vision-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vision-log-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: 2px solid #111;
+  border-radius: 12px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  text-align: left;
+}
+
+.vision-log-item.is-confirmed {
+  border-color: #1b8f3a;
+}
+
+.vision-log-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vision-log-edit[hidden] {
+  display: none !important;
+}
+
+.vision-log-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 700;
+}
+
+.vision-log-field select {
+  font: inherit;
+  padding: 8px 10px;
+  border: 2px solid #111;
+  border-radius: 10px;
+  background: #fff;
+}
+
 .vision-approx {
   margin: 4px 0 8px;
   font-size: 2rem;
