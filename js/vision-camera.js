@@ -146,6 +146,7 @@ export function startArmCamera(video, hooks) {
       return;
     }
     const state = tracker.push(sample);
+    hooks.onProgress?.(state.dir ? state.ms : 0);
     if (!state.dir) {
       hooks.onStatus("把手停在開口方向");
       return;

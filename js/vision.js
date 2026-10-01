@@ -34,6 +34,8 @@ let wakeLock = null;
 
 /** @type {'bare' | 'glasses'} */
 let wear = "bare";
+/** @type {'practice' | 'both' | 'right' | 'left'} */
+let phase = "both";
 /** @type {'both' | 'right' | 'left'} */
 let eye = "both";
 let levelIndex = 0;
@@ -230,8 +232,23 @@ function renderE(dir) {
 function renderProgress() {
   const el = $("#vision-progress");
   if (!el) return;
+  if (phase === "practice") {
+    el.textContent = "練習　不計分";
+    return;
+  }
   const acuity = LEVELS[levelIndex].toFixed(1);
   el.textContent = `${eyeLabel(eye)}　${acuity}　${asked + 1}/${PER_LEVEL}`;
+}
+
+const HOLD_RING = 2 * Math.PI * 52;
+
+function setHoldRing(ms) {
+  const ring = $("#vision-hold");
+  const arc = $("#vision-hold-arc");
+  if (!ring || !arc) return;
+  const p = useCamera ? Math.min(1, Math.max(0, ms / 2000)) : 0;
+  ring.hidden = p <= 0;
+  arc.style.strokeDashoffset = String(HOLD_RING * (1 - p));
 }
 
 function showQuestion() {
@@ -285,6 +302,7 @@ function ensureCamera() {
   video.hidden = false;
   stopCamera = startArmCamera(video, {
     onStatus: setCameraStatus,
+    onProgress: setHoldRing,
     onDirection: (dir) => {
       if (!accepting) return;
       const expect = queue[asked];
@@ -294,8 +312,24 @@ function ensureCamera() {
   });
 }
 
+function beginPractice() {
+  cancelRound();
+  phase = "practice";
+  eye = "both";
+  levelIndex = LEVELS.indexOf(0.5);
+  lastDir = null;
+  asked = 0;
+  correct = 0;
+  queue = shuffleDirs(null).slice(0, 1);
+  showPanel("vision-play");
+  showQuestion();
+  holdAwake();
+  ensureCamera();
+}
+
 function beginEye(which) {
   cancelRound();
+  phase = which;
   eye = which;
   levelIndex = 0;
   lastDir = null;
@@ -385,6 +419,7 @@ function hideFlash() {
 }
 
 function showFlash(ok) {
+  setHoldRing(0);
   const flash = $("#vision-flash");
   const markEl = $("#vision-flash-mark");
   if (!flash || !markEl) return;
@@ -397,6 +432,7 @@ function cancelRound() {
   roundToken += 1;
   clearTimeout(advanceTimer);
   hideFlash();
+  setHoldRing(0);
 }
 
 function mark(ok) {
@@ -404,12 +440,20 @@ function mark(ok) {
   const expect = queue[asked];
   if (!expect) return;
   accepting = false;
-  lastDir = expect;
-  if (ok) correct += 1;
-  asked += 1;
+  lastDir = queue[asked];
   showFlash(ok);
   const ticket = ++roundToken;
   clearTimeout(advanceTimer);
+  if (phase === "practice") {
+    advanceTimer = setTimeout(() => {
+      if (ticket !== roundToken) return;
+      hideFlash();
+      showSwitch("練習好了", "這一題不計分。兩眼張開，開始正式測。", "開始測雙眼");
+    }, 900);
+    return;
+  }
+  if (ok) correct += 1;
+  asked += 1;
   advanceTimer = setTimeout(() => {
     if (ticket !== roundToken) return;
     hideFlash();
@@ -487,7 +531,7 @@ export function initVision(d) {
     bothScore = null;
     rightScore = null;
     leftScore = null;
-    beginEye("both");
+    beginPractice();
   });
   $("#vision-mark")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-vision-mark]");
@@ -502,7 +546,9 @@ export function initVision(d) {
     renderSetup();
   });
   $("#btn-vision-next")?.addEventListener("click", () => {
-    beginEye(eye === "both" ? "right" : "left");
+    if (phase === "practice") beginEye("both");
+    else if (phase === "both") beginEye("right");
+    else beginEye("left");
   });
   $("#btn-vision-again")?.addEventListener("click", () => {
     releaseCamera();

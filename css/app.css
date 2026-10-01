@@ -760,6 +760,36 @@ body:has(#view-vision.view-active) #app {
   min-height: 0;
 }
 
+.vision-hold {
+  position: absolute;
+  width: min(72vw, 280px);
+  height: min(72vw, 280px);
+  pointer-events: none;
+}
+
+.vision-hold[hidden] {
+  display: none !important;
+}
+
+.vision-hold-track,
+.vision-hold-arc {
+  fill: none;
+  stroke-width: 8;
+}
+
+.vision-hold-track {
+  stroke: #d9d9d9;
+}
+
+.vision-hold-arc {
+  stroke: #1b8f3a;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 60px 60px;
+  stroke-dasharray: 326.73;
+  stroke-dashoffset: 326.73;
+}
+
 .vision-camera {
   position: absolute;
   top: 0;
