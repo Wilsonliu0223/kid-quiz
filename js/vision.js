@@ -59,6 +59,8 @@ let useCamera = false;
 let stopCamera = null;
 let advanceTimer = 0;
 let roundToken = 0;
+let lastSavedAt = 0;
+let editingAt = 0;
 
 export function eSizeMm(acuity, distanceM = DISTANCE_M) {
   const arcmin = 5 / acuity;
@@ -157,15 +159,111 @@ function loadLog() {
 function saveEntry(entry) {
   const list = loadLog();
   list.unshift(entry);
-  localStorage.setItem(KEY_LOG, JSON.stringify(list.slice(0, 20)));
+  localStorage.setItem(KEY_LOG, JSON.stringify(list.slice(0, 180)));
+}
+
+function writeLog(list) {
+  localStorage.setItem(KEY_LOG, JSON.stringify(list.slice(0, 180)));
 }
 
 function latestForChild(id) {
   return loadLog().find((row) => row && row.childId === id) || null;
 }
 
+function dayLabel(at) {
+  const when = new Date(at);
+  const hh = String(when.getHours()).padStart(2, "0");
+  const mm = String(when.getMinutes()).padStart(2, "0");
+  return `${when.getMonth() + 1}/${when.getDate()} ${hh}:${mm}`;
+}
+
+function fillAcuitySelect(select, value) {
+  if (!select) return;
+  const options = [["low", "低於 0.2"], ...LEVELS.map((level) => [String(level), level.toFixed(1)])];
+  const current = value == null ? "low" : String(value);
+  select.innerHTML = options
+    .map(([val, label]) => `<option value="${val}"${val === current ? " selected" : ""}>${label}</option>`)
+    .join("");
+}
+
+function readAcuitySelect(select) {
+  if (!select || select.value === "low") return null;
+  const n = Number(select.value);
+  return LEVELS.find((level) => Math.abs(level - n) < 0.001) ?? null;
+}
+
+function trendText() {
+  const rows = loadLog().filter((row) => row && row.childId === childId && row.confirmed);
+  if (rows.length < 2) return "確認過的紀錄還不到兩筆。";
+  const [now, prev] = rows;
+  const bits = [];
+  for (const [key, name] of [
+    ["both", "雙眼"],
+    ["right", "右眼"],
+    ["left", "左眼"],
+  ]) {
+    const drop = levelRank(prev[key]) - levelRank(now[key]);
+    if (drop >= 1) {
+      bits.push(`${name} ${formatAcuity(prev[key])} → ${formatAcuity(now[key])}`);
+    }
+  }
+  if (!bits.length) return `最近確認 ${dayLabel(now.at)}，沒有比上一筆更差。`;
+  return `比上一筆確認變差：${bits.join("，")}`;
+}
+
+function renderLogList() {
+  const list = $("#vision-log-list");
+  const edit = $("#vision-log-edit");
+  const trend = $("#vision-log-trend");
+  if (edit) edit.hidden = true;
+  if (list) list.hidden = false;
+  const clearBtn = $("#btn-vision-log-clear");
+  if (clearBtn) clearBtn.hidden = false;
+  if (trend) trend.textContent = trendText();
+  if (!list) return;
+  const rows = loadLog().filter((row) => row && row.childId === childId);
+  if (!rows.length) {
+    list.innerHTML = `<p class="vision-lead">還沒有紀錄</p>`;
+    return;
+  }
+  list.innerHTML = rows
+    .map((row) => {
+      const mode = row.wear === "glasses" ? "戴鏡" : "裸視";
+      const mark = row.confirmed ? "已確認" : "未確認";
+      return `<button type="button" class="vision-log-item${row.confirmed ? " is-confirmed" : ""}" data-vision-at="${row.at}">${dayLabel(row.at)}　${row.childName || childName}　${mode}　${mark}<br>雙 ${formatAcuity(row.both)}　右 ${formatAcuity(row.right)}　左 ${formatAcuity(row.left)}</button>`;
+    })
+    .join("");
+}
+
+function openLog(editAt) {
+  childId = getSelectedChild();
+  childName = getChildName(childId);
+  renderLogList();
+  showPanel("vision-log");
+  if (editAt) openLogEdit(editAt);
+}
+
+function openLogEdit(at) {
+  const row = loadLog().find((item) => item && item.at === at);
+  if (!row) return;
+  editingAt = at;
+  const list = $("#vision-log-list");
+  const edit = $("#vision-log-edit");
+  const when = $("#vision-log-edit-when");
+  if (list) list.hidden = true;
+  if (edit) edit.hidden = false;
+  const clearBtn = $("#btn-vision-log-clear");
+  if (clearBtn) clearBtn.hidden = true;
+  if (when) when.textContent = `${row.childName || childName}　${dayLabel(row.at)}`;
+  const wearSel = $("#vision-log-wear");
+  if (wearSel) wearSel.value = row.wear === "glasses" ? "glasses" : "bare";
+  fillAcuitySelect($("#vision-log-both"), row.both);
+  fillAcuitySelect($("#vision-log-right"), row.right);
+  fillAcuitySelect($("#vision-log-left"), row.left);
+}
+
 function showPanel(name) {
-  for (const id of ["vision-setup", "vision-play", "vision-switch", "vision-result"]) {
+  for (const id of ["vision-setup", "vision-play", "vision-switch", "vision-result", "vision-log"]) {
     const el = document.getElementById(id);
     if (el) el.hidden = id !== name;
   }
@@ -387,7 +485,9 @@ function finishTest() {
     both: bothScore,
     right: rightScore,
     left: leftScore,
+    confirmed: false,
   };
+  lastSavedAt = entry.at;
   saveEntry(entry);
   const approx = $("#vision-approx");
   if (approx) {
@@ -403,8 +503,8 @@ function finishTest() {
   const note = $("#vision-result-note");
   if (note) {
     note.textContent = needsReferral(rightScore, leftScore)
-      ? "有一眼低於 0.9，或兩眼相差兩級以上。建議給眼科看。這是家用篩檢，不能代替診斷。"
-      : "兩眼都有 0.9。這仍是家用篩檢，不能代替診斷。";
+      ? "有一眼低於 0.9，或兩眼相差兩級以上。建議給眼科看。這筆記的是視力小數，可按修改這筆再確認。"
+      : "兩眼都有 0.9。這筆記的是視力小數，不是驗光度數，可按修改這筆再確認。";
   }
   showPanel("vision-result");
 }
@@ -549,6 +649,35 @@ export function initVision(d) {
     if (phase === "practice") beginEye("both");
     else if (phase === "both") beginEye("right");
     else beginEye("left");
+  });
+  $("#btn-vision-log")?.addEventListener("click", () => openLog());
+  $("#btn-vision-edit")?.addEventListener("click", () => openLog(lastSavedAt));
+  $("#btn-vision-log-back")?.addEventListener("click", () => renderSetup());
+  $("#btn-vision-log-cancel")?.addEventListener("click", () => renderLogList());
+  $("#btn-vision-log-clear")?.addEventListener("click", () => {
+    const name = childName || "這個人";
+    if (!confirm(`清空${name}的視力紀錄？`)) return;
+    writeLog(loadLog().filter((row) => !row || row.childId !== childId));
+    renderLogList();
+  });
+  $("#vision-log-list")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-vision-at]");
+    if (!btn) return;
+    openLogEdit(Number(btn.dataset.visionAt));
+  });
+  $("#vision-log-edit")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const list = loadLog();
+    const row = list.find((item) => item && item.at === editingAt);
+    if (!row) return;
+    row.wear = $("#vision-log-wear")?.value === "glasses" ? "glasses" : "bare";
+    row.both = readAcuitySelect($("#vision-log-both"));
+    row.right = readAcuitySelect($("#vision-log-right"));
+    row.left = readAcuitySelect($("#vision-log-left"));
+    row.confirmed = true;
+    row.edited = true;
+    writeLog(list);
+    renderLogList();
   });
   $("#btn-vision-again")?.addEventListener("click", () => {
     releaseCamera();
