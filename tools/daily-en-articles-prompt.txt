@@ -35,7 +35,8 @@
    句子：
    - 每段最多一句收尾，而且必須是這則新聞裡的事實。禁止 can still、仍然能、Kids in Taiwan can 這種每篇一樣的口號。字數不夠就從來源補一個動作、名字或數字，不要補感想。
    - L1 可以短，但相關的兩件事寫成一句，不要每句只放一個名詞。
-   - 測驗錯選項要在同一題裡說得通：棒球比數用別的比數，不用當天其他文章的木偶、馬達或洗手秒數。單字題的錯字也用這篇裡的詞。
+   - 測驗錯選項要在同一題裡說得通：棒球比數用別的比數，不用當天其他文章的木偶、馬達或洗手秒數。單字題的錯字也用這篇裡的詞。禁止 Something else in this story、A different part、Another person in this story 這種空選項。
+   - 對話要問這篇裡的人、數字、地點或單字。禁止 What is this story about、這篇在說什麼、昨天是哪一種、Yes. Today there is。中英同一句要對得上，不要把欄位錯開。
    - 中文跟英文句數對齊，但要寫成孩子會說的話，不要把口號逐字硬譯。安全界線可以留，例如「不是射擊遊戲」。
 6. 產文可寫在 .local/（已 gitignore）。用本機驗證字數／句數後，必須先過文法查核再上傳：
    node tools/check-en-article-grammar.mjs .local/articles-YYYY-MM-DD.json
