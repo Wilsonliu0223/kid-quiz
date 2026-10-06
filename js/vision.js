@@ -547,8 +547,48 @@ function hideFlash() {
   if (flash) flash.hidden = true;
 }
 
+let markAudio = null;
+
+function markAudioContext() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!markAudio) markAudio = new Ctx();
+  if (markAudio.state === "suspended") markAudio.resume();
+  return markAudio;
+}
+
+function playMarkSound(ok) {
+  const ctx = markAudioContext();
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  const notes = ok
+    ? [
+        [523.25, 0, 0.12],
+        [659.25, 0.1, 0.16],
+      ]
+    : [
+        [220, 0, 0.16],
+        [174.61, 0.12, 0.2],
+      ];
+  for (const [freq, delay, dur] of notes) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = ok ? "sine" : "triangle";
+    osc.frequency.value = freq;
+    const start = t + delay;
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.16, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur + 0.02);
+  }
+}
+
 function showFlash(ok) {
   setHoldRing(0);
+  playMarkSound(ok);
   const flash = $("#vision-flash");
   const markEl = $("#vision-flash-mark");
   if (!flash || !markEl) return;
@@ -655,6 +695,7 @@ export function initVision(d) {
       return;
     }
     saveScreen(widthCm, heightCm);
+    markAudioContext();
     childId = getSelectedChild();
     childName = getChildName(childId);
     bothScore = undefined;
@@ -666,6 +707,7 @@ export function initVision(d) {
   $("#vision-mark")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-vision-mark]");
     if (!btn) return;
+    markAudioContext();
     mark(btn.dataset.visionMark === "ok");
   });
   $("#btn-vision-abort")?.addEventListener("click", () => {
