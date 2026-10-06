@@ -561,29 +561,38 @@ function playMarkSound(ok) {
   const ctx = markAudioContext();
   if (!ctx) return;
   const t = ctx.currentTime;
-  const notes = ok
-    ? [
-        [523.25, 0, 0.12],
-        [659.25, 0.1, 0.16],
-      ]
-    : [
-        [220, 0, 0.16],
-        [174.61, 0.12, 0.2],
-      ];
-  for (const [freq, delay, dur] of notes) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = ok ? "sine" : "triangle";
-    osc.frequency.value = freq;
-    const start = t + delay;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.16, start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(start);
-    osc.stop(start + dur + 0.02);
+  if (ok) {
+    for (const [freq, delay] of [
+      [784, 0],
+      [1174.7, 0.09],
+    ]) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.value = freq;
+      const start = t + delay;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.42, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.16);
+    }
+    return;
   }
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(520, t);
+  osc.frequency.exponentialRampToValueAtTime(90, t + 0.45);
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(0.38, t + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.5);
 }
 
 function showFlash(ok) {
