@@ -4,7 +4,7 @@
  */
 import { getSelectedChild } from "./store.js";
 import { getChildName } from "./children.js";
-import { startArmCamera } from "./vision-camera.js?v=vision-cam-v2";
+import { startArmCamera } from "./vision-camera.js?v=vision-cam-v3";
 
 const DISTANCE_M = 3;
 const KEY_SCREEN = "kid-quiz-vision-screen";
