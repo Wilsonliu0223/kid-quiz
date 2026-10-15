@@ -690,6 +690,7 @@ export function initVision(d) {
   $("#view-vision")?.addEventListener("pointerdown", () => {
     markAudioContext();
   });
+  $("#btn-vision-back")?.addEventListener("click", () => {
     releaseAwake();
     releaseCamera();
     cancelRound();
