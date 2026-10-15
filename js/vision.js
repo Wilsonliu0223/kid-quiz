@@ -548,51 +548,72 @@ function hideFlash() {
 }
 
 let markAudio = null;
+let markKeepalive = null;
 
 function markAudioContext() {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if (!Ctx) return null;
   if (!markAudio) markAudio = new Ctx();
-  if (markAudio.state === "suspended") markAudio.resume();
+  if (markAudio.state === "suspended" || markAudio.state === "interrupted") {
+    markAudio.resume();
+  }
+  if (!markKeepalive && markAudio.state !== "closed") {
+    const osc = markAudio.createOscillator();
+    const gain = markAudio.createGain();
+    gain.gain.value = 0.0001;
+    osc.frequency.value = 440;
+    osc.connect(gain);
+    gain.connect(markAudio.destination);
+    osc.start();
+    markKeepalive = osc;
+  }
   return markAudio;
 }
 
 function playMarkSound(ok) {
   const ctx = markAudioContext();
   if (!ctx) return;
-  const t = ctx.currentTime;
-  if (ok) {
-    for (const [freq, delay] of [
-      [784, 0],
-      [1174.7, 0.09],
-    ]) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "square";
-      osc.frequency.value = freq;
-      const start = t + delay;
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.42, start + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.14);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + 0.16);
+  const startSound = () => {
+    if (ctx.state !== "running") return;
+    const t = ctx.currentTime;
+    if (ok) {
+      for (const [freq, delay] of [
+        [784, 0],
+        [1174.7, 0.09],
+      ]) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.value = freq;
+        const start = t + delay;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.42, start + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.14);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.16);
+      }
+      return;
     }
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(520, t);
+    osc.frequency.exponentialRampToValueAtTime(90, t + 0.45);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.38, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.5);
+  };
+  if (ctx.state === "running") {
+    startSound();
     return;
   }
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = "sawtooth";
-  osc.frequency.setValueAtTime(520, t);
-  osc.frequency.exponentialRampToValueAtTime(90, t + 0.45);
-  gain.gain.setValueAtTime(0.0001, t);
-  gain.gain.exponentialRampToValueAtTime(0.38, t + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(t);
-  osc.stop(t + 0.5);
+  ctx.resume().then(startSound).catch(() => {});
 }
 
 function showFlash(ok) {
@@ -666,7 +687,9 @@ export function openVision() {
 
 export function initVision(d) {
   deps = d;
-  $("#btn-vision-back")?.addEventListener("click", () => {
+  $("#view-vision")?.addEventListener("pointerdown", () => {
+    markAudioContext();
+  });
     releaseAwake();
     releaseCamera();
     cancelRound();
