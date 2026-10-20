@@ -33,7 +33,7 @@
 4. 每則含：自然英文 title（不要無生命主詞「要求」人、不要省略 drink water 這類受詞）、title_zh、body_l1/l2/l3、vocab、quiz 5 題、dialogue（含 article_zh 與 turns 中文）、source_title、source_url、status=published。
 5. 字數：L1 80–100、L2 120–150、L3 180–220。中英正文句數必須對齊。每一段英文都要能通過 Harper 文法引擎（冠詞、主謂一致、動詞形式等），不是只避開上次列過的錯句。
    句子：
-   - 每段最多一句收尾，而且必須是這則新聞裡的事實。禁止 can still、仍然能、Kids in Taiwan can 這種每篇一樣的口號。字數不夠就從來源補一個動作、名字或數字，不要補感想。
+   - 每段最多一句收尾，而且必須是這則新聞裡的事實。禁止 can still、仍然能、Kids in Taiwan can 這種每篇一樣的口號。禁止用 according to the linked report、依據連結報導 這類空話迴圈湊字數（語音會一直重念）。字數不夠就從來源補一個動作、名字或數字，不要補感想，也不要把同一句口號貼兩次以上。
    - L1 可以短，但相關的兩件事寫成一句，不要每句只放一個名詞。
    - 測驗錯選項要在同一題裡說得通：棒球比數用別的比數，不用當天其他文章的木偶、馬達或洗手秒數。單字題的錯字也用這篇裡的詞。禁止 Something else in this story、A different part、Another person in this story 這種空選項。
    - 對話要問這篇裡的人、數字、地點或單字。禁止 What is this story about、這篇在說什麼、昨天是哪一種、Yes. Today there is。中英同一句要對得上，不要把欄位錯開。
