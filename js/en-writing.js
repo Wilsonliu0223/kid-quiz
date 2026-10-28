@@ -1,7 +1,7 @@
 /**
  * 英語寫作：L1／L2／L3 定式與短文。
  */
-import { speakEnglish } from "./english.js?v=en-speak-v40";
+import { speakEnglish } from "./english.js?v=en-speak-v41";
 import { openEnWordGloss } from "./en-daily.js?v=en-daily-v90";
 import {
   ESSAYS,

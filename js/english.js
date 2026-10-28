@@ -1,5 +1,5 @@
 /** 英文答案比對（忽略大小寫、前後空白） */
-import { CONFIG } from "./config.site.js?v=config-v45.71";
+import { CONFIG } from "./config.site.js?v=config-v45.74";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 
 export function normalizeEnglish(s) {
@@ -1331,6 +1331,63 @@ async function edgeTtsEndpoint() {
   return (await discoverHomeTtsProxy()) || "";
 }
 
+function clearHomeTtsCache() {
+  homeTtsUrl = "";
+  homeTtsDiscoverAt = 0;
+  try {
+    sessionStorage.removeItem(HOME_TTS_CACHE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+async function postEdgeSpeech(endpoint, text, voice, ttsToken) {
+  const headers = { "Content-Type": "application/json" };
+  if (ttsToken) headers["X-Kid-Quiz-Tts"] = ttsToken;
+  return fetchWithTimeout(
+    endpoint,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: "tts-1",
+        input: text,
+        voice,
+        speed: 1,
+        response_format: "mp3",
+      }),
+    },
+    20000
+  );
+}
+
+async function edgeAudioDataUrlFromResponse(res, voice) {
+  if (res.status === 401 || res.status === 403) {
+    edgeTtsCooldownUntil = Date.now() + 45000;
+    clearHomeTtsCache();
+    console.warn("Edge TTS blocked", res.status);
+    return { blocked: true, url: "" };
+  }
+  if (!res.ok) {
+    console.warn("Edge TTS HTTP", voice, res.status);
+    return { blocked: false, url: "", retryable: res.status >= 500 || res.status === 429 };
+  }
+  const buf = await res.arrayBuffer();
+  if (!buf || buf.byteLength < 200) {
+    return { blocked: false, url: "", retryable: true };
+  }
+  const headTxt = new TextDecoder().decode(buf.slice(0, 48)).trim();
+  if (headTxt.startsWith("{") || headTxt.startsWith("<")) {
+    console.warn("Edge TTS not audio", voice, headTxt.slice(0, 80));
+    return { blocked: false, url: "", retryable: true };
+  }
+  return {
+    blocked: false,
+    url: `data:audio/mpeg;base64,${arrayBufferToBase64(buf)}`,
+    retryable: false,
+  };
+}
+
 /**
  * Microsoft Edge 神經語音（家用電腦 edge-tts；平板只拿短 mp3）
  * 手機改用 data: URL，避免 blob: 在 iOS 不播而掉進機械音
@@ -1342,11 +1399,12 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
   if (!text) return "";
   if (Date.now() < edgeTtsCooldownUntil) return "";
 
-  const endpoint = await edgeTtsEndpoint();
+  let endpoint = await edgeTtsEndpoint();
   if (!endpoint) return "";
   const voiceList = (voices || []).filter(Boolean);
   if (!voiceList.length) return "";
   const ttsToken = String(CONFIG.EDGE_TTS_TOKEN || "kq-home-tts").trim();
+  let refreshed = false;
 
   for (const voice of voiceList) {
     const cacheKey = `${voice}::${text}`;
@@ -1354,58 +1412,28 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
       lastSpeakEngine = `edge:${voice}`;
       return edgeSpeechCache.get(cacheKey);
     }
-    try {
-      const headers = { "Content-Type": "application/json" };
-      if (ttsToken) headers["X-Kid-Quiz-Tts"] = ttsToken;
-      const res = await fetchWithTimeout(
-        endpoint,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            model: "tts-1",
-            input: text,
-            voice,
-            speed: 1,
-            response_format: "mp3",
-          }),
-        },
-        20000
-      );
-      if (res.status === 401 || res.status === 403) {
-        edgeTtsCooldownUntil = Date.now() + 45000;
-        homeTtsUrl = "";
-        try {
-          sessionStorage.removeItem(HOME_TTS_CACHE_KEY);
-        } catch {
-          /* ignore */
-        }
-        console.warn("Edge TTS blocked", res.status);
-        return "";
-      }
-      if (!res.ok) {
-        console.warn("Edge TTS HTTP", voice, res.status);
-        continue;
-      }
-      const buf = await res.arrayBuffer();
-      if (!buf || buf.byteLength < 200) continue;
-      const headTxt = new TextDecoder().decode(buf.slice(0, 48)).trim();
-      if (headTxt.startsWith("{") || headTxt.startsWith("<")) {
-        console.warn("Edge TTS not audio", voice, headTxt.slice(0, 80));
-        continue;
-      }
-      const url = `data:audio/mpeg;base64,${arrayBufferToBase64(buf)}`;
-      edgeSpeechCache.set(cacheKey, url);
-      lastSpeakEngine = `edge:${voice}`;
-      return url;
-    } catch (e) {
-      console.warn("Edge TTS", voice, e);
-      homeTtsUrl = "";
-      homeTtsDiscoverAt = 0;
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        sessionStorage.removeItem(HOME_TTS_CACHE_KEY);
-      } catch {
-        /* ignore */
+        const res = await postEdgeSpeech(endpoint, text, voice, ttsToken);
+        const parsed = await edgeAudioDataUrlFromResponse(res, voice);
+        if (parsed.blocked) return "";
+        if (parsed.url) {
+          edgeSpeechCache.set(cacheKey, parsed.url);
+          lastSpeakEngine = `edge:${voice}`;
+          return parsed.url;
+        }
+        if (!parsed.retryable || attempt === 1) break;
+        await new Promise((r) => setTimeout(r, 400));
+      } catch (e) {
+        console.warn("Edge TTS", voice, e);
+        if (!refreshed) {
+          refreshed = true;
+          clearHomeTtsCache();
+          endpoint = (await discoverHomeTtsProxy()) || "";
+          if (!endpoint) return "";
+          continue;
+        }
+        break;
       }
     }
   }
@@ -1512,13 +1540,13 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
         return true;
       }
     }
-    lastSpeakEngine = "fallback";
     const soft = { soften: true, speed };
     const gSpeech = googleSpeechZhUrl(chunk);
     if (
       gSpeech &&
       (await playAudioUrl(gSpeech, { ...soft, startTimeoutMs: 3500 }))
     ) {
+      lastSpeakEngine = "zh-google";
       return true;
     }
     const urls = [
@@ -1529,6 +1557,7 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
     ];
     for (const url of urls) {
       if (url && (await playAudioUrl(url, { ...soft, startTimeoutMs: 3200 }))) {
+        lastSpeakEngine = "zh-online";
         return true;
       }
     }

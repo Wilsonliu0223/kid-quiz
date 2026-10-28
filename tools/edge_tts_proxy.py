@@ -40,7 +40,7 @@ ALLOWED_VOICES = {
 
 _rate_lock = threading.Lock()
 _rate_hits: dict[str, list[float]] = {}
-_synth_sem = threading.Semaphore(2)
+_synth_sem = threading.Semaphore(4)
 
 
 def _origin_ok(origin: str) -> bool:
@@ -115,7 +115,16 @@ async def _synth(text: str, voice: str) -> bytes:
 
 def synth_mp3(text: str, voice: str) -> bytes:
     with _synth_sem:
-        return asyncio.run(_synth(text, voice))
+        last_exc: Exception | None = None
+        for attempt in range(2):
+            try:
+                return asyncio.run(_synth(text, voice))
+            except Exception as exc:  # noqa: BLE001 — retry transient Edge failures
+                last_exc = exc
+                if attempt == 0:
+                    time.sleep(0.45)
+        assert last_exc is not None
+        raise last_exc
 
 
 class TtsHandler(BaseHTTPRequestHandler):

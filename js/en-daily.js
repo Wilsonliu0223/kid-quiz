@@ -23,7 +23,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v40";
+} from "./english.js?v=en-speak-v41";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 import {
   analyzeEnglishMorph,
@@ -519,12 +519,19 @@ function playEngineTip(side, eng) {
     if (eng.startsWith("edge")) return `✓${selectedVoiceLabel("zh")}`;
     if (eng.startsWith("script")) return "伺服器語音";
     if (eng === "zhiyu") return "舊女聲(備援)";
-    return "⚠備援機械音";
+    if (eng === "zh-google" || eng === "zh-online" || eng === "fallback") {
+      return "線上備援";
+    }
+    if (eng === "synth") return "⚠備援機械音";
+    return "";
   }
   if (eng.startsWith("edge:")) {
     return `✓${ttsVoiceLabel("en", eng.slice(5)) || "英文神經音"}`;
   }
   if (eng.startsWith("edge")) return `✓${selectedVoiceLabel("en")}`;
+  if (eng === "en-google" || eng === "en-youdao" || eng === "en-online") {
+    return "線上備援";
+  }
   if (eng === "en-synth" || eng === "synth") return "⚠備援機械音";
   return "";
 }
