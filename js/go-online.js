@@ -21,7 +21,7 @@ import {
 } from "./online-duo.js";
 import { startGameRoom, transactGameState } from "./room-service.js?v=room-v37";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=go-v1";
-import { rebindGomokuBoardZoom, shouldSuppressGomokuCellTap } from "./gomoku-board-zoom.js";
+import { rebindGomokuBoardZoom, shouldSuppressGomokuCellTap } from "./gomoku-board-zoom.js?v=gomoku-v38";
 
 const $ = (sel) => document.querySelector(sel);
 

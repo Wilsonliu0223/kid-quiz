@@ -5367,12 +5367,11 @@ body:has(#view-vision.view-active) #app {
   color: #333;
 }
 
-#view-gomoku-play.view-active {
-  overflow: hidden;
-}
-
+#view-gomoku-play.view-active,
 #view-gomoku-online-play.view-active {
   overflow: hidden;
+  /* 平板放寬版面，棋盤可以更大 */
+  max-width: min(920px, 100%);
 }
 
 .gomoku-play-body {
@@ -5645,8 +5644,15 @@ button.gomoku-cell:disabled {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  touch-action: none;
+  /* 未放大時允許點按；放大後改 none 以便拖曳／捏合 */
+  touch-action: manipulation;
   padding: 2px 0 8px;
+}
+
+.gomoku-board-wrap.can-pan,
+.gomoku-board-wrap.is-pinching,
+.gomoku-board-wrap.is-panning {
+  touch-action: none;
 }
 
 .gomoku-board-wrap.can-pan {
@@ -5666,6 +5672,7 @@ button.gomoku-cell:disabled {
   transform-origin: center center;
   will-change: transform;
   position: relative;
+  container-type: size;
 }
 
 .gomoku-win-line-layer {
@@ -5732,8 +5739,10 @@ button.gomoku-cell:disabled {
   display: grid;
   grid-template-columns: repeat(var(--gomoku-size, 15), 1fr);
   gap: 0;
-  width: min(100%, 420px);
-  max-width: 420px;
+  /* 依舞台較短邊撐滿，避免平板橫向時棋盤超出被裁切 */
+  width: min(100%, 560px);
+  max-width: min(100%, 560px);
+  max-height: 100%;
   aspect-ratio: 1;
   flex-shrink: 0;
   background-color: #dcb35c;
@@ -5746,6 +5755,40 @@ button.gomoku-cell:disabled {
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
+@supports (width: 1cqmin) {
+  .gomoku-board {
+    width: min(100cqmin, 640px);
+    max-width: none;
+    max-height: none;
+  }
+}
+
+/* 矮螢幕／平板橫向：縮狀態列，把高度留給棋盤 */
+@media (max-height: 760px) {
+  .gomoku-side-card {
+    min-height: 44px;
+    padding: 4px 4px;
+  }
+
+  .gomoku-side-card-name {
+    font-size: 0.78rem;
+  }
+
+  .gomoku-renju-hint {
+    font-size: 0.75rem;
+    min-height: 0;
+  }
+
+  .gomoku-zoom-hint {
+    display: none;
+  }
+
+  .gomoku-status-bar {
+    min-height: 0;
+    gap: 2px;
+  }
+}
+
 .gomoku-cell {
   position: relative;
   width: 100%;
@@ -5755,8 +5798,14 @@ button.gomoku-cell:disabled {
   border: none;
   background: transparent;
   cursor: pointer;
-  touch-action: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+.gomoku-board-wrap.can-pan .gomoku-cell,
+.gomoku-board-wrap.is-pinching .gomoku-cell,
+.gomoku-board-wrap.is-panning .gomoku-cell {
+  touch-action: none;
 }
 
 .gomoku-cell-filled {
@@ -7645,6 +7694,7 @@ button.gomoku-cell:disabled {
 #view-go-drill-play.view-active {
   display: flex;
   flex-direction: column;
+  max-width: min(920px, 100%);
 }
 .go-play-body {
   flex: 1;

@@ -19,7 +19,9 @@ import {
   resetGomokuBoardZoom,
   rebindGomokuBoardZoom,
   shouldSuppressGomokuCellTap,
-} from "./gomoku-board-zoom.js";
+  bindGomokuCellTap,
+  clearGomokuCellTap,
+} from "./gomoku-board-zoom.js?v=gomoku-v38";
 import {
   celebrateGomokuWin,
   clearGomokuWinCelebration,
@@ -668,7 +670,7 @@ function applyCellState(btn, row, col) {
 
   btn.className = "gomoku-cell";
   btn.replaceChildren();
-  btn.onclick = null;
+  clearGomokuCellTap(btn);
 
   if (cell) {
     btn.classList.add("gomoku-cell-filled");
@@ -684,18 +686,19 @@ function applyCellState(btn, row, col) {
   } else {
     const waitingAi = isComputerMatch(game) && (aiMovePending || !isHumanTurn());
     const forbidden = forbiddenAt(row, col);
-    btn.disabled = game.over || (waitingAi && !forbidden);
+    // 勿用 disabled：平板上 disabled 按鈕常吃不到觸控；改以邏輯擋下子
+    btn.disabled = false;
     if (forbidden) {
       btn.classList.add("gomoku-cell-forbidden");
       btn.setAttribute("aria-label", `禁手：${forbiddenLabel(forbidden)}`);
       btn.title = `禁手：${forbiddenLabel(forbidden)}`;
       if (!waitingAi && !game.over) {
-        btn.onclick = () => alert(`不能下這裡：${forbiddenLabel(forbidden)}`);
+        bindGomokuCellTap(btn, () => alert(`不能下這裡：${forbiddenLabel(forbidden)}`));
       }
     } else if (!game.over && !waitingAi) {
       btn.removeAttribute("title");
       btn.setAttribute("aria-label", `第 ${row + 1} 行第 ${col + 1} 列`);
-      btn.onclick = () => onCellClick(row, col);
+      bindGomokuCellTap(btn, () => onCellClick(row, col));
     }
   }
 

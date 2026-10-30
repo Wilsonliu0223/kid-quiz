@@ -2,6 +2,7 @@ const ZOOM_MIN = 1;
 const ZOOM_MAX = 3;
 const ZOOM_WHEEL_STEP = 0.1;
 const PAN_THRESHOLD = 6;
+const CELL_TAP_SLOP = 14;
 
 /** @type {HTMLElement | null} */
 let viewportEl = null;
@@ -31,13 +32,65 @@ function suppressCellTapBriefly() {
 function shouldSuppressCellTap() {
   return (
     Date.now() < suppressCellTapUntil ||
-    !!viewportEl?.classList.contains("is-pinching")
+    !!viewportEl?.classList.contains("is-pinching") ||
+    !!viewportEl?.classList.contains("is-panning")
   );
 }
 
-/** 雙指縮放後避免誤觸下棋 */
+/** 雙指縮放／拖曳後避免誤觸下棋 */
 export function shouldSuppressGomokuCellTap() {
   return shouldSuppressCellTap();
+}
+
+/**
+ * 清除格子上的落子手勢綁定。
+ * @param {HTMLElement} el
+ */
+export function clearGomokuCellTap(el) {
+  el.onpointerdown = null;
+  el.onpointerup = null;
+  el.onpointercancel = null;
+  el.onclick = null;
+}
+
+/**
+ * 用 pointerup 落子（平板／手機比 click 可靠；避免被縮放手勢吞掉）。
+ * 同時保留 click 給不支援 PointerEvent 的舊裝置，並去重避免連下兩次。
+ * @param {HTMLElement} el
+ * @param {() => void} onTap
+ */
+export function bindGomokuCellTap(el, onTap) {
+  /** @type {{ x: number, y: number, id: number } | null} */
+  let start = null;
+  let lastTapAt = 0;
+  clearGomokuCellTap(el);
+
+  const fireTap = () => {
+    if (shouldSuppressCellTap()) return;
+    const now = Date.now();
+    if (now - lastTapAt < 450) return;
+    lastTapAt = now;
+    onTap();
+  };
+
+  el.onpointerdown = (e) => {
+    if (!e.isPrimary) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  };
+  el.onpointerup = (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+    start = null;
+    if (dist > CELL_TAP_SLOP) return;
+    fireTap();
+  };
+  el.onpointercancel = () => {
+    start = null;
+  };
+  el.onclick = () => {
+    fireTap();
+  };
 }
 
 function teardownGomokuBoardZoom() {
@@ -114,7 +167,8 @@ function clampPan() {
     zoomState.y = 0;
     return;
   }
-  const board = stageEl.querySelector(".gomoku-board");
+  const board =
+    stageEl.querySelector(".gomoku-board") || stageEl.querySelector(".go-board");
   if (!board) return;
 
   const vpW = viewportEl.clientWidth;
@@ -244,16 +298,20 @@ function onTouchMove(e) {
 
 function onTouchEnd(e) {
   if (!viewportEl) return;
+  // 剩下一指就結束捏合，否則 is-pinching 會卡住、點格子沒反應
   if (e.touches.length < 2) {
     touchPinchStart = null;
     pinchStart = null;
+    viewportEl.classList.remove("is-pinching");
   }
   if (e.touches.length === 0) {
+    const wasPanning = !!touchPanStart?.moved || viewportEl.classList.contains("is-panning");
     touchPanStart = null;
     touchPinchStart = null;
     panStart = null;
     pointers.clear();
     viewportEl.classList.remove("is-panning", "is-pinching");
+    if (wasPanning) suppressCellTapBriefly();
   } else if (e.touches.length === 1 && zoomState.scale > 1) {
     touchPanStart = {
       x: e.touches[0].clientX,
@@ -345,13 +403,13 @@ function onPointerUp(e) {
   pointers.delete(e.pointerId);
   if (pointers.size < 2) {
     pinchStart = null;
-    if (pointers.size === 0) {
-      viewportEl?.classList.remove("is-pinching");
-    }
+    viewportEl?.classList.remove("is-pinching");
   }
   if (pointers.size === 0) {
+    const wasPanning = !!panStart?.moved || viewportEl?.classList.contains("is-panning");
     panStart = null;
     viewportEl?.classList.remove("is-panning", "is-pinching");
+    if (wasPanning) suppressCellTapBriefly();
   } else if (pointers.size === 1 && zoomState.scale > 1) {
     const remaining = [...pointers.values()][0];
     panStart = {
@@ -374,7 +432,11 @@ function onContextMenu(e) {
 }
 
 function onCaptureClick(e) {
-  if (shouldSuppressCellTap() && e.target instanceof Element && e.target.closest(".gomoku-cell")) {
+  if (
+    shouldSuppressCellTap() &&
+    e.target instanceof Element &&
+    e.target.closest(".gomoku-cell, .go-point")
+  ) {
     e.preventDefault();
     e.stopPropagation();
   }
