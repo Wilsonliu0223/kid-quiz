@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.95" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.96" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1958,6 +1958,11 @@
             >
               黑先禁手：三三、四四、長連。出現時格子會標 ✕（白棋無禁手）
             </p>
+            <div class="gomoku-play-tools">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-gomoku-undo" disabled>
+                上一步
+              </button>
+            </div>
           </div>
           <p class="gomoku-zoom-hint">雙指捏合放大 · 單指下棋 · 放大後單指拖曳移動（電腦：滾輪放大、右鍵拖曳）</p>
           <div class="gomoku-board-wrap" id="gomoku-board-viewport">
@@ -3359,7 +3364,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.71").catch((e) => {
+      import("./js/app.js?v=app-v46.72").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

@@ -49,6 +49,8 @@ let aiMoveToken = 0;
 let rapfiLoadUiPoll = null;
 /** @type {number | null} */
 let aiThinkUiPoll = null;
+/** @type {number | null} */
+let undoAiResumeTimer = null;
 
 /** @type {GomokuDeps | null} */
 let deps = null;
@@ -296,6 +298,79 @@ function isHumanTurn() {
   return game?.mode !== "ai" || game.currentPlayerId === game.humanPlayerId;
 }
 
+function clearUndoAiResumeTimer() {
+  if (undoAiResumeTimer != null) {
+    window.clearTimeout(undoAiResumeTimer);
+    undoAiResumeTimer = null;
+  }
+}
+
+function cancelPendingAi() {
+  aiMoveToken += 1;
+  aiMovePending = false;
+  clearUndoAiResumeTimer();
+  stopRapfiLoadUiPoll();
+  stopAiThinkUiPoll();
+  if (game) game.aiThinkStartedAt = 0;
+}
+
+function syncUndoButton() {
+  const btn = $("#btn-gomoku-undo");
+  if (!btn) return;
+  const canUndo =
+    !!game &&
+    !isGomokuReplayRunning() &&
+    (game.moveHistory?.length || 0) > 0;
+  btn.disabled = !canUndo;
+}
+
+/**
+ * 悔一子。可連點；對電腦時若悔到電腦回合，稍停才讓 AI 續下，方便一直點上一步。
+ */
+function undoLastMove() {
+  if (!game || isGomokuReplayRunning()) return false;
+  const hist = game.moveHistory;
+  if (!hist?.length) return false;
+
+  cancelPendingAi();
+  stopGomokuReplay();
+
+  if (game.over) {
+    game.over = false;
+    game.winner = null;
+    game.winLine = null;
+    localWinUiDismissed = false;
+    clearGomokuWinCelebration($("#gomoku-board-stage"), $("#gomoku-win-overlay"));
+    syncLocalReplayDock();
+  }
+
+  const removed = hist.pop();
+  if (!removed) return false;
+  game.cells[removed.row][removed.col] = "";
+  game.currentPlayerId = removed.player;
+  game.lastMove = hist.length
+    ? [hist[hist.length - 1].row, hist[hist.length - 1].col]
+    : null;
+  game.lastAiThinkSec = 0;
+
+  renderBoard();
+  syncUndoButton();
+
+  if (
+    game.mode === "ai" &&
+    !game.over &&
+    game.currentPlayerId === game.aiPlayerId
+  ) {
+    const token = aiMoveToken;
+    undoAiResumeTimer = window.setTimeout(() => {
+      undoAiResumeTimer = null;
+      if (token !== aiMoveToken) return;
+      maybeScheduleAiMove();
+    }, 700);
+  }
+  return true;
+}
+
 function whitePlayerId() {
   if (!game) return "";
   return otherPlayer(game.blackPlayerId);
@@ -462,6 +537,7 @@ function renderPlayHeader(statusText = "") {
   }
 
   syncNirvanaEngineBadge(diff);
+  syncUndoButton();
 }
 
 function getCellBtn(row, col) {
@@ -639,6 +715,7 @@ function finishAfterMove(row, col, prevLastMove) {
 
 function placeMove(row, col) {
   if (!game || game.over || game.cells[row][col]) return false;
+  clearUndoAiResumeTimer();
 
   const player = game.currentPlayerId;
   if (player === game.blackPlayerId) {
@@ -697,6 +774,7 @@ function onCellClick(row, col) {
 function maybeScheduleAiMove() {
   if (!game || game.mode !== "ai" || game.over) return;
   if (game.currentPlayerId !== game.aiPlayerId) return;
+  clearUndoAiResumeTimer();
   aiMovePending = true;
   renderPlayHeader();
   for (let row = 0; row < BOARD_SIZE; row++) {
@@ -993,27 +1071,26 @@ export function bindGomokuEvents() {
   $("#btn-gomoku-play-back")?.addEventListener("click", () => {
     if (confirm("離開棋局？目前進度不會儲存。")) {
       stopGomokuReplay();
-      aiMoveToken += 1;
-      aiMovePending = false;
+      cancelPendingAi();
       game = null;
       localWinUiDismissed = false;
       syncLocalReplayDock();
-      stopRapfiLoadUiPoll();
-      stopAiThinkUiPoll();
+      syncUndoButton();
       terminateAiWorker();
       deps.showView("home");
     }
   });
+  $("#btn-gomoku-undo")?.addEventListener("click", () => {
+    undoLastMove();
+  });
   $("#btn-gomoku-replay")?.addEventListener("click", replayGomoku);
   $("#btn-gomoku-home")?.addEventListener("click", () => {
     stopGomokuReplay();
-    aiMoveToken += 1;
-    aiMovePending = false;
+    cancelPendingAi();
     game = null;
     localWinUiDismissed = false;
     syncLocalReplayDock();
-    stopRapfiLoadUiPoll();
-    stopAiThinkUiPoll();
+    syncUndoButton();
     terminateAiWorker();
     deps.showView("home");
   });
@@ -1039,13 +1116,11 @@ export function bindGomokuEvents() {
   $("#btn-gomoku-win-home")?.addEventListener("click", () => {
     clearGomokuWinCelebration($("#gomoku-board-stage"), $("#gomoku-win-overlay"));
     stopGomokuReplay();
-    aiMoveToken += 1;
-    aiMovePending = false;
+    cancelPendingAi();
     game = null;
     localWinUiDismissed = false;
     syncLocalReplayDock();
-    stopRapfiLoadUiPoll();
-    stopAiThinkUiPoll();
+    syncUndoButton();
     terminateAiWorker();
     deps.showView("home");
   });
