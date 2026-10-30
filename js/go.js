@@ -16,13 +16,15 @@ import {
 import { ensureGoBoardSvg, renderGoBoardSvg } from "./go-board-ui.js?v=go-v2";
 import {
   AI_PLAYER_ID,
+  AI_BLACK_ID,
+  AI_WHITE_ID,
   GO_AI_LEVELS,
   NIRVANA_LEVEL,
   katagoLoadState,
   ensureKatagoReady,
   terminateKatagoEngine,
   requestGoAiMove,
-} from "./go-ai.js?v=go-v3";
+} from "./go-ai.js?v=go-v4";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=go-v1";
 import { getChildName } from "./children.js";
 import { getSelectedChild } from "./store.js";
@@ -46,12 +48,18 @@ let deps = null;
 let boardSize = 9;
 /** @type {"local"|"ai"} */
 let setupMode = "local";
+/** @type {"challenge"|"watch"} */
+let aiSetupKind = "challenge";
 let aiDifficulty = 3;
+let aiDifficultyBlack = 3;
+let aiDifficultyWhite = 4;
 let aiMoveToken = 0;
+/** @type {number | null} */
+let undoAiResumeTimer = null;
 
 /**
  * @typedef {object} GoGame
- * @property {"local"|"ai"} mode
+ * @property {"local"|"ai"|"ai-watch"} mode
  * @property {import('./go-core.js').GoPosition} position
  * @property {string} blackPlayerId
  * @property {string} whitePlayerId
@@ -60,6 +68,9 @@ let aiMoveToken = 0;
  * @property {string} [endReason]
  * @property {string} [humanPlayerId]
  * @property {number} [aiDifficulty]
+ * @property {number} [aiDifficultyBlack]
+ * @property {number} [aiDifficultyWhite]
+ * @property {{ pass?: boolean, r?: number, c?: number }[]} [moveLog]
  */
 
 /** @type {GoGame|null} */
@@ -101,6 +112,27 @@ function colorName(c) {
   return c === BLACK ? "黑" : "白";
 }
 
+function isComputerMatch(g = game) {
+  return g?.mode === "ai" || g?.mode === "ai-watch";
+}
+
+function currentSideDifficulty(g = game) {
+  if (!g) return aiDifficulty;
+  if (g.mode === "ai-watch") {
+    return g.position.turn === BLACK
+      ? (g.aiDifficultyBlack ?? aiDifficultyBlack)
+      : (g.aiDifficultyWhite ?? aiDifficultyWhite);
+  }
+  return g.aiDifficulty ?? aiDifficulty;
+}
+
+function shouldAiMoveNow(g = game) {
+  if (!g || g.over) return false;
+  if (g.mode === "ai-watch") return true;
+  if (g.mode === "ai") return currentId() === AI_PLAYER_ID;
+  return false;
+}
+
 function playerName(id) {
   if (id === AI_PLAYER_ID) {
     if (game?.mode === "ai") {
@@ -109,11 +141,79 @@ function playerName(id) {
     }
     return "電腦";
   }
+  if (id === AI_BLACK_ID) {
+    const label = aiLevelLabel(game?.aiDifficultyBlack ?? aiDifficultyBlack);
+    return label ? `黑方電腦（${label}）` : "黑方電腦";
+  }
+  if (id === AI_WHITE_ID) {
+    const label = aiLevelLabel(game?.aiDifficultyWhite ?? aiDifficultyWhite);
+    return label ? `白方電腦（${label}）` : "白方電腦";
+  }
   return getChildName(id);
 }
 
 function aiLevelLabel(level) {
   return GO_AI_LEVELS.find((d) => d.level === level)?.label || "";
+}
+
+function clearUndoAiResumeTimer() {
+  if (undoAiResumeTimer != null) {
+    window.clearTimeout(undoAiResumeTimer);
+    undoAiResumeTimer = null;
+  }
+}
+
+function cancelPendingAi() {
+  aiMoveToken += 1;
+  clearUndoAiResumeTimer();
+}
+
+function syncUndoButton() {
+  const btn = $("#btn-go-undo");
+  if (!btn) return;
+  btn.disabled = !(game && (game.moveLog?.length || 0) > 0);
+}
+
+function rebuildFromMoveLog(log, size) {
+  let pos = createPosition(size);
+  for (const step of log) {
+    if (step.pass) pos = playPass(pos);
+    else pos = playMove(pos, step.r, step.c);
+  }
+  return pos;
+}
+
+function pushMoveLog(entry) {
+  if (!game) return;
+  if (!game.moveLog) game.moveLog = [];
+  game.moveLog.push(entry);
+}
+
+function undoLastMove() {
+  if (!game) return false;
+  const log = game.moveLog;
+  if (!log?.length) return false;
+
+  cancelPendingAi();
+  if (game.over) {
+    game.over = false;
+    game.winner = null;
+    game.endReason = "";
+    $("#go-win-overlay")?.setAttribute("hidden", "");
+  }
+  log.pop();
+  game.position = rebuildFromMoveLog(log, game.position.size);
+  renderPlay();
+  syncUndoButton();
+  if (shouldAiMoveNow(game)) {
+    const token = aiMoveToken;
+    undoAiResumeTimer = window.setTimeout(() => {
+      undoAiResumeTimer = null;
+      if (token !== aiMoveToken) return;
+      maybeAi();
+    }, 700);
+  }
+  return true;
 }
 
 function ensurePlayBoard() {
@@ -125,6 +225,7 @@ function renderPlay() {
   renderGoBoardSvg(ensurePlayBoard(), game.position);
   const turn = game.position.turn === BLACK ? "black" : "white";
   const turnId = game.position.turn === BLACK ? game.blackPlayerId : game.whitePlayerId;
+  const waitingAi = shouldAiMoveNow(game);
   renderDuoTurnStatusBar({
     theme: "go",
     leftCard: $("#go-side-black"),
@@ -138,24 +239,27 @@ function renderPlay() {
     turnPlayerName: playerName(turnId),
     over: game.over,
     overTitle: game.endReason || "終局",
-    waitingAi: game.mode === "ai" && !game.over && turnId === AI_PLAYER_ID,
+    waitingAi,
     extraEl: $("#go-play-meta"),
     extraText: formatGoPlayMeta(turnId),
     extraVisible: true,
   });
   const passBtn = $("#btn-go-pass");
   const resignBtn = $("#btn-go-resign");
-  if (passBtn) passBtn.hidden = game.over;
-  if (resignBtn) resignBtn.hidden = game.over;
+  const watch = game.mode === "ai-watch";
+  if (passBtn) passBtn.hidden = game.over || watch;
+  if (resignBtn) resignBtn.hidden = game.over || watch;
+  syncUndoButton();
 }
 
 function formatGoPlayMeta(turnId) {
   if (!game) return "";
   const base = `${game.position.size} 路 · 貼目 ${komiForSize(game.position.size)} · 黑提 ${game.position.captured[0]} · 白提 ${game.position.captured[1]}`;
-  if (game.mode !== "ai") return base;
-  const lv = game.aiDifficulty ?? aiDifficulty;
+  if (!isComputerMatch(game)) return base;
+  const lv = currentSideDifficulty(game);
   const info = GO_AI_LEVELS.find((d) => d.level === lv);
   const strength = info?.strength ? ` · ${info.strength}` : "";
+  const aiThinking = shouldAiMoveNow(game);
   if (lv >= NIRVANA_LEVEL) {
     if (katagoLoadState.loading) {
       return `${base}\nKataGo 載入中… ${Math.round((katagoLoadState.progress || 0) * 100)}%`;
@@ -163,13 +267,13 @@ function formatGoPlayMeta(turnId) {
     if (katagoLoadState.failReason) {
       return `${base}\nKataGo 載入失敗，改用宗師啟發式 · ${katagoLoadState.failReason}`;
     }
-    if (turnId === AI_PLAYER_ID && !game.over) {
+    if (aiThinking) {
       const be = katagoLoadState.backend ? `（${katagoLoadState.backend}）` : "";
       return `${base}\n涅槃・KataGo 思考中${be}${strength}`;
     }
     return `${base}\n${strength}${katagoLoadState.backend ? ` · 後端 ${katagoLoadState.backend}` : ""}`;
   }
-  if (turnId === AI_PLAYER_ID && !game.over) {
+  if (aiThinking) {
     return `${base}\n電腦思考中${strength}`;
   }
   return `${base}${strength}`;
@@ -194,9 +298,11 @@ function endWithScore(reason) {
 function onPlayPoint(r, c) {
   if (!game || game.over) return;
   if (shouldSuppressGomokuCellTap()) return;
+  if (game.mode === "ai-watch") return;
   if (game.mode === "ai" && currentId() === AI_PLAYER_ID) return;
   if (!isLegalMove(game.position, r, c)) return;
   game.position = playMove(game.position, r, c);
+  pushMoveLog({ r, c });
   afterHumanOrAiMove();
 }
 
@@ -216,18 +322,31 @@ function afterHumanOrAiMove() {
 }
 
 function maybeAi() {
-  if (!game || game.over || game.mode !== "ai") return;
-  if (currentId() !== AI_PLAYER_ID) return;
+  if (!shouldAiMoveNow(game)) return;
   const token = ++aiMoveToken;
-  requestGoAiMove(clonePosition(game.position), game.aiDifficulty ?? aiDifficulty).then((mv) => {
-    if (!game || token !== aiMoveToken || game.over) return;
-    if (currentId() !== AI_PLAYER_ID) return;
-    game.position = mv ? playMove(game.position, mv[0], mv[1]) : playPass(game.position);
-    afterHumanOrAiMove();
-  });
+  const level = currentSideDifficulty(game);
+  const delay = game.mode === "ai-watch" ? 320 : 0;
+  const run = () => {
+    if (!game || token !== aiMoveToken || game.over || !shouldAiMoveNow(game)) return;
+    requestGoAiMove(clonePosition(game.position), level).then((mv) => {
+      if (!game || token !== aiMoveToken || game.over) return;
+      if (!shouldAiMoveNow(game)) return;
+      if (mv) {
+        game.position = playMove(game.position, mv[0], mv[1]);
+        pushMoveLog({ r: mv[0], c: mv[1] });
+      } else {
+        game.position = playPass(game.position);
+        pushMoveLog({ pass: true });
+      }
+      afterHumanOrAiMove();
+    });
+  };
+  if (delay) window.setTimeout(run, delay);
+  else run();
 }
 
 function startLocalGame(blackId) {
+  cancelPendingAi();
   const ids = getActiveDuoPlayerIds();
   const whiteId = ids.find((id) => id !== blackId) || ids[1];
   game = {
@@ -237,6 +356,7 @@ function startLocalGame(blackId) {
     whitePlayerId: whiteId,
     over: false,
     winner: null,
+    moveLog: [],
   };
   $("#go-win-overlay")?.setAttribute("hidden", "");
   deps?.showView("goPlay");
@@ -244,8 +364,17 @@ function startLocalGame(blackId) {
   renderPlay();
 }
 
+function needsNirvana(levelA, levelB) {
+  return levelA >= NIRVANA_LEVEL || levelB >= NIRVANA_LEVEL;
+}
+
 function startAiGame(humanBlack) {
   const human = getSelectedChild();
+  if (!human) {
+    alert("請在首頁選「誰在練習」");
+    return;
+  }
+  cancelPendingAi();
   const level = aiDifficulty;
   game = {
     mode: "ai",
@@ -256,6 +385,7 @@ function startAiGame(humanBlack) {
     aiDifficulty: level,
     over: false,
     winner: null,
+    moveLog: [],
   };
   $("#go-win-overlay")?.setAttribute("hidden", "");
   deps?.showView("goPlay");
@@ -263,7 +393,7 @@ function startAiGame(humanBlack) {
   renderPlay();
   if (level >= NIRVANA_LEVEL) {
     const poll = window.setInterval(() => {
-      if (!game || game.mode !== "ai") {
+      if (!game || !isComputerMatch(game)) {
         window.clearInterval(poll);
         return;
       }
@@ -279,6 +409,69 @@ function startAiGame(humanBlack) {
     return;
   }
   maybeAi();
+}
+
+function startAiWatchGame() {
+  cancelPendingAi();
+  game = {
+    mode: "ai-watch",
+    position: createPosition(boardSize),
+    blackPlayerId: AI_BLACK_ID,
+    whitePlayerId: AI_WHITE_ID,
+    aiDifficultyBlack,
+    aiDifficultyWhite,
+    over: false,
+    winner: null,
+    moveLog: [],
+  };
+  $("#go-win-overlay")?.setAttribute("hidden", "");
+  deps?.showView("goPlay");
+  rebindGomokuBoardZoom("#go-board-viewport", "#go-board-stage");
+  renderPlay();
+  if (needsNirvana(aiDifficultyBlack, aiDifficultyWhite)) {
+    const poll = window.setInterval(() => {
+      if (!game || !isComputerMatch(game)) {
+        window.clearInterval(poll);
+        return;
+      }
+      renderPlay();
+      if (!katagoLoadState.loading) window.clearInterval(poll);
+    }, 400);
+    ensureKatagoReady()
+      .catch(() => {})
+      .finally(() => {
+        renderPlay();
+        maybeAi();
+      });
+    return;
+  }
+  maybeAi();
+}
+
+function renderDifficultyChipGroup(sel, selected, onPick) {
+  const chips = $(sel);
+  if (!chips) return;
+  chips.innerHTML = "";
+  for (const d of GO_AI_LEVELS) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `xiangqi-ai-card${selected === d.level ? " is-selected" : ""}`;
+    btn.innerHTML = `<strong>${d.label}</strong><span class="go-ai-strength">${d.strength || ""}</span><span>${d.desc}</span>`;
+    btn.addEventListener("click", () => onPick(d.level));
+    chips.appendChild(btn);
+  }
+}
+
+function syncAiSetupKindUi() {
+  const challenge = $("#go-ai-challenge-panel");
+  const watch = $("#go-ai-watch-panel");
+  if (challenge) challenge.hidden = aiSetupKind !== "challenge";
+  if (watch) watch.hidden = aiSetupKind !== "watch";
+  $("#go-ai-kind-chips")?.querySelectorAll("[data-go-ai-kind]").forEach((btn) => {
+    const on = btn.getAttribute("data-go-ai-kind") === aiSetupKind;
+    btn.classList.toggle("chip-active", on);
+    btn.setAttribute("aria-pressed", String(on));
+  });
 }
 
 function renderFirst() {
@@ -300,24 +493,22 @@ function renderFirst() {
     const name = getChildName(getSelectedChild());
     const n = $("#go-ai-active-name");
     if (n) n.textContent = name;
-    const chips = $("#go-ai-difficulty-chips");
-    if (chips) {
-      chips.innerHTML = "";
-      for (const d of GO_AI_LEVELS) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = `xiangqi-ai-card${aiDifficulty === d.level ? " is-selected" : ""}`;
-        btn.innerHTML = `<strong>${d.label}</strong><span class="go-ai-strength">${d.strength || ""}</span><span>${d.desc}</span>`;
-        btn.addEventListener("click", () => {
-          aiDifficulty = d.level;
-          if (d.level >= NIRVANA_LEVEL) {
-            ensureKatagoReady().catch(() => {});
-          }
-          renderFirst();
-        });
-        chips.appendChild(btn);
-      }
-    }
+    syncAiSetupKindUi();
+    renderDifficultyChipGroup("#go-ai-difficulty-chips", aiDifficulty, (level) => {
+      aiDifficulty = level;
+      if (level >= NIRVANA_LEVEL) ensureKatagoReady().catch(() => {});
+      renderFirst();
+    });
+    renderDifficultyChipGroup("#go-ai-black-chips", aiDifficultyBlack, (level) => {
+      aiDifficultyBlack = level;
+      if (level >= NIRVANA_LEVEL) ensureKatagoReady().catch(() => {});
+      renderFirst();
+    });
+    renderDifficultyChipGroup("#go-ai-white-chips", aiDifficultyWhite, (level) => {
+      aiDifficultyWhite = level;
+      if (level >= NIRVANA_LEVEL) ensureKatagoReady().catch(() => {});
+      renderFirst();
+    });
     const wrap = $("#go-ai-start-btns");
     if (wrap) {
       wrap.innerHTML = "";
@@ -811,21 +1002,37 @@ function bind() {
   bindRulesGuideButtons("go", ["#btn-go-first-rules", "#btn-go-rules"]);
   $("#btn-go-play-back")?.addEventListener("click", () => {
     if (confirm("離開棋局？進度不會儲存。")) {
-      aiMoveToken += 1;
+      cancelPendingAi();
       game = null;
       terminateKatagoEngine();
       resetGomokuBoardZoom();
       deps?.showView("goHub");
     }
   });
+  $("#btn-go-undo")?.addEventListener("click", () => {
+    undoLastMove();
+  });
+  $("#go-ai-kind-chips")?.addEventListener("click", (e) => {
+    const btn = e.target.closest?.("[data-go-ai-kind]");
+    if (!btn) return;
+    const kind = btn.getAttribute("data-go-ai-kind");
+    if (kind !== "challenge" && kind !== "watch") return;
+    aiSetupKind = kind;
+    syncAiSetupKindUi();
+  });
+  $("#btn-go-ai-watch-start")?.addEventListener("click", () => {
+    startAiWatchGame();
+  });
   $("#btn-go-pass")?.addEventListener("click", () => {
-    if (!game || game.over) return;
+    if (!game || game.over || game.mode === "ai-watch") return;
     if (game.mode === "ai" && currentId() === AI_PLAYER_ID) return;
     game.position = playPass(game.position);
+    pushMoveLog({ pass: true });
     afterHumanOrAiMove();
   });
   $("#btn-go-resign")?.addEventListener("click", () => {
-    if (!game || game.over) return;
+    if (!game || game.over || game.mode === "ai-watch") return;
+    cancelPendingAi();
     const loser = currentId();
     game.over = true;
     game.winner = loser === game.blackPlayerId ? WHITE : BLACK;
@@ -838,13 +1045,15 @@ function bind() {
   });
   $("#btn-go-win-dismiss")?.addEventListener("click", () => $("#go-win-overlay")?.setAttribute("hidden", ""));
   $("#btn-go-win-home")?.addEventListener("click", () => {
+    cancelPendingAi();
     game = null;
     terminateKatagoEngine();
     deps?.showView("goHub");
   });
   $("#btn-go-win-replay")?.addEventListener("click", () => {
     if (!game) return;
-    if (game.mode === "ai") startAiGame(game.blackPlayerId !== AI_PLAYER_ID);
+    if (game.mode === "ai-watch") startAiWatchGame();
+    else if (game.mode === "ai") startAiGame(game.blackPlayerId !== AI_PLAYER_ID);
     else startLocalGame(game.blackPlayerId);
   });
   $("#btn-go-lesson-back")?.addEventListener("click", () => {

@@ -15,6 +15,8 @@ import {
 } from "./go-katago-engine.js?v=go-v1";
 
 export const AI_PLAYER_ID = "__go_ai__";
+export const AI_BLACK_ID = "__go_ai_black__";
+export const AI_WHITE_ID = "__go_ai_white__";
 export { NIRVANA_LEVEL, katagoLoadState, ensureKatagoReady, terminateKatagoEngine };
 
 /**

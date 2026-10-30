@@ -1,6 +1,8 @@
 import { computeChessAiMove, GRANDMASTER_LEVEL, MASTER_WORKER_LEVEL, NIRVANA_LEVEL } from "./chess-ai-core.js?v=chess-v5";
 
 export const AI_PLAYER_ID = "__chess_ai__";
+export const AI_WHITE_ID = "__chess_ai_white__";
+export const AI_BLACK_ID = "__chess_ai_black__";
 export { GRANDMASTER_LEVEL, MASTER_WORKER_LEVEL, NIRVANA_LEVEL };
 
 /** @type {Worker | null} */

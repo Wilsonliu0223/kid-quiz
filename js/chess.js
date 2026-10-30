@@ -26,19 +26,27 @@ import {
 } from "./duo-pick.js";
 import {
   AI_PLAYER_ID,
+  AI_WHITE_ID,
+  AI_BLACK_ID,
   GRANDMASTER_LEVEL,
   requestChessAiMove,
   terminateChessAiWorker,
-} from "./chess-ai.js?v=chess-v5";
+} from "./chess-ai.js?v=chess-v6";
 import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v5";
 
 /** @typedef {"local"|"ai"} SetupMode */
 
 /** @type {SetupMode} */
 let setupMode = "local";
+/** @type {"challenge"|"watch"} */
+let aiSetupKind = "challenge";
 let aiDifficulty = 2;
+let aiDifficultyWhite = 3;
+let aiDifficultyBlack = 4;
 let aiMovePending = false;
 let aiMoveToken = 0;
+/** @type {number | null} */
+let undoAiResumeTimer = null;
 let localWinUiDismissed = false;
 let pendingPromotion = null;
 
@@ -47,7 +55,7 @@ let deps = null;
 
 /**
  * @typedef {object} ChessGame
- * @property {"local"|"ai"} mode
+ * @property {"local"|"ai"|"ai-watch"} mode
  * @property {import('./chess-core.js').ChessPosition} position
  * @property {string} whitePlayerId
  * @property {string} blackPlayerId
@@ -55,6 +63,8 @@ let deps = null;
  * @property {"white"|"black"|null} winner
  * @property {string} [endReason]
  * @property {number} [aiDifficulty]
+ * @property {number} [aiDifficultyWhite]
+ * @property {number} [aiDifficultyBlack]
  * @property {string} [humanPlayerId]
  * @property {string} [aiPlayerId]
  * @property {[number,number]|null} selected
@@ -81,11 +91,36 @@ function aiLevelLabel(level) {
   return AI_LEVELS.find((d) => d.level === level)?.label || "";
 }
 
+function currentSideDifficulty(g = game) {
+  if (!g) return aiDifficulty;
+  if (g.mode === "ai-watch") {
+    return g.position.turn === "white"
+      ? (g.aiDifficultyWhite ?? aiDifficultyWhite)
+      : (g.aiDifficultyBlack ?? aiDifficultyBlack);
+  }
+  return g.aiDifficulty ?? aiDifficulty;
+}
+
+function shouldAiMoveNow(g = game) {
+  if (!g || g.over) return false;
+  if (g.mode === "ai-watch") return true;
+  if (g.mode === "ai") return g.position.turn === playerSide(g.aiPlayerId);
+  return false;
+}
+
 function playerName(id) {
   if (!id) return "—";
   if (id === AI_PLAYER_ID) {
     const label = aiLevelLabel(game?.aiDifficulty ?? aiDifficulty);
     return label ? `電腦（${label}）` : "電腦";
+  }
+  if (id === AI_WHITE_ID) {
+    const label = aiLevelLabel(game?.aiDifficultyWhite ?? aiDifficultyWhite);
+    return label ? `白方電腦（${label}）` : "白方電腦";
+  }
+  if (id === AI_BLACK_ID) {
+    const label = aiLevelLabel(game?.aiDifficultyBlack ?? aiDifficultyBlack);
+    return label ? `黑方電腦（${label}）` : "黑方電腦";
   }
   const names = deps?.getChildNames() || {};
   return names[id] || getChildName(id) || id;
@@ -118,8 +153,6 @@ function setFirstScreenMode(mode) {
   const title = $("#chess-first-title");
   const meta = $("#chess-first-meta");
   if (mode === "ai") {
-    if (title) title.textContent = "西洋棋 · 對電腦";
-    if (meta) meta.textContent = "8×8 · 白先 · 史東頓棋子";
     renderAiSetup();
   } else {
     if (title) title.textContent = "誰執白（先手）？";
@@ -136,25 +169,58 @@ function renderLocalPick() {
   });
 }
 
+function renderDifficultyChipGroup(sel, selected, onPick) {
+  const chips = $(sel);
+  if (!chips) return;
+  chips.innerHTML = "";
+  for (const d of AI_LEVELS) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `chess-ai-card${selected === d.level ? " is-selected" : ""}`;
+    btn.innerHTML = `<strong>${d.label}</strong><span>${d.desc}</span>`;
+    btn.addEventListener("click", () => onPick(d.level));
+    chips.appendChild(btn);
+  }
+}
+
+function syncAiSetupKindUi() {
+  const challenge = $("#chess-ai-challenge-panel");
+  const watch = $("#chess-ai-watch-panel");
+  if (challenge) challenge.hidden = aiSetupKind !== "challenge";
+  if (watch) watch.hidden = aiSetupKind !== "watch";
+  $("#chess-ai-kind-chips")?.querySelectorAll("[data-chess-ai-kind]").forEach((btn) => {
+    const on = btn.getAttribute("data-chess-ai-kind") === aiSetupKind;
+    btn.classList.toggle("chip-active", on);
+    btn.setAttribute("aria-pressed", String(on));
+  });
+  const title = $("#chess-first-title");
+  const meta = $("#chess-first-meta");
+  if (setupMode === "ai") {
+    if (title) title.textContent = aiSetupKind === "watch" ? "兩台電腦對打" : "西洋棋 · 對電腦";
+    if (meta) {
+      meta.textContent =
+        aiSetupKind === "watch" ? "觀戰 · 8×8 · 白先 · 可悔棋" : "8×8 · 白先 · 史東頓棋子";
+    }
+  }
+}
+
 function renderAiSetup() {
   const active = getSelectedChild();
   const nameEl = $("#chess-ai-active-name");
   if (nameEl) nameEl.textContent = active ? playerName(active) : "—";
-  const chips = $("#chess-ai-difficulty-chips");
-  if (chips) {
-    chips.innerHTML = "";
-    for (const d of AI_LEVELS) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = `chess-ai-card${aiDifficulty === d.level ? " is-selected" : ""}`;
-      btn.innerHTML = `<strong>${d.label}</strong><span>${d.desc}</span>`;
-      btn.addEventListener("click", () => {
-        aiDifficulty = d.level;
-        renderAiSetup();
-      });
-      chips.appendChild(btn);
-    }
-  }
+  syncAiSetupKindUi();
+  renderDifficultyChipGroup("#chess-ai-difficulty-chips", aiDifficulty, (level) => {
+    aiDifficulty = level;
+    renderAiSetup();
+  });
+  renderDifficultyChipGroup("#chess-ai-white-chips", aiDifficultyWhite, (level) => {
+    aiDifficultyWhite = level;
+    renderAiSetup();
+  });
+  renderDifficultyChipGroup("#chess-ai-black-chips", aiDifficultyBlack, (level) => {
+    aiDifficultyBlack = level;
+    renderAiSetup();
+  });
   const startBox = $("#chess-ai-start-btns");
   if (!startBox) return;
   startBox.innerHTML = "";
@@ -198,6 +264,16 @@ function startAiGame(humanWhite) {
   });
 }
 
+function startAiWatchGame() {
+  beginGame({
+    mode: "ai-watch",
+    aiDifficultyWhite,
+    aiDifficultyBlack,
+    whitePlayerId: AI_WHITE_ID,
+    blackPlayerId: AI_BLACK_ID,
+  });
+}
+
 function resolveViewFlipped(opts) {
   if (opts.mode === "ai" && opts.humanPlayerId) {
     const humanSide = opts.humanPlayerId === opts.whitePlayerId ? "white" : "black";
@@ -206,9 +282,69 @@ function resolveViewFlipped(opts) {
   return false;
 }
 
-function beginGame(opts) {
+function clearUndoAiResumeTimer() {
+  if (undoAiResumeTimer != null) {
+    window.clearTimeout(undoAiResumeTimer);
+    undoAiResumeTimer = null;
+  }
+}
+
+function cancelPendingAi() {
   aiMoveToken += 1;
   aiMovePending = false;
+  clearUndoAiResumeTimer();
+}
+
+function syncUndoButton() {
+  const btn = $("#btn-chess-undo");
+  if (!btn) return;
+  btn.disabled = !(game && (game.moveHistory?.length || 0) > 0);
+}
+
+function undoLastMove() {
+  if (!game) return false;
+  const hist = game.moveHistory;
+  if (!hist?.length) return false;
+
+  cancelPendingAi();
+  pendingPromotion = null;
+  hidePromotion();
+
+  if (game.over) {
+    game.over = false;
+    game.winner = null;
+    game.endReason = "";
+    localWinUiDismissed = false;
+    $("#chess-win-overlay")?.setAttribute("hidden", "");
+  }
+
+  hist.pop();
+  let pos = createPosition();
+  let lastMove = null;
+  for (const m of hist) {
+    pos = applyMove(pos, m);
+    lastMove = { from: m.from, to: m.to };
+  }
+  game.position = pos;
+  game.lastMove = lastMove;
+  game.selected = null;
+
+  renderBoard();
+  syncUndoButton();
+
+  if (shouldAiMoveNow(game)) {
+    const token = aiMoveToken;
+    undoAiResumeTimer = window.setTimeout(() => {
+      undoAiResumeTimer = null;
+      if (token !== aiMoveToken) return;
+      maybeScheduleAiMove();
+    }, 700);
+  }
+  return true;
+}
+
+function beginGame(opts) {
+  cancelPendingAi();
   localWinUiDismissed = false;
   pendingPromotion = null;
   hidePromotion();
@@ -220,6 +356,8 @@ function beginGame(opts) {
     over: false,
     winner: null,
     aiDifficulty: opts.aiDifficulty,
+    aiDifficultyWhite: opts.aiDifficultyWhite,
+    aiDifficultyBlack: opts.aiDifficultyBlack,
     humanPlayerId: opts.humanPlayerId,
     aiPlayerId: opts.aiPlayerId,
     selected: null,
@@ -252,23 +390,29 @@ function syncResignButton() {
   const btn = $("#btn-chess-resign");
   const wrap = btn?.closest(".chess-play-actions");
   if (!btn) return;
-  const show = !!game && !game.over;
-  btn.hidden = !show;
-  if (wrap) wrap.hidden = !show;
-  if (!show) return;
-  btn.disabled = false;
-  if (game.mode === "ai") btn.textContent = "認輸";
-  else btn.textContent = `${playerName(sidePlayerId(game.position.turn))} 認輸`;
+  if (wrap) wrap.hidden = !game;
+  if (!game) {
+    btn.hidden = true;
+    syncUndoButton();
+    return;
+  }
+  const showResign = !game.over && game.mode !== "ai-watch";
+  btn.hidden = !showResign;
+  if (showResign) {
+    btn.disabled = false;
+    if (game.mode === "ai") btn.textContent = "認輸";
+    else btn.textContent = `${playerName(sidePlayerId(game.position.turn))} 認輸`;
+  }
+  syncUndoButton();
 }
 
 function resignGame() {
-  if (!game || game.over) return;
+  if (!game || game.over || game.mode === "ai-watch") return;
   const resignSide = game.mode === "ai" ? playerSide(game.humanPlayerId) : game.position.turn;
   if (!resignSide) return;
   const resignName = game.mode === "ai" ? "你" : playerName(sidePlayerId(resignSide));
   if (!confirm(`${resignName}確定認輸？`)) return;
-  aiMoveToken += 1;
-  aiMovePending = false;
+  cancelPendingAi();
   pendingPromotion = null;
   hidePromotion();
   game.over = true;
@@ -296,6 +440,10 @@ function renderBoard() {
   if (!svg || !game) return;
   const legal = new Set(legalTargets().map(([r, c]) => `${r},${c}`));
   const humanSide = playerSide(game.humanPlayerId);
+  const humanCanMove =
+    game.mode !== "ai-watch" &&
+    !(game.mode === "ai" && game.position.turn !== humanSide) &&
+    !pendingPromotion;
   renderChessBoardSvg(svg, {
     board: game.position.board,
     selected: game.selected,
@@ -303,7 +451,7 @@ function renderBoard() {
     legal,
     kingInCheck: kingInCheckPos(),
     over: game.over,
-    interactive: !(game.mode === "ai" && game.position.turn !== humanSide) && !pendingPromotion,
+    interactive: humanCanMove,
     flipped: game.viewFlipped,
   });
   renderPlayHeader();
@@ -312,10 +460,11 @@ function renderBoard() {
 function renderPlayHeader() {
   if (!game) return;
   const humanSide = playerSide(game.humanPlayerId);
-  const isHumanTurn = game.mode !== "ai" || (!game.over && game.position.turn === humanSide);
-  const waitingAi =
-    game.mode === "ai" && !game.over && game.position.turn === playerSide(AI_PLAYER_ID) && aiMovePending;
-  const deepThink = waitingAi && (game.aiDifficulty || aiDifficulty) >= GRANDMASTER_LEVEL;
+  const isHumanTurn =
+    game.mode === "local" ||
+    (game.mode === "ai" && !game.over && game.position.turn === humanSide);
+  const waitingAi = shouldAiMoveNow(game) && aiMovePending;
+  const deepThink = waitingAi && currentSideDifficulty(game) >= GRANDMASTER_LEVEL;
   const inCheck = !game.over && isInCheck(game.position.board, game.position.turn);
 
   renderChessStatusBar({
@@ -331,7 +480,11 @@ function renderPlayHeader() {
     over: game.over,
     overTitle: game.winner ? `${playerName(sidePlayerId(game.winner))} 獲勝！` : "和棋",
     waitingAi: waitingAi && !deepThink,
-    statusText: deepThink ? "電腦深度思考中…" : "",
+    statusText: deepThink
+      ? "電腦深度思考中…"
+      : game.mode === "ai-watch" && waitingAi
+        ? "觀戰中…"
+        : "",
     youHint: isHumanTurn ? " · 輪到你" : "",
     inCheck,
     checkEl: $("#chess-check-hint"),
@@ -428,6 +581,7 @@ function tryMove(fromR, fromC, toR, toC) {
 
 function onSquareClick(r, c) {
   if (!game || game.over || pendingPromotion) return;
+  if (game.mode === "ai-watch") return;
   if (game.mode === "ai" && game.position.turn !== playerSide(game.humanPlayerId)) return;
 
   const piece = game.position.board[r][c];
@@ -447,27 +601,27 @@ function onSquareClick(r, c) {
 }
 
 function maybeScheduleAiMove() {
-  if (!game || game.over || game.mode !== "ai") return;
-  const aiSide = playerSide(AI_PLAYER_ID);
-  if (game.position.turn !== aiSide) return;
+  if (!shouldAiMoveNow(game)) return;
   aiMovePending = true;
   renderPlayHeader();
   const token = ++aiMoveToken;
-  window.setTimeout(() => void runAiMove(token), 40);
+  const delay = game.mode === "ai-watch" ? 320 : 40;
+  window.setTimeout(() => void runAiMove(token), delay);
 }
 
 async function runAiMove(token) {
   if (!game || token !== aiMoveToken || game.over) return;
-  const aiSide = playerSide(AI_PLAYER_ID);
-  if (game.position.turn !== aiSide) {
+  if (!shouldAiMoveNow(game)) {
     aiMovePending = false;
     return;
   }
+  const aiSide = game.position.turn;
+  const level = currentSideDifficulty(game);
   try {
     const move = await requestChessAiMove({
       position: clonePosition(game.position),
       aiSide,
-      level: game.aiDifficulty || aiDifficulty,
+      level,
     });
     if (token !== aiMoveToken || !game || game.over || game.position.turn !== aiSide) return;
     aiMovePending = false;
@@ -527,7 +681,7 @@ function bindChessEvents() {
   });
   $("#btn-chess-play-back")?.addEventListener("click", () => {
     if (confirm("離開棋局？目前進度不會儲存。")) {
-      aiMoveToken += 1;
+      cancelPendingAi();
       terminateChessAiWorker();
       game = null;
       pendingPromotion = null;
@@ -536,21 +690,42 @@ function bindChessEvents() {
       deps?.showView("home");
     }
   });
+  $("#btn-chess-undo")?.addEventListener("click", () => {
+    undoLastMove();
+  });
+  $("#chess-ai-kind-chips")?.addEventListener("click", (e) => {
+    const btn = e.target.closest?.("[data-chess-ai-kind]");
+    if (!btn) return;
+    const kind = btn.getAttribute("data-chess-ai-kind");
+    if (kind !== "challenge" && kind !== "watch") return;
+    aiSetupKind = kind;
+    syncAiSetupKindUi();
+  });
+  $("#btn-chess-ai-watch-start")?.addEventListener("click", () => {
+    startAiWatchGame();
+  });
   $("#btn-chess-resign")?.addEventListener("click", () => resignGame());
   bindRulesGuideButtons("chess", ["#btn-chess-rules", "#btn-chess-first-rules"]);
   $("#btn-chess-win-dismiss")?.addEventListener("click", () => dismissWinOverlay());
   $("#btn-chess-win-replay")?.addEventListener("click", () => {
     if (!game) return;
+    if (game.mode === "ai-watch") {
+      startAiWatchGame();
+      return;
+    }
     beginGame({
       mode: game.mode,
       whitePlayerId: game.whitePlayerId,
       blackPlayerId: game.blackPlayerId,
       aiDifficulty: game.aiDifficulty,
+      aiDifficultyWhite: game.aiDifficultyWhite,
+      aiDifficultyBlack: game.aiDifficultyBlack,
       humanPlayerId: game.humanPlayerId,
       aiPlayerId: game.aiPlayerId,
     });
   });
   $("#btn-chess-win-home")?.addEventListener("click", () => {
+    cancelPendingAi();
     game = null;
     deps?.showView("home");
   });

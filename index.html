@@ -2332,11 +2332,29 @@
             <p class="flip-first-hint">
               誰在練習：<strong id="chess-ai-active-name">—</strong>
             </p>
-            <div class="chess-ai-zone home-zone">
-              <p class="home-zone-title">電腦難度</p>
-              <div class="chess-ai-difficulty-cards" id="chess-ai-difficulty-chips"></div>
-              <p class="chess-ai-start-hint">涅槃之後可接 Stockfish；目前與宗師同棋力。</p>
-              <div class="chess-ai-start-btns" id="chess-ai-start-btns"></div>
+            <div class="lesson-chips chess-ai-kind-chips" id="chess-ai-kind-chips" role="group" aria-label="對戰方式">
+              <button type="button" class="chip chip-active" data-chess-ai-kind="challenge" aria-pressed="true">我對電腦</button>
+              <button type="button" class="chip" data-chess-ai-kind="watch" aria-pressed="false">兩台電腦對打</button>
+            </div>
+            <div id="chess-ai-challenge-panel">
+              <div class="chess-ai-zone home-zone">
+                <p class="home-zone-title">電腦難度</p>
+                <div class="chess-ai-difficulty-cards" id="chess-ai-difficulty-chips"></div>
+                <p class="chess-ai-start-hint">涅槃之後可接 Stockfish；目前與宗師同棋力。</p>
+                <div class="chess-ai-start-btns" id="chess-ai-start-btns"></div>
+              </div>
+            </div>
+            <div id="chess-ai-watch-panel" hidden>
+              <div class="chess-ai-zone home-zone">
+                <p class="home-zone-title">白方電腦（先手）</p>
+                <div class="chess-ai-difficulty-cards" id="chess-ai-white-chips"></div>
+              </div>
+              <div class="chess-ai-zone home-zone">
+                <p class="home-zone-title">黑方電腦</p>
+                <div class="chess-ai-difficulty-cards" id="chess-ai-black-chips"></div>
+              </div>
+              <p class="chess-ai-start-hint">兩台電腦自動對打，可按「上一步」悔棋後繼續觀戰。</p>
+              <button type="button" class="btn btn-primary btn-block" id="btn-chess-ai-watch-start">開始觀戰</button>
             </div>
           </div>
         </div>
@@ -2374,6 +2392,7 @@
               </div>
             </div>
             <div class="chess-play-actions" hidden>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-undo" disabled>上一步</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-resign" hidden>認輸</button>
             </div>
             <p class="rules-play-hint" id="chess-piece-hint" hidden></p>
@@ -2518,16 +2537,34 @@
           </div>
           <div id="go-ai-setup" class="xiangqi-ai-setup" hidden>
             <p class="flip-first-hint">練習者：<strong id="go-ai-active-name">—</strong></p>
-            <div class="home-zone xiangqi-ai-zone">
-              <p class="home-zone-title">電腦難度</p>
-              <div class="xiangqi-ai-difficulty-cards" id="go-ai-difficulty-chips"></div>
-              <p class="xiangqi-ai-start-hint">
-                每一級都會標明「棋力」。涅槃＝開源最強引擎系列 KataGo（瀏覽器小網路 b6c96，約 3.6 MB），明顯強過內建啟發式；不是桌面滿血最大網路。
-              </p>
+            <div class="lesson-chips go-ai-kind-chips" id="go-ai-kind-chips" role="group" aria-label="對戰方式">
+              <button type="button" class="chip chip-active" data-go-ai-kind="challenge" aria-pressed="true">我對電腦</button>
+              <button type="button" class="chip" data-go-ai-kind="watch" aria-pressed="false">兩台電腦對打</button>
             </div>
-            <div class="home-zone xiangqi-ai-zone">
-              <p class="home-zone-title">誰拿黑（先手）</p>
-              <div id="go-ai-start-btns"></div>
+            <div id="go-ai-challenge-panel">
+              <div class="home-zone xiangqi-ai-zone">
+                <p class="home-zone-title">電腦難度</p>
+                <div class="xiangqi-ai-difficulty-cards" id="go-ai-difficulty-chips"></div>
+                <p class="xiangqi-ai-start-hint">
+                  每一級都會標明「棋力」。涅槃＝開源最強引擎系列 KataGo（瀏覽器小網路 b6c96，約 3.6 MB），明顯強過內建啟發式；不是桌面滿血最大網路。
+                </p>
+              </div>
+              <div class="home-zone xiangqi-ai-zone">
+                <p class="home-zone-title">誰拿黑（先手）</p>
+                <div id="go-ai-start-btns"></div>
+              </div>
+            </div>
+            <div id="go-ai-watch-panel" hidden>
+              <div class="home-zone xiangqi-ai-zone">
+                <p class="home-zone-title">黑方電腦（先手）</p>
+                <div class="xiangqi-ai-difficulty-cards" id="go-ai-black-chips"></div>
+              </div>
+              <div class="home-zone xiangqi-ai-zone">
+                <p class="home-zone-title">白方電腦</p>
+                <div class="xiangqi-ai-difficulty-cards" id="go-ai-white-chips"></div>
+              </div>
+              <p class="xiangqi-ai-start-hint">兩台電腦自動對打，可按「上一步」悔棋後繼續觀戰。涅槃較慢，建議至少一方用宗師或以下。</p>
+              <button type="button" class="btn btn-primary btn-block" id="btn-go-ai-watch-start">開始觀戰</button>
             </div>
           </div>
         </div>
@@ -2558,6 +2595,7 @@
             </div>
             <p class="go-play-meta" id="go-play-meta"></p>
             <div class="go-play-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-go-undo" disabled>上一步</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-go-pass">停著</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-go-resign">認輸</button>
             </div>

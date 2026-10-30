@@ -88,8 +88,8 @@ import {
 } from "./flip-math-deck30.js";
 import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v37";
 import { initXiangqi, renderXiangqiHomePlayers } from "./xiangqi.js?v=xiangqi-v13";
-import { initChess, renderChessHomePlayers } from "./chess.js?v=chess-v5";
-import { initGo, renderGoHomePlayers } from "./go.js?v=go-v7";
+import { initChess, renderChessHomePlayers } from "./chess.js?v=chess-v6";
+import { initGo, renderGoHomePlayers } from "./go.js?v=go-v8";
 import { initAnqi, onAnqiFirstShown, renderAnqiHomePlayers } from "./anqi.js?v=anqi-v19";
 import { initOnlineDuo } from "./online-duo.js";
 import { initSkyOnline, openSkyDuoMenu } from "./sky-online.js?v=sky-duo-v43";
