@@ -3,6 +3,8 @@ import { bindRulesGuideButtons } from "./piece-rules-guide.js?v=rules-v5";
 import { openDuoModePicker } from "./online-duo.js";
 import {
   AI_PLAYER_ID,
+  AI_BLACK_ID,
+  AI_WHITE_ID,
   requestAiMove,
   terminateAiWorker,
   rapfiLoadState,
@@ -11,7 +13,7 @@ import {
   isRapfiLiteReady,
   GRANDMASTER_LEVEL,
   NIRVANA_LEVEL,
-} from "./gomoku-ai.js?v=gomoku-v34";
+} from "./gomoku-ai.js?v=gomoku-v37";
 import { NIRVANA_FULL_LOAD_MIN_STONES } from "./gomoku-ai-timing.js?v=gomoku-v5";
 import {
   resetGomokuBoardZoom,
@@ -42,7 +44,11 @@ const BOARD_SIZE = 15;
 let duoPlayerIds = [];
 /** @type {"local"|"ai"} */
 let setupMode = "local";
+/** @type {"challenge"|"watch"} */
+let aiSetupKind = "challenge";
 let aiDifficulty = 2;
+let aiDifficultyBlack = 3;
+let aiDifficultyWhite = 4;
 let aiMovePending = false;
 let aiMoveToken = 0;
 /** @type {number | null} */
@@ -66,10 +72,12 @@ let localWinUiDismissed = false;
 
 /**
  * @typedef {object} GomokuState
- * @property {"local"|"ai"} [mode]
+ * @property {"local"|"ai"|"ai-watch"} [mode]
  * @property {string} [humanPlayerId]
  * @property {string} [aiPlayerId]
  * @property {number} [aiDifficulty]
+ * @property {number} [aiDifficultyBlack]
+ * @property {number} [aiDifficultyWhite]
  * @property {(''|string)[][]} cells
  * @property {string} blackPlayerId
  * @property {string} currentPlayerId
@@ -128,6 +136,27 @@ function aiLevelLabel(level) {
   return AI_DIFFICULTIES.find((d) => d.level === level)?.label || "";
 }
 
+function isComputerMatch(g = game) {
+  return g?.mode === "ai" || g?.mode === "ai-watch";
+}
+
+function currentSideDifficulty(g = game) {
+  if (!g) return aiDifficulty;
+  if (g.mode === "ai-watch") {
+    return g.currentPlayerId === g.blackPlayerId
+      ? (g.aiDifficultyBlack ?? aiDifficultyBlack)
+      : (g.aiDifficultyWhite ?? aiDifficultyWhite);
+  }
+  return g.aiDifficulty ?? aiDifficulty;
+}
+
+function shouldAiMoveNow(g = game) {
+  if (!g || g.over) return false;
+  if (g.mode === "ai-watch") return true;
+  if (g.mode === "ai") return g.currentPlayerId === g.aiPlayerId;
+  return false;
+}
+
 function playerName(id) {
   if (id === AI_PLAYER_ID) {
     if (game?.mode === "ai") {
@@ -135,6 +164,14 @@ function playerName(id) {
       return label ? `電腦（${label}）` : "電腦";
     }
     return "電腦";
+  }
+  if (id === AI_BLACK_ID) {
+    const label = aiLevelLabel(game?.aiDifficultyBlack ?? aiDifficultyBlack);
+    return label ? `黑方電腦（${label}）` : "黑方電腦";
+  }
+  if (id === AI_WHITE_ID) {
+    const label = aiLevelLabel(game?.aiDifficultyWhite ?? aiDifficultyWhite);
+    return label ? `白方電腦（${label}）` : "白方電腦";
   }
   const names = deps?.getChildNames() || { A: "A", B: "B" };
   return names[id] || getChildName(id) || id;
@@ -160,11 +197,20 @@ function setFirstScreenMode(mode) {
   const hint = $("#gomoku-first-hint");
   if (local) local.hidden = mode !== "local";
   if (ai) ai.hidden = mode !== "ai";
-  if (title) title.textContent = mode === "ai" ? "挑戰 AI" : "誰拿黑子？";
+  if (title) {
+    title.textContent =
+      mode === "ai"
+        ? aiSetupKind === "watch"
+          ? "兩台電腦對打"
+          : "挑戰 AI"
+        : "誰拿黑子？";
+  }
   if (meta) {
     meta.textContent =
       mode === "ai"
-        ? "單人對電腦 · 15×15 · 連珠規則"
+        ? aiSetupKind === "watch"
+          ? "觀戰 · 15×15 · 連珠規則 · 可悔棋"
+          : "單人對電腦 · 15×15 · 連珠規則"
         : "15×15 · 先連五子獲勝 · 連珠規則";
   }
   if (hint) hint.hidden = mode === "ai";
@@ -179,16 +225,21 @@ function renderFirstPicker() {
   });
 }
 
-function renderAiDifficultyChips() {
-  const wrap = $("#gomoku-ai-difficulty-chips");
+/**
+ * @param {string} wrapSel
+ * @param {number} selected
+ * @param {(level: number) => void} onPick
+ */
+function renderDifficultyChipGroup(wrapSel, selected, onPick) {
+  const wrap = $(wrapSel);
   if (!wrap) return;
   wrap.innerHTML = "";
   for (const item of AI_DIFFICULTIES) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `card gomoku-ai-diff-card gomoku-ai-diff-card-${item.level}`;
-    if (item.level === aiDifficulty) btn.classList.add("gomoku-ai-diff-card-active");
-    btn.setAttribute("aria-pressed", String(item.level === aiDifficulty));
+    if (item.level === selected) btn.classList.add("gomoku-ai-diff-card-active");
+    btn.setAttribute("aria-pressed", String(item.level === selected));
     btn.dataset.level = String(item.level);
     btn.innerHTML = `
       <span class="gomoku-ai-diff-card-head">
@@ -197,11 +248,52 @@ function renderAiDifficultyChips() {
       </span>
       <span class="card-desc gomoku-ai-diff-card-desc">${item.desc}</span>
     `;
-    btn.addEventListener("click", () => {
-      aiDifficulty = item.level;
-      renderAiDifficultyChips();
-    });
+    btn.addEventListener("click", () => onPick(item.level));
     wrap.appendChild(btn);
+  }
+}
+
+function renderAiDifficultyChips() {
+  renderDifficultyChipGroup("#gomoku-ai-difficulty-chips", aiDifficulty, (level) => {
+    aiDifficulty = level;
+    renderAiDifficultyChips();
+    renderAiStartButtons();
+  });
+}
+
+function renderWatchDifficultyChips() {
+  renderDifficultyChipGroup("#gomoku-ai-black-chips", aiDifficultyBlack, (level) => {
+    aiDifficultyBlack = level;
+    renderWatchDifficultyChips();
+  });
+  renderDifficultyChipGroup("#gomoku-ai-white-chips", aiDifficultyWhite, (level) => {
+    aiDifficultyWhite = level;
+    renderWatchDifficultyChips();
+  });
+}
+
+function syncAiSetupKindUi() {
+  const challenge = $("#gomoku-ai-challenge-panel");
+  const watch = $("#gomoku-ai-watch-panel");
+  if (challenge) challenge.hidden = aiSetupKind !== "challenge";
+  if (watch) watch.hidden = aiSetupKind !== "watch";
+  $("#gomoku-ai-kind-chips")?.querySelectorAll("[data-ai-kind]").forEach((btn) => {
+    const on = btn.getAttribute("data-ai-kind") === aiSetupKind;
+    btn.classList.toggle("chip-active", on);
+    btn.setAttribute("aria-pressed", String(on));
+  });
+  const title = $("#gomoku-first-title");
+  const meta = $("#gomoku-first-meta");
+  if (setupMode === "ai") {
+    if (title) {
+      title.textContent = aiSetupKind === "watch" ? "兩台電腦對打" : "挑戰 AI";
+    }
+    if (meta) {
+      meta.textContent =
+        aiSetupKind === "watch"
+          ? "觀戰 · 15×15 · 連珠規則 · 可悔棋"
+          : "單人對電腦 · 15×15 · 連珠規則";
+    }
   }
 }
 
@@ -240,7 +332,9 @@ function renderAiStartButtons() {
 
 function renderAiSetup() {
   setFirstScreenMode("ai");
+  syncAiSetupKindUi();
   renderAiDifficultyChips();
+  renderWatchDifficultyChips();
   renderAiStartButtons();
 }
 
@@ -295,7 +389,10 @@ function stoneLabel(playerId) {
 }
 
 function isHumanTurn() {
-  return game?.mode !== "ai" || game.currentPlayerId === game.humanPlayerId;
+  if (!game) return false;
+  if (game.mode === "ai-watch") return false;
+  if (game.mode === "ai") return game.currentPlayerId === game.humanPlayerId;
+  return true;
 }
 
 function clearUndoAiResumeTimer() {
@@ -356,11 +453,7 @@ function undoLastMove() {
   renderBoard();
   syncUndoButton();
 
-  if (
-    game.mode === "ai" &&
-    !game.over &&
-    game.currentPlayerId === game.aiPlayerId
-  ) {
+  if (shouldAiMoveNow(game)) {
     const token = aiMoveToken;
     undoAiResumeTimer = window.setTimeout(() => {
       undoAiResumeTimer = null;
@@ -391,7 +484,7 @@ function stopRapfiLoadUiPoll() {
 function startRapfiLoadUiPoll() {
   stopRapfiLoadUiPoll();
   rapfiLoadUiPoll = window.setInterval(() => {
-    if (!game || game.mode !== "ai" || game.over) {
+    if (!game || !isComputerMatch(game) || game.over) {
       stopRapfiLoadUiPoll();
       return;
     }
@@ -434,7 +527,7 @@ function formatRapfiLoadingLabel(diff) {
 function syncNirvanaEngineBadge(diff) {
   const badge = $("#gomoku-engine-badge");
   if (!badge) return;
-  if (!game || game.mode !== "ai" || game.over || diff < NIRVANA_LEVEL) {
+  if (!game || !isComputerMatch(game) || game.over || diff < NIRVANA_LEVEL) {
     badge.hidden = true;
     badge.textContent = "";
     badge.className = "gomoku-engine-badge";
@@ -478,9 +571,9 @@ function syncNirvanaEngineBadge(diff) {
 function renderPlayHeader(statusText = "") {
   if (!game) return;
   const renjuHint = $("#gomoku-renju-hint");
-  const waitingAi = game.mode === "ai" && !game.over && aiMovePending;
+  const waitingAi = isComputerMatch(game) && !game.over && aiMovePending;
   const humanTurn = isHumanTurn();
-  const diff = game.aiDifficulty ?? aiDifficulty;
+  const diff = currentSideDifficulty(game);
   const overTitle = game.over
     ? game.winner
       ? `${playerName(game.winner)} 獲勝！`
@@ -589,7 +682,7 @@ function applyCellState(btn, row, col) {
     btn.appendChild(stone);
     btn.setAttribute("aria-label", `${playerName(cell)} ${stoneLabel(cell)}`);
   } else {
-    const waitingAi = game.mode === "ai" && (aiMovePending || !isHumanTurn());
+    const waitingAi = isComputerMatch(game) && (aiMovePending || !isHumanTurn());
     const forbidden = forbiddenAt(row, col);
     btn.disabled = game.over || (waitingAi && !forbidden);
     if (forbidden) {
@@ -676,9 +769,12 @@ function countBoardStones() {
 }
 
 function maybePreloadNirvanaEngine() {
-  if (!game || game.mode !== "ai" || game.over) return;
-  const diff = game.aiDifficulty ?? aiDifficulty;
-  if (diff < NIRVANA_LEVEL) return;
+  if (!game || !isComputerMatch(game) || game.over) return;
+  const diffs =
+    game.mode === "ai-watch"
+      ? [game.aiDifficultyBlack ?? aiDifficultyBlack, game.aiDifficultyWhite ?? aiDifficultyWhite]
+      : [game.aiDifficulty ?? aiDifficulty];
+  if (!diffs.some((d) => d >= NIRVANA_LEVEL)) return;
   if (countBoardStones() !== 2) return;
   startRapfiLoadUiPoll();
   renderPlayHeader();
@@ -745,7 +841,7 @@ function onCellClick(row, col) {
   if (isGomokuReplayRunning()) return;
   if (!game || game.over) return;
   if (game.cells[row][col]) return;
-  if (game.mode === "ai" && !isHumanTurn()) return;
+  if (isComputerMatch(game) && !isHumanTurn()) return;
 
   const player = game.currentPlayerId;
   if (player === game.blackPlayerId) {
@@ -772,8 +868,7 @@ function onCellClick(row, col) {
 }
 
 function maybeScheduleAiMove() {
-  if (!game || game.mode !== "ai" || game.over) return;
-  if (game.currentPlayerId !== game.aiPlayerId) return;
+  if (!shouldAiMoveNow()) return;
   clearUndoAiResumeTimer();
   aiMovePending = true;
   renderPlayHeader();
@@ -784,11 +879,12 @@ function maybeScheduleAiMove() {
       }
     }
   }
-  window.setTimeout(() => void runAiMove(), 40);
+  const delay = game.mode === "ai-watch" ? 320 : 40;
+  window.setTimeout(() => void runAiMove(), delay);
 }
 
 async function runAiMove() {
-  if (!game || game.mode !== "ai" || game.over || game.currentPlayerId !== game.aiPlayerId) {
+  if (!shouldAiMoveNow()) {
     aiMovePending = false;
     return;
   }
@@ -796,16 +892,17 @@ async function runAiMove() {
   const token = ++aiMoveToken;
   const blackId = game.blackPlayerId;
   const whiteId = otherPlayer(blackId);
+  const moverId = game.currentPlayerId;
 
   try {
-    const diff = game.aiDifficulty ?? aiDifficulty;
+    const diff = currentSideDifficulty(game);
     const thinkStart = Date.now();
     game.aiThinkStartedAt = thinkStart;
     startAiThinkUiPoll(token);
     if (diff >= GRANDMASTER_LEVEL) startRapfiLoadUiPoll();
 
     const move = await requestAiMove(game.cells, {
-      aiId: game.aiPlayerId,
+      aiId: moverId,
       blackId,
       whiteId,
       difficulty: diff,
@@ -818,7 +915,7 @@ async function runAiMove() {
     game.lastAiThinkSec = Number(((Date.now() - thinkStart) / 1000).toFixed(1));
 
     if (token !== aiMoveToken) return;
-    if (!game || game.mode !== "ai" || game.over || game.currentPlayerId !== game.aiPlayerId) {
+    if (!shouldAiMoveNow() || game.currentPlayerId !== moverId) {
       aiMovePending = false;
       return;
     }
@@ -1014,6 +1111,31 @@ function startAiGame(humanIsBlack) {
   maybeScheduleAiMove();
 }
 
+function startAiWatchGame() {
+  const playerIds = [AI_BLACK_ID, AI_WHITE_ID];
+  duoPlayerIds = playerIds;
+  aiMovePending = false;
+  game = {
+    mode: "ai-watch",
+    humanPlayerId: "",
+    aiPlayerId: "",
+    aiDifficultyBlack,
+    aiDifficultyWhite,
+    cells: emptyBoard(),
+    playerIds,
+    blackPlayerId: AI_BLACK_ID,
+    currentPlayerId: AI_BLACK_ID,
+    over: false,
+    winner: null,
+    lastMove: null,
+    winLine: null,
+    moveHistory: [],
+  };
+  resetBoardDom();
+  renderBoard();
+  maybeScheduleAiMove();
+}
+
 export function beginGomokuFromHome() {
   openDuoModePicker({
     game: "gomoku",
@@ -1049,7 +1171,9 @@ function replayGomoku() {
     beginGomokuFromHome();
     return;
   }
-  if (game.mode === "ai") {
+  if (isComputerMatch(game)) {
+    if (game.mode === "ai-watch") aiSetupKind = "watch";
+    else aiSetupKind = "challenge";
     renderAiSetup();
     deps.showView("gomokuFirst");
     return;
@@ -1082,6 +1206,17 @@ export function bindGomokuEvents() {
   });
   $("#btn-gomoku-undo")?.addEventListener("click", () => {
     undoLastMove();
+  });
+  $("#gomoku-ai-kind-chips")?.addEventListener("click", (e) => {
+    const btn = e.target.closest?.("[data-ai-kind]");
+    if (!btn) return;
+    const kind = btn.getAttribute("data-ai-kind");
+    if (kind !== "challenge" && kind !== "watch") return;
+    aiSetupKind = kind;
+    syncAiSetupKindUi();
+  });
+  $("#btn-gomoku-ai-watch-start")?.addEventListener("click", () => {
+    startAiWatchGame();
   });
   $("#btn-gomoku-replay")?.addEventListener("click", replayGomoku);
   $("#btn-gomoku-home")?.addEventListener("click", () => {

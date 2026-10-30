@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.75";
+import { CONFIG } from "./config.site.js?v=config-v45.76";
 import {
   loadZhItems,
   loadEnItems,
@@ -86,7 +86,7 @@ import {
   initFlipMath,
   renderMathHomePlayers,
 } from "./flip-math-deck30.js";
-import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v36";
+import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v37";
 import { initXiangqi, renderXiangqiHomePlayers } from "./xiangqi.js?v=xiangqi-v13";
 import { initChess, renderChessHomePlayers } from "./chess.js?v=chess-v5";
 import { initGo, renderGoHomePlayers } from "./go.js?v=go-v7";

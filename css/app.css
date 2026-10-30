@@ -5820,6 +5820,11 @@ button.gomoku-cell:disabled {
   background: #fffaf5;
 }
 
+.gomoku-ai-kind-chips {
+  justify-content: center;
+  margin: 0 0 10px;
+}
+
 .gomoku-ai-setup {
   display: flex;
   flex-direction: column;

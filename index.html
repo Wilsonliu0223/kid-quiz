@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v45.96" />
+    <link rel="stylesheet" href="css/app.css?v=app-v45.97" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v19" />
     <script type="importmap">
       {
@@ -1783,7 +1783,7 @@
               同一台裝置（面對面）
             </button>
             <button type="button" class="btn btn-secondary btn-block btn-primary-gomoku-outline" id="btn-duo-mode-ai" hidden>
-              挑戰 AI（單人練習）
+              挑戰 AI／觀戰兩台電腦
             </button>
             <button type="button" class="btn btn-secondary btn-block" id="btn-duo-mode-online">
               兩台手機（房間碼連線）
@@ -1903,19 +1903,53 @@
             <p class="flip-first-meta duo-active-line">
               練習者：<strong id="gomoku-ai-active-name">思妘</strong>
             </p>
-            <div class="home-zone gomoku-ai-zone">
-              <h3 class="home-zone-title">電腦難度</h3>
-              <div
-                class="gomoku-ai-difficulty-cards"
-                id="gomoku-ai-difficulty-chips"
-                role="group"
-                aria-label="AI 難度"
-              ></div>
+            <div class="lesson-chips gomoku-ai-kind-chips" id="gomoku-ai-kind-chips" role="group" aria-label="對戰方式">
+              <button type="button" class="chip chip-active" data-ai-kind="challenge" aria-pressed="true">
+                我對電腦
+              </button>
+              <button type="button" class="chip" data-ai-kind="watch" aria-pressed="false">
+                兩台電腦對打
+              </button>
             </div>
-            <div class="home-zone gomoku-ai-zone">
-              <h3 class="home-zone-title">誰拿黑子（先手）</h3>
-              <p class="gomoku-ai-start-hint">宗師為 Rapfi 快板，精簡但棋力比舊版宗師更強；涅槃為完整 NNUE（首次約 40 MB），棋力最強。建議執白。</p>
-              <div class="gomoku-ai-start-cards" id="gomoku-ai-start-btns"></div>
+            <div id="gomoku-ai-challenge-panel">
+              <div class="home-zone gomoku-ai-zone">
+                <h3 class="home-zone-title">電腦難度</h3>
+                <div
+                  class="gomoku-ai-difficulty-cards"
+                  id="gomoku-ai-difficulty-chips"
+                  role="group"
+                  aria-label="AI 難度"
+                ></div>
+              </div>
+              <div class="home-zone gomoku-ai-zone">
+                <h3 class="home-zone-title">誰拿黑子（先手）</h3>
+                <p class="gomoku-ai-start-hint">宗師為 Rapfi 快板，精簡但棋力比舊版宗師更強；涅槃為完整 NNUE（首次約 40 MB），棋力最強。建議執白。</p>
+                <div class="gomoku-ai-start-cards" id="gomoku-ai-start-btns"></div>
+              </div>
+            </div>
+            <div id="gomoku-ai-watch-panel" hidden>
+              <div class="home-zone gomoku-ai-zone">
+                <h3 class="home-zone-title">黑方電腦（先手）</h3>
+                <div
+                  class="gomoku-ai-difficulty-cards"
+                  id="gomoku-ai-black-chips"
+                  role="group"
+                  aria-label="黑方 AI 難度"
+                ></div>
+              </div>
+              <div class="home-zone gomoku-ai-zone">
+                <h3 class="home-zone-title">白方電腦</h3>
+                <div
+                  class="gomoku-ai-difficulty-cards"
+                  id="gomoku-ai-white-chips"
+                  role="group"
+                  aria-label="白方 AI 難度"
+                ></div>
+              </div>
+              <p class="gomoku-ai-start-hint">兩台電腦自動對打，可按「上一步」悔棋後繼續觀戰。涅槃較慢，建議至少一方用大師或以下。</p>
+              <button type="button" class="btn btn-primary btn-block btn-primary-gomoku" id="btn-gomoku-ai-watch-start">
+                開始觀戰
+              </button>
             </div>
           </div>
         </div>
@@ -3364,7 +3398,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.72").catch((e) => {
+      import("./js/app.js?v=app-v46.73").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,

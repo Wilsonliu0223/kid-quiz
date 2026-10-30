@@ -13,6 +13,10 @@ import {
 } from "./rapfi-engine.js?v=rapfi-v13";
 
 export const AI_PLAYER_ID = "__ai__";
+/** 觀戰：黑方電腦 */
+export const AI_BLACK_ID = "__ai_black__";
+/** 觀戰：白方電腦 */
+export const AI_WHITE_ID = "__ai_white__";
 export const AI_WORKER_LEVEL = 4;
 export { AI_LEVELS, GRANDMASTER_LEVEL, NIRVANA_LEVEL, rapfiLoadState, preloadNirvanaFullEngine, isRapfiFullReady, isRapfiLiteReady };
 
