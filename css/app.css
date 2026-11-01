@@ -5370,8 +5370,12 @@ body:has(#view-vision.view-active) #app {
 #view-gomoku-play.view-active,
 #view-gomoku-online-play.view-active {
   overflow: hidden;
-  /* 平板放寬版面，棋盤可以更大 */
-  max-width: min(920px, 100%);
+  /* 平板全寬，把空間留給正方形棋盤 */
+  max-width: 100%;
+  width: 100%;
+  padding-left: max(6px, env(safe-area-inset-left, 0px));
+  padding-right: max(6px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
 }
 
 .gomoku-play-body {
@@ -5379,7 +5383,7 @@ body:has(#view-vision.view-active) #app {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  gap: 4px;
+  gap: 2px;
 }
 
 .gomoku-status-bar {
@@ -5643,12 +5647,12 @@ button.gomoku-cell:disabled {
 
 .gomoku-board-wrap {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
   /* 未放大時允許點按；放大後改 none 以便拖曳／捏合 */
   touch-action: manipulation;
-  padding: 2px 0 8px;
+  padding: 0;
 }
 
 .gomoku-board-wrap.can-pan,
@@ -5751,8 +5755,8 @@ button.gomoku-cell:disabled {
   display: grid;
   grid-template-columns: repeat(var(--gomoku-size, 15), 1fr);
   gap: 0;
-  /* 用 vw/dvh 限制，勿用 cqmin（Chrome 在 size containment 下會算成 0） */
-  width: min(100%, 560px, 72dvh, 72vh);
+  /* JS fitGomokuBoardToStage 會覆寫成舞台較短邊；此為後備 */
+  width: min(100%, calc(100dvh - 11.5rem));
   max-width: 100%;
   aspect-ratio: 1;
   height: auto;
@@ -5767,19 +5771,51 @@ button.gomoku-cell:disabled {
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
-/* 矮螢幕／平板橫向：縮狀態列，把高度留給棋盤 */
-@media (max-height: 760px) {
+/* 平板／大螢幕：壓狀態列，棋盤區盡量大 */
+@media (min-width: 600px), (min-height: 760px) {
+  .gomoku-zoom-hint {
+    display: none;
+  }
+
+  .gomoku-status-bar {
+    min-height: 0;
+    gap: 2px;
+    padding: 0 4px;
+  }
+
   .gomoku-side-card {
     min-height: 44px;
     padding: 4px 4px;
   }
 
   .gomoku-side-card-name {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
   }
 
   .gomoku-renju-hint {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    min-height: 0;
+    line-height: 1.25;
+  }
+
+  .gomoku-play-tools .btn {
+    min-height: 2.1rem;
+  }
+}
+
+/* 矮螢幕／平板橫向：再縮狀態列 */
+@media (max-height: 760px) {
+  .gomoku-side-card {
+    min-height: 40px;
+    padding: 3px 4px;
+  }
+
+  .gomoku-side-card-name {
+    font-size: 0.76rem;
+  }
+
+  .gomoku-renju-hint {
+    font-size: 0.7rem;
     min-height: 0;
   }
 

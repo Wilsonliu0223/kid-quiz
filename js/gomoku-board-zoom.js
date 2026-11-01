@@ -24,6 +24,10 @@ let touchPanStart = null;
 
 let bound = false;
 let suppressCellTapUntil = 0;
+/** @type {ResizeObserver | null} */
+let fitObserver = null;
+/** @type {number | null} */
+let fitRaf = null;
 
 function suppressCellTapBriefly() {
   suppressCellTapUntil = Date.now() + 280;
@@ -93,6 +97,40 @@ export function bindGomokuCellTap(el, onTap) {
   };
 }
 
+function clearBoardFitStyles() {
+  const board = stageEl?.querySelector?.(".gomoku-board");
+  if (!(board instanceof HTMLElement)) return;
+  board.style.removeProperty("width");
+  board.style.removeProperty("height");
+  board.style.removeProperty("max-width");
+}
+
+/**
+ * 把正方形棋盤撐滿舞台（取寬高較短邊），平板才不會留一大塊空白。
+ */
+export function fitGomokuBoardToStage() {
+  if (!stageEl) return;
+  const board = stageEl.querySelector(".gomoku-board");
+  if (!(board instanceof HTMLElement)) return;
+  const w = stageEl.clientWidth;
+  const h = stageEl.clientHeight;
+  if (w < 64 || h < 64) return;
+  const size = Math.floor(Math.min(w, h));
+  board.style.width = `${size}px`;
+  board.style.height = `${size}px`;
+  board.style.maxWidth = "none";
+}
+
+function scheduleBoardFit() {
+  if (fitRaf != null) return;
+  fitRaf = window.requestAnimationFrame(() => {
+    fitRaf = null;
+    fitGomokuBoardToStage();
+    if (zoomState.scale > 1) clampPan();
+    applyTransform();
+  });
+}
+
 function teardownGomokuBoardZoom() {
   if (!viewportEl || !bound) return;
   viewportEl.removeEventListener("wheel", onWheel);
@@ -106,6 +144,15 @@ function teardownGomokuBoardZoom() {
   viewportEl.removeEventListener("touchmove", onTouchMove);
   viewportEl.removeEventListener("touchend", onTouchEnd);
   viewportEl.removeEventListener("touchcancel", onTouchEnd);
+  window.removeEventListener("resize", scheduleBoardFit);
+  window.removeEventListener("orientationchange", scheduleBoardFit);
+  fitObserver?.disconnect();
+  fitObserver = null;
+  if (fitRaf != null) {
+    window.cancelAnimationFrame(fitRaf);
+    fitRaf = null;
+  }
+  clearBoardFitStyles();
   bound = false;
   viewportEl = null;
   stageEl = null;
@@ -476,6 +523,15 @@ export function initGomokuBoardZoom(viewportSelector, stageSelector) {
 
   bound = true;
   resetGomokuBoardZoom();
+  scheduleBoardFit();
+
+  if (typeof ResizeObserver !== "undefined") {
+    fitObserver = new ResizeObserver(() => scheduleBoardFit());
+    fitObserver.observe(viewportEl);
+    fitObserver.observe(stageEl);
+  }
+  window.addEventListener("resize", scheduleBoardFit);
+  window.addEventListener("orientationchange", scheduleBoardFit);
 
   viewportEl.addEventListener("wheel", onWheel, { passive: false });
   viewportEl.addEventListener("pointerdown", onPointerDown, { passive: false });

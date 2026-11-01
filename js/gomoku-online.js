@@ -5,7 +5,7 @@ import {
   shouldSuppressGomokuCellTap,
   bindGomokuCellTap,
   clearGomokuCellTap,
-} from "./gomoku-board-zoom.js?v=gomoku-v40";
+} from "./gomoku-board-zoom.js?v=gomoku-v41";
 import {
   celebrateGomokuWin,
   clearGomokuWinCelebration,
