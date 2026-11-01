@@ -14,6 +14,7 @@ import {
   renderXiangqiStatusBar,
   resetXiangqiBoardSvg,
 } from "./xiangqi-board-ui.js?v=xiangqi-v12";
+import { rebindBoardFit, resetGomokuBoardZoom } from "./gomoku-board-zoom.js?v=gomoku-v43";
 import { buildCheckAlert, getResolveCheckSquares } from "./xiangqi-check-ui.js?v=xiangqi-v12";
 import {
   registerOnlineGame,
@@ -238,6 +239,10 @@ function enterOnlinePlay(snapshot) {
   }
   $("#xiangqi-online-win-overlay")?.setAttribute("hidden", "");
   applyRemoteXiangqi(snapshot);
+  requestAnimationFrame(() => {
+    resetGomokuBoardZoom();
+    rebindBoardFit("#view-xiangqi-online-play .xiangqi-board-wrap");
+  });
 }
 
 async function resignOnlineGame() {

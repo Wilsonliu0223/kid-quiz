@@ -23,6 +23,7 @@ import {
   rematchOnlineRoom,
 } from "./online-duo.js";
 import { startGameRoom, transactGameState } from "./room-service.js?v=room-v37";
+import { rebindBoardFit, resetGomokuBoardZoom } from "./gomoku-board-zoom.js?v=gomoku-v43";
 
 /** @typedef {'host' | 'guest'} RoomSlot */
 
@@ -239,6 +240,10 @@ function enterOnlinePlay(snapshot) {
   }
   $("#chess-online-win-overlay")?.setAttribute("hidden", "");
   applyRemoteChess(snapshot);
+  requestAnimationFrame(() => {
+    resetGomokuBoardZoom();
+    rebindBoardFit("#view-chess-online-play .chess-board-wrap");
+  });
 }
 
 async function submitOnlineMove(move) {

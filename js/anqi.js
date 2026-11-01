@@ -29,6 +29,7 @@ import {
   rebuildAnqiBoardSvg,
   resetAnqiBoardSvg,
 } from "./anqi-board-ui.js?v=anqi-v19";
+import { rebindBoardFit, resetGomokuBoardZoom } from "./gomoku-board-zoom.js?v=gomoku-v43";
 import {
   AI_PLAYER_ID,
   ANQI_AI_LEVELS,
@@ -353,6 +354,10 @@ function resetBoardDom() {
   }
   $("#anqi-win-overlay")?.setAttribute("hidden", "");
   deps?.showView("anqiPlay");
+  requestAnimationFrame(() => {
+    resetGomokuBoardZoom();
+    rebindBoardFit("#view-anqi-play .anqi-board-wrap");
+  });
 }
 
 function abandonAnqiGame() {

@@ -33,6 +33,7 @@ import {
   terminateChessAiWorker,
 } from "./chess-ai.js?v=chess-v6";
 import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v5";
+import { rebindBoardFit, resetGomokuBoardZoom } from "./gomoku-board-zoom.js?v=gomoku-v43";
 
 /** @typedef {"local"|"ai"} SetupMode */
 
@@ -380,6 +381,10 @@ function resetBoardDom() {
   $("#chess-win-overlay")?.setAttribute("hidden", "");
   syncResignButton();
   deps?.showView("chessPlay");
+  requestAnimationFrame(() => {
+    resetGomokuBoardZoom();
+    rebindBoardFit("#view-chess-play .chess-board-wrap");
+  });
 }
 
 function ensureBoardSvg() {

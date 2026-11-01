@@ -21,7 +21,7 @@ import {
   shouldSuppressGomokuCellTap,
   bindGomokuCellTap,
   clearGomokuCellTap,
-} from "./gomoku-board-zoom.js?v=gomoku-v42";
+} from "./gomoku-board-zoom.js?v=gomoku-v43";
 import {
   celebrateGomokuWin,
   clearGomokuWinCelebration,

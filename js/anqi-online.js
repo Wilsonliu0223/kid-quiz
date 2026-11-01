@@ -29,6 +29,7 @@ import {
   rematchOnlineRoom,
 } from "./online-duo.js";
 import { startGameRoom, transactGameState } from "./room-service.js?v=room-v37";
+import { rebindBoardFit, resetGomokuBoardZoom } from "./gomoku-board-zoom.js?v=gomoku-v43";
 
 /** @typedef {'host' | 'guest'} RoomSlot */
 
@@ -293,6 +294,10 @@ function enterOnlinePlay(snap) {
   $("#anqi-online-win-overlay")?.setAttribute("hidden", "");
   getOnlineContext().deps?.showView("anqiOnlinePlay");
   applyRemoteAnqi(snap);
+  requestAnimationFrame(() => {
+    resetGomokuBoardZoom();
+    rebindBoardFit("#view-anqi-online-play .anqi-board-wrap");
+  });
 }
 
 function bindAnqiOnlineOnly() {

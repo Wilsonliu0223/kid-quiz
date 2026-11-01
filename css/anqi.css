@@ -13,10 +13,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0 0.5rem 0.75rem;
+  padding: 0 0.35rem 0.5rem;
   flex: 1;
   min-height: 0;
-  max-width: 420px;
+  max-width: none;
   margin: 0 auto;
   width: 100%;
   overflow: hidden;
@@ -82,12 +82,30 @@
 
 .anqi-board-wrap {
   position: relative;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  max-height: calc(100dvh - 13.5rem);
+  max-height: none;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.anqi-svg {
+  display: block;
+  flex-shrink: 0;
+  /* JS rebindBoardFit 會覆寫成最大 1:2 */
+  width: min(100%, calc((100dvh - 12rem) * 0.5));
+  height: auto;
   aspect-ratio: 1 / 2;
+  max-width: 100%;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 18%),
     linear-gradient(145deg, #c9954e 0%, #a67c3d 38%, #8b5e2a 100%);
@@ -98,15 +116,7 @@
     0 8px 24px rgba(62, 39, 20, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 -2px 6px rgba(62, 39, 20, 0.25);
-}
-
-.anqi-board-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 8px;
-  border-radius: 10px;
-  border: 1px solid rgba(109, 76, 45, 0.45);
-  pointer-events: none;
+  box-sizing: border-box;
 }
 
 #view-anqi-play .xiangqi-status-bar,
@@ -116,9 +126,6 @@
 }
 
 .anqi-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   user-select: none;

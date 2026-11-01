@@ -31,6 +31,7 @@ import {
 } from "./duo-pick.js";
 import { AI_PLAYER_ID, GRANDMASTER_LEVEL, NIRVANA_LEVEL, requestXiangqiAiMove, terminateXiangqiAiWorker, pikafishLoadState } from "./xiangqi-ai.js";
 import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v5";
+import { rebindBoardFit, resetGomokuBoardZoom } from "./gomoku-board-zoom.js?v=gomoku-v43";
 
 /** @typedef {"local"|"ai"} SetupMode */
 
@@ -257,6 +258,10 @@ function resetBoardDom() {
   syncResignButton();
   syncReplayDock();
   deps?.showView("xiangqiPlay");
+  requestAnimationFrame(() => {
+    resetGomokuBoardZoom();
+    rebindBoardFit("#view-xiangqi-play .xiangqi-board-wrap");
+  });
 }
 
 function syncResignButton() {
