@@ -107,7 +107,13 @@ export function celebrateGomokuWin(opts) {
     overlayTimer = null;
     if (titleEl) titleEl.textContent = title;
     if (detailEl) detailEl.textContent = detail || "";
-    if (overlayEl) overlayEl.hidden = false;
+    if (overlayEl) {
+      overlayEl.hidden = false;
+      overlayEl.querySelector(".gomoku-win-card")?.scrollIntoView?.({
+        block: "nearest",
+        inline: "nearest",
+      });
+    }
   }, WIN_OVERLAY_DELAY_MS);
 }
 

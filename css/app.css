@@ -5608,13 +5608,14 @@ button.gomoku-cell:disabled {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 4;
+  z-index: 5;
   display: flex;
   gap: 8px;
   justify-content: center;
-  padding: 10px 12px 12px;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(to top, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.08) 55%, transparent);
   pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .gomoku-replay-dock[hidden] {
@@ -5641,6 +5642,7 @@ button.gomoku-cell:disabled {
 }
 
 .gomoku-board-wrap {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -5694,13 +5696,22 @@ button.gomoku-cell:disabled {
 .gomoku-win-overlay {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 6;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 10px 12px 14px;
+  padding: 10px 12px calc(14px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(to top, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.08) 55%, transparent);
   pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.gomoku-win-overlay .gomoku-win-card,
+.gomoku-win-overlay .btn {
+  pointer-events: auto;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
 }
 
 .gomoku-win-overlay[hidden] {

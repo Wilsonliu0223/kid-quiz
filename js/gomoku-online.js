@@ -5,7 +5,7 @@ import {
   shouldSuppressGomokuCellTap,
   bindGomokuCellTap,
   clearGomokuCellTap,
-} from "./gomoku-board-zoom.js?v=gomoku-v38";
+} from "./gomoku-board-zoom.js?v=gomoku-v40";
 import {
   celebrateGomokuWin,
   clearGomokuWinCelebration,
@@ -13,7 +13,7 @@ import {
   isGomokuWinCelebrationPending,
   renderGomokuWinLine,
   showGomokuWinOverlayImmediate,
-} from "./gomoku-win-ui.js?v=gomoku-v39";
+} from "./gomoku-win-ui.js?v=gomoku-v40";
 import { startGomokuReplay, stopGomokuReplay, isGomokuReplayRunning } from "./gomoku-replay.js?v=gomoku-v13";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=gomoku-v14";
 import {
@@ -449,6 +449,7 @@ function showOnlineWinOptions() {
   if (!onlineGame) return;
   const { title, detail } = getOnlineWinTexts();
   onlineWinUiDismissed = false;
+  resetGomokuBoardZoom();
   showGomokuWinOverlayImmediate({
     overlayEl: $("#gomoku-online-win-overlay"),
     titleEl: $("#gomoku-online-win-title"),
@@ -464,6 +465,7 @@ function showOnlineWinOptions() {
 function showOnlineWinOnBoard() {
   if (!onlineGame) return;
   onlineWinUiDismissed = false;
+  resetGomokuBoardZoom();
   const { title, detail } = getOnlineWinTexts();
   celebrateGomokuWin({
     stageEl: $("#gomoku-online-board-stage"),

@@ -39,7 +39,7 @@ import {
   rebindGomokuBoardZoom,
   resetGomokuBoardZoom,
   shouldSuppressGomokuCellTap,
-} from "./gomoku-board-zoom.js?v=gomoku-v38";
+} from "./gomoku-board-zoom.js?v=gomoku-v40";
 import lessons from "./go/lessons.js?v=go-v5";
 import drills from "./go/drills.js?v=go-v5";
 

@@ -21,7 +21,7 @@ import {
   shouldSuppressGomokuCellTap,
   bindGomokuCellTap,
   clearGomokuCellTap,
-} from "./gomoku-board-zoom.js?v=gomoku-v38";
+} from "./gomoku-board-zoom.js?v=gomoku-v40";
 import {
   celebrateGomokuWin,
   clearGomokuWinCelebration,
@@ -29,7 +29,7 @@ import {
   isGomokuWinCelebrationPending,
   renderGomokuWinLine,
   showGomokuWinOverlayImmediate,
-} from "./gomoku-win-ui.js?v=gomoku-v39";
+} from "./gomoku-win-ui.js?v=gomoku-v40";
 import { startGomokuReplay, stopGomokuReplay, isGomokuReplayRunning } from "./gomoku-replay.js?v=gomoku-v13";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=gomoku-v14";
 import { getChildName, otherDuoPlayer } from "./children.js";
@@ -982,6 +982,7 @@ function showLocalWinOptions() {
   if (!game) return;
   const { title, detail } = getLocalWinTexts();
   localWinUiDismissed = false;
+  resetGomokuBoardZoom();
   showGomokuWinOverlayImmediate({
     overlayEl: $("#gomoku-win-overlay"),
     titleEl: $("#gomoku-win-title"),
@@ -997,6 +998,8 @@ function showLocalWinOptions() {
 function showWinOnBoard() {
   if (!game) return;
   localWinUiDismissed = false;
+  // 勝利選單在縮放層外；先還原，避免放大後按鈕點不到
+  resetGomokuBoardZoom();
   const { title, detail } = getLocalWinTexts();
   celebrateGomokuWin({
     stageEl: $("#gomoku-board-stage"),

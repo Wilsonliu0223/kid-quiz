@@ -137,6 +137,25 @@ function isInsideViewport(e) {
   return viewportEl.contains(target);
 }
 
+/** 勝利選單／重播列在縮放層之上，手勢不該攔截 */
+function isUiChromeTarget(e) {
+  const target = e.target;
+  return (
+    target instanceof Element &&
+    !!target.closest(".gomoku-win-overlay, .gomoku-replay-dock, .gomoku-win-card")
+  );
+}
+
+function isWinOverlayOpen() {
+  if (!viewportEl) return false;
+  const overlay = viewportEl.querySelector(".gomoku-win-overlay");
+  return !!(overlay && !overlay.hidden);
+}
+
+function shouldIgnoreZoomGesture(e) {
+  return isWinOverlayOpen() || isUiChromeTarget(e);
+}
+
 function getPinchMetrics() {
   const pts = [...pointers.values()];
   const dx = pts[1].x - pts[0].x;
@@ -222,6 +241,7 @@ export function wasGomokuBoardPanned() {
 }
 
 function onWheel(e) {
+  if (shouldIgnoreZoomGesture(e)) return;
   e.preventDefault();
   const factor = e.deltaY < 0 ? 1 + ZOOM_WHEEL_STEP : 1 - ZOOM_WHEEL_STEP;
   setScaleAt(zoomState.scale * factor, e.clientX, e.clientY);
@@ -236,6 +256,7 @@ function shouldPanPointer(e, onCell) {
 
 function onTouchStart(e) {
   if (!viewportEl || !isInsideViewport(e)) return;
+  if (shouldIgnoreZoomGesture(e)) return;
 
   if (e.touches.length >= 2) {
     e.preventDefault();
@@ -268,6 +289,7 @@ function onTouchStart(e) {
 
 function onTouchMove(e) {
   if (!viewportEl) return;
+  if (isWinOverlayOpen()) return;
 
   if (e.touches.length >= 2 && touchPinchStart) {
     e.preventDefault();
@@ -326,6 +348,7 @@ function onTouchEnd(e) {
 function onPointerDown(e) {
   if (!viewportEl) return;
   if (e.pointerType === "touch") return;
+  if (shouldIgnoreZoomGesture(e)) return;
 
   const onCell = isCellTarget(e);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
