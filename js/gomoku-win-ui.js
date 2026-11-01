@@ -37,8 +37,19 @@ export function getWinLineEndpoints(winLine, lastMove) {
 }
 
 /** @param {Element | null} stageEl */
+function resolveBoardEl(stageEl) {
+  if (!stageEl) return null;
+  return stageEl.querySelector?.(".gomoku-board") || stageEl;
+}
+
+/** @param {Element | null} stageEl */
 export function clearGomokuWinLine(stageEl) {
-  stageEl?.querySelector(".gomoku-win-line-layer")?.remove();
+  const board = resolveBoardEl(stageEl);
+  board?.querySelector?.(".gomoku-win-line-layer")?.remove();
+  // 舊版畫在 stage 上的線也清掉
+  if (stageEl && stageEl !== board) {
+    stageEl.querySelector?.(":scope > .gomoku-win-line-layer")?.remove();
+  }
 }
 
 /**
@@ -47,7 +58,8 @@ export function clearGomokuWinLine(stageEl) {
  * @param {[number, number] | null} lastMove
  */
 export function renderGomokuWinLine(stageEl, winLine, lastMove) {
-  if (!stageEl) return;
+  const board = resolveBoardEl(stageEl);
+  if (!board) return;
   clearGomokuWinLine(stageEl);
   const ends = getWinLineEndpoints(winLine, lastMove);
   if (!ends) return;
@@ -56,16 +68,17 @@ export function renderGomokuWinLine(stageEl, winLine, lastMove) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.classList.add("gomoku-win-line-layer");
   svg.setAttribute("viewBox", "0 0 100 100");
-  svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
   svg.setAttribute("aria-hidden", "true");
 
   const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  // 對準格子中心（與 15×15 grid 一致）
   line.setAttribute("x1", String(((c0 + 0.5) / BOARD_SIZE) * 100));
   line.setAttribute("y1", String(((r0 + 0.5) / BOARD_SIZE) * 100));
   line.setAttribute("x2", String(((c1 + 0.5) / BOARD_SIZE) * 100));
   line.setAttribute("y2", String(((r1 + 0.5) / BOARD_SIZE) * 100));
   svg.appendChild(line);
-  stageEl.appendChild(svg);
+  board.appendChild(svg);
 }
 
 /**

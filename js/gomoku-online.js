@@ -13,7 +13,7 @@ import {
   isGomokuWinCelebrationPending,
   renderGomokuWinLine,
   showGomokuWinOverlayImmediate,
-} from "./gomoku-win-ui.js";
+} from "./gomoku-win-ui.js?v=gomoku-v39";
 import { startGomokuReplay, stopGomokuReplay, isGomokuReplayRunning } from "./gomoku-replay.js?v=gomoku-v13";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=gomoku-v14";
 import {

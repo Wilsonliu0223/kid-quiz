@@ -5680,14 +5680,15 @@ button.gomoku-cell:disabled {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
 }
 
 .gomoku-win-line-layer line {
   stroke: #e53935;
-  stroke-width: 2.8;
+  stroke-width: 3.5;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 3px rgba(229, 57, 53, 0.65));
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 2px rgba(229, 57, 53, 0.55));
 }
 
 .gomoku-win-overlay {
@@ -5735,6 +5736,7 @@ button.gomoku-cell:disabled {
 }
 
 .gomoku-board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(var(--gomoku-size, 15), 1fr);
   gap: 0;
