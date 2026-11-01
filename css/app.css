@@ -5481,31 +5481,54 @@ body:has(#view-vision.view-active) #app {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  min-height: 58px;
-  padding: 8px 10px;
+  /* 固定高度：思考中／輪到你切換時不要撐高狀態列、連帶擠動棋盤 */
+  min-height: 4.5rem;
+  height: 4.5rem;
+  padding: 6px 10px;
   border-radius: 12px;
   border: 2px solid transparent;
   text-align: center;
+  overflow: hidden;
   animation: xiangqi-turn-pulse 1.4s ease-in-out infinite;
 }
 
 .gomoku-turn-banner-kicker {
+  flex-shrink: 0;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   opacity: 0.9;
+  line-height: 1.1;
 }
 
 .gomoku-turn-banner-main {
-  font-size: clamp(1rem, 4.2vw, 1.2rem);
+  font-size: clamp(0.95rem, 3.8vw, 1.15rem);
   font-weight: 900;
-  line-height: 1.15;
+  line-height: 1.2;
+  max-height: 2.4em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .gomoku-turn-banner-sub {
+  flex-shrink: 0;
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.25;
+  min-height: 1.25em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* hidden 時仍佔位，避免副標消失讓棋盤上移 */
+.gomoku-turn-banner-sub[hidden] {
+  display: block !important;
+  visibility: hidden;
 }
 
 .gomoku-turn-banner-black {
@@ -5559,17 +5582,34 @@ body:has(#view-vision.view-active) #app {
 
 .gomoku-renju-hint {
   margin: 0;
-  min-height: 1.35em;
+  min-height: 2.6em;
   font-size: 0.88rem;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.3;
   color: #8d4a2a;
   text-align: center;
   visibility: visible;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .gomoku-renju-hint.is-visible {
   visibility: visible;
+}
+
+.gomoku-engine-badge[hidden] {
+  /* 保留佔位，AI 訊息出現／消失時不擠棋盤（非 AI 局也只多一小條空白） */
+  display: block !important;
+  visibility: hidden;
+  min-height: 1.55rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  border: none;
+  background: transparent;
+  color: transparent;
 }
 
 button.gomoku-cell:disabled {
@@ -5577,13 +5617,18 @@ button.gomoku-cell:disabled {
 }
 
 .gomoku-engine-badge {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.02em;
+  min-height: 1.55rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .gomoku-engine-badge-full {
@@ -5794,7 +5839,6 @@ button.gomoku-cell:disabled {
 
   .gomoku-renju-hint {
     font-size: 0.72rem;
-    min-height: 0;
     line-height: 1.25;
   }
 
@@ -5803,7 +5847,7 @@ button.gomoku-cell:disabled {
   }
 }
 
-/* 矮螢幕／平板橫向：再縮狀態列 */
+/* 矮螢幕／平板橫向：再縮狀態列（仍保留固定佔位，避免下棋時棋盤跳） */
 @media (max-height: 760px) {
   .gomoku-side-card {
     min-height: 40px;
@@ -5814,9 +5858,13 @@ button.gomoku-cell:disabled {
     font-size: 0.76rem;
   }
 
+  .gomoku-turn-banner {
+    min-height: 4.1rem;
+    height: 4.1rem;
+  }
+
   .gomoku-renju-hint {
     font-size: 0.7rem;
-    min-height: 0;
   }
 
   .gomoku-zoom-hint {

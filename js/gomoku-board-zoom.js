@@ -24,10 +24,11 @@ let touchPanStart = null;
 
 let bound = false;
 let suppressCellTapUntil = 0;
-/** @type {ResizeObserver | null} */
-let fitObserver = null;
 /** @type {number | null} */
 let fitRaf = null;
+/** 最近一次套用的棋盤邊長；訊息列微抖動時不重算，避免棋盤跳動 */
+let lastFitSize = 0;
+const FIT_JITTER_PX = 20;
 
 function suppressCellTapBriefly() {
   suppressCellTapUntil = Date.now() + 280;
@@ -107,8 +108,9 @@ function clearBoardFitStyles() {
 
 /**
  * 把正方形棋盤撐滿舞台（取寬高較短邊），平板才不會留一大塊空白。
+ * @param {boolean} [force] 視窗旋轉／進對局時強制；一般忽略小幅高度抖動
  */
-export function fitGomokuBoardToStage() {
+export function fitGomokuBoardToStage(force = false) {
   if (!stageEl) return;
   const board = stageEl.querySelector(".gomoku-board");
   if (!(board instanceof HTMLElement)) return;
@@ -116,16 +118,30 @@ export function fitGomokuBoardToStage() {
   const h = stageEl.clientHeight;
   if (w < 64 || h < 64) return;
   const size = Math.floor(Math.min(w, h));
+  if (!force && lastFitSize > 0 && Math.abs(size - lastFitSize) < FIT_JITTER_PX) {
+    return;
+  }
+  lastFitSize = size;
   board.style.width = `${size}px`;
   board.style.height = `${size}px`;
   board.style.maxWidth = "none";
 }
 
-function scheduleBoardFit() {
-  if (fitRaf != null) return;
+/**
+ * @param {boolean} [force]
+ */
+function scheduleBoardFit(force = false) {
+  if (fitRaf != null) {
+    if (force) {
+      window.cancelAnimationFrame(fitRaf);
+      fitRaf = null;
+    } else {
+      return;
+    }
+  }
   fitRaf = window.requestAnimationFrame(() => {
     fitRaf = null;
-    fitGomokuBoardToStage();
+    fitGomokuBoardToStage(force);
     if (zoomState.scale > 1) clampPan();
     applyTransform();
   });
@@ -144,18 +160,21 @@ function teardownGomokuBoardZoom() {
   viewportEl.removeEventListener("touchmove", onTouchMove);
   viewportEl.removeEventListener("touchend", onTouchEnd);
   viewportEl.removeEventListener("touchcancel", onTouchEnd);
-  window.removeEventListener("resize", scheduleBoardFit);
-  window.removeEventListener("orientationchange", scheduleBoardFit);
-  fitObserver?.disconnect();
-  fitObserver = null;
+  window.removeEventListener("resize", onWindowResizeFit);
+  window.removeEventListener("orientationchange", onWindowResizeFit);
   if (fitRaf != null) {
     window.cancelAnimationFrame(fitRaf);
     fitRaf = null;
   }
   clearBoardFitStyles();
+  lastFitSize = 0;
   bound = false;
   viewportEl = null;
   stageEl = null;
+}
+
+function onWindowResizeFit() {
+  scheduleBoardFit(true);
 }
 
 /**
@@ -522,16 +541,12 @@ export function initGomokuBoardZoom(viewportSelector, stageSelector) {
   if (!viewportEl || !stageEl || bound) return;
 
   bound = true;
+  lastFitSize = 0;
   resetGomokuBoardZoom();
-  scheduleBoardFit();
-
-  if (typeof ResizeObserver !== "undefined") {
-    fitObserver = new ResizeObserver(() => scheduleBoardFit());
-    fitObserver.observe(viewportEl);
-    fitObserver.observe(stageEl);
-  }
-  window.addEventListener("resize", scheduleBoardFit);
-  window.addEventListener("orientationchange", scheduleBoardFit);
+  // 只在進對局／視窗變化時量尺寸；勿聽 ResizeObserver，否則回合訊息換行會讓棋盤跳動
+  scheduleBoardFit(true);
+  window.addEventListener("resize", onWindowResizeFit);
+  window.addEventListener("orientationchange", onWindowResizeFit);
 
   viewportEl.addEventListener("wheel", onWheel, { passive: false });
   viewportEl.addEventListener("pointerdown", onPointerDown, { passive: false });
