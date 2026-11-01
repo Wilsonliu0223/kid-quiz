@@ -5672,7 +5672,6 @@ button.gomoku-cell:disabled {
   transform-origin: center center;
   will-change: transform;
   position: relative;
-  container-type: size;
 }
 
 .gomoku-win-line-layer {
@@ -5739,11 +5738,11 @@ button.gomoku-cell:disabled {
   display: grid;
   grid-template-columns: repeat(var(--gomoku-size, 15), 1fr);
   gap: 0;
-  /* 依舞台較短邊撐滿，避免平板橫向時棋盤超出被裁切 */
-  width: min(100%, 560px);
-  max-width: min(100%, 560px);
-  max-height: 100%;
+  /* 用 vw/dvh 限制，勿用 cqmin（Chrome 在 size containment 下會算成 0） */
+  width: min(100%, 560px, 72dvh, 72vh);
+  max-width: 100%;
   aspect-ratio: 1;
+  height: auto;
   flex-shrink: 0;
   background-color: #dcb35c;
   background-image:
@@ -5753,14 +5752,6 @@ button.gomoku-cell:disabled {
   border: 3px solid var(--gomoku-dark);
   border-radius: 6px;
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.1);
-}
-
-@supports (width: 1cqmin) {
-  .gomoku-board {
-    width: min(100cqmin, 640px);
-    max-width: none;
-    max-height: none;
-  }
 }
 
 /* 矮螢幕／平板橫向：縮狀態列，把高度留給棋盤 */
