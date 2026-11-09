@@ -22,7 +22,7 @@ import {
   primeSpeech,
   unlockSpeechFromGesture,
   prefetchEnglishAudio,
-} from "./english.js?v=en-speak-v41";
+} from "./english.js?v=en-speak-v42";
 import { createHandwritingCanvas } from "./canvas-handwriting.js";
 import {
   buildHomophoneChoices,
@@ -112,7 +112,7 @@ import { initNumMemory, openNumMemory } from "./num-memory.js?v=num-mem-v1";
 import { initVision, openVision } from "./vision.js?v=vision-v29";
 import { initSudoku, openSudokuHome } from "./sudoku.js?v=sudoku-v12";
 import { initGifted } from "./gifted.js?v=gifted-v21";
-import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v93";
+import { initEnDaily, openEnHub, onEnViewChange } from "./en-daily.js?v=en-daily-v94";
 import { initFlipEn } from "./flip-en.js?v=en-flip-v6";
 import {
   addMistake,

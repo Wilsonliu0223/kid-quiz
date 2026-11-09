@@ -7,7 +7,7 @@ import {
   speakEnglish,
   stopSpeaking,
   unlockSpeechFromGesture,
-} from "./english.js?v=en-speak-v37";
+} from "./english.js?v=en-speak-v42";
 import {
   escapeHtml,
   hideLookupCard,

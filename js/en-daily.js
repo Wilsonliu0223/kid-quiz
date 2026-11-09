@@ -23,7 +23,7 @@ import {
   getEnAccent,
   getZhAccent,
   preferredTtsVoice,
-} from "./english.js?v=en-speak-v41";
+} from "./english.js?v=en-speak-v42";
 import { toTraditional } from "./zh-trad.js?v=zh-trad-v1";
 import {
   analyzeEnglishMorph,
@@ -529,6 +529,10 @@ function playEngineTip(side, eng) {
     return `✓${ttsVoiceLabel("en", eng.slice(5)) || "英文神經音"}`;
   }
   if (eng.startsWith("edge")) return `✓${selectedVoiceLabel("en")}`;
+  if (eng.startsWith("script:")) {
+    return /google/i.test(eng) ? "線上備援" : "伺服器語音";
+  }
+  if (eng.startsWith("script")) return "伺服器語音";
   if (eng === "en-google" || eng === "en-youdao" || eng === "en-online") {
     return "線上備援";
   }

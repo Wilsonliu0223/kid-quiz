@@ -1406,6 +1406,14 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
   const ttsToken = String(CONFIG.EDGE_TTS_TOKEN || "kq-home-tts").trim();
   let refreshed = false;
 
+  const refreshEndpoint = async () => {
+    if (refreshed) return Boolean(endpoint);
+    refreshed = true;
+    clearHomeTtsCache();
+    endpoint = (await discoverHomeTtsProxy()) || "";
+    return Boolean(endpoint);
+  };
+
   for (const voice of voiceList) {
     const cacheKey = `${voice}::${text}`;
     if (edgeSpeechCache.has(cacheKey)) {
@@ -1422,18 +1430,16 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
           lastSpeakEngine = `edge:${voice}`;
           return parsed.url;
         }
+        if (parsed.retryable && (await refreshEndpoint()) && attempt === 0) {
+          await new Promise((r) => setTimeout(r, 350));
+          continue;
+        }
         if (!parsed.retryable || attempt === 1) break;
         await new Promise((r) => setTimeout(r, 400));
       } catch (e) {
         console.warn("Edge TTS", voice, e);
-        if (!refreshed) {
-          refreshed = true;
-          clearHomeTtsCache();
-          endpoint = (await discoverHomeTtsProxy()) || "";
-          if (!endpoint) return "";
-          continue;
-        }
-        break;
+        if (!(await refreshEndpoint())) return "";
+        continue;
       }
     }
   }
@@ -1441,13 +1447,11 @@ async function resolveEdgeSpeechUrl(chunk, voices) {
 }
 
 async function resolveEdgeZhBlobUrl(chunk, voice) {
-  const voices = voice ? [voice] : zhVoiceCandidates();
-  return resolveEdgeSpeechUrl(chunk, voices);
+  return resolveEdgeSpeechUrl(chunk, zhVoiceCandidates(voice));
 }
 
 async function resolveEdgeEnBlobUrl(chunk, voice) {
-  const voices = voice ? [voice] : enVoiceCandidates();
-  return resolveEdgeSpeechUrl(chunk, voices);
+  return resolveEdgeSpeechUrl(chunk, enVoiceCandidates(voice));
 }
 
 /** 預熱中文神經語音（進閱讀頁／點中文前呼叫，縮短手機等待） */
@@ -1565,7 +1569,6 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
     return false;
   }
 
-  lastSpeakEngine = "en-online";
   const edgeEn = await resolveEdgeEnBlobUrl(chunk, voice);
   if (
     edgeEn &&
@@ -1573,11 +1576,7 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
   ) {
     return true;
   }
-  const g = googleTtsUrl(chunk, getEnAccent() === "gb" ? "en-GB" : "en");
-  if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 5000 }))) {
-    lastSpeakEngine = "en-google";
-    return true;
-  }
+  // 家用 Edge 失敗時先走 Apps Script（仍優先打家用代理），避免直接掉 Google 機械音
   const scriptEn = await resolveZhNeuralUrl(
     chunk,
     voice || preferredTtsVoice("en")
@@ -1586,6 +1585,11 @@ async function playOnlineChunk(chunk, lang = "en", speed = 1, voice) {
     scriptEn &&
     (await playAudioUrl(scriptEn, { speed, soften: false, startTimeoutMs: 8000 }))
   ) {
+    return true;
+  }
+  const g = googleTtsUrl(chunk, getEnAccent() === "gb" ? "en-GB" : "en");
+  if (g && (await playAudioUrl(g, { speed, startTimeoutMs: 5000 }))) {
+    lastSpeakEngine = "en-google";
     return true;
   }
   const y = youdaoTtsUrl(chunk, getEnAccent());
