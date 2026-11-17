@@ -5430,13 +5430,29 @@ body:has(#view-vision.view-active) #app {
   margin: 0;
   padding: 0 4px;
   text-align: center;
-  font-size: 0.82rem;
-  line-height: 1.35;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
   color: #5a4632;
 }
 
 .gomoku-coach-tip[hidden] {
   display: none !important;
+}
+
+/* 桌機／寬螢幕：教學回饋字再放大（手機維持較緊） */
+@media (min-width: 900px) {
+  .gomoku-coach-tip {
+    font-size: 1.15rem;
+    line-height: 1.45;
+    padding: 2px 8px;
+  }
+
+  .gomoku-coach-tools .btn {
+    font-size: 1.02rem;
+    min-height: 2.45rem;
+    min-width: 5.2rem;
+  }
 }
 
 .gomoku-cell-coach-hint:not(.gomoku-cell-filled)::after {
