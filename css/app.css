@@ -8057,6 +8057,21 @@ button.gomoku-cell:disabled {
 .go-stone-white { fill: #f7f4ee; stroke: #333; stroke-width: 1.4; }
 .go-last { fill: #c0392b; }
 .go-mark { fill: #2f7d4a; opacity: 0.85; }
+.go-coach-hint {
+  fill: rgba(46, 160, 90, 0.28);
+  stroke: #1b7f4a;
+  stroke-width: 3;
+}
+.go-coach-danger {
+  fill: rgba(198, 40, 40, 0.28);
+  stroke: #c62828;
+  stroke-width: 3;
+}
+.go-coach-stone {
+  stroke: #1565c0;
+  stroke-width: 3.5;
+  opacity: 0.95;
+}
 .go-choice-idle { fill: #fff8e7; stroke: #3d2a12; stroke-width: 2; opacity: 0.95; }
 .go-choice-ok { fill: #c8e6c9; stroke: #2e7d32; stroke-width: 2.5; }
 .go-choice-bad { fill: #ffcdd2; stroke: #c62828; stroke-width: 2.5; }

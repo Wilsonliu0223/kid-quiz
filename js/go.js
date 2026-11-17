@@ -13,7 +13,7 @@ import {
   positionFromAscii,
   clonePosition,
 } from "./go-core.js?v=go-v1";
-import { ensureGoBoardSvg, renderGoBoardSvg } from "./go-board-ui.js?v=go-v2";
+import { ensureGoBoardSvg, renderGoBoardSvg } from "./go-board-ui.js?v=go-v3";
 import {
   AI_PLAYER_ID,
   AI_BLACK_ID,
@@ -25,6 +25,12 @@ import {
   terminateKatagoEngine,
   requestGoAiMove,
 } from "./go-ai.js?v=go-v4";
+import {
+  coachSuggestMove,
+  coachRateLastMove,
+  coachDangerPoints,
+  rebuildGoFromLog,
+} from "./go-coach.js?v=go-v1";
 import { renderDuoTurnStatusBar } from "./game-turn-status.js?v=go-v1";
 import { getChildName } from "./children.js";
 import { getSelectedChild } from "./store.js";
@@ -75,6 +81,17 @@ let undoAiResumeTimer = null;
 
 /** @type {GoGame|null} */
 let game = null;
+
+/** 本機教學標記（對電腦模式才顯示） */
+/** @type {[number, number][]} */
+let coachHintMarks = [];
+/** @type {[number, number][]} */
+let coachDangerMarks = [];
+/** @type {[number, number][]} */
+let coachStoneMarks = [];
+let coachWhyText = "";
+let coachTipText = "";
+
 let lessonIndex = 0;
 let lessonStep = 0;
 /** 本步是否已選對（有 choices 的步驟） */
@@ -174,6 +191,115 @@ function syncUndoButton() {
   btn.disabled = !(game && (game.moveLog?.length || 0) > 0);
 }
 
+function clearCoachMarks({ keepTip = false } = {}) {
+  coachHintMarks = [];
+  coachDangerMarks = [];
+  coachStoneMarks = [];
+  if (!keepTip) {
+    coachWhyText = "";
+    coachTipText = "";
+  }
+}
+
+function showCoachTip(reason, why) {
+  coachTipText = String(reason || "").trim();
+  if (why != null) coachWhyText = String(why || "").trim();
+  const tip = $("#go-coach-tip");
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText;
+  }
+  requestAnimationFrame(() => {
+    rebindGomokuBoardZoom("#go-board-viewport", "#go-board-stage");
+  });
+}
+
+function syncCoachTools() {
+  const tools = $("#go-coach-tools");
+  const tip = $("#go-coach-tip");
+  const show = !!game && game.mode === "ai";
+  if (tools) tools.hidden = !show;
+  if (!show) {
+    clearCoachMarks();
+    if (tip) {
+      tip.hidden = true;
+      tip.textContent = "";
+    }
+    return;
+  }
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText || "";
+  }
+}
+
+function humanColorForCoach() {
+  if (!game || game.mode !== "ai") return null;
+  if (game.humanPlayerId === game.blackPlayerId) return BLACK;
+  if (game.humanPlayerId === game.whitePlayerId) return WHITE;
+  return game.blackPlayerId !== AI_PLAYER_ID ? BLACK : WHITE;
+}
+
+function runCoachHint() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const result = coachSuggestMove(game.position);
+  clearCoachMarks({ keepTip: true });
+  coachHintMarks = result.move ? [result.move] : [];
+  showCoachTip(result.reason, result.why);
+  renderPlay();
+}
+
+function runCoachRate() {
+  if (!game || game.mode !== "ai") return;
+  const log = game.moveLog || [];
+  if (!log.length) {
+    showCoachTip("還沒有棋步可評", "先下一手，再按「這步好嗎」。");
+    return;
+  }
+  let humanMoveIndex = -1;
+  {
+    let pos = createPosition(game.position.size);
+    for (let i = 0; i < log.length; i++) {
+      const turnId = pos.turn === BLACK ? game.blackPlayerId : game.whitePlayerId;
+      const step = log[i];
+      if (turnId === game.humanPlayerId && !step.pass) humanMoveIndex = i;
+      if (step.pass) pos = playPass(pos);
+      else pos = playMove(pos, step.r, step.c);
+    }
+  }
+  if (humanMoveIndex < 0) {
+    showCoachTip("請先下你的一手再評", "這步好嗎是評你下的棋，不是評電腦。");
+    return;
+  }
+  const before = rebuildGoFromLog(log.slice(0, humanMoveIndex), game.position.size);
+  const step = log[humanMoveIndex];
+  const result = coachRateLastMove(before, [step.r, step.c]);
+  clearCoachMarks({ keepTip: true });
+  coachStoneMarks = result.marks || [];
+  coachHintMarks = result.emptyMarks || [];
+  showCoachTip(result.reason, result.why);
+  renderPlay();
+}
+
+function runCoachDanger() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const color = humanColorForCoach() || (game.position.turn === BLACK ? BLACK : WHITE);
+  const result = coachDangerPoints(game.position, color);
+  clearCoachMarks({ keepTip: true });
+  coachDangerMarks = result.points || [];
+  showCoachTip(result.reason, result.why);
+  renderPlay();
+}
+
+function runCoachWhy() {
+  if (!game || game.mode !== "ai") return;
+  if (!coachWhyText) {
+    showCoachTip("先按 提示／這步好嗎／危險", "為什麼會說明上一次教學分析的理由。");
+    return;
+  }
+  showCoachTip(coachWhyText, coachWhyText);
+}
+
 function rebuildFromMoveLog(log, size) {
   let pos = createPosition(size);
   for (const step of log) {
@@ -203,6 +329,12 @@ function undoLastMove() {
   }
   log.pop();
   game.position = rebuildFromMoveLog(log, game.position.size);
+  clearCoachMarks();
+  const tip = $("#go-coach-tip");
+  if (tip) {
+    tip.hidden = true;
+    tip.textContent = "";
+  }
   renderPlay();
   syncUndoButton();
   if (shouldAiMoveNow(game)) {
@@ -222,7 +354,11 @@ function ensurePlayBoard() {
 
 function renderPlay() {
   if (!game) return;
-  renderGoBoardSvg(ensurePlayBoard(), game.position);
+  renderGoBoardSvg(ensurePlayBoard(), game.position, {
+    hintMarks: coachHintMarks,
+    dangerMarks: coachDangerMarks,
+    stoneMarks: coachStoneMarks,
+  });
   const turn = game.position.turn === BLACK ? "black" : "white";
   const turnId = game.position.turn === BLACK ? game.blackPlayerId : game.whitePlayerId;
   const waitingAi = shouldAiMoveNow(game);
@@ -250,6 +386,7 @@ function renderPlay() {
   if (passBtn) passBtn.hidden = game.over || watch;
   if (resignBtn) resignBtn.hidden = game.over || watch;
   syncUndoButton();
+  syncCoachTools();
 }
 
 function formatGoPlayMeta(turnId) {
@@ -301,6 +438,12 @@ function onPlayPoint(r, c) {
   if (game.mode === "ai-watch") return;
   if (game.mode === "ai" && currentId() === AI_PLAYER_ID) return;
   if (!isLegalMove(game.position, r, c)) return;
+  clearCoachMarks();
+  const tip = $("#go-coach-tip");
+  if (tip) {
+    tip.hidden = true;
+    tip.textContent = "";
+  }
   game.position = playMove(game.position, r, c);
   pushMoveLog({ r, c });
   afterHumanOrAiMove();
@@ -375,6 +518,7 @@ function startAiGame(humanBlack) {
     return;
   }
   cancelPendingAi();
+  clearCoachMarks();
   const level = aiDifficulty;
   game = {
     mode: "ai",
@@ -1004,6 +1148,8 @@ function bind() {
     if (confirm("離開棋局？進度不會儲存。")) {
       cancelPendingAi();
       game = null;
+      clearCoachMarks();
+      syncCoachTools();
       terminateKatagoEngine();
       resetGomokuBoardZoom();
       deps?.showView("goHub");
@@ -1011,6 +1157,18 @@ function bind() {
   });
   $("#btn-go-undo")?.addEventListener("click", () => {
     undoLastMove();
+  });
+  $("#btn-go-coach-hint")?.addEventListener("click", () => {
+    runCoachHint();
+  });
+  $("#btn-go-coach-rate")?.addEventListener("click", () => {
+    runCoachRate();
+  });
+  $("#btn-go-coach-danger")?.addEventListener("click", () => {
+    runCoachDanger();
+  });
+  $("#btn-go-coach-why")?.addEventListener("click", () => {
+    runCoachWhy();
   });
   $("#go-ai-kind-chips")?.addEventListener("click", (e) => {
     const btn = e.target.closest?.("[data-go-ai-kind]");
@@ -1026,6 +1184,12 @@ function bind() {
   $("#btn-go-pass")?.addEventListener("click", () => {
     if (!game || game.over || game.mode === "ai-watch") return;
     if (game.mode === "ai" && currentId() === AI_PLAYER_ID) return;
+    clearCoachMarks();
+    const tip = $("#go-coach-tip");
+    if (tip) {
+      tip.hidden = true;
+      tip.textContent = "";
+    }
     game.position = playPass(game.position);
     pushMoveLog({ pass: true });
     afterHumanOrAiMove();

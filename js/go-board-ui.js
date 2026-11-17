@@ -33,6 +33,9 @@ export function resetGoBoardSvg(svg) {
  * @param {{
  *   lastMove?:[number,number]|null,
  *   marks?:[number,number][],
+ *   hintMarks?:[number,number][],
+ *   dangerMarks?:[number,number][],
+ *   stoneMarks?:[number,number][],
  *   choiceMarks?:{r:number,c:number,label:string,state?:'idle'|'ok'|'bad'}[],
  *   ko?:[number,number]|null
  * }} [opts]
@@ -46,6 +49,9 @@ export function renderGoBoardSvg(svg, pos, opts = {}) {
   const gap = n === 1 ? 0 : span / (n - 1);
   const last = opts.lastMove || pos.lastMove;
   const marks = new Set((opts.marks || []).map(([r, c]) => `${r},${c}`));
+  const hintMarks = new Set((opts.hintMarks || []).map(([r, c]) => `${r},${c}`));
+  const dangerMarks = new Set((opts.dangerMarks || []).map(([r, c]) => `${r},${c}`));
+  const stoneMarks = new Set((opts.stoneMarks || []).map(([r, c]) => `${r},${c}`));
   /** @type {Map<string,{label:string,state:string}>} */
   const choices = new Map();
   for (const ch of opts.choiceMarks || []) {
@@ -79,13 +85,18 @@ export function renderGoBoardSvg(svg, pos, opts = {}) {
         if (last && last[0] === r && last[1] === c) {
           stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.16}" class="go-last"/>`;
         }
+        if (stoneMarks.has(key)) {
+          stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.52}" class="go-coach-stone" fill="none"/>`;
+        }
       } else if (choices.has(key)) {
         const ch = choices.get(key);
         const st = ch.state === "ok" ? "go-choice-ok" : ch.state === "bad" ? "go-choice-bad" : "go-choice-idle";
         stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.36}" class="go-choice ${st}"/>`;
         stones += `<text x="${x}" y="${y}" class="go-choice-label" text-anchor="middle" dominant-baseline="central" font-size="${fontSize}">${ch.label}</text>`;
-      } else if (marks.has(key)) {
-        stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.14}" class="go-mark"/>`;
+      } else if (dangerMarks.has(key)) {
+        stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.22}" class="go-coach-danger"/>`;
+      } else if (hintMarks.has(key) || marks.has(key)) {
+        stones += `<circle cx="${x}" cy="${y}" r="${gap * 0.2}" class="${hintMarks.has(key) ? "go-coach-hint" : "go-mark"}"/>`;
       } else if (pos.ko && pos.ko[0] === r && pos.ko[1] === c) {
         stones += `<rect x="${x - 5}" y="${y - 5}" width="10" height="10" class="go-ko" rx="1"/>`;
       }
