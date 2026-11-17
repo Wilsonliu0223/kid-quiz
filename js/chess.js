@@ -4,7 +4,7 @@ import {
   renderChessBoardSvg,
   renderChessStatusBar,
   resetChessBoardSvg,
-} from "./chess-board-ui.js?v=chess-v5";
+} from "./chess-board-ui.js?v=chess-v6";
 import {
   applyMove,
   clonePosition,
@@ -16,6 +16,11 @@ import {
   shouldFlipBoardForSide,
   sideOfPiece,
 } from "./chess-core.js?v=chess-v5";
+import {
+  coachSuggestMove,
+  coachRateLastMove,
+  coachDangerPoints,
+} from "./chess-coach.js?v=chess-v1";
 import { getChildName, otherDuoPlayer } from "./children.js";
 import { getSelectedChild } from "./store.js";
 import {
@@ -48,6 +53,13 @@ let aiMovePending = false;
 let aiMoveToken = 0;
 /** @type {number | null} */
 let undoAiResumeTimer = null;
+
+/** 本機教學標記（對電腦模式） */
+let coachHintKeys = new Set();
+let coachDangerKeys = new Set();
+let coachFromKeys = new Set();
+let coachWhyText = "";
+let coachTipText = "";
 let localWinUiDismissed = false;
 let pendingPromotion = null;
 
@@ -302,6 +314,139 @@ function syncUndoButton() {
   btn.disabled = !(game && (game.moveHistory?.length || 0) > 0);
 }
 
+function clearCoachMarks({ keepTip = false } = {}) {
+  coachHintKeys = new Set();
+  coachDangerKeys = new Set();
+  coachFromKeys = new Set();
+  if (!keepTip) {
+    coachWhyText = "";
+    coachTipText = "";
+  }
+}
+
+function showCoachTip(reason, why) {
+  coachTipText = String(reason || "").trim();
+  if (why != null) coachWhyText = String(why || "").trim();
+  const tip = $("#chess-coach-tip");
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText;
+  }
+  requestAnimationFrame(() => {
+    rebindBoardFit("#view-chess-play .chess-board-wrap");
+  });
+}
+
+function syncCoachTools() {
+  const tools = $("#chess-coach-tools");
+  const tip = $("#chess-coach-tip");
+  const show = !!game && game.mode === "ai";
+  if (tools) tools.hidden = !show;
+  if (!show) {
+    clearCoachMarks();
+    if (tip) {
+      tip.hidden = true;
+      tip.textContent = "";
+    }
+    return;
+  }
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText || "";
+  }
+}
+
+function keysFromSq(sq) {
+  return sq ? new Set([`${sq[0]},${sq[1]}`]) : new Set();
+}
+
+function runCoachHint() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const result = coachSuggestMove(game.position);
+  clearCoachMarks({ keepTip: true });
+  coachFromKeys = keysFromSq(result.from);
+  coachHintKeys = keysFromSq(result.to);
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachRate() {
+  if (!game || game.mode !== "ai") return;
+  const hist = game.moveHistory || [];
+  if (!hist.length) {
+    showCoachTip("還沒有棋步可評", "先走一手，再按「這步好嗎」。");
+    return;
+  }
+  const humanSide = playerSide(game.humanPlayerId);
+  let pos = createPosition();
+  let humanIdx = -1;
+  for (let i = 0; i < hist.length; i++) {
+    if (pos.turn === humanSide) humanIdx = i;
+    const legal = getLegalMovesFrom(pos, hist[i].from[0], hist[i].from[1]);
+    const full =
+      legal.find(
+        (m) =>
+          m.to[0] === hist[i].to[0] &&
+          m.to[1] === hist[i].to[1] &&
+          (hist[i].promotion ? m.promotion === hist[i].promotion : true)
+      ) || hist[i];
+    pos = applyMove(pos, full);
+  }
+  if (humanIdx < 0) {
+    showCoachTip("請先下你的一手再評", "這步好嗎是評你下的棋，不是評電腦。");
+    return;
+  }
+  let before = createPosition();
+  for (let i = 0; i < humanIdx; i++) {
+    const legal = getLegalMovesFrom(before, hist[i].from[0], hist[i].from[1]);
+    const full =
+      legal.find(
+        (m) =>
+          m.to[0] === hist[i].to[0] &&
+          m.to[1] === hist[i].to[1] &&
+          (hist[i].promotion ? m.promotion === hist[i].promotion : true)
+      ) || hist[i];
+    before = applyMove(before, full);
+  }
+  const step = hist[humanIdx];
+  const legal = getLegalMovesFrom(before, step.from[0], step.from[1]);
+  const fullMove =
+    legal.find(
+      (m) =>
+        m.to[0] === step.to[0] &&
+        m.to[1] === step.to[1] &&
+        (step.promotion ? m.promotion === step.promotion : true)
+    ) || step;
+  const result = coachRateLastMove(before, fullMove);
+  clearCoachMarks({ keepTip: true });
+  coachFromKeys = keysFromSq(result.from);
+  coachHintKeys = new Set([
+    ...keysFromSq(result.to),
+    ...keysFromSq(result.altTo),
+  ]);
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachDanger() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const side = playerSide(game.humanPlayerId) || game.position.turn;
+  const result = coachDangerPoints(game.position, side);
+  clearCoachMarks({ keepTip: true });
+  coachDangerKeys = new Set((result.points || []).map(([r, c]) => `${r},${c}`));
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachWhy() {
+  if (!game || game.mode !== "ai") return;
+  if (!coachWhyText) {
+    showCoachTip("先按 提示／這步好嗎／危險", "為什麼會說明上一次教學分析的理由。");
+    return;
+  }
+  showCoachTip(coachWhyText, coachWhyText);
+}
+
 function undoLastMove() {
   if (!game) return false;
   const hist = game.moveHistory;
@@ -320,6 +465,12 @@ function undoLastMove() {
   }
 
   hist.pop();
+  clearCoachMarks();
+  const tip = $("#chess-coach-tip");
+  if (tip) {
+    tip.hidden = true;
+    tip.textContent = "";
+  }
   let pos = createPosition();
   let lastMove = null;
   for (const m of hist) {
@@ -346,6 +497,7 @@ function undoLastMove() {
 
 function beginGame(opts) {
   cancelPendingAi();
+  clearCoachMarks();
   localWinUiDismissed = false;
   pendingPromotion = null;
   hidePromotion();
@@ -458,8 +610,12 @@ function renderBoard() {
     over: game.over,
     interactive: humanCanMove,
     flipped: game.viewFlipped,
+    coachHintKeys,
+    coachDangerKeys,
+    coachFromKeys,
   });
   renderPlayHeader();
+  syncCoachTools();
 }
 
 function renderPlayHeader() {
@@ -562,8 +718,19 @@ function finishAfterMove(move) {
 }
 
 function commitMove(move) {
+  clearCoachMarks();
+  const tip = $("#chess-coach-tip");
+  if (tip) {
+    tip.hidden = true;
+    tip.textContent = "";
+  }
   if (!game.moveHistory) game.moveHistory = [];
-  game.moveHistory.push({ from: move.from, to: move.to, promotion: move.promotion });
+  game.moveHistory.push({
+    from: move.from,
+    to: move.to,
+    promotion: move.promotion,
+    capture: move.capture,
+  });
   game.position = applyMove(game.position, move);
   hidePromotion();
   pendingPromotion = null;
@@ -689,12 +856,18 @@ function bindChessEvents() {
       cancelPendingAi();
       terminateChessAiWorker();
       game = null;
+      clearCoachMarks();
+      syncCoachTools();
       pendingPromotion = null;
       hidePromotion();
       syncResignButton();
       deps?.showView("home");
     }
   });
+  $("#btn-chess-coach-hint")?.addEventListener("click", () => runCoachHint());
+  $("#btn-chess-coach-rate")?.addEventListener("click", () => runCoachRate());
+  $("#btn-chess-coach-danger")?.addEventListener("click", () => runCoachDanger());
+  $("#btn-chess-coach-why")?.addEventListener("click", () => runCoachWhy());
   $("#btn-chess-undo")?.addEventListener("click", () => {
     undoLastMove();
   });

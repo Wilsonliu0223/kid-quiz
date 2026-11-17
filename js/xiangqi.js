@@ -5,7 +5,7 @@ import {
   renderXiangqiBoardSvg,
   renderXiangqiStatusBar,
   resetXiangqiBoardSvg,
-} from "./xiangqi-board-ui.js?v=xiangqi-v13";
+} from "./xiangqi-board-ui.js?v=xiangqi-v14";
 import {
   applyMove,
   cloneBoard,
@@ -30,6 +30,11 @@ import {
   renderDuoPickButtons,
 } from "./duo-pick.js";
 import { AI_PLAYER_ID, GRANDMASTER_LEVEL, NIRVANA_LEVEL, requestXiangqiAiMove, terminateXiangqiAiWorker, pikafishLoadState } from "./xiangqi-ai.js";
+import {
+  coachSuggestMove,
+  coachRateLastMove,
+  coachDangerPoints,
+} from "./xiangqi-coach.js?v=xiangqi-v1";
 import { bindRulesGuideButtons, getPieceMoveHint, setRulesPlayHint } from "./piece-rules-guide.js?v=rules-v5";
 import { rebindBoardFit, resetGomokuBoardZoom } from "./gomoku-board-zoom.js?v=gomoku-v43";
 
@@ -42,6 +47,13 @@ let aiMovePending = false;
 let aiMoveToken = 0;
 let localWinUiDismissed = false;
 let headerStatusText = "";
+
+/** 本機教學標記（對電腦模式） */
+let coachHintKeys = new Set();
+let coachDangerKeys = new Set();
+let coachFromKeys = new Set();
+let coachWhyText = "";
+let coachTipText = "";
 
 /** @type {{ showView: (v: string) => void, getChildNames: () => Record<string, string> } | null} */
 let deps = null;
@@ -220,6 +232,7 @@ function resolveViewFlipped(opts) {
 }
 
 function beginGame(opts) {
+  clearCoachMarks();
   aiMoveToken += 1;
   aiMovePending = false;
   localWinUiDismissed = false;
@@ -278,6 +291,135 @@ function syncResignButton() {
   } else {
     btn.textContent = `${playerName(sidePlayerId(game.turn))} 認輸`;
   }
+}
+
+function clearCoachMarks({ keepTip = false } = {}) {
+  coachHintKeys = new Set();
+  coachDangerKeys = new Set();
+  coachFromKeys = new Set();
+  if (!keepTip) {
+    coachWhyText = "";
+    coachTipText = "";
+  }
+}
+
+function showCoachTip(reason, why) {
+  coachTipText = String(reason || "").trim();
+  if (why != null) coachWhyText = String(why || "").trim();
+  const tip = $("#xiangqi-coach-tip");
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText;
+  }
+  requestAnimationFrame(() => {
+    rebindBoardFit("#view-xiangqi-play .xiangqi-board-wrap");
+  });
+}
+
+function syncCoachTools() {
+  const tools = $("#xiangqi-coach-tools");
+  const tip = $("#xiangqi-coach-tip");
+  const show = !!game && game.mode === "ai";
+  if (tools) tools.hidden = !show;
+  if (!show) {
+    clearCoachMarks();
+    if (tip) {
+      tip.hidden = true;
+      tip.textContent = "";
+    }
+    return;
+  }
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText || "";
+  }
+}
+
+function keysFromSq(sq) {
+  return sq ? new Set([`${sq[0]},${sq[1]}`]) : new Set();
+}
+
+function runCoachHint() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const result = coachSuggestMove(game.board, game.turn);
+  clearCoachMarks({ keepTip: true });
+  coachFromKeys = keysFromSq(result.from);
+  coachHintKeys = keysFromSq(result.to);
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachRate() {
+  if (!game || game.mode !== "ai") return;
+  const hist = game.moveHistory || [];
+  if (!hist.length) {
+    showCoachTip("還沒有棋步可評", "先走一手，再按「這步好嗎」。");
+    return;
+  }
+  const humanSide = playerSide(game.humanPlayerId);
+  // 重建到人類最後一手之前
+  let board = createBoard();
+  let turn = "red";
+  let humanIdx = -1;
+  let humanMove = null;
+  for (let i = 0; i < hist.length; i++) {
+    if (turn === humanSide) {
+      humanIdx = i;
+      humanMove = hist[i];
+    }
+    const legal = getLegalMovesFrom(board, turn, hist[i].from[0], hist[i].from[1]);
+    const full =
+      legal.find((m) => m.to[0] === hist[i].to[0] && m.to[1] === hist[i].to[1]) ||
+      hist[i];
+    board = applyMove(board, full);
+    turn = turn === "red" ? "black" : "red";
+  }
+  if (humanIdx < 0 || !humanMove) {
+    showCoachTip("請先下你的一手再評", "這步好嗎是評你下的棋，不是評電腦。");
+    return;
+  }
+  let before = createBoard();
+  let t = "red";
+  for (let i = 0; i < humanIdx; i++) {
+    const legal = getLegalMovesFrom(before, t, hist[i].from[0], hist[i].from[1]);
+    const full =
+      legal.find((m) => m.to[0] === hist[i].to[0] && m.to[1] === hist[i].to[1]) ||
+      hist[i];
+    before = applyMove(before, full);
+    t = t === "red" ? "black" : "red";
+  }
+  const legal = getLegalMovesFrom(before, humanSide, humanMove.from[0], humanMove.from[1]);
+  const fullMove =
+    legal.find((m) => m.to[0] === humanMove.to[0] && m.to[1] === humanMove.to[1]) ||
+    humanMove;
+  const result = coachRateLastMove(before, humanSide, fullMove);
+  clearCoachMarks({ keepTip: true });
+  coachFromKeys = keysFromSq(result.from);
+  coachHintKeys = new Set([
+    ...keysFromSq(result.to),
+    ...keysFromSq(result.altTo),
+  ]);
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachDanger() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const side = playerSide(game.humanPlayerId) || game.turn;
+  const result = coachDangerPoints(game.board, side);
+  clearCoachMarks({ keepTip: true });
+  coachDangerKeys = new Set((result.points || []).map(([r, c]) => `${r},${c}`));
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachWhy() {
+  if (!game || game.mode !== "ai") return;
+  if (!coachWhyText) {
+    showCoachTip("先按 提示／這步好嗎／危險", "為什麼會說明上一次教學分析的理由。");
+    return;
+  }
+  showCoachTip(coachWhyText, coachWhyText);
 }
 
 function resignGame() {
@@ -339,8 +481,12 @@ function renderBoard() {
       !replaying &&
       !(game.mode === "ai" && game.turn !== humanSide),
     flipped: game.viewFlipped,
+    coachHintKeys,
+    coachDangerKeys,
+    coachFromKeys,
   });
   renderPlayHeader(checkAlert);
+  syncCoachTools();
 }
 
 function getWinTexts() {
@@ -524,8 +670,14 @@ function tryMove(fromR, fromC, toR, toC) {
   const moves = getLegalMovesFrom(game.board, game.turn, fromR, fromC);
   const move = moves.find((m) => m.to[0] === toR && m.to[1] === toC);
   if (!move) return false;
+  clearCoachMarks();
+  const tip = $("#xiangqi-coach-tip");
+  if (tip) {
+    tip.hidden = true;
+    tip.textContent = "";
+  }
   if (!game.moveHistory) game.moveHistory = [];
-  game.moveHistory.push({ from: move.from, to: move.to });
+  game.moveHistory.push({ from: move.from, to: move.to, capture: move.capture });
   game.board = applyMove(game.board, move);
   finishAfterMove(move);
   return true;
@@ -596,7 +748,7 @@ async function runAiMove(token) {
       return;
     }
     if (!game.moveHistory) game.moveHistory = [];
-    game.moveHistory.push({ from: move.from, to: move.to });
+    game.moveHistory.push({ from: move.from, to: move.to, capture: move.capture });
     game.board = applyMove(game.board, move);
     finishAfterMove(move);
   } catch (err) {
@@ -664,12 +816,18 @@ function bindXiangqiEvents() {
     if (setupMode === "ai") deps?.showView("duoMode");
     else deps?.showView("xiangqiVariant");
   });
+  $("#btn-xiangqi-coach-hint")?.addEventListener("click", () => runCoachHint());
+  $("#btn-xiangqi-coach-rate")?.addEventListener("click", () => runCoachRate());
+  $("#btn-xiangqi-coach-danger")?.addEventListener("click", () => runCoachDanger());
+  $("#btn-xiangqi-coach-why")?.addEventListener("click", () => runCoachWhy());
   $("#btn-xiangqi-play-back")?.addEventListener("click", () => {
     if (confirm("離開棋局？目前進度不會儲存。")) {
       aiMoveToken += 1;
       terminateXiangqiAiWorker();
       stopXiangqiReplay();
       game = null;
+      clearCoachMarks();
+      syncCoachTools();
       syncResignButton();
       deps?.showView("home");
     }

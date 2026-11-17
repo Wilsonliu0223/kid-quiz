@@ -2236,9 +2236,16 @@
                 <p class="xiangqi-check-alert-detail" id="xiangqi-check-detail">帥有危險，快解將！</p>
               </div>
             </div>
-            <div class="xiangqi-play-actions" hidden>
+            <div class="xiangqi-play-actions" id="xiangqi-play-actions">
               <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-resign" hidden>認輸</button>
             </div>
+            <div class="gomoku-coach-tools" id="xiangqi-coach-tools" hidden>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-coach-hint">提示</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-coach-rate">這步好嗎</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-coach-danger">危險</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-xiangqi-coach-why">為什麼</button>
+            </div>
+            <p class="gomoku-coach-tip" id="xiangqi-coach-tip" hidden aria-live="polite"></p>
             <p class="rules-play-hint" id="xiangqi-piece-hint" hidden></p>
           </div>
           <div class="xiangqi-board-wrap">
@@ -2407,10 +2414,17 @@
                 <p class="chess-check-alert-detail" id="chess-check-detail">王有危險，快解將！</p>
               </div>
             </div>
-            <div class="chess-play-actions" hidden>
+            <div class="chess-play-actions" id="chess-play-actions">
               <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-undo" disabled>上一步</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-resign" hidden>認輸</button>
             </div>
+            <div class="gomoku-coach-tools" id="chess-coach-tools" hidden>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-coach-hint">提示</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-coach-rate">這步好嗎</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-coach-danger">危險</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-chess-coach-why">為什麼</button>
+            </div>
+            <p class="gomoku-coach-tip" id="chess-coach-tip" hidden aria-live="polite"></p>
             <p class="rules-play-hint" id="chess-piece-hint" hidden></p>
           </div>
           <div class="chess-board-wrap">

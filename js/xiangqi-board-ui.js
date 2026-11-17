@@ -220,7 +220,20 @@ export function ensureXiangqiBoardSvg(svg, onPointClick) {
  */
 export function renderXiangqiBoardSvg(svg, opts) {
   if (!svg) return;
-  const { board, selected, lastMove, legal, resolveCheck, kingInCheck, over, interactive = true, flipped = false } = opts;
+  const {
+    board,
+    selected,
+    lastMove,
+    legal,
+    resolveCheck,
+    kingInCheck,
+    over,
+    interactive = true,
+    flipped = false,
+    coachHintKeys = null,
+    coachDangerKeys = null,
+    coachFromKeys = null,
+  } = opts;
   const [kr, kc] = kingInCheck || [null, null];
   applyBoardViewFlip(svg, flipped);
   const [sr, sc] = selected || [null, null];
@@ -243,7 +256,10 @@ export function renderXiangqiBoardSvg(svg, opts) {
         "is-resolve-check",
         "is-king-in-check",
         "is-last",
-        "is-empty"
+        "is-empty",
+        "is-coach-hint",
+        "is-coach-danger",
+        "is-coach-from"
       );
 
       if (piece) {
@@ -267,6 +283,10 @@ export function renderXiangqiBoardSvg(svg, opts) {
         g.querySelector(".xiangqi-danger-mark")?.setAttribute("visibility", "hidden");
       }
       if (lr === r && lc === c) g.classList.add("is-last");
+      const key = `${r},${c}`;
+      if (coachHintKeys?.has(key)) g.classList.add("is-coach-hint");
+      if (coachDangerKeys?.has(key)) g.classList.add("is-coach-danger");
+      if (coachFromKeys?.has(key)) g.classList.add("is-coach-from");
 
       g.setAttribute("data-disabled", canPlay ? "0" : "1");
       g.style.pointerEvents = canPlay ? "all" : "none";

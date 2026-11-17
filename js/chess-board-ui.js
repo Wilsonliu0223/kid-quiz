@@ -248,6 +248,9 @@ export function renderChessBoardSvg(svg, opts) {
     over = false,
     interactive = true,
     flipped = false,
+    coachHintKeys = null,
+    coachDangerKeys = null,
+    coachFromKeys = null,
   } = opts;
 
   applyFlip(svg, flipped);
@@ -318,6 +321,32 @@ export function renderChessBoardSvg(svg, opts) {
           dot.setAttribute("r", "0.13");
           overlays.appendChild(dot);
         }
+      }
+
+      const key = `${r},${c}`;
+      if (coachDangerKeys?.has(key)) {
+        const hi = document.createElementNS(SVG_NS, "rect");
+        hi.setAttribute("class", "chess-coach-danger");
+        hi.setAttribute("x", String(c));
+        hi.setAttribute("y", String(r));
+        hi.setAttribute("width", "1");
+        hi.setAttribute("height", "1");
+        overlays.appendChild(hi);
+      } else if (coachHintKeys?.has(key)) {
+        const ring = document.createElementNS(SVG_NS, "circle");
+        ring.setAttribute("class", "chess-coach-hint");
+        ring.setAttribute("cx", String(c + 0.5));
+        ring.setAttribute("cy", String(r + 0.5));
+        ring.setAttribute("r", "0.28");
+        overlays.appendChild(ring);
+      }
+      if (coachFromKeys?.has(key)) {
+        const ring = document.createElementNS(SVG_NS, "circle");
+        ring.setAttribute("class", "chess-coach-from");
+        ring.setAttribute("cx", String(c + 0.5));
+        ring.setAttribute("cy", String(r + 0.5));
+        ring.setAttribute("r", "0.36");
+        overlays.appendChild(ring);
       }
 
       const piece = board[r][c];

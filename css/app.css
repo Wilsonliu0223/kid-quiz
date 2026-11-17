@@ -7201,6 +7201,29 @@ button.gomoku-cell:disabled {
   stroke-width: 0.1;
 }
 
+.xiangqi-point.is-coach-hint .xiangqi-disc {
+  visibility: visible !important;
+  fill: rgba(46, 160, 90, 0.35);
+  stroke: #1b7f4a;
+  stroke-width: 0.12;
+}
+
+.xiangqi-point.is-coach-hint.is-empty .xiangqi-disc {
+  visibility: visible !important;
+}
+
+.xiangqi-point.is-coach-danger .xiangqi-disc {
+  visibility: visible !important;
+  fill: rgba(198, 40, 40, 0.35);
+  stroke: #c62828;
+  stroke-width: 0.12;
+}
+
+.xiangqi-point.is-coach-from .xiangqi-disc {
+  stroke: #1565c0;
+  stroke-width: 0.14;
+}
+
 .xiangqi-win-overlay {
   position: absolute;
   inset: 0;
@@ -7591,6 +7614,25 @@ button.gomoku-cell:disabled {
 
 .chess-last {
   fill: rgba(201, 162, 39, 0.38);
+  pointer-events: none;
+}
+
+.chess-coach-hint {
+  fill: rgba(46, 160, 90, 0.35);
+  stroke: #1b7f4a;
+  stroke-width: 0.06;
+  pointer-events: none;
+}
+
+.chess-coach-danger {
+  fill: rgba(198, 40, 40, 0.32);
+  pointer-events: none;
+}
+
+.chess-coach-from {
+  fill: none;
+  stroke: #1565c0;
+  stroke-width: 0.07;
   pointer-events: none;
 }
 
