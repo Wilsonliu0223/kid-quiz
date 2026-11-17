@@ -86,7 +86,7 @@ import {
   initFlipMath,
   renderMathHomePlayers,
 } from "./flip-math-deck30.js";
-import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v43";
+import { initGomoku, renderGomokuHomePlayers } from "./gomoku.js?v=gomoku-v44";
 import { initXiangqi, renderXiangqiHomePlayers } from "./xiangqi.js?v=xiangqi-v14";
 import { initChess, renderChessHomePlayers } from "./chess.js?v=chess-v7";
 import { initGo, renderGoHomePlayers } from "./go.js?v=go-v9";

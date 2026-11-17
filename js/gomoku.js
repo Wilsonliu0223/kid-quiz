@@ -16,6 +16,11 @@ import {
 } from "./gomoku-ai.js?v=gomoku-v37";
 import { NIRVANA_FULL_LOAD_MIN_STONES } from "./gomoku-ai-timing.js?v=gomoku-v5";
 import {
+  coachSuggestMove,
+  coachRateLastMove,
+  coachDangerPoints,
+} from "./gomoku-coach.js?v=gomoku-v1";
+import {
   resetGomokuBoardZoom,
   rebindGomokuBoardZoom,
   shouldSuppressGomokuCellTap,
@@ -65,6 +70,13 @@ let deps = null;
 /** @type {GomokuState | null} */
 let game = null;
 let localWinUiDismissed = false;
+
+/** 本機教學標記（不影響落子；對電腦模式才顯示） */
+let coachHintKeys = new Set();
+let coachDangerKeys = new Set();
+let coachMarkKeys = new Set();
+let coachWhyText = "";
+let coachTipText = "";
 
 /**
  * @typedef {object} GomokuDeps
@@ -423,6 +435,144 @@ function syncUndoButton() {
   btn.disabled = !canUndo;
 }
 
+function coachKeysFromMoves(moves) {
+  const keys = new Set();
+  for (const m of moves || []) {
+    if (m && Number.isFinite(m[0]) && Number.isFinite(m[1])) {
+      keys.add(`${m[0]},${m[1]}`);
+    }
+  }
+  return keys;
+}
+
+function clearCoachMarks({ keepTip = false } = {}) {
+  coachHintKeys = new Set();
+  coachDangerKeys = new Set();
+  coachMarkKeys = new Set();
+  if (!keepTip) {
+    coachWhyText = "";
+    coachTipText = "";
+  }
+}
+
+function showCoachTip(reason, why) {
+  coachTipText = String(reason || "").trim();
+  if (why != null) coachWhyText = String(why || "").trim();
+  const tip = $("#gomoku-coach-tip");
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText;
+  }
+  // 提示列高度變了，重算最大棋盤（不改最大化邏輯，只重跑 fit）
+  requestAnimationFrame(() => {
+    rebindGomokuBoardZoom("#gomoku-board-viewport", "#gomoku-board-stage");
+  });
+}
+
+function syncCoachTools() {
+  const tools = $("#gomoku-coach-tools");
+  const tip = $("#gomoku-coach-tip");
+  const show = !!game && game.mode === "ai" && !isGomokuReplayRunning();
+  if (tools) tools.hidden = !show;
+  if (!show) {
+    clearCoachMarks();
+    if (tip) {
+      tip.hidden = true;
+      tip.textContent = "";
+    }
+    return;
+  }
+  if (tip) {
+    tip.hidden = !coachTipText;
+    tip.textContent = coachTipText || "";
+  }
+}
+
+function humanPlayerIdForCoach() {
+  if (!game || game.mode !== "ai") return null;
+  return game.humanPlayerId || null;
+}
+
+function runCoachHint() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const side = game.currentPlayerId;
+  const whiteId = otherPlayer(game.blackPlayerId);
+  const result = coachSuggestMove(game.cells, {
+    sideToMove: side,
+    blackId: game.blackPlayerId,
+    whiteId,
+  });
+  clearCoachMarks({ keepTip: true });
+  coachHintKeys = coachKeysFromMoves(result.move ? [result.move] : []);
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachRate() {
+  if (!game || game.mode !== "ai") return;
+  const humanId = humanPlayerIdForCoach();
+  if (!humanId || !game.lastMove) {
+    showCoachTip("還沒有棋步可評", "先下一手，再按「這步好嗎」。");
+    return;
+  }
+  // 只評「人類剛下的一手」：若最後一手是電腦，改評歷史倒數第二手
+  let moverId = game.cells[game.lastMove[0]][game.lastMove[1]];
+  let move = game.lastMove;
+  let board = game.cells;
+  if (moverId !== humanId && (game.moveHistory?.length || 0) >= 2) {
+    const hist = game.moveHistory;
+    const prev = hist[hist.length - 2];
+    const cloned = game.cells.map((row) => [...row]);
+    const last = hist[hist.length - 1];
+    cloned[last.row][last.col] = "";
+    board = cloned;
+    move = [prev.row, prev.col];
+    moverId = prev.player;
+  }
+  if (moverId !== humanId) {
+    showCoachTip("請先下你的一手再評", "這步好嗎是評你下的棋，不是評電腦。");
+    return;
+  }
+  const whiteId = otherPlayer(game.blackPlayerId);
+  const result = coachRateLastMove(board, move, {
+    moverId,
+    blackId: game.blackPlayerId,
+    whiteId,
+  });
+  clearCoachMarks({ keepTip: true });
+  coachMarkKeys = coachKeysFromMoves(result.marks || []);
+  // 推薦／漏擋點若是空位，用提示圈標出
+  for (const m of result.marks || []) {
+    if (!board[m[0]][m[1]]) coachHintKeys.add(`${m[0]},${m[1]}`);
+  }
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachDanger() {
+  if (!game || game.mode !== "ai" || game.over) return;
+  const humanId = humanPlayerIdForCoach() || game.currentPlayerId;
+  const whiteId = otherPlayer(game.blackPlayerId);
+  const result = coachDangerPoints(game.cells, {
+    forPlayer: humanId,
+    blackId: game.blackPlayerId,
+    whiteId,
+  });
+  clearCoachMarks({ keepTip: true });
+  coachDangerKeys = coachKeysFromMoves(result.points || []);
+  showCoachTip(result.reason, result.why);
+  renderBoard();
+}
+
+function runCoachWhy() {
+  if (!game || game.mode !== "ai") return;
+  if (!coachWhyText) {
+    showCoachTip("先按 提示／這步好嗎／危險", "為什麼會說明上一次教學分析的理由。");
+    return;
+  }
+  showCoachTip(coachWhyText, coachWhyText);
+}
+
 /**
  * 悔一子。可連點；對電腦時若悔到電腦回合，稍停才讓 AI 續下，方便一直點上一步。
  */
@@ -451,9 +601,16 @@ function undoLastMove() {
     ? [hist[hist.length - 1].row, hist[hist.length - 1].col]
     : null;
   game.lastAiThinkSec = 0;
+  clearCoachMarks();
+  const tip = $("#gomoku-coach-tip");
+  if (tip) {
+    tip.hidden = true;
+    tip.textContent = "";
+  }
 
   renderBoard();
   syncUndoButton();
+  syncCoachTools();
 
   if (shouldAiMoveNow(game)) {
     const token = aiMoveToken;
@@ -633,6 +790,7 @@ function renderPlayHeader(statusText = "") {
 
   syncNirvanaEngineBadge(diff);
   syncUndoButton();
+  syncCoachTools();
 }
 
 function getCellBtn(row, col) {
@@ -707,6 +865,16 @@ function applyCellState(btn, row, col) {
   }
   if (game.winLine?.has(idx)) {
     btn.classList.add("gomoku-cell-win");
+  }
+  const key = `${row},${col}`;
+  if (!cell && coachHintKeys.has(key) && !btn.classList.contains("gomoku-cell-forbidden")) {
+    btn.classList.add("gomoku-cell-coach-hint");
+  }
+  if (!cell && coachDangerKeys.has(key) && !btn.classList.contains("gomoku-cell-forbidden")) {
+    btn.classList.add("gomoku-cell-coach-danger");
+  }
+  if (cell && coachMarkKeys.has(key)) {
+    btn.classList.add("gomoku-cell-coach-mark");
   }
 }
 
@@ -815,6 +983,12 @@ function finishAfterMove(row, col, prevLastMove) {
 function placeMove(row, col) {
   if (!game || game.over || game.cells[row][col]) return false;
   clearUndoAiResumeTimer();
+  clearCoachMarks();
+  const tip = $("#gomoku-coach-tip");
+  if (tip) {
+    tip.hidden = true;
+    tip.textContent = "";
+  }
 
   const player = game.currentPlayerId;
   if (player === game.blackPlayerId) {
@@ -1059,9 +1233,11 @@ function resetBoardDom() {
   const grid = $("#gomoku-board");
   if (grid) delete grid.dataset.built;
   localWinUiDismissed = false;
+  clearCoachMarks();
   clearGomokuWinCelebration($("#gomoku-board-stage"), $("#gomoku-win-overlay"));
   syncLocalReplayDock();
   deps?.showView("gomokuPlay");
+  syncCoachTools();
   rebindGomokuBoardZoom("#gomoku-board-viewport", "#gomoku-board-stage");
   resetGomokuBoardZoom();
 }
@@ -1204,14 +1380,28 @@ export function bindGomokuEvents() {
       cancelPendingAi();
       game = null;
       localWinUiDismissed = false;
+      clearCoachMarks();
       syncLocalReplayDock();
       syncUndoButton();
+      syncCoachTools();
       terminateAiWorker();
       deps.showView("home");
     }
   });
   $("#btn-gomoku-undo")?.addEventListener("click", () => {
     undoLastMove();
+  });
+  $("#btn-gomoku-coach-hint")?.addEventListener("click", () => {
+    runCoachHint();
+  });
+  $("#btn-gomoku-coach-rate")?.addEventListener("click", () => {
+    runCoachRate();
+  });
+  $("#btn-gomoku-coach-danger")?.addEventListener("click", () => {
+    runCoachDanger();
+  });
+  $("#btn-gomoku-coach-why")?.addEventListener("click", () => {
+    runCoachWhy();
   });
   $("#gomoku-ai-kind-chips")?.addEventListener("click", (e) => {
     const btn = e.target.closest?.("[data-ai-kind]");

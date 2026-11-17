@@ -5408,6 +5408,71 @@ body:has(#view-vision.view-active) #app {
   min-width: 6.5rem;
 }
 
+.gomoku-coach-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 0 0;
+}
+
+.gomoku-coach-tools[hidden] {
+  display: none !important;
+}
+
+.gomoku-coach-tools .btn {
+  min-width: 4.6rem;
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+}
+
+.gomoku-coach-tip {
+  margin: 0;
+  padding: 0 4px;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #5a4632;
+}
+
+.gomoku-coach-tip[hidden] {
+  display: none !important;
+}
+
+.gomoku-cell-coach-hint:not(.gomoku-cell-filled)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 38%;
+  height: 38%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid #1b7f4a;
+  background: rgba(46, 160, 90, 0.22);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.gomoku-cell-coach-danger:not(.gomoku-cell-filled)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 38%;
+  height: 38%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid #c62828;
+  background: rgba(198, 40, 40, 0.2);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.gomoku-cell-coach-mark.gomoku-cell-filled .gomoku-stone {
+  box-shadow: 0 0 0 2px #1565c0, 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
 .gomoku-room-tag {
   margin: 0;
   text-align: center;
