@@ -3118,6 +3118,22 @@ body:has(#view-vision.view-active) #app {
   color: #1a5bb8;
 }
 
+.en-vocab-image-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 10px;
+}
+
+.en-vocab-image {
+  width: min(42vw, 148px);
+  height: min(42vw, 148px);
+  object-fit: contain;
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  background: #fff8e8;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+}
+
 .en-chinese-display {
   text-align: center;
   font-size: clamp(2rem, 10vw, 2.75rem);

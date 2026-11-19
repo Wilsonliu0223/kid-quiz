@@ -17,6 +17,7 @@ const COL_EN = {
   chinese: ["中文", "中文提示", "意思"],
   hint: ["提示", "音標", "拼音", "KK"],
   english: ["英文", "英語", "答案", "單字"],
+  image: ["圖片", "圖片網址", "圖", "image", "img"],
 };
 
 function cellNorm(s) {
@@ -167,12 +168,13 @@ function resolveEnColIdx(headerRow, dataRows) {
     chinese: pickCol(COL_EN.chinese, headerRow),
     hint: pickCol(COL_EN.hint, headerRow),
     english: pickCol(COL_EN.english, headerRow),
+    image: pickCol(COL_EN.image, headerRow),
   };
   if (idx.chinese >= 0 && idx.english >= 0) return idx;
 
   const sample = dataRows[0] ? rowCells(dataRows[0]) : [];
   if (rowLooksLikeEnData(sample)) {
-    return { lesson: 0, type: 1, chinese: 2, hint: 3, english: 4 };
+    return { lesson: 0, type: 1, chinese: 2, hint: 3, english: 4, image: -1 };
   }
   return idx;
 }
@@ -214,12 +216,15 @@ function rowToEnItem(cells, idx) {
   if (!english) return null;
   const { chinese, hint } = enRowChineseAndHint(cells, idx, english);
   if (!chinese) return null;
+  const image =
+    idx.image >= 0 ? String(cells[idx.image] ?? "").trim() : "";
   return {
     lesson: normalizeEnLesson(cells[idx.lesson] ?? ""),
     type: cells[idx.type] ?? "",
     chinese,
     hint,
     english,
+    image,
   };
 }
 

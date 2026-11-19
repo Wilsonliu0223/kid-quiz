@@ -9,13 +9,14 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.76";
+import { CONFIG } from "./config.site.js?v=config-v45.83";
 import {
   loadZhItems,
   loadEnItems,
   uniqueLessons,
   pickRandomQuestions,
 } from "./sheets.js";
+import { resolveEnVocabImage } from "./en-vocab-images.js";
 import {
   englishAnswersMatch,
   speakEnglish,
@@ -1283,6 +1284,22 @@ function startEnQuiz(options = {}) {
   persistQuizDraft();
 }
 
+function renderEnVocabImage(q) {
+  const wrap = $("#en-vocab-image-wrap");
+  const img = $("#en-vocab-image");
+  if (!wrap || !img) return;
+  const src = resolveEnVocabImage(q);
+  if (!src) {
+    wrap.hidden = true;
+    img.removeAttribute("src");
+    img.alt = "";
+    return;
+  }
+  wrap.hidden = false;
+  img.alt = q?.chinese ? `${q.chinese} 的圖` : "單字圖";
+  if (img.getAttribute("src") !== src) img.src = src;
+}
+
 function renderEnQuestion() {
   const q = quiz.questions[quiz.index];
   const mode = quiz.mode || enMode;
@@ -1291,6 +1308,8 @@ function renderEnQuestion() {
   const meaningBlock = $("#en-prompt-meaning");
   const hintEl = $("#en-hint-display");
   const speakBtn = $("#btn-speak-en");
+
+  renderEnVocabImage(q);
 
   let listenPrompt = $("#en-listen-prompt");
   if (mode === "listen") {
@@ -1304,7 +1323,7 @@ function renderEnQuestion() {
     }
     listenPrompt.hidden = false;
     listenPrompt.textContent = "請按下方「播放發音」";
-    $("#en-quiz-hint").textContent = "聽清楚後輸入英文（沒聽到就再按一次）";
+    $("#en-quiz-hint").textContent = "看圖、聽清楚後輸入英文（沒聽到就再按一次）";
   } else {
     if (listenPrompt) listenPrompt.hidden = true;
     meaningBlock.hidden = false;
@@ -1316,7 +1335,7 @@ function renderEnQuestion() {
     } else {
       hintEl.hidden = true;
     }
-    $("#en-quiz-hint").textContent = "看中文與提示，輸入英文單字";
+    $("#en-quiz-hint").textContent = "看中文、圖片與提示，輸入英文單字";
   }
 
   const input = $("#en-answer-input");
