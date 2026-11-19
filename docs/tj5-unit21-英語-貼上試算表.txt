@@ -1,64 +1,64 @@
 課次	類型	中文	提示	英文
-TJ5 Unit21考試	單字	梨	pear	pear
-TJ5 Unit21考試	單字	草莓	strawberry	strawberry
-TJ5 Unit21考試	單字	番茄	tomato	tomato
-TJ5 Unit21考試	單字	桃子	peach	peach
-TJ5 Unit21考試	單字	鋼琴	piano	piano
-TJ5 Unit21考試	單字	吉他	guitar	guitar
-TJ5 Unit21考試	單字	小提琴	violin	violin
-TJ5 Unit21考試	單字	獅子	lion	lion
-TJ5 Unit21考試	單字	老虎	tiger	tiger
-TJ5 Unit21考試	單字	熊	bear	bear
-TJ5 Unit21考試	單字	猴子	monkey	monkey
-TJ5 Unit21考試	單字	老師	teacher	teacher
-TJ5 Unit21考試	單字	學生	student	student
-TJ5 Unit21考試	單字	魔術師	magician	magician
-TJ5 Unit21考試	單字	頭髮	hair	hair
-TJ5 Unit21考試	單字	手臂	arm	arm
-TJ5 Unit21考試	單字	手	hand	hand
-TJ5 Unit21考試	單字	腿	leg	leg
-TJ5 Unit21考試	單字	腳	foot	foot
-TJ5 Unit21考試	單字	長的	long	long
-TJ5 Unit21考試	單字	短的	short	short
-TJ5 Unit21考試	單字	大的	big	big
-TJ5 Unit21考試	單字	小的	small	small
-TJ5 Unit21考試	單字	無聊的	bored	bored
-TJ5 Unit21考試	單字	興奮的	excited	excited
-TJ5 Unit21考試	單字	貧窮的	poor	poor
-TJ5 Unit21考試	單字	有錢的	rich	rich
-TJ5 Unit21考試	單字	晴朗的	sunny	sunny
-TJ5 Unit21考試	單字	多雲的	cloudy	cloudy
-TJ5 Unit21考試	單字	有風的	windy	windy
-TJ5 Unit21考試	單字	下雨的	rainy	rainy
-TJ5 Unit21考試	單字	下雪的	snowy	snowy
-TJ5 Unit21考試	單字	看	see	see
-TJ5 Unit21考試	單字	聽	hear	hear
-TJ5 Unit21考試	單字	聞	smell	smell
-TJ5 Unit21考試	單字	看電視	watch TV	watch TV
-TJ5 Unit21考試	單字	洗澡	take a bath	take a bath
-TJ5 Unit21考試	單字	做功課	do my homework	do my homework
-TJ5 Unit21考試	單字	騎腳踏車	ride a bike	ride a bike
-TJ5 Unit21考試	單字	放風箏	fly a kite	fly a kite
-TJ5 Unit21考試	單字	拍照	take a picture	take a picture
-TJ5 Unit21考試	單字	做蛋糕	make a cake	make a cake
-TJ5 Unit21考試	單字	臥室	bedroom	bedroom
-TJ5 Unit21考試	單字	浴室	bathroom	bathroom
-TJ5 Unit21考試	單字	廚房	kitchen	kitchen
-TJ5 Unit21考試	單字	餐廳	dining room	dining room
-TJ5 Unit21考試	單字	客廳	living room	living room
-TJ5 Unit21考試	單字	在旁邊	next to	next to
-TJ5 Unit21考試	單字	在後面	behind	behind
-TJ5 Unit21考試	單字	在前面	in front of	in front of
-TJ5 Unit21考試	單字	在上面	on	on
-TJ5 Unit21考試	單字	在裡面	in	in
-TJ5 Unit21考試	單字	在下面	under	under
-TJ5 Unit21考試	單字	在附近	near	near
-TJ5 Unit21考試	單字	在中間	between	between
-TJ5 Unit21考試	單字	市場	market	market
-TJ5 Unit21考試	單字	辦公室	office	office
-TJ5 Unit21考試	單字	圖書館	library	library
-TJ5 Unit21考試	單字	超市	supermarket	supermarket
-TJ5 Unit21考試	單字	台灣	Taiwan	Taiwan
-TJ5 Unit21考試	單字	美國	the USA	the USA
-TJ5 Unit21考試	單字	英國	England	England
-TJ5 Unit21考試	單字	中國	China	China
+TJ5 Unit21考試	單字	梨	/pɛr/	pear
+TJ5 Unit21考試	單字	草莓	/ˈstrɔ͵bɛrɪ/	strawberry
+TJ5 Unit21考試	單字	番茄	/təˈmeto/	tomato
+TJ5 Unit21考試	單字	桃子	/pitʃ/	peach
+TJ5 Unit21考試	單字	鋼琴	/pɪˈæno/	piano
+TJ5 Unit21考試	單字	吉他	/ɡɪˈtɑr/	guitar
+TJ5 Unit21考試	單字	小提琴	/͵vaɪəˈlɪn/	violin
+TJ5 Unit21考試	單字	獅子	/ˈlaɪən/	lion
+TJ5 Unit21考試	單字	老虎	/ˈtaɪɡɚ/	tiger
+TJ5 Unit21考試	單字	熊	/bɛr/	bear
+TJ5 Unit21考試	單字	猴子	/ˈmʌŋkɪ/	monkey
+TJ5 Unit21考試	單字	老師	/ˈtitʃɚ/	teacher
+TJ5 Unit21考試	單字	學生	/ˈstudnt/	student
+TJ5 Unit21考試	單字	魔術師	/məˈdʒɪʃən/	magician
+TJ5 Unit21考試	單字	頭髮	/hɛr/	hair
+TJ5 Unit21考試	單字	手臂	/ɑrm/	arm
+TJ5 Unit21考試	單字	手	/hænd/	hand
+TJ5 Unit21考試	單字	腿	/lɛɡ/	leg
+TJ5 Unit21考試	單字	腳	/fʊt/	foot
+TJ5 Unit21考試	單字	長的	/lɔŋ/	long
+TJ5 Unit21考試	單字	短的	/ʃɔrt/	short
+TJ5 Unit21考試	單字	大的	/bɪɡ/	big
+TJ5 Unit21考試	單字	小的	/smɔl/	small
+TJ5 Unit21考試	單字	無聊的	/bord/	bored
+TJ5 Unit21考試	單字	興奮的	/ɪkˈsaɪtɪd/	excited
+TJ5 Unit21考試	單字	貧窮的	/pʊr/	poor
+TJ5 Unit21考試	單字	有錢的	/rɪtʃ/	rich
+TJ5 Unit21考試	單字	晴朗的	/ˈsʌnɪ/	sunny
+TJ5 Unit21考試	單字	多雲的	/ˈklaʊdɪ/	cloudy
+TJ5 Unit21考試	單字	有風的	/ˈwɪndɪ/	windy
+TJ5 Unit21考試	單字	下雨的	/ˈrenɪ/	rainy
+TJ5 Unit21考試	單字	下雪的	/ˈsnoɪ/	snowy
+TJ5 Unit21考試	單字	看	/si/	see
+TJ5 Unit21考試	單字	聽	/hɪr/	hear
+TJ5 Unit21考試	單字	聞	/smɛl/	smell
+TJ5 Unit21考試	單字	看電視	/wɑtʃ ˈti͵vi/	watch TV
+TJ5 Unit21考試	單字	洗澡	/tek ə bæθ/	take a bath
+TJ5 Unit21考試	單字	做功課	/du maɪ ˈhom͵wɝk/	do my homework
+TJ5 Unit21考試	單字	騎腳踏車	/raɪd ə baɪk/	ride a bike
+TJ5 Unit21考試	單字	放風箏	/flaɪ ə kaɪt/	fly a kite
+TJ5 Unit21考試	單字	拍照	/tek ə ˈpɪktʃɚ/	take a picture
+TJ5 Unit21考試	單字	做蛋糕	/mek ə kek/	make a cake
+TJ5 Unit21考試	單字	臥室	/ˈbɛd͵rum/	bedroom
+TJ5 Unit21考試	單字	浴室	/ˈbæθ͵rum/	bathroom
+TJ5 Unit21考試	單字	廚房	/ˈkɪtʃən/	kitchen
+TJ5 Unit21考試	單字	餐廳	/ˈdaɪnɪŋ͵rum/	dining room
+TJ5 Unit21考試	單字	客廳	/ˈlɪvɪŋ͵rum/	living room
+TJ5 Unit21考試	單字	在旁邊	/nɛkst tu/	next to
+TJ5 Unit21考試	單字	在後面	/bəˈhaɪnd/	behind
+TJ5 Unit21考試	單字	在前面	/ɪn frʌnt əv/	in front of
+TJ5 Unit21考試	單字	在上面	/ɑn/	on
+TJ5 Unit21考試	單字	在裡面	/ɪn/	in
+TJ5 Unit21考試	單字	在下面	/ˈʌndɚ/	under
+TJ5 Unit21考試	單字	在附近	/nɪr/	near
+TJ5 Unit21考試	單字	在中間	/bəˈtwin/	between
+TJ5 Unit21考試	單字	市場	/ˈmɑrkɪt/	market
+TJ5 Unit21考試	單字	辦公室	/ˈɔfɪs/	office
+TJ5 Unit21考試	單字	圖書館	/ˈlaɪ͵brɛrɪ/	library
+TJ5 Unit21考試	單字	超市	/ˈsupɚ͵mɑrkɪt/	supermarket
+TJ5 Unit21考試	單字	台灣	/ˈtaɪ͵wɑn/	Taiwan
+TJ5 Unit21考試	單字	美國	/ðə ˌju ɛs ˈe/	the USA
+TJ5 Unit21考試	單字	英國	/ˈɪŋɡlənd/	England
+TJ5 Unit21考試	單字	中國	/ˈtʃaɪnə/	China
