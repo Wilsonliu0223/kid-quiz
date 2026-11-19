@@ -3125,13 +3125,11 @@ body:has(#view-vision.view-active) #app {
 }
 
 .en-vocab-image {
-  width: min(42vw, 148px);
-  height: min(42vw, 148px);
+  width: min(46vw, 168px);
+  height: min(46vw, 168px);
   object-fit: contain;
-  border-radius: 16px;
-  border: 2px solid var(--border);
-  background: #fff8e8;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  border-radius: 14px;
+  background: transparent;
 }
 
 .en-chinese-display {
