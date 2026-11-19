@@ -1,0 +1,9 @@
+課次	類型	中文	提示	英文	圖片
+TJ5 Unit21考試	單字	獅子（複數）	/ˈlaɪənz/	lions	assets/tj5-vocab/lions.jpg
+TJ5 Unit21考試	單字	腳踏車（複數）	/baɪks/	bikes	assets/tj5-vocab/bikes.jpg
+TJ5 Unit21考試	單字	學生（複數）	/ˈstudnts/	students	assets/tj5-vocab/students.jpg
+TJ5 Unit21考試	單字	番茄（複數 +es）	/təˈmetoz/	tomatoes	assets/tj5-vocab/tomatoes.jpg
+TJ5 Unit21考試	單字	桃子（複數 +es）	/ˈpitʃɪz/	peaches	assets/tj5-vocab/peaches.jpg
+TJ5 Unit21考試	單字	草莓（複數 y→ies）	/ˈstrɔ͵bɛrɪz/	strawberries	assets/tj5-vocab/strawberries.jpg
+TJ5 Unit21考試	單字	圖書館（複數 y→ies）	/ˈlaɪ͵brɛrɪz/	libraries	assets/tj5-vocab/libraries.jpg
+TJ5 Unit21考試	單字	腳（複數 feet）	/fit/	feet	assets/tj5-vocab/feet.jpg
