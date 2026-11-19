@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.86";
+import { CONFIG } from "./config.site.js?v=config-v45.87";
 import {
   loadZhItems,
   loadEnItems,
@@ -136,7 +136,11 @@ let zhBank = [];
 let enBank = [];
 let zhLessonFilter = "全部";
 let enLessonFilter = "全部";
+/** @type {"全部"|"單字"|"句子"} */
+let enTypeFilter = "全部";
 let enMode = "meaning";
+/** 句子題：中文提示是否已展開 */
+let enZhHintRevealed = false;
 let quiz = null;
 let handwriting = null;
 /** @type {{ recognized: string, imageDataUrl: string | null } | null} */
@@ -1272,16 +1276,21 @@ function startEnQuiz(options = {}) {
   clearQuizDraft();
   const countSetting = getQuizCountSetting();
   const child = getSelectedChild();
+  const enPool =
+    enTypeFilter === "全部"
+      ? enBank
+      : enBank.filter((it) => String(it.type || "").trim() === enTypeFilter);
   const questions = options.mistakeReview
-    ? questionsFromMistakeBook(enBank, child, "en", countSetting)
-    : pickRandomQuestions(enBank, countSetting, enLessonFilter);
+    ? questionsFromMistakeBook(enPool, child, "en", countSetting)
+    : pickRandomQuestions(enPool, countSetting, enLessonFilter);
 
   if (!questions.length) {
+    const typeLabel = enTypeFilter === "全部" ? "單字／句子" : enTypeFilter;
     const hint = options.mistakeReview
       ? "錯題本裡沒有英語題目。"
       : enLessonFilter !== "全部"
-        ? `目前範圍「${enLessonFilter}」在英語題庫沒有題目，請改選其他考試範圍。`
-        : "請在試算表新增「英語」工作表，並確認「類型」欄為「單字」或「句子」。";
+        ? `目前範圍「${enLessonFilter}」沒有「${typeLabel}」題目，請改選題型或其他考試範圍。`
+        : `目前沒有「${typeLabel}」題目，請確認試算表類型欄，或改選題型。`;
     alert(`沒有英語題目！${hint}`);
     return;
   }
@@ -1330,51 +1339,100 @@ function syncEnSpeechButton(q) {
   btn.disabled = false;
 }
 
+function syncEnZhHintButton(q) {
+  const btn = $("#btn-en-zh-hint");
+  const chineseEl = $("#en-chinese-display");
+  if (!btn || !chineseEl) return;
+  const sentence = isEnSentenceItem(q);
+  if (!sentence) {
+    btn.hidden = true;
+    return;
+  }
+  btn.hidden = false;
+  chineseEl.textContent = q.chinese || "";
+  if (enZhHintRevealed) {
+    chineseEl.hidden = false;
+    btn.textContent = "💡 隱藏中文提示";
+  } else {
+    chineseEl.hidden = true;
+    btn.textContent = "💡 看提示（中文）";
+  }
+}
+
 function renderEnQuestion() {
   const q = quiz.questions[quiz.index];
   const mode = quiz.mode || enMode;
   const sentence = isEnSentenceItem(q);
+  enZhHintRevealed = false;
   $("#quiz-progress-en").textContent = `第 ${quiz.index + 1} / ${quiz.questions.length} 題`;
 
   const meaningBlock = $("#en-prompt-meaning");
   const hintEl = $("#en-hint-display");
   const speakBtn = $("#btn-speak-en");
   const input = $("#en-answer-input");
+  const chineseEl = $("#en-chinese-display");
 
   renderEnVocabImage(q);
   syncEnSpeechButton(q);
 
   let listenPrompt = $("#en-listen-prompt");
   if (mode === "listen") {
-    meaningBlock.hidden = true;
-    speakBtn.hidden = false;
-    speakBtn.textContent = sentence ? "🔊 播放問題" : "🔊 播放發音";
-    if (!listenPrompt) {
-      listenPrompt = document.createElement("p");
-      listenPrompt.id = "en-listen-prompt";
-      listenPrompt.className = "en-listen-prompt";
-      speakBtn.before(listenPrompt);
+    if (sentence) {
+      // 句子：圖＋播問題；中文預設藏，看不懂再點提示
+      meaningBlock.hidden = false;
+      if (chineseEl) chineseEl.hidden = true;
+      if (hintEl) hintEl.hidden = true;
+      speakBtn.hidden = false;
+      speakBtn.textContent = "🔊 播放問題";
+      if (!listenPrompt) {
+        listenPrompt = document.createElement("p");
+        listenPrompt.id = "en-listen-prompt";
+        listenPrompt.className = "en-listen-prompt";
+        speakBtn.before(listenPrompt);
+      }
+      listenPrompt.hidden = false;
+      listenPrompt.textContent = "請按下方「播放問題」";
+      $("#en-quiz-hint").textContent =
+        "聽問題後回答；看不懂可點「看提示（中文）」";
+      if (input) input.placeholder = "輸入英文回答句";
+    } else {
+      meaningBlock.hidden = true;
+      speakBtn.hidden = false;
+      speakBtn.textContent = "🔊 播放發音";
+      if (!listenPrompt) {
+        listenPrompt = document.createElement("p");
+        listenPrompt.id = "en-listen-prompt";
+        listenPrompt.className = "en-listen-prompt";
+        speakBtn.before(listenPrompt);
+      }
+      listenPrompt.hidden = false;
+      listenPrompt.textContent = "請按下方「播放發音」";
+      $("#en-quiz-hint").textContent =
+        "看圖、聽清楚後輸入英文（沒聽到就再按一次）";
+      if (input) input.placeholder = "輸入英文";
     }
-    listenPrompt.hidden = false;
-    listenPrompt.textContent = sentence
-      ? "請按下方「播放問題」"
-      : "請按下方「播放發音」";
-    $("#en-quiz-hint").textContent = sentence
-      ? "聽完問題後打字或按住說話回答（沒聽到就再按一次）"
-      : "看圖、聽清楚後輸入英文（沒聽到就再按一次）";
-    if (input) input.placeholder = sentence ? "輸入英文回答句" : "輸入英文";
+  } else if (sentence) {
+    if (listenPrompt) listenPrompt.hidden = true;
+    meaningBlock.hidden = false;
+    speakBtn.hidden = false;
+    speakBtn.textContent = "🔊 播放問題";
+    if (hintEl) hintEl.hidden = true;
+    if (chineseEl) {
+      chineseEl.textContent = q.chinese || "";
+      chineseEl.hidden = true;
+    }
+    $("#en-quiz-hint").textContent =
+      "看圖聽問題後回答；看不懂再點「看提示（中文）」";
+    if (input) input.placeholder = "輸入英文回答句";
   } else {
     if (listenPrompt) listenPrompt.hidden = true;
     meaningBlock.hidden = false;
-    speakBtn.hidden = !sentence;
-    if (sentence) speakBtn.textContent = "🔊 播放問題";
-    $("#en-chinese-display").textContent = q.chinese;
-    if (sentence) {
-      hintEl.hidden = true;
-      $("#en-quiz-hint").textContent =
-        "看中文與圖片，打字或按住說話回答完整句子（可再按播放問題）";
-      if (input) input.placeholder = "輸入英文回答句";
-    } else if (q.hint) {
+    speakBtn.hidden = true;
+    if (chineseEl) {
+      chineseEl.hidden = false;
+      chineseEl.textContent = q.chinese;
+    }
+    if (q.hint) {
       hintEl.hidden = false;
       hintEl.textContent = `提示：${q.hint}`;
       $("#en-quiz-hint").textContent = "看中文、圖片與提示，輸入英文單字";
@@ -1385,6 +1443,8 @@ function renderEnQuestion() {
       if (input) input.placeholder = "輸入英文";
     }
   }
+
+  syncEnZhHintButton(q);
 
   if (input) {
     input.value = "";
@@ -2406,6 +2466,22 @@ function bindEvents() {
     void playEnglishAudio();
   });
   bindEnSpeechButton();
+  $("#btn-en-zh-hint")?.addEventListener("click", () => {
+    if (!quiz || quiz.subject !== "en") return;
+    const q = quiz.questions[quiz.index];
+    if (!isEnSentenceItem(q)) return;
+    enZhHintRevealed = !enZhHintRevealed;
+    syncEnZhHintButton(q);
+  });
+  document.querySelectorAll("#en-type-chips .chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const t = btn.dataset.enType || "全部";
+      enTypeFilter = t === "單字" || t === "句子" ? t : "全部";
+      document.querySelectorAll("#en-type-chips .chip").forEach((c) => {
+        c.classList.toggle("chip-active", c.dataset.enType === enTypeFilter);
+      });
+    });
+  });
   $("#btn-speak-zh")?.addEventListener("click", (e) => {
     e.preventDefault();
     unlockSpeechFromGesture();

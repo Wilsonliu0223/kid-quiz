@@ -3178,6 +3178,15 @@ body:has(#view-vision.view-active) #app {
   background: #dce8ff;
 }
 
+.btn-en-zh-hint {
+  margin: 4px 0 10px;
+  min-height: 48px;
+  font-size: 1.05rem;
+  border: 2px dashed #90a4ae;
+  color: #455a64;
+  background: #f7fafc;
+}
+
 .btn-en-speech {
   margin-bottom: 10px;
   min-height: 56px;

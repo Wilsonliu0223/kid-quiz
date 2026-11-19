@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v46.07" />
+    <link rel="stylesheet" href="css/app.css?v=app-v46.08" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v20" />
     <script type="importmap">
       {
@@ -1170,6 +1170,16 @@
         </div>
 
         <div class="setup-section">
+          <span class="label">題型</span>
+          <div class="lesson-chips" id="en-type-chips" role="group" aria-label="題型">
+            <button type="button" class="chip chip-active" data-en-type="全部">全部</button>
+            <button type="button" class="chip" data-en-type="單字">單字</button>
+            <button type="button" class="chip" data-en-type="句子">句子</button>
+          </div>
+          <p class="setup-section-sub">單字＝拼單字；句子＝聽問題／看圖回答完整句。</p>
+        </div>
+
+        <div class="setup-section">
           <span class="label">考試範圍</span>
           <p class="setup-section-sub">佳音課次。看中拼英或聽音拼字，和時事聽寫是同一種練習、題庫不同。</p>
           <div class="lesson-books" id="setup-en-exam-books"></div>
@@ -1283,6 +1293,14 @@
             <p class="en-chinese-display" id="en-chinese-display">貓</p>
             <p class="en-hint-display" id="en-hint-display" hidden></p>
           </div>
+          <button
+            type="button"
+            class="btn btn-secondary btn-block btn-en-zh-hint"
+            id="btn-en-zh-hint"
+            hidden
+          >
+            💡 看提示（中文）
+          </button>
           <p class="quiz-hint" id="en-quiz-hint">請輸入英文單字</p>
 
           <input
@@ -3485,7 +3503,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.77").catch((e) => {
+      import("./js/app.js?v=app-v46.78").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
