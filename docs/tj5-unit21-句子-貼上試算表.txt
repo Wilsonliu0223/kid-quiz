@@ -1,0 +1,25 @@
+課次	類型	中文	提示	英文
+TJ5 Unit21考試	句子	你是魔術師嗎？	Are you a magician?	No, I am not a magician. I am a student.
+TJ5 Unit21考試	句子	Nick 要去哪裡？	Where's Nick going?	He is going to the library.
+TJ5 Unit21考試	句子	那裡有很多什麼？	What are there many of?	There are many tomatoes.
+TJ5 Unit21考試	句子	吉他多少錢？	How much is the guitar?	It is thirty dollars.
+TJ5 Unit21考試	句子	Tom 在哪裡？	Where's Tom?	He is in the living room.
+TJ5 Unit21考試	句子	猴子在箱子後面嗎？	Is the monkey behind the box?	No, it is not behind the box. It is in front of the box.
+TJ5 Unit21考試	句子	天氣如何？	How's the weather?	It is snowy.
+TJ5 Unit21考試	句子	Eric 很興奮嗎？	Is Eric excited?	No, he is not excited. He is bored.
+TJ5 Unit21考試	句子	Lucy 在看電視嗎？	Is Lucy watching TV?	Yes, she is watching TV.
+TJ5 Unit21考試	句子	Abby 有什麼？	What does Abby have?	She has a violin.
+TJ5 Unit21考試	句子	Nini 會做什麼？	What can Nini do?	She can ride a bike.
+TJ5 Unit21考試	句子	你在哪裡？	Where are you?	I am in the bedroom.
+TJ5 Unit21考試	句子	你來自哪裡？	Where are you from?	I am from Taiwan.
+TJ5 Unit21考試	句子	你要去哪裡？	Where are you going?	I am going to the market.
+TJ5 Unit21考試	句子	你會騎腳踏車嗎？	Can you ride a bike?	Yes, I can ride a bike.
+TJ5 Unit21考試	句子	你會做什麼？	What can you do?	I can make a cake.
+TJ5 Unit21考試	句子	你在看電視嗎？	Are you watching TV?	Yes, I am watching TV.
+TJ5 Unit21考試	句子	那裡有一顆草莓嗎？	Is there a strawberry?	Yes, there is a strawberry.
+TJ5 Unit21考試	句子	猴子在樹附近嗎？	Are there many monkeys near the tree?	Yes, there are many monkeys near the tree.
+TJ5 Unit21考試	句子	天氣晴朗嗎？	Is it sunny?	Yes, it is sunny.
+TJ5 Unit21考試	句子	他有一隻狗嗎？（用 has）	Does he have a dog?	Yes, he has a dog.
+TJ5 Unit21考試	句子	你會做蛋糕嗎？	Can you make a cake?	Yes, I can make a cake.
+TJ5 Unit21考試	句子	他在客廳嗎？	Is he in the living room?	Yes, he is in the living room.
+TJ5 Unit21考試	句子	那是圖書館嗎？	Is she going to the library?	Yes, she is going to the library.

@@ -3178,6 +3178,23 @@ body:has(#view-vision.view-active) #app {
   background: #dce8ff;
 }
 
+.btn-en-speech {
+  margin-bottom: 10px;
+  min-height: 56px;
+  font-size: 1.15rem;
+  border: 2px solid #c45c26;
+  color: #8a3a12;
+  background: #fff4ec;
+  touch-action: none;
+  user-select: none;
+}
+
+.btn-en-speech.is-listening {
+  background: #ffd7bf;
+  border-color: #e85d2a;
+  color: #6b2a0c;
+}
+
 #view-quiz-en .en-listen-prompt {
   text-align: center;
   font-size: 1.05rem;

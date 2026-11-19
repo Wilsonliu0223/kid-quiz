@@ -84,8 +84,31 @@ function siteAssetUrl(relPath) {
   }
 }
 
+const KEYS_BY_LENGTH = Object.keys(FILE_BY_ENGLISH).sort(
+  (a, b) => b.length - a.length,
+);
+
+function findVocabFileInText(...parts) {
+  const hay = parts
+    .map((p) => normalizeEnglishKey(p))
+    .filter(Boolean)
+    .join(" ");
+  if (!hay) return null;
+  for (const key of KEYS_BY_LENGTH) {
+    if (hay === key || hay.includes(` ${key} `) || hay.startsWith(`${key} `) || hay.endsWith(` ${key}`) || hay.includes(key)) {
+      // 避免短鍵誤中：單字鍵用詞界；片語已較長可直接 includes
+      if (!key.includes(" ")) {
+        const re = new RegExp(`(?:^|[^a-z])${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:[^a-z]|$)`);
+        if (!re.test(hay)) continue;
+      }
+      return FILE_BY_ENGLISH[key];
+    }
+  }
+  return null;
+}
+
 /**
- * @param {{ english?: string, image?: string } | null | undefined} item
+ * @param {{ english?: string, hint?: string, chinese?: string, image?: string, type?: string } | null | undefined} item
  * @returns {string | null}
  */
 export function resolveEnVocabImage(item) {
@@ -95,7 +118,9 @@ export function resolveEnVocabImage(item) {
     if (/^https?:\/\//i.test(fromSheet) || fromSheet.startsWith("data:")) return fromSheet;
     return siteAssetUrl(fromSheet);
   }
-  const file = FILE_BY_ENGLISH[normalizeEnglishKey(item.english)];
-  if (!file) return null;
-  return siteAssetUrl(`assets/tj5-vocab/${file}`);
+  const exact = FILE_BY_ENGLISH[normalizeEnglishKey(item.english)];
+  if (exact) return siteAssetUrl(`assets/tj5-vocab/${exact}`);
+  const fromText = findVocabFileInText(item.english, item.hint);
+  if (!fromText) return null;
+  return siteAssetUrl(`assets/tj5-vocab/${fromText}`);
 }

@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.84";
+import { CONFIG } from "./config.site.js?v=config-v45.85";
 import {
   loadZhItems,
   loadEnItems,
@@ -17,6 +17,10 @@ import {
   pickRandomQuestions,
 } from "./sheets.js";
 import { resolveEnVocabImage } from "./en-vocab-images.js";
+import {
+  isEnSpeechInputSupported,
+  startEnSpeechInput,
+} from "./en-speech-input.js";
 import {
   englishAnswersMatch,
   speakEnglish,
@@ -1219,12 +1223,24 @@ function setEnMode(mode) {
   }
 }
 
+function isEnSentenceItem(q) {
+  return String(q?.type || "").trim() === "句子";
+}
+
+function enSpeakText(q) {
+  if (!q) return "";
+  if (isEnSentenceItem(q)) return String(q.hint || "").trim();
+  return String(q.english || "").trim();
+}
+
 async function playEnglishAudio() {
   const q = quiz?.questions[quiz.index];
-  if (!q?.english) return;
+  const text = enSpeakText(q);
+  if (!text) return;
 
   const btn = $("#btn-speak-en");
   const hint = $("#en-quiz-hint");
+  const sentence = isEnSentenceItem(q);
   // 必須在點擊同步路徑解鎖，否則手機 await 後無法播音
   unlockSpeechFromGesture();
 
@@ -1233,16 +1249,20 @@ async function playEnglishAudio() {
     btn.textContent = "播放中…";
   }
 
-  const ok = await speakEnglish(q.english, { fast: true, speed: 1 });
+  const ok = await speakEnglish(text, { fast: true, speed: 1 });
 
   if (btn) {
     btn.disabled = false;
-    btn.textContent = "🔊 播放發音";
+    btn.textContent = sentence ? "🔊 播放問題" : "🔊 播放發音";
   }
   if (!ok && hint) {
-    hint.textContent = "無法播音：請確認有網路並調大音量，或改「看中拼英」";
+    hint.textContent = sentence
+      ? "無法播音：請確認有網路並調大音量"
+      : "無法播音：請確認有網路並調大音量，或改「看中拼英」";
   } else if (hint && quiz?.mode === "listen") {
-    hint.textContent = "聽清楚後輸入英文（沒聽到就再按一次）";
+    hint.textContent = sentence
+      ? "聽完問題後打字或按住說話回答（沒聽到就再按一次）"
+      : "聽清楚後輸入英文（沒聽到就再按一次）";
   }
 }
 
@@ -1261,7 +1281,7 @@ function startEnQuiz(options = {}) {
       ? "錯題本裡沒有英語題目。"
       : enLessonFilter !== "全部"
         ? `目前範圍「${enLessonFilter}」在英語題庫沒有題目，請改選其他考試範圍。`
-        : "請在試算表新增「英語」工作表，並確認「類型」欄為「單字」。";
+        : "請在試算表新增「英語」工作表，並確認「類型」欄為「單字」或「句子」。";
     alert(`沒有英語題目！${hint}`);
     return;
   }
@@ -1300,21 +1320,35 @@ function renderEnVocabImage(q) {
   if (img.getAttribute("src") !== src) img.src = src;
 }
 
+function syncEnSpeechButton(q) {
+  const btn = $("#btn-en-speech");
+  if (!btn) return;
+  const show = isEnSentenceItem(q) && isEnSpeechInputSupported();
+  btn.hidden = !show;
+  btn.classList.remove("is-listening");
+  btn.textContent = "🎤 按住說話回答";
+  btn.disabled = false;
+}
+
 function renderEnQuestion() {
   const q = quiz.questions[quiz.index];
   const mode = quiz.mode || enMode;
+  const sentence = isEnSentenceItem(q);
   $("#quiz-progress-en").textContent = `第 ${quiz.index + 1} / ${quiz.questions.length} 題`;
 
   const meaningBlock = $("#en-prompt-meaning");
   const hintEl = $("#en-hint-display");
   const speakBtn = $("#btn-speak-en");
+  const input = $("#en-answer-input");
 
   renderEnVocabImage(q);
+  syncEnSpeechButton(q);
 
   let listenPrompt = $("#en-listen-prompt");
   if (mode === "listen") {
     meaningBlock.hidden = true;
     speakBtn.hidden = false;
+    speakBtn.textContent = sentence ? "🔊 播放問題" : "🔊 播放發音";
     if (!listenPrompt) {
       listenPrompt = document.createElement("p");
       listenPrompt.id = "en-listen-prompt";
@@ -1322,26 +1356,43 @@ function renderEnQuestion() {
       speakBtn.before(listenPrompt);
     }
     listenPrompt.hidden = false;
-    listenPrompt.textContent = "請按下方「播放發音」";
-    $("#en-quiz-hint").textContent = "看圖、聽清楚後輸入英文（沒聽到就再按一次）";
+    listenPrompt.textContent = sentence
+      ? "請按下方「播放問題」"
+      : "請按下方「播放發音」";
+    $("#en-quiz-hint").textContent = sentence
+      ? "聽完問題後打字或按住說話回答（沒聽到就再按一次）"
+      : "看圖、聽清楚後輸入英文（沒聽到就再按一次）";
+    if (input) input.placeholder = sentence ? "輸入英文回答句" : "輸入英文";
   } else {
     if (listenPrompt) listenPrompt.hidden = true;
     meaningBlock.hidden = false;
-    speakBtn.hidden = true;
+    speakBtn.hidden = !sentence;
+    if (sentence) speakBtn.textContent = "🔊 播放問題";
     $("#en-chinese-display").textContent = q.chinese;
-    if (q.hint) {
+    if (sentence) {
+      hintEl.hidden = true;
+      $("#en-quiz-hint").textContent =
+        "看中文與圖片，打字或按住說話回答完整句子（可再按播放問題）";
+      if (input) input.placeholder = "輸入英文回答句";
+    } else if (q.hint) {
       hintEl.hidden = false;
       hintEl.textContent = `提示：${q.hint}`;
+      $("#en-quiz-hint").textContent = "看中文、圖片與提示，輸入英文單字";
+      if (input) input.placeholder = "輸入英文";
     } else {
       hintEl.hidden = true;
+      $("#en-quiz-hint").textContent = "看中文、圖片與提示，輸入英文單字";
+      if (input) input.placeholder = "輸入英文";
     }
-    $("#en-quiz-hint").textContent = "看中文、圖片與提示，輸入英文單字";
   }
 
-  const input = $("#en-answer-input");
-  input.value = "";
-  input.focus();
-  if (mode === "listen" && q?.english) prefetchEnglishAudio(q.english);
+  if (input) {
+    input.value = "";
+    input.focus();
+  }
+  const prefetch = enSpeakText(q);
+  if (mode === "listen" && prefetch) prefetchEnglishAudio(prefetch);
+  else if (sentence && prefetch) prefetchEnglishAudio(prefetch);
 }
 
 function showFeedback(type, text, actions = [], options = {}) {
@@ -1794,7 +1845,7 @@ function submitEnAnswer() {
   const typed = $("#en-answer-input").value;
 
   if (!typed.trim()) {
-    showFeedback("warn", "請先輸入英文", [
+    showFeedback("warn", isEnSentenceItem(q) ? "請先回答（打字或說話）" : "請先輸入英文", [
       { label: "好的", primary: true, onClick: () => {} },
     ]);
     return;
@@ -1809,6 +1860,74 @@ function submitEnAnswer() {
   }
 
   showEnWrongAnswer(q, typed.trim());
+}
+
+/** @type {{ stop: () => Promise<string>, abort: () => void } | null} */
+let enSpeechSession = null;
+
+async function endEnSpeechCapture() {
+  const btn = $("#btn-en-speech");
+  const session = enSpeechSession;
+  enSpeechSession = null;
+  if (!session) return;
+  const text = await session.stop();
+  if (btn) {
+    btn.classList.remove("is-listening");
+    btn.textContent = "🎤 按住說話回答";
+    btn.disabled = false;
+  }
+  const input = $("#en-answer-input");
+  if (text && input) {
+    input.value = text;
+    submitEnAnswer();
+  } else if (!text) {
+    showFeedback("warn", "沒聽清楚，請再按住說一次或改打字", [
+      { label: "好的", primary: true, onClick: () => {} },
+    ]);
+  }
+}
+
+function bindEnSpeechButton() {
+  const btn = $("#btn-en-speech");
+  if (!btn || btn.dataset.bound === "1") return;
+  btn.dataset.bound = "1";
+
+  const begin = (e) => {
+    e.preventDefault();
+    if (!quiz || quiz.subject !== "en") return;
+    const q = quiz.questions[quiz.index];
+    if (!isEnSentenceItem(q) || !isEnSpeechInputSupported()) return;
+    if (enSpeechSession) return;
+    unlockSpeechFromGesture();
+    const input = $("#en-answer-input");
+    if (input) input.value = "";
+    enSpeechSession = startEnSpeechInput({
+      lang: "en-US",
+      onPartial: (t) => {
+        if (input) input.value = t;
+      },
+    });
+    if (!enSpeechSession) {
+      showFeedback("warn", "這個瀏覽器不支援語音作答，請改打字", [
+        { label: "好的", primary: true, onClick: () => {} },
+      ]);
+      return;
+    }
+    btn.classList.add("is-listening");
+    btn.textContent = "聆聽中…鬆開結束";
+  };
+
+  const finish = (e) => {
+    e.preventDefault();
+    void endEnSpeechCapture();
+  };
+
+  btn.addEventListener("pointerdown", begin);
+  btn.addEventListener("pointerup", finish);
+  btn.addEventListener("pointercancel", finish);
+  btn.addEventListener("pointerleave", (e) => {
+    if (enSpeechSession && e.buttons === 0) void endEnSpeechCapture();
+  });
 }
 
 async function submitAnswer() {
@@ -2286,6 +2405,7 @@ function bindEvents() {
     unlockSpeechFromGesture();
     void playEnglishAudio();
   });
+  bindEnSpeechButton();
   $("#btn-speak-zh")?.addEventListener("click", (e) => {
     e.preventDefault();
     unlockSpeechFromGesture();
