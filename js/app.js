@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.87";
+import { CONFIG } from "./config.site.js?v=config-v45.88";
 import {
   loadZhItems,
   loadEnItems,
@@ -1346,9 +1346,11 @@ function syncEnZhHintButton(q) {
   const sentence = isEnSentenceItem(q);
   if (!sentence) {
     btn.hidden = true;
+    chineseEl.classList.remove("is-sentence-tip");
     return;
   }
   btn.hidden = false;
+  chineseEl.classList.add("is-sentence-tip");
   chineseEl.textContent = q.chinese || "";
   if (enZhHintRevealed) {
     chineseEl.hidden = false;
@@ -1371,64 +1373,61 @@ function renderEnQuestion() {
   const speakBtn = $("#btn-speak-en");
   const input = $("#en-answer-input");
   const chineseEl = $("#en-chinese-display");
+  const questionEl = $("#en-question-display");
 
   renderEnVocabImage(q);
   syncEnSpeechButton(q);
 
   let listenPrompt = $("#en-listen-prompt");
-  if (mode === "listen") {
-    if (sentence) {
-      // 句子：圖＋播問題；中文預設藏，看不懂再點提示
-      meaningBlock.hidden = false;
-      if (chineseEl) chineseEl.hidden = true;
-      if (hintEl) hintEl.hidden = true;
-      speakBtn.hidden = false;
-      speakBtn.textContent = "🔊 播放問題";
-      if (!listenPrompt) {
-        listenPrompt = document.createElement("p");
-        listenPrompt.id = "en-listen-prompt";
-        listenPrompt.className = "en-listen-prompt";
-        speakBtn.before(listenPrompt);
-      }
-      listenPrompt.hidden = false;
-      listenPrompt.textContent = "請按下方「播放問題」";
-      $("#en-quiz-hint").textContent =
-        "聽問題後回答；看不懂可點「看提示（中文）」";
-      if (input) input.placeholder = "輸入英文回答句";
-    } else {
-      meaningBlock.hidden = true;
-      speakBtn.hidden = false;
-      speakBtn.textContent = "🔊 播放發音";
-      if (!listenPrompt) {
-        listenPrompt = document.createElement("p");
-        listenPrompt.id = "en-listen-prompt";
-        listenPrompt.className = "en-listen-prompt";
-        speakBtn.before(listenPrompt);
-      }
-      listenPrompt.hidden = false;
-      listenPrompt.textContent = "請按下方「播放發音」";
-      $("#en-quiz-hint").textContent =
-        "看圖、聽清楚後輸入英文（沒聽到就再按一次）";
-      if (input) input.placeholder = "輸入英文";
-    }
-  } else if (sentence) {
+  if (sentence) {
+    // 句子：提示欄＝出題英文；中文欄＝可點開的提示；英文欄＝答案
     if (listenPrompt) listenPrompt.hidden = true;
     meaningBlock.hidden = false;
-    speakBtn.hidden = false;
-    speakBtn.textContent = "🔊 播放問題";
     if (hintEl) hintEl.hidden = true;
+    if (questionEl) {
+      questionEl.hidden = false;
+      questionEl.textContent = String(q.hint || "").trim() || "（缺提示欄問題）";
+    }
     if (chineseEl) {
       chineseEl.textContent = q.chinese || "";
       chineseEl.hidden = true;
     }
+    speakBtn.hidden = false;
+    speakBtn.textContent = "🔊 播放問題";
     $("#en-quiz-hint").textContent =
-      "看圖聽問題後回答；看不懂再點「看提示（中文）」";
+      mode === "listen"
+        ? "依上方英文問題回答；可再按播放；看不懂點中文提示"
+        : "看上方英文問題與圖片回答；看不懂點中文提示";
     if (input) input.placeholder = "輸入英文回答句";
+  } else if (mode === "listen") {
+    if (questionEl) {
+      questionEl.hidden = true;
+      questionEl.textContent = "";
+    }
+    meaningBlock.hidden = true;
+    speakBtn.hidden = false;
+    speakBtn.textContent = "🔊 播放發音";
+    if (!listenPrompt) {
+      listenPrompt = document.createElement("p");
+      listenPrompt.id = "en-listen-prompt";
+      listenPrompt.className = "en-listen-prompt";
+      speakBtn.before(listenPrompt);
+    }
+    listenPrompt.hidden = false;
+    listenPrompt.textContent = "請按下方「播放發音」";
+    $("#en-quiz-hint").textContent =
+      "看圖、聽清楚後輸入英文（沒聽到就再按一次）";
+    if (input) input.placeholder = "輸入英文";
   } else {
     if (listenPrompt) listenPrompt.hidden = true;
+    if (questionEl) {
+      questionEl.hidden = true;
+      questionEl.textContent = "";
+    }
     meaningBlock.hidden = false;
     speakBtn.hidden = true;
     if (chineseEl) {
+      chineseEl.classList.remove("is-sentence-tip");
       chineseEl.hidden = false;
       chineseEl.textContent = q.chinese;
     }
@@ -1451,8 +1450,7 @@ function renderEnQuestion() {
     input.focus();
   }
   const prefetch = enSpeakText(q);
-  if (mode === "listen" && prefetch) prefetchEnglishAudio(prefetch);
-  else if (sentence && prefetch) prefetchEnglishAudio(prefetch);
+  if ((mode === "listen" || sentence) && prefetch) prefetchEnglishAudio(prefetch);
 }
 
 function showFeedback(type, text, actions = [], options = {}) {

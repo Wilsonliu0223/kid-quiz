@@ -15,7 +15,7 @@
     <title>家裡練習</title>
     <script>
       (function () {
-        var V = "40.03";
+        var V = "40.04";
         var key = "kid-quiz-cache-ver";
         var prev = localStorage.getItem(key);
         localStorage.setItem(key, V);
@@ -33,7 +33,7 @@
       })();
     </script>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="css/app.css?v=app-v46.08" />
+    <link rel="stylesheet" href="css/app.css?v=app-v46.09" />
     <link rel="stylesheet" href="css/anqi.css?v=anqi-v20" />
     <script type="importmap">
       {
@@ -1176,7 +1176,7 @@
             <button type="button" class="chip" data-en-type="單字">單字</button>
             <button type="button" class="chip" data-en-type="句子">句子</button>
           </div>
-          <p class="setup-section-sub">單字＝拼單字；句子＝聽問題／看圖回答完整句。</p>
+          <p class="setup-section-sub">單字＝拼單字；句子＝用「提示」欄英文出題，中文欄當提示，英文欄當答案。</p>
         </div>
 
         <div class="setup-section">
@@ -1290,6 +1290,7 @@
             <img class="en-vocab-image" id="en-vocab-image" alt="" decoding="async" />
           </div>
           <div id="en-prompt-meaning">
+            <p class="en-question-display" id="en-question-display" hidden></p>
             <p class="en-chinese-display" id="en-chinese-display">貓</p>
             <p class="en-hint-display" id="en-hint-display" hidden></p>
           </div>
@@ -3503,7 +3504,7 @@
         el.hidden = false;
         el.textContent = msg;
       };
-      import("./js/app.js?v=app-v46.78").catch((e) => {
+      import("./js/app.js?v=app-v46.79").catch((e) => {
         console.error(e);
         showLoadError(
           `程式載入失敗：${e.message || e}。請關閉分頁重開；若仍無效請到瀏覽器設定清除此網站快取。`,
