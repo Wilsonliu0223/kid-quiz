@@ -23,6 +23,14 @@ export const EN_EXAM_BOOKS = [
     sortKey: (lesson) => lesson,
     chipLabel: (lesson) => String(lesson),
   },
+  {
+    id: "tj5",
+    label: "TJ5",
+    hint: "五年級",
+    match: (lesson) => /^TJ5(\s|$)/i.test(lesson),
+    sortKey: (lesson) => lesson,
+    chipLabel: (lesson) => String(lesson),
+  },
 ];
 
 /** @param {string} lesson */
