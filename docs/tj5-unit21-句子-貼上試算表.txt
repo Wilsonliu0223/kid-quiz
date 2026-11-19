@@ -10,20 +10,20 @@ TJ5 Unit21考試	句子	那裡有一顆草莓嗎？	Is there a strawberry?	Yes, 
 TJ5 Unit21考試	句子	那裡有兩顆草莓嗎？	Are there two strawberries?	Yes, there are two strawberries.	assets/tj5-vocab/strawberry.jpg
 TJ5 Unit21考試	句子	那裡有很多草莓嗎？	Are there many strawberries?	Yes, there are many strawberries.	assets/tj5-vocab/strawberry.jpg
 TJ5 Unit21考試	句子	那裡有很多番茄嗎？	Are there many tomatoes?	Yes, there are many tomatoes.	assets/tj5-vocab/tomato.jpg
-TJ5 Unit21考試	句子	樹後面有一隻猴子嗎？	Is there a monkey behind the tree?	Yes, there is a monkey behind the tree.	assets/tj5-vocab/behind.jpg
-TJ5 Unit21考試	句子	樹前面有兩隻猴子嗎？	Are there two monkeys in front of the tree?	Yes, there are two monkeys in front of the tree.	assets/tj5-vocab/in-front-of.jpg
-TJ5 Unit21考試	句子	樹附近有很多猴子嗎？	Are there many monkeys near the tree?	Yes, there are many monkeys near the tree.	assets/tj5-vocab/near.jpg
-TJ5 Unit21考試	句子	猴子在箱子後面嗎？	Is the monkey behind the box?	No, it is not behind the box. It is in front of the box.	assets/tj5-vocab/in-front-of.jpg
+TJ5 Unit21考試	句子	樹後面有一隻猴子嗎？	Is there a monkey behind the tree?	Yes, there is a monkey behind the tree.	assets/tj5-vocab/monkey.jpg
+TJ5 Unit21考試	句子	樹前面有兩隻猴子嗎？	Are there two monkeys in front of the tree?	Yes, there are two monkeys in front of the tree.	assets/tj5-vocab/monkey.jpg
+TJ5 Unit21考試	句子	樹附近有很多猴子嗎？	Are there many monkeys near the tree?	Yes, there are many monkeys near the tree.	assets/tj5-vocab/monkey.jpg
+TJ5 Unit21考試	句子	猴子在箱子後面嗎？	Is the monkey behind the box?	No, it is not behind the box. It is in front of the box.	assets/tj5-vocab/monkey.jpg
 TJ5 Unit21考試	句子	狗在箱子旁邊嗎？	Is the dog next to the box?	Yes, it is next to the box.	assets/tj5-vocab/next-to.jpg
 TJ5 Unit21考試	句子	狗在箱子上面嗎？	Is the dog on the box?	Yes, it is on the box.	assets/tj5-vocab/on.jpg
 TJ5 Unit21考試	句子	狗在箱子裡面嗎？	Is the dog in the box?	Yes, it is in the box.	assets/tj5-vocab/in.jpg
 TJ5 Unit21考試	句子	狗在箱子下面嗎？	Is the dog under the box?	Yes, it is under the box.	assets/tj5-vocab/under.jpg
 TJ5 Unit21考試	句子	狗在兩箱中間嗎？	Is the dog between the boxes?	Yes, it is between the boxes.	assets/tj5-vocab/between.jpg
 TJ5 Unit21考試	句子	這個多少錢？	How much is it?	It is thirty dollars.	assets/tj5-vocab/dollars.jpg
-TJ5 Unit21考試	句子	吉他多少錢？	How much is the guitar?	It is thirty dollars.	assets/tj5-vocab/dollars.jpg
+TJ5 Unit21考試	句子	吉他多少錢？	How much is the guitar?	It is thirty dollars.	assets/tj5-vocab/guitar.jpg
 TJ5 Unit21考試	句子	你是魔術師嗎？	Are you a magician?	No, I am not a magician. I am a student.	assets/tj5-vocab/magician.jpg
 TJ5 Unit21考試	句子	你是學生嗎？	Are you a student?	Yes, I am a student.	assets/tj5-vocab/student.jpg
-TJ5 Unit21考試	句子	你們是魔術師嗎？	Are you magicians?	No, we are not magicians. We are students.	assets/tj5-vocab/student.jpg
+TJ5 Unit21考試	句子	你們是魔術師嗎？	Are you magicians?	No, we are not magicians. We are students.	assets/tj5-vocab/magician.jpg
 TJ5 Unit21考試	句子	你在看電視嗎？	Are you watching TV?	Yes, I am watching TV.	assets/tj5-vocab/watch-tv.jpg
 TJ5 Unit21考試	句子	你們在看電視嗎？	Are you watching TV?	Yes, we are watching TV.	assets/tj5-vocab/watch-tv.jpg
 TJ5 Unit21考試	句子	Lucy 在看電視嗎？	Is Lucy watching TV?	Yes, she is watching TV.	assets/tj5-vocab/watch-tv.jpg
@@ -55,10 +55,10 @@ TJ5 Unit21考試	句子	Eric 很興奮嗎？	Is Eric excited?	No, he is not exci
 TJ5 Unit21考試	句子	他很無聊嗎？	Is he bored?	Yes, he is bored.	assets/tj5-vocab/bored.jpg
 TJ5 Unit21考試	句子	她很有錢嗎？	Is she rich?	Yes, she is rich.	assets/tj5-vocab/rich.jpg
 TJ5 Unit21考試	句子	他很窮嗎？	Is he poor?	Yes, he is poor.	assets/tj5-vocab/poor.jpg
-TJ5 Unit21考試	句子	手臂很長嗎？	Is the arm long?	Yes, it is long.	assets/tj5-vocab/long.jpg
-TJ5 Unit21考試	句子	腳很短嗎？	Is the foot short?	Yes, it is short.	assets/tj5-vocab/short.jpg
-TJ5 Unit21考試	句子	獅子很大嗎？	Is the lion big?	Yes, it is big.	assets/tj5-vocab/big.jpg
-TJ5 Unit21考試	句子	猴子很小嗎？	Is the monkey small?	Yes, it is small.	assets/tj5-vocab/small.jpg
+TJ5 Unit21考試	句子	手臂很長嗎？	Is the arm long?	Yes, it is long.	assets/tj5-vocab/arm.jpg
+TJ5 Unit21考試	句子	腳很短嗎？	Is the foot short?	Yes, it is short.	assets/tj5-vocab/foot.jpg
+TJ5 Unit21考試	句子	獅子很大嗎？	Is the lion big?	Yes, it is big.	assets/tj5-vocab/lion.jpg
+TJ5 Unit21考試	句子	猴子很小嗎？	Is the monkey small?	Yes, it is small.	assets/tj5-vocab/monkey.jpg
 TJ5 Unit21考試	句子	他在洗澡嗎？	Is he taking a bath?	Yes, he is taking a bath.	assets/tj5-vocab/take-a-bath.jpg
 TJ5 Unit21考試	句子	她在做功課嗎？	Is she doing her homework?	Yes, she is doing her homework.	assets/tj5-vocab/do-my-homework.jpg
 TJ5 Unit21考試	句子	他在騎腳踏車嗎？	Is he riding a bike?	Yes, he is riding a bike.	assets/tj5-vocab/ride-a-bike.jpg
@@ -68,7 +68,7 @@ TJ5 Unit21考試	句子	她在做蛋糕嗎？	Is she making a cake?	Yes, she is 
 TJ5 Unit21考試	句子	你看得到嗎？	Can you see?	Yes, I can see.	assets/tj5-vocab/see.jpg
 TJ5 Unit21考試	句子	你聽得到嗎？	Can you hear?	Yes, I can hear.	assets/tj5-vocab/hear.jpg
 TJ5 Unit21考試	句子	你聞得到嗎？	Can you smell?	Yes, I can smell.	assets/tj5-vocab/smell.jpg
-TJ5 Unit21考試	句子	老師在哪裡？	Where's the teacher?	He is in the library.	assets/tj5-vocab/library.jpg
+TJ5 Unit21考試	句子	老師在哪裡？	Where's the teacher?	He is in the library.	assets/tj5-vocab/teacher.jpg
 TJ5 Unit21考試	句子	那裡有一架鋼琴嗎？	Is there a piano?	Yes, there is a piano.	assets/tj5-vocab/piano.jpg
 TJ5 Unit21考試	句子	那裡有很多熊嗎？	Are there many bears?	Yes, there are many bears.	assets/tj5-vocab/bear.jpg
 TJ5 Unit21考試	句子	那裡有老虎嗎？	Is there a tiger?	Yes, there is a tiger.	assets/tj5-vocab/tiger.jpg

@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.89";
+import { CONFIG } from "./config.site.js?v=config-v45.90";
 import {
   loadZhItems,
   loadEnItems,

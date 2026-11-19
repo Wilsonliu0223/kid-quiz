@@ -1,5 +1,5 @@
 /**
- * 英語單字／句子類似圖：試算表「圖片」欄優先；否則依英文關鍵詞對站內圖。
+ * 英語單字／句子類似圖：試算表「圖片」欄優先；句子依「題目主體」對圖。
  */
 
 const FILE_BY_ENGLISH = {
@@ -71,81 +71,108 @@ const FILE_BY_ENGLISH = {
   dollar: "dollars.jpg",
 };
 
-/** 句子答句 → 圖檔（確保 73 題都有圖） */
-const IMAGE_BY_ANSWER = {
-  "It is sunny.": "sunny.jpg",
-  "It is cloudy.": "cloudy.jpg",
-  "It is windy.": "windy.jpg",
-  "It is rainy.": "rainy.jpg",
-  "It is snowy.": "snowy.jpg",
-  "Yes, it is sunny.": "sunny.jpg",
-  "Yes, it is rainy.": "rainy.jpg",
-  "Yes, there is a strawberry.": "strawberry.jpg",
-  "Yes, there are two strawberries.": "strawberry.jpg",
-  "Yes, there are many strawberries.": "strawberry.jpg",
-  "Yes, there are many tomatoes.": "tomato.jpg",
-  "Yes, there is a monkey behind the tree.": "behind.jpg",
-  "Yes, there are two monkeys in front of the tree.": "in-front-of.jpg",
-  "Yes, there are many monkeys near the tree.": "near.jpg",
-  "No, it is not behind the box. It is in front of the box.": "in-front-of.jpg",
-  "Yes, it is next to the box.": "next-to.jpg",
-  "Yes, it is on the box.": "on.jpg",
-  "Yes, it is in the box.": "in.jpg",
-  "Yes, it is under the box.": "under.jpg",
-  "Yes, it is between the boxes.": "between.jpg",
-  "It is thirty dollars.": "dollars.jpg",
-  "No, I am not a magician. I am a student.": "magician.jpg",
-  "Yes, I am a student.": "student.jpg",
-  "No, we are not magicians. We are students.": "student.jpg",
-  "Yes, I am watching TV.": "watch-tv.jpg",
-  "Yes, we are watching TV.": "watch-tv.jpg",
-  "Yes, she is watching TV.": "watch-tv.jpg",
-  "Yes, I can ride a bike.": "ride-a-bike.jpg",
-  "No, I cannot ride a bike.": "ride-a-bike.jpg",
-  "I can make a cake.": "make-a-cake.jpg",
-  "She can ride a bike.": "ride-a-bike.jpg",
-  "Yes, I can make a cake.": "make-a-cake.jpg",
-  "Yes, I can fly a kite.": "fly-a-kite.jpg",
-  "Yes, I can take a picture.": "take-a-picture.jpg",
-  "Yes, I have a dog.": "dog.jpg",
-  "Yes, he has a dog.": "dog.jpg",
-  "Yes, she has a violin.": "violin.jpg",
-  "She has a violin.": "violin.jpg",
-  "I am in the bedroom.": "bedroom.jpg",
-  "I am from Taiwan.": "taiwan.jpg",
-  "Yes, I am from the USA.": "the-usa.jpg",
-  "Yes, I am from England.": "england.jpg",
-  "Yes, I am from China.": "china.jpg",
-  "I am going to the market.": "market.jpg",
-  "He is going to the library.": "library.jpg",
-  "Yes, she is going to the supermarket.": "supermarket.jpg",
-  "He is in the living room.": "living-room.jpg",
-  "Yes, he is in the bathroom.": "bathroom.jpg",
-  "Yes, she is in the kitchen.": "kitchen.jpg",
-  "Yes, they are in the dining room.": "dining-room.jpg",
-  "Yes, he is in the office.": "office.jpg",
-  "No, he is not excited. He is bored.": "bored.jpg",
-  "Yes, he is bored.": "bored.jpg",
-  "Yes, she is rich.": "rich.jpg",
-  "Yes, he is poor.": "poor.jpg",
-  "Yes, it is long.": "long.jpg",
-  "Yes, it is short.": "short.jpg",
-  "Yes, it is big.": "big.jpg",
-  "Yes, it is small.": "small.jpg",
-  "Yes, he is taking a bath.": "take-a-bath.jpg",
-  "Yes, she is doing her homework.": "do-my-homework.jpg",
-  "Yes, he is riding a bike.": "ride-a-bike.jpg",
-  "Yes, she is flying a kite.": "fly-a-kite.jpg",
-  "Yes, he is taking a picture.": "take-a-picture.jpg",
-  "Yes, she is making a cake.": "make-a-cake.jpg",
-  "Yes, I can see.": "see.jpg",
-  "Yes, I can hear.": "hear.jpg",
-  "Yes, I can smell.": "smell.jpg",
-  "He is in the library.": "library.jpg",
-  "Yes, there is a piano.": "piano.jpg",
-  "Yes, there are many bears.": "bear.jpg",
-  "Yes, there is a tiger.": "tiger.jpg",
+/** 句子：提示欄＋英文答句 → 圖（對齊題目主體，避免 big/small 水槍蓋掉獅子／猴子） */
+const IMAGE_BY_QA = {
+  "How's the weather?\tIt is sunny.": "sunny.jpg",
+  "How's the weather?\tIt is cloudy.": "cloudy.jpg",
+  "How's the weather?\tIt is windy.": "windy.jpg",
+  "How's the weather?\tIt is rainy.": "rainy.jpg",
+  "How's the weather?\tIt is snowy.": "snowy.jpg",
+  "Is it sunny?\tYes, it is sunny.": "sunny.jpg",
+  "Is it rainy?\tYes, it is rainy.": "rainy.jpg",
+  "Is there a strawberry?\tYes, there is a strawberry.": "strawberry.jpg",
+  "Are there two strawberries?\tYes, there are two strawberries.": "strawberry.jpg",
+  "Are there many strawberries?\tYes, there are many strawberries.": "strawberry.jpg",
+  "Are there many tomatoes?\tYes, there are many tomatoes.": "tomato.jpg",
+  "Is there a monkey behind the tree?\tYes, there is a monkey behind the tree.": "monkey.jpg",
+  "Are there two monkeys in front of the tree?\tYes, there are two monkeys in front of the tree.": "monkey.jpg",
+  "Are there many monkeys near the tree?\tYes, there are many monkeys near the tree.": "monkey.jpg",
+  "Is the monkey behind the box?\tNo, it is not behind the box. It is in front of the box.": "monkey.jpg",
+  "Is the dog next to the box?\tYes, it is next to the box.": "next-to.jpg",
+  "Is the dog on the box?\tYes, it is on the box.": "on.jpg",
+  "Is the dog in the box?\tYes, it is in the box.": "in.jpg",
+  "Is the dog under the box?\tYes, it is under the box.": "under.jpg",
+  "Is the dog between the boxes?\tYes, it is between the boxes.": "between.jpg",
+  "How much is it?\tIt is thirty dollars.": "dollars.jpg",
+  "How much is the guitar?\tIt is thirty dollars.": "guitar.jpg",
+  "Are you a magician?\tNo, I am not a magician. I am a student.": "magician.jpg",
+  "Are you a student?\tYes, I am a student.": "student.jpg",
+  "Are you magicians?\tNo, we are not magicians. We are students.": "magician.jpg",
+  "Are you watching TV?\tYes, I am watching TV.": "watch-tv.jpg",
+  "Are you watching TV?\tYes, we are watching TV.": "watch-tv.jpg",
+  "Is Lucy watching TV?\tYes, she is watching TV.": "watch-tv.jpg",
+  "Can you ride a bike?\tYes, I can ride a bike.": "ride-a-bike.jpg",
+  "Can you ride a bike?\tNo, I cannot ride a bike.": "ride-a-bike.jpg",
+  "What can you do?\tI can make a cake.": "make-a-cake.jpg",
+  "What can Nini do?\tShe can ride a bike.": "ride-a-bike.jpg",
+  "Can you make a cake?\tYes, I can make a cake.": "make-a-cake.jpg",
+  "Can you fly a kite?\tYes, I can fly a kite.": "fly-a-kite.jpg",
+  "Can you take a picture?\tYes, I can take a picture.": "take-a-picture.jpg",
+  "Do you have a dog?\tYes, I have a dog.": "dog.jpg",
+  "Does he have a dog?\tYes, he has a dog.": "dog.jpg",
+  "Does she have a violin?\tYes, she has a violin.": "violin.jpg",
+  "What does Abby have?\tShe has a violin.": "violin.jpg",
+  "Where are you?\tI am in the bedroom.": "bedroom.jpg",
+  "Where are you from?\tI am from Taiwan.": "taiwan.jpg",
+  "Are you from the USA?\tYes, I am from the USA.": "the-usa.jpg",
+  "Are you from England?\tYes, I am from England.": "england.jpg",
+  "Are you from China?\tYes, I am from China.": "china.jpg",
+  "Where are you going?\tI am going to the market.": "market.jpg",
+  "Where's Nick going?\tHe is going to the library.": "library.jpg",
+  "Is she going to the supermarket?\tYes, she is going to the supermarket.": "supermarket.jpg",
+  "Where's Tom?\tHe is in the living room.": "living-room.jpg",
+  "Is he in the bathroom?\tYes, he is in the bathroom.": "bathroom.jpg",
+  "Is she in the kitchen?\tYes, she is in the kitchen.": "kitchen.jpg",
+  "Are they in the dining room?\tYes, they are in the dining room.": "dining-room.jpg",
+  "Is he in the office?\tYes, he is in the office.": "office.jpg",
+  "Is Eric excited?\tNo, he is not excited. He is bored.": "bored.jpg",
+  "Is he bored?\tYes, he is bored.": "bored.jpg",
+  "Is she rich?\tYes, she is rich.": "rich.jpg",
+  "Is he poor?\tYes, he is poor.": "poor.jpg",
+  "Is the arm long?\tYes, it is long.": "arm.jpg",
+  "Is the foot short?\tYes, it is short.": "foot.jpg",
+  "Is the lion big?\tYes, it is big.": "lion.jpg",
+  "Is the monkey small?\tYes, it is small.": "monkey.jpg",
+  "Is he taking a bath?\tYes, he is taking a bath.": "take-a-bath.jpg",
+  "Is she doing her homework?\tYes, she is doing her homework.": "do-my-homework.jpg",
+  "Is he riding a bike?\tYes, he is riding a bike.": "ride-a-bike.jpg",
+  "Is she flying a kite?\tYes, she is flying a kite.": "fly-a-kite.jpg",
+  "Is he taking a picture?\tYes, he is taking a picture.": "take-a-picture.jpg",
+  "Is she making a cake?\tYes, she is making a cake.": "make-a-cake.jpg",
+  "Can you see?\tYes, I can see.": "see.jpg",
+  "Can you hear?\tYes, I can hear.": "hear.jpg",
+  "Can you smell?\tYes, I can smell.": "smell.jpg",
+  "Where's the teacher?\tHe is in the library.": "teacher.jpg",
+  "Is there a piano?\tYes, there is a piano.": "piano.jpg",
+  "Are there many bears?\tYes, there are many bears.": "bear.jpg",
+  "Is there a tiger?\tYes, there is a tiger.": "tiger.jpg",
 };
+
+/** 形容詞／天氣：有主體名詞時不要優先拿這些當圖 */
+const LOW_PRIORITY_KEYS = new Set([
+  "long",
+  "short",
+  "big",
+  "small",
+  "bored",
+  "excited",
+  "poor",
+  "rich",
+  "sunny",
+  "cloudy",
+  "windy",
+  "rainy",
+  "snowy",
+  "on",
+  "in",
+  "under",
+  "near",
+  "behind",
+  "between",
+  "see",
+  "hear",
+  "smell",
+]);
 
 const NORM_REPLACEMENTS = [
   [/\bwatching tv\b/g, "watch tv"],
@@ -195,13 +222,11 @@ const KEYS_BY_LENGTH = Object.keys(FILE_BY_ENGLISH).sort(
   (a, b) => b.length - a.length,
 );
 
-function findVocabFileInText(...parts) {
-  const hay = parts
-    .map((p) => normalizeForLookup(p))
-    .filter(Boolean)
-    .join(" ");
+function findVocabFileInText(text, { allowLowPriority = true } = {}) {
+  const hay = normalizeForLookup(text);
   if (!hay) return null;
   for (const key of KEYS_BY_LENGTH) {
+    if (!allowLowPriority && LOW_PRIORITY_KEYS.has(key)) continue;
     if (!key.includes(" ")) {
       const re = new RegExp(
         `(?:^|[^a-z])${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:[^a-z]|$)`,
@@ -220,18 +245,30 @@ function findVocabFileInText(...parts) {
  */
 export function resolveEnVocabImage(item) {
   if (!item) return null;
+
+  const hint = String(item.hint ?? "").trim();
+  const answer = String(item.english ?? "").trim();
+  const qaKey = `${hint}\t${answer}`;
+  // 句子固定對照優先於試算表舊圖片路徑（免重貼也能修正）
+  if (IMAGE_BY_QA[qaKey]) {
+    return siteAssetUrl(`assets/tj5-vocab/${IMAGE_BY_QA[qaKey]}`);
+  }
+
   const fromSheet = String(item.image ?? "").trim();
   if (fromSheet) {
     if (/^https?:\/\//i.test(fromSheet) || fromSheet.startsWith("data:")) return fromSheet;
     return siteAssetUrl(fromSheet);
   }
-  const answer = String(item.english ?? "").trim();
-  const byAnswer = IMAGE_BY_ANSWER[answer];
-  if (byAnswer) return siteAssetUrl(`assets/tj5-vocab/${byAnswer}`);
 
   const exact = FILE_BY_ENGLISH[normalizeEnglishKey(item.english)];
   if (exact) return siteAssetUrl(`assets/tj5-vocab/${exact}`);
-  const fromText = findVocabFileInText(item.english, item.hint);
-  if (!fromText) return null;
-  return siteAssetUrl(`assets/tj5-vocab/${fromText}`);
+
+  // 先從「提示＝題目」找主體名詞，避免答句 big/small 搶圖
+  const fromHint = findVocabFileInText(hint, { allowLowPriority: false });
+  if (fromHint) return siteAssetUrl(`assets/tj5-vocab/${fromHint}`);
+  const fromHintAny = findVocabFileInText(hint, { allowLowPriority: true });
+  if (fromHintAny) return siteAssetUrl(`assets/tj5-vocab/${fromHintAny}`);
+  const fromAnswer = findVocabFileInText(answer, { allowLowPriority: true });
+  if (fromAnswer) return siteAssetUrl(`assets/tj5-vocab/${fromAnswer}`);
+  return null;
 }
