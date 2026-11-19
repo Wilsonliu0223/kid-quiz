@@ -1,8 +1,8 @@
-課次	類型	中文	提示	英文	圖片
-TJ5 Unit21考試	單字	正在看（+ing）	/ˈwɑtʃɪŋ/	watching	assets/tj5-vocab/watching.jpg
-TJ5 Unit21考試	單字	正在做（+ing）	/ˈduɪŋ/	doing	assets/tj5-vocab/doing.jpg
-TJ5 Unit21考試	單字	正在飛（+ing）	/ˈflaɪɪŋ/	flying	assets/tj5-vocab/flying.jpg
-TJ5 Unit21考試	單字	正在拍／拿（去 e +ing）	/ˈtekɪŋ/	taking	assets/tj5-vocab/taking.jpg
-TJ5 Unit21考試	單字	正在使用（去 e +ing）	/ˈjuzɪŋ/	using	assets/tj5-vocab/using.jpg
-TJ5 Unit21考試	單字	正在騎（去 e +ing）	/ˈraɪdɪŋ/	riding	assets/tj5-vocab/riding.jpg
-TJ5 Unit21考試	單字	正在製作（去 e +ing）	/ˈmekɪŋ/	making	assets/tj5-vocab/making.jpg
+課次	類型	中文	提示	英文
+TJ5 Unit21考試	單字	正在看（+ing）	/ˈwɑtʃɪŋ/	watching
+TJ5 Unit21考試	單字	正在做（+ing）	/ˈduɪŋ/	doing
+TJ5 Unit21考試	單字	正在飛（+ing）	/ˈflaɪɪŋ/	flying
+TJ5 Unit21考試	單字	正在拍／拿（去 e +ing）	/ˈtekɪŋ/	taking
+TJ5 Unit21考試	單字	正在使用（去 e +ing）	/ˈjuzɪŋ/	using
+TJ5 Unit21考試	單字	正在騎（去 e +ing）	/ˈraɪdɪŋ/	riding
+TJ5 Unit21考試	單字	正在製作（去 e +ing）	/ˈmekɪŋ/	making
