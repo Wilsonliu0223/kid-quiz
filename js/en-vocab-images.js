@@ -129,8 +129,14 @@ const IMAGE_BY_QA = {
   "Is he bored?\tYes, he is bored.": "bored.jpg",
   "Is she rich?\tYes, she is rich.": "rich.jpg",
   "Is he poor?\tYes, he is poor.": "poor.jpg",
-  "Is the arm long?\tYes, it is long.": "arm.jpg",
-  "Is the foot short?\tYes, it is short.": "foot.jpg",
+  // 長／短：課本圖是長短對比（尺／水槍），不要配手臂／腳
+  "Is it long?\tYes, it is long.": "long.jpg",
+  "Is it short?\tYes, it is short.": "short.jpg",
+  "Is the arm long?\tYes, it is long.": "long.jpg",
+  "Is the foot short?\tYes, it is short.": "short.jpg",
+  "Is it big?\tYes, it is big.": "big.jpg",
+  "Is it small?\tYes, it is small.": "small.jpg",
+  // 有主體時跟主體走，勿被答句 big/small 或試算表舊圖蓋掉
   "Is the lion big?\tYes, it is big.": "lion.jpg",
   "Is the monkey small?\tYes, it is small.": "monkey.jpg",
   "Is he taking a bath?\tYes, he is taking a bath.": "take-a-bath.jpg",
@@ -243,16 +249,27 @@ function findVocabFileInText(text, { allowLowPriority = true } = {}) {
  * @param {{ english?: string, hint?: string, chinese?: string, image?: string, type?: string } | null | undefined} item
  * @returns {string | null}
  */
+function normalizeQaPart(s) {
+  return String(s ?? "")
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function resolveEnVocabImage(item) {
   if (!item) return null;
 
-  const hint = String(item.hint ?? "").trim();
-  const answer = String(item.english ?? "").trim();
+  const hint = normalizeQaPart(item.hint);
+  const answer = normalizeQaPart(item.english);
   const qaKey = `${hint}\t${answer}`;
   // 句子固定對照優先於試算表舊圖片路徑（免重貼也能修正）
   if (IMAGE_BY_QA[qaKey]) {
     return siteAssetUrl(`assets/tj5-vocab/${IMAGE_BY_QA[qaKey]}`);
   }
+
+  // 題目主體名詞優先於試算表「圖片」欄（避免獅子題仍載入 big.jpg）
+  const fromHint = findVocabFileInText(hint, { allowLowPriority: false });
+  if (fromHint) return siteAssetUrl(`assets/tj5-vocab/${fromHint}`);
 
   const fromSheet = String(item.image ?? "").trim();
   if (fromSheet) {
@@ -263,9 +280,6 @@ export function resolveEnVocabImage(item) {
   const exact = FILE_BY_ENGLISH[normalizeEnglishKey(item.english)];
   if (exact) return siteAssetUrl(`assets/tj5-vocab/${exact}`);
 
-  // 先從「提示＝題目」找主體名詞，避免答句 big/small 搶圖
-  const fromHint = findVocabFileInText(hint, { allowLowPriority: false });
-  if (fromHint) return siteAssetUrl(`assets/tj5-vocab/${fromHint}`);
   const fromHintAny = findVocabFileInText(hint, { allowLowPriority: true });
   if (fromHintAny) return siteAssetUrl(`assets/tj5-vocab/${fromHintAny}`);
   const fromAnswer = findVocabFileInText(answer, { allowLowPriority: true });

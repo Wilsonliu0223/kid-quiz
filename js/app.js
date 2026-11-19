@@ -16,7 +16,7 @@ import {
   uniqueLessons,
   pickRandomQuestions,
 } from "./sheets.js";
-import { resolveEnVocabImage } from "./en-vocab-images.js";
+import { resolveEnVocabImage } from "./en-vocab-images.js?v=46.82";
 import {
   isEnSpeechInputSupported,
   startEnSpeechInput,

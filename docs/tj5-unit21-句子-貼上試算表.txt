@@ -55,8 +55,8 @@ TJ5 Unit21考試	句子	Eric 很興奮嗎？	Is Eric excited?	No, he is not exci
 TJ5 Unit21考試	句子	他很無聊嗎？	Is he bored?	Yes, he is bored.	assets/tj5-vocab/bored.jpg
 TJ5 Unit21考試	句子	她很有錢嗎？	Is she rich?	Yes, she is rich.	assets/tj5-vocab/rich.jpg
 TJ5 Unit21考試	句子	他很窮嗎？	Is he poor?	Yes, he is poor.	assets/tj5-vocab/poor.jpg
-TJ5 Unit21考試	句子	手臂很長嗎？	Is the arm long?	Yes, it is long.	assets/tj5-vocab/arm.jpg
-TJ5 Unit21考試	句子	腳很短嗎？	Is the foot short?	Yes, it is short.	assets/tj5-vocab/foot.jpg
+TJ5 Unit21考試	句子	這支尺很長嗎？	Is it long?	Yes, it is long.	assets/tj5-vocab/long.jpg
+TJ5 Unit21考試	句子	這支尺很短嗎？	Is it short?	Yes, it is short.	assets/tj5-vocab/short.jpg
 TJ5 Unit21考試	句子	獅子很大嗎？	Is the lion big?	Yes, it is big.	assets/tj5-vocab/lion.jpg
 TJ5 Unit21考試	句子	猴子很小嗎？	Is the monkey small?	Yes, it is small.	assets/tj5-vocab/monkey.jpg
 TJ5 Unit21考試	句子	他在洗澡嗎？	Is he taking a bath?	Yes, he is taking a bath.	assets/tj5-vocab/take-a-bath.jpg
