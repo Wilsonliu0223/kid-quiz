@@ -9,7 +9,7 @@ import {
   formatEnExamTitle,
   dedupeEnExamLessons,
 } from "./exam-books.js";
-import { CONFIG } from "./config.site.js?v=config-v45.88";
+import { CONFIG } from "./config.site.js?v=config-v45.89";
 import {
   loadZhItems,
   loadEnItems,
@@ -1342,23 +1342,52 @@ function syncEnSpeechButton(q) {
 function syncEnZhHintButton(q) {
   const btn = $("#btn-en-zh-hint");
   const chineseEl = $("#en-chinese-display");
-  if (!btn || !chineseEl) return;
+  const tipEl = $("#en-sentence-zh-tip");
+  if (!btn) return;
   const sentence = isEnSentenceItem(q);
   if (!sentence) {
     btn.hidden = true;
-    chineseEl.classList.remove("is-sentence-tip");
+    if (tipEl) tipEl.hidden = true;
     return;
   }
   btn.hidden = false;
-  chineseEl.classList.add("is-sentence-tip");
-  chineseEl.textContent = q.chinese || "";
+  // 中文提示另開一列，不覆蓋上方英文出題
+  let tip = tipEl;
+  if (!tip) {
+    tip = document.createElement("p");
+    tip.id = "en-sentence-zh-tip";
+    tip.className = "en-sentence-zh-tip";
+    tip.hidden = true;
+    btn.before(tip);
+  }
+  tip.textContent = q.chinese || "";
   if (enZhHintRevealed) {
-    chineseEl.hidden = false;
+    tip.hidden = false;
     btn.textContent = "💡 隱藏中文提示";
   } else {
-    chineseEl.hidden = true;
+    tip.hidden = true;
     btn.textContent = "💡 看提示（中文）";
   }
+  // 大字區維持英文問題，不要被中文蓋掉
+  if (chineseEl) {
+    chineseEl.classList.remove("is-sentence-tip");
+    chineseEl.hidden = false;
+    chineseEl.textContent = String(q.hint || "").trim() || "（缺提示欄英文問題）";
+  }
+}
+
+function ensureEnQuestionDisplay() {
+  let el = $("#en-question-display");
+  if (el) return el;
+  const meaningBlock = $("#en-prompt-meaning");
+  const chineseEl = $("#en-chinese-display");
+  if (!meaningBlock || !chineseEl) return null;
+  el = document.createElement("p");
+  el.id = "en-question-display";
+  el.className = "en-question-display";
+  el.hidden = true;
+  meaningBlock.insertBefore(el, chineseEl);
+  return el;
 }
 
 function renderEnQuestion() {
@@ -1373,31 +1402,32 @@ function renderEnQuestion() {
   const speakBtn = $("#btn-speak-en");
   const input = $("#en-answer-input");
   const chineseEl = $("#en-chinese-display");
-  const questionEl = $("#en-question-display");
+  const questionEl = ensureEnQuestionDisplay();
+  const questionText = String(q.hint || "").trim();
 
   renderEnVocabImage(q);
   syncEnSpeechButton(q);
 
   let listenPrompt = $("#en-listen-prompt");
   if (sentence) {
-    // 句子：提示欄＝出題英文；中文欄＝可點開的提示；英文欄＝答案
+    // 句子：提示欄＝出題英文（畫面上一定顯示）；中文欄＝可點開提示；英文欄＝答案
     if (listenPrompt) listenPrompt.hidden = true;
     meaningBlock.hidden = false;
     if (hintEl) hintEl.hidden = true;
     if (questionEl) {
       questionEl.hidden = false;
-      questionEl.textContent = String(q.hint || "").trim() || "（缺提示欄問題）";
+      questionEl.textContent = questionText || "（缺提示欄英文問題）";
     }
+    // 大字區也放英文問題，避免只靠小標被忽略
     if (chineseEl) {
-      chineseEl.textContent = q.chinese || "";
-      chineseEl.hidden = true;
+      chineseEl.classList.remove("is-sentence-tip");
+      chineseEl.hidden = false;
+      chineseEl.textContent = questionText || "（缺提示欄英文問題）";
     }
     speakBtn.hidden = false;
     speakBtn.textContent = "🔊 播放問題";
     $("#en-quiz-hint").textContent =
-      mode === "listen"
-        ? "依上方英文問題回答；可再按播放；看不懂點中文提示"
-        : "看上方英文問題與圖片回答；看不懂點中文提示";
+      "請依上方英文問題回答；看不懂再點「看提示（中文）」";
     if (input) input.placeholder = "輸入英文回答句";
   } else if (mode === "listen") {
     if (questionEl) {

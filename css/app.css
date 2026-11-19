@@ -3133,12 +3133,15 @@ body:has(#view-vision.view-active) #app {
 }
 
 .en-question-display {
+  display: none; /* 句子題改用大字 en-chinese-display 顯示英文問題 */
+}
+
+.en-sentence-zh-tip {
   text-align: center;
-  font-size: clamp(1.25rem, 5.5vw, 1.65rem);
-  font-weight: 700;
-  line-height: 1.35;
-  margin: 8px 0 6px;
-  color: #1a5bb8;
+  font-size: clamp(1.1rem, 4.2vw, 1.35rem);
+  font-weight: 600;
+  color: var(--muted);
+  margin: 4px 0 8px;
 }
 
 .en-chinese-display {
