@@ -218,14 +218,33 @@ function rowToEnItem(cells, idx) {
   if (!chinese) return null;
   const image =
     idx.image >= 0 ? String(cells[idx.image] ?? "").trim() : "";
-  return {
+  return fixEnItemPronounGender({
     lesson: normalizeEnLesson(cells[idx.lesson] ?? ""),
     type: cells[idx.type] ?? "",
     chinese,
     hint,
     english,
     image,
-  };
+  });
+}
+
+/** 配圖是男生時，把 she 題改成 he（免重貼試算表也能對） */
+function fixEnItemPronounGender(item) {
+  if (!item) return item;
+  const hint = String(item.hint ?? "");
+  const english = String(item.english ?? "");
+  if (
+    /Is she making a cake\?/i.test(hint) ||
+    /she is making a cake/i.test(english)
+  ) {
+    return {
+      ...item,
+      chinese: "他在做蛋糕嗎？",
+      hint: "Is he making a cake?",
+      english: "Yes, he is making a cake.",
+    };
+  }
+  return item;
 }
 
 function enItemDedupeKey(item) {
@@ -295,10 +314,10 @@ export async function loadEnItems() {
     const data = await res.json();
     const items = (data.enItems ?? []).map((item) =>
       item
-        ? {
+        ? fixEnItemPronounGender({
             ...item,
             lesson: normalizeEnLesson(item.lesson),
-          }
+          })
         : item,
     );
     return filterByTypes(items, types);
@@ -319,13 +338,14 @@ export async function loadEnItems() {
     const seen = new Set();
     const addItem = (item) => {
       if (!item) return;
-      const key = enItemDedupeKey(item);
-      if (seen.has(key)) return;
-      seen.add(key);
-      items.push({
+      const fixed = fixEnItemPronounGender({
         ...item,
         lesson: normalizeEnLesson(item.lesson),
       });
+      const key = enItemDedupeKey(fixed);
+      if (seen.has(key)) return;
+      seen.add(key);
+      items.push(fixed);
     };
 
     for (const row of recoverEnItemsFromBrokenColLabels(table)) {

@@ -159,6 +159,7 @@ const IMAGE_BY_QA = {
   "Is he riding a bike?\tYes, he is riding a bike.": "ride-a-bike.jpg",
   "Is she flying a kite?\tYes, she is flying a kite.": "fly-a-kite.jpg",
   "Is he taking a picture?\tYes, he is taking a picture.": "take-a-picture.jpg",
+  "Is he making a cake?\tYes, he is making a cake.": "make-a-cake.jpg",
   "Is she making a cake?\tYes, she is making a cake.": "make-a-cake.jpg",
   "Can you see?\tYes, I can see.": "see.jpg",
   "Can you hear?\tYes, I can hear.": "hear.jpg",

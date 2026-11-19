@@ -64,7 +64,7 @@ TJ5 Unit21考試	句子	她在做功課嗎？	Is she doing her homework?	Yes, sh
 TJ5 Unit21考試	句子	他在騎腳踏車嗎？	Is he riding a bike?	Yes, he is riding a bike.	assets/tj5-vocab/ride-a-bike.jpg
 TJ5 Unit21考試	句子	她在放風箏嗎？	Is she flying a kite?	Yes, she is flying a kite.	assets/tj5-vocab/fly-a-kite.jpg
 TJ5 Unit21考試	句子	他在拍照嗎？	Is he taking a picture?	Yes, he is taking a picture.	assets/tj5-vocab/take-a-picture.jpg
-TJ5 Unit21考試	句子	她在做蛋糕嗎？	Is she making a cake?	Yes, she is making a cake.	assets/tj5-vocab/make-a-cake.jpg
+TJ5 Unit21考試	句子	他在做蛋糕嗎？	Is he making a cake?	Yes, he is making a cake.	assets/tj5-vocab/make-a-cake.jpg
 TJ5 Unit21考試	句子	你看得到嗎？	Can you see?	Yes, I can see.	assets/tj5-vocab/see.jpg
 TJ5 Unit21考試	句子	你聽得到嗎？	Can you hear?	Yes, I can hear.	assets/tj5-vocab/hear.jpg
 TJ5 Unit21考試	句子	你聞得到嗎？	Can you smell?	Yes, I can smell.	assets/tj5-vocab/smell.jpg
