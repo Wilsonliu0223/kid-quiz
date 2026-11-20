@@ -16,11 +16,11 @@ import {
   uniqueLessons,
   pickRandomQuestions,
 } from "./sheets.js";
-import { resolveEnVocabImage } from "./en-vocab-images.js?v=46.86";
+import { resolveEnVocabImage } from "./en-vocab-images.js?v=46.88";
 import {
   isEnSpeechInputSupported,
   startEnSpeechInput,
-} from "./en-speech-input.js";
+} from "./en-speech-input.js?v=46.88";
 import {
   englishAnswersMatch,
   speakEnglish,
@@ -1265,7 +1265,7 @@ async function playEnglishAudio() {
       : "無法播音：請確認有網路並調大音量，或改「看中拼英」";
   } else if (hint && quiz?.mode === "listen") {
     hint.textContent = sentence
-      ? "聽完問題後打字或按住說話回答（沒聽到就再按一次）"
+      ? "聽完問題後打字或點一下說話回答（沒聽到就再按一次）"
       : "聽清楚後輸入英文（沒聽到就再按一次）";
   }
 }
@@ -1335,7 +1335,7 @@ function syncEnSpeechButton(q) {
   const show = isEnSentenceItem(q) && isEnSpeechInputSupported();
   btn.hidden = !show;
   btn.classList.remove("is-listening");
-  btn.textContent = "🎤 按住說話回答";
+  btn.textContent = "🎤 點一下說話回答";
   btn.disabled = false;
 }
 
@@ -1953,17 +1953,37 @@ function submitEnAnswer() {
 /** @type {{ stop: () => Promise<string>, abort: () => void } | null} */
 let enSpeechSession = null;
 
+function resetEnSpeechButtonUi() {
+  const btn = $("#btn-en-speech");
+  if (!btn) return;
+  btn.classList.remove("is-listening");
+  btn.textContent = "🎤 點一下說話回答";
+  btn.disabled = false;
+}
+
 async function endEnSpeechCapture() {
   const btn = $("#btn-en-speech");
   const session = enSpeechSession;
   enSpeechSession = null;
-  if (!session) return;
-  const text = await session.stop();
+  if (!session) {
+    resetEnSpeechButtonUi();
+    return;
+  }
+  // 先恢復按鈕，避免 stop() 卡住時一直「聆聽中」
   if (btn) {
     btn.classList.remove("is-listening");
-    btn.textContent = "🎤 按住說話回答";
-    btn.disabled = false;
+    btn.textContent = "辨識中…";
+    btn.disabled = true;
   }
+  let text = "";
+  try {
+    text = await session.stop();
+  } catch (_) {
+    try {
+      session.abort();
+    } catch (__) {}
+  }
+  resetEnSpeechButtonUi();
   const input = $("#en-answer-input");
   if (text && input) {
     // 講完只填入輸入欄，讓孩子確認／改字後再按送出
@@ -1973,7 +1993,7 @@ async function endEnSpeechCapture() {
       input.setSelectionRange(input.value.length, input.value.length);
     } catch (_) {}
   } else if (!text) {
-    showFeedback("warn", "沒聽清楚，請再按住說一次或改打字", [
+    showFeedback("warn", "沒聽清楚，請再點一次說話或改打字", [
       { label: "好的", primary: true, onClick: () => {} },
     ]);
   }
@@ -1984,12 +2004,18 @@ function bindEnSpeechButton() {
   if (!btn || btn.dataset.bound === "1") return;
   btn.dataset.bound = "1";
 
-  const begin = (e) => {
+  // 手機改「點一下開始／再點結束」，避免按住說話 pointer 事件卡住
+  btn.addEventListener("click", (e) => {
     e.preventDefault();
     if (!quiz || quiz.subject !== "en") return;
     const q = quiz.questions[quiz.index];
     if (!isEnSentenceItem(q) || !isEnSpeechInputSupported()) return;
-    if (enSpeechSession) return;
+
+    if (enSpeechSession) {
+      void endEnSpeechCapture();
+      return;
+    }
+
     unlockSpeechFromGesture();
     const input = $("#en-answer-input");
     if (input) input.value = "";
@@ -2006,19 +2032,7 @@ function bindEnSpeechButton() {
       return;
     }
     btn.classList.add("is-listening");
-    btn.textContent = "聆聽中…鬆開結束";
-  };
-
-  const finish = (e) => {
-    e.preventDefault();
-    void endEnSpeechCapture();
-  };
-
-  btn.addEventListener("pointerdown", begin);
-  btn.addEventListener("pointerup", finish);
-  btn.addEventListener("pointercancel", finish);
-  btn.addEventListener("pointerleave", (e) => {
-    if (enSpeechSession && e.buttons === 0) void endEnSpeechCapture();
+    btn.textContent = "🎙 再說完點一下填入";
   });
 }
 

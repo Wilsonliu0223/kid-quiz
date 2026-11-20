@@ -3220,8 +3220,9 @@ body:has(#view-vision.view-active) #app {
   border: 2px solid #c45c26;
   color: #8a3a12;
   background: #fff4ec;
-  touch-action: none;
+  touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .btn-en-speech.is-listening {
