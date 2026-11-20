@@ -1966,8 +1966,12 @@ async function endEnSpeechCapture() {
   }
   const input = $("#en-answer-input");
   if (text && input) {
+    // 講完只填入輸入欄，讓孩子確認／改字後再按送出
     input.value = text;
-    submitEnAnswer();
+    input.focus();
+    try {
+      input.setSelectionRange(input.value.length, input.value.length);
+    } catch (_) {}
   } else if (!text) {
     showFeedback("warn", "沒聽清楚，請再按住說一次或改打字", [
       { label: "好的", primary: true, onClick: () => {} },
